@@ -411,6 +411,9 @@ predicate  apoCalidse()
     && (c_amfx <= oHeap)
   }
 
+
+
+
 //{:timeLimit 60}
   function {:isolate_assertions} {:timeLimit 30} CalidKV(k : Object, v : Object) : (mK : Klon)
     //givne a Calid Klon, add in k:=v to the mapping and get a  Calid result.
@@ -1460,6 +1463,8 @@ function mapBackKlon(os: set<Object>, m : Klon) : (r : set<Object>)
   ensures  r  <= m.m.Keys
   reads {}
 { mapBackVMap(os,m.m) }
+
+function objThruKlon(o : Object, m : Klon) : Object    requires o in m.m.Keys {m.m[o]}
 
 
 

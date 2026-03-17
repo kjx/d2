@@ -3,6 +3,8 @@ include "Library.dfy"
 include "Set-Lemmata.dfy"
 
 
+method nl() { print "\n"; }
+
 method printobject(o : Object)
 {
       printobj(o);

@@ -105,6 +105,11 @@ predicate AllTheseOwnersAreFlatOK(os : set<Object>, context : set<Object> := os)
 
 
 
+
+
+
+
+
 lemma AMFOsisAMFOs(o : Object)
   requires o.Ready()
   ensures forall oo <- o.AMFO | oo != o :: (o.AMFO > oo.AMFO)

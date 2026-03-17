@@ -713,3 +713,22 @@ lemma {:isolate_assertions} ShiftOWNRshiftAMFOs(kk : OWNR, vv : OWNR, m : Klon)
       requires mappingOWNRsThruKlownKV(kk, vv, m)
       ensures vv == shiftAMFO(kk, m.o.AMFO, m.m[m.o].AMFO, m.m)
       {}
+
+
+
+
+
+
+
+function {:isolate_assertions} shiftObjectBETTER(i0 : Object, m : Klon) : (i1 : Object)
+    requires m.apoCalidse()
+    requires m.SuperCalidFragilistic()
+     ensures m.AllLinesCalid()
+//    requires HighCalidFragilistic(m)
+  //     ensures HighLineKV(i0,i1,m)
+    requires i0.Ready()
+    requires inside(i0, m.o)
+    requires m.objectInKlown(i0)
+     ensures inside(i1, m.m[m.o])
+       reads m.hns()
+    { m.m[i0] }

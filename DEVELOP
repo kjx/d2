@@ -1,0 +1,1 @@
+csplit DUMP.txt %//STARTGRAPH%; mv xx00  test.gv ; dpdf test.gv ; open test.gv.pdf
