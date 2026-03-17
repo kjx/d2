@@ -422,6 +422,17 @@ lemma ValidMeansAllFieldsValid()
 }//end class Object
 
 
+
+
+  lemma {:isolate_assertions}  FieldInFields(o : Object, n : string, v : Object)
+    requires o.Ready()
+    requires o.Valid()
+    requires n in o.fields.Keys
+    requires v == o.fields[n]
+    ensures  v in o.fields.Values
+  {}
+
+
 /// LILLE /// these two should go.. elsewere.   geometery?  Cut?
 ///
 /// predicate StandaloneObjectsAreValid(os : set<Object>)  //LILLE should probalby go away or at laest into C2
