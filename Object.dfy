@@ -1,6 +1,6 @@
-include "Library.dfy"
+ include "Library.dfy"
 include "Mode.dfy"
-include "Ownership.dfy"
+include "Ownership.dfy" //comes in via Mode anyway..
 
 //TODOS when valid - precondition on comoputeWOwnerForClone - see JDVANCE
 //GREENLAND   - geting bound covariant over cloning
@@ -46,9 +46,11 @@ class Object {
     //make an object.  owner & (opt) bound should be local owners, not flattened OWNRS
 
 //refactored 30 Jan 2026!! //bunch of commented-out-stuff excised
-    requires context >= flatten(oo) >= flatten(mb)
+
+//    requires context >= flatten(oo) >= flatten(mb)   //GRR
+    requires flatten(oo) >= flatten(mb)
     requires forall o <- flatten(oo) :: o.Ready()
-    requires nuBoundsOK(oo, mb)
+    requires nuBoundsOK(oo, mb)   ///attempting to get verification times down
 
 //"rephrase" precondtions
     ensures context >= AMFX >= AMFB
@@ -80,7 +82,6 @@ class Object {
     AMFB        := flatten(mb);
     AMFX        := flatten(oo);
     AMFO        := flatten(oo)+{this};
-    AMFO        := AMFX + {this};
 
     fieldModes  := ks;
     fields      := map[];
@@ -412,19 +413,167 @@ lemma ValidMeansAllFieldsValid()
 {}
 
 
+
   method setf(n : string, v : Object)
+    requires Ready()
     requires n  in fieldModes.Keys
-    requires n !in fields.Keys
+    requires refOO(this, v)
      ensures fields == old(fields)[n:=v]
     modifies this`fields
        { fields := fields[n:=v]; }
 
+  function getf(n : string) : (v : Object)
+    requires n in fieldModes.Keys
+    requires n in fields.Keys
+       reads `fields, `fieldModes
+       { fields[n] }
+
+
+lemma {:isolate_assertions} I_HATE_BOUNDS()
+  requires Ready()
+   ensures ( (set ooo : Object <- {this}, omb : Object <-  ooo.AMFB :: omb) + {this} ) == (AMFB + {this})
+   ensures (forall oo <- owner :: oo.AMFB >= AMFB)
+ {
+  calc {
+     (set ooo : Object <- {this}, omb : Object <-  ooo.AMFB :: omb) + {this};
+     (set                         omb : Object <- this.AMFB :: omb) + {this};
+     (                                                 AMFB       ) + {this};
+     AMFB + {this};
+   }
+   assert (AMFO > AMFX >= AMFB);
+   assert flatten(bound) == AMFB;
+   assert flatten(owner) == AMFX;
+   assert flatten(owner) + {this} == AMFO;
+   assert flatten(owner) >= flatten(bound);
+
+   assert this !in AMFX;  assert this !in AMFB;
+}
+
+
+function collectOwnersBounds() : set<set<Object>>  { set o <- owner :: o.AMFB }
+
+function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds() ) }
+//
+// lemma {:isolate_assertions} {:timeLimit 20} Bounds_Reflexive(oo : Owner)
+//    requires forall o <- oo :: o.bound == o.owner
+//    requires AllReady(oo)
+//   //  ensures nuBoundsOK(oo, oo)
+//     ensures intersetion({oo}) == oo
+//
+//   {
+//     forall o <- oo ensures (true) { o.ExtraReady(); }
+//     assert forall o <- oo :: o.AMFX == o.AMFB;
+//     assert forall o <- oo :: flatten(oo) >= o.AMFO > o.AMFX == o.AMFB;
+//
+//     var set_of_owners_bounds : set<set<Object>> := set o <- oo :: o.AMFB;
+//     assert set_of_owners_bounds == set o <- oo :: o.AMFX;
+//
+//     var interset_bounds : set<Object> := intersetion( set_of_owners_bounds );
+//     assert interset_bounds == intersetion( set o <- oo :: o.AMFB );
+//     assert interset_bounds == intersetion( set o <- oo :: o.AMFX );
+//
+//
+//     assert forall o <- oo :: o.AMFB >= interset_bounds;
+//
+//   assert (flatten(oo) >= flatten(oo)) ; //aka effectiveowner is INSIDE effectivebound
+//   assert (forall o <- oo :: o.AMFB >= flatten(oo)) ;
+//
+//   }
+//
+//
+//
+// lemma {:isolate_assertions} {:timeLimit 20} SOOB(oo : Owner)
+//    requires forall o <- oo :: o.bound == o.owner
+//    requires AllReady(oo)
+//   //  ensures nuBoundsOK(oo, oo)
+//   {
+//     assert forall o <- oo :: o.AMFX == o.AMFB;
+//     assert forall o <- oo :: flatten(oo) >= o.AMFO > o.AMFX == o.AMFB;
+//
+//     var set_of_owners_bounds : set<set<Object>> := set o <- oo :: o.AMFB;
+//     assert set_of_owners_bounds == set o <- oo :: o.AMFX;
+//
+//     var interset_bounds : set<Object> := intersetion( set_of_owners_bounds );
+//     assert interset_bounds == intersetion( set o <- oo :: o.AMFB );
+//     assert interset_bounds == intersetion( set o <- oo :: o.AMFX );
+//
+//   //
+//   //     assert forall o <- oo :: o.AMFB >= interset_bounds;
+//   //
+//   //   assert (flatten(oo) >= flatten(oo)) ; //aka effectiveowner is INSIDE effectivebound
+//   //   assert (forall o <- oo :: o.AMFB >= flatten(oo)) ;
+//
+//   }
+//
+
+
+  method {:isolate_assertions} setn(n : string, v : nat)
+    requires Ready()
+    requires Valid()
+    requires n in fieldModes.Keys
+    requires fieldModes[n] in {Evil} //Rep too?
+     ensures fields.Keys == old(fields.Keys) + {n}
+     ensures Ready()
+     ensures Valid()
+    modifies this`fields
+       {
+         var vObj := new Object.make(map[],{this},AMFO, natToString(v), {this});
+         assert refOK(this, vObj);
+         fields := fields[n:=vObj];
+         assert Ready();
+         assert (forall n <- fields :: refOK(this, fields[n]));
+         MODE_INDIGO(this ,fieldModes[n], vObj);
+         assert (forall n <- fields :: modeOK(this, fieldModes[n], fields[n]));
+       }
+
+//   method {:isolate_assertions} Xset(n : string, v : nat)
+//     requires Ready()
+//     requires Valid()
+//
+//     requires n in fieldModes.Keys
+//     requires forall m <- fieldModes.Keys :: fieldModes[m] == Evil
+//     requires nuBoundsOK(owner, bound)
+//      ensures flatten({this}) <= (set ooo : Object <- {this}, omb <- ooo.AMFB :: omb) + {this}
+//      ensures fields.Keys == old(fields.Keys) + {n}
+//      ensures Ready()
+//      ensures Valid()
+//     modifies this`fields
+//        {
+//   assert (flatten({this}) >= flatten({this}));
+//   I_HATE_BOUNDS();
+//   assert flatten({this})  <= (AMFB + {this});
+//   assert (flatten({this}) <= (set ooo : Object <- {this}, omb : Object <- ooo.AMFB :: omb) + {this});
+//          assert nuBoundsOK({this}, {this});
+//          var vObj := new Object.make(map[],{this},AMFO, natToString(v), {this});
+//          assert refOK(this, vObj);
+//          fields := fields[n:=vObj];
+//          assert Ready();
+//          assert (fields.Keys <= fieldModes.Keys);
+//          assert (forall n <- fields :: refOK(this, fields[n]));
+//          MODE_INDIGO(this ,fieldModes[n], vObj);
+//          assert (forall n <- fields :: modeOK(this, fieldModes[n], fields[n]));
+//
+//          assert Valid();
+//        }
+
+
+
+  function getn(n : string) : (v : nat)
+    requires n in fieldModes.Keys
+    requires n in fields.Keys
+       reads `fields, `fieldModes, fields.Values`nick
+       { var vObj := fields[n];
+         if (forall c <- vObj.nick :: c in "0123456789")
+           then (stringToNat(vObj.nick))
+           else 0 }
+
+
+
 }//end class Object
 
+ function fields(fs : set<string> ) : map<string,Mode>  { map f <- fs :: f := Evil }
 
-
-
-  lemma {:isolate_assertions}  FieldInFields(o : Object, n : string, v : Object)
+  lemma {:isolate_assertions} FieldInFields(o : Object, n : string, v : Object)
     requires o.Ready()
     requires o.Valid()
     requires n in o.fields.Keys
@@ -433,13 +582,14 @@ lemma ValidMeansAllFieldsValid()
   {}
 
 
-/// LILLE /// these two should go.. elsewere.   geometery?  Cut?
-///
-/// predicate StandaloneObjectsAreValid(os : set<Object>)  //LILLE should probalby go away or at laest into C2
-///    reads os`fields, os`fieldModes { forall o <- os :: o.Ready() && o.Valid() }
-///
-///
-/// predicate OutgoingReferencesFromTheseObjectsAreToTheseObjects(fs : set<Object>, ts : set<Object>)
-///      reads fs { forall f <- fs :: f.outgoing() <= ts }
-///
-///
+
+function intersetion<T>(intersets : set<set<T>>) : set<T>
+ {
+  set s : set<T> <- intersets, e : T <- s | (forall t : set<T> <- intersets :: e in t ) :: e
+ }
+
+// lemma {:isolate_assertions} {:timeLimt 0} AllForOneAndOneForALl(oo : Owner, mb : Owner)
+//   requires AllReady(oo)
+//   requires  mb == intersetion( set o <- oo :: o.AMFB )
+//    ensures forall x <- mb, t <- oo :: x in t.AMFB
+//   {}

@@ -39,6 +39,11 @@ predicate modeOK(f : Object, m : Mode, t : Object)
   case Self => (f == t) // this is apparently redundant, dont' know what
 }
 
+lemma MODE_INDIGO(f : Object, m : Mode, t : Object)
+    requires m == Evil
+     ensures modeOK(f,m,t)
+{}
+
 //
 lemma MODE_SANITY(m : Mode, o : Object)
   requires m.Self?

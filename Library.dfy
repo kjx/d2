@@ -1054,19 +1054,48 @@ lemma MapWithoutKey<K,V>(m : vmap<K,V>, ks : set<K>, vs : set<V>, k : K, v : V)
 
 
 
-//by Rustan Leino -
-  function natToString(n: nat): string {
+//by Rustan Leino - from old std library
+  function natToString(n : nat) : (s : string)
+    ensures forall c <- s :: c in "0123456789"
+    ensures (n < 10) ==> |s| == 1
+   {
     match n
-    case 0 => "0" case 1 => "1" case 2 => "2" case 3 => "3" case 4 => "4"
-    case 5 => "5" case 6 => "6" case 7 => "7" case 8 => "8" case 9 => "9"
-    case _ => natToString(n / 10) + natToString(n % 10)
+      case 0 => "0" case 1 => "1" case 2 => "2" case 3 => "3" case 4 => "4"
+      case 5 => "5" case 6 => "6" case 7 => "7" case 8 => "8" case 9 => "9"
+      case _ => natToString(n / 10) + natToString(n % 10)
+  }
+
+
+   function charToNat(c : char) : nat
+     requires c in "0123456789"
+   {
+    match c
+     case '0' => 0 case '1' => 1 case '2' => 2 case '3' => 3 case '4' => 4
+     case '5' => 5 case '6' => 6 case '7' => 7 case '8' => 8 case '9' => 9
   }
 
 
 
+//ditto
+ function stringToNat(s : string) : (n : nat)
+      requires forall c <- s :: c in "0123456789"
+       ensures (|s| == 1) ==> (charToNat(s[0]) == n)
+    {
+      if s == [] then 0
+      else
+        var c := s[|s| - 1];
+        assert c in "0123456789"    ;
+        stringToNat(s[..|s| - 1]) * 10 + charToNat(c)
+    }
 
 
-
+lemma RoundTripNatToString(n : nat)
+  requires 0 <= n <= 9
+  {
+    var s := natToString(n);
+    var m := stringToNat(s);
+    assert m == n;
+  }
 
 
 

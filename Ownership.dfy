@@ -175,9 +175,12 @@ function collectBounds(os : Owner) : Owner    //TODO old should delete  //THULE
   reads {}    {set o <- os, oo <- o.AMFB :: oo}
 
 predicate nuBoundsOK(oo : Owner, mb : Owner) {
+//arguments are local fields, unflattened...
 //&& (flatten(mb) <= flatten(oo))  //bound is a subset of owner
   && (flatten(oo) >= flatten(mb)) //aka effectiveowner is INSIDE effectivebound
-  && (flatten(mb) <= (set ooo <- oo, omb <- ooo.AMFB :: omb) + oo)
+  && (forall o <- oo :: o.AMFB >= flatten(mb))
+
+//  && (flatten(mb) <= (set ooo <- oo, omb <- ooo.AMFB :: omb) + oo)
       //AKA (I think) effectivebound is subseteq/surroundingeq the union of owners' bounds.
 }
 
