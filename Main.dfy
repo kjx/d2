@@ -136,6 +136,11 @@ method {:verify false} Main(args : seq<string>)
     }
 
 
+ if (pops.graph == "t")
+    {
+      t,a,b,c,d,e,k,l,m,os,oq, loutName := zandalThreads();
+    }
+
 
 
 
@@ -2139,25 +2144,92 @@ var elem3 := new Object.make(fields({}), {}, {list}, "elem3", {} );
     oq := [t, a, b, c, d, e, k, l, m];
  }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 const listF : map<string, Mode> := fields({"head"})
 const linkF : map<string, Mode> := fields({"data","next"})
 const frame : map<string, Mode> := fields({"a","b","c"})
 const appData := frame
+
+
+
+
+
+
+
+
+
+method {:isolate_assertions} zandalThreads()
+  //easier than declaring everything in main
+  returns (t : Object, a : Object, b : Object, c : Object, d : Object, e : Object,
+           k : Object, l : Object, m : Object,
+           os : set<Object>, oq : seq<Object>, loutName : string)
+ ensures t.Ready()
+ ensures a.Ready()
+ ensures b.Ready()
+ ensures c.Ready()   //should be the centre
+ ensures d.Ready()
+ ensures e.Ready()
+ ensures k.Ready()
+ ensures l.Ready()
+ ensures m.Ready()
+ ensures AllReady(os)
+ {
+// {rank=same} subgraph cluster1 {pencolor=invis;  t1; 10; 11; 12; 13; 14; }   subgraph cluster2 { pencolor=invis; t2; 20; 21; 22; 23; } subgraph {edge [style=invis;] node [style=invis] 14 -> X;  21 -> X;}
+
+//{rank=same} subgraph cluster1 {pencolor=invis;  t1; 10; 11; 12; 13; 14; }   subgraph cluster2 { pencolor=invis; t2; 20; 21; 22; 23; } subgraph x {edge [style=invis;] 10 -> X;  20 -> X;}  splines=ortho
+
+
+assert nuBoundsOK({},{});
+
+var topLeft  := new Object.make(fields({}), {}, {}, "t1", {});
+var topRite  := new Object.make(fields({}), {}, {}, "t2", {});
+
+
+
+var left  := new Object.make(fields({}), {topLeft}, {topLeft}, "10", {topLeft});
+
+var left0 := new Object.make(fields({}), {left}, {left}, "11", {left} );
+var left1 := new Object.make(fields({}), {left}, {left}, "12", {left} );
+var left2 := new Object.make(fields({}), {left}, {left}, "13", {left} );
+var left3 := new Object.make(fields({}), {left2}, {left,left2}, "14", {left} );
+
+var world := new Object.make(fields({}), {}, {}, "world", {} );
+
+var xxxx := new Object.make(fields({}), {world}, {world}, "X", {world} );
+
+var rite   := new Object.make(fields({}), {topRite}, {topRite}, "20", {topRite} );
+
+var rite0 := new Object.make(fields({}), {rite}, {rite}, "21", {rite} );
+var rite1 := new Object.make(fields({}), {rite}, {rite}, "22", {rite} );
+var rite2 := new Object.make(fields({}), {rite}, {rite}, "23", {rite} );
+
+
+    loutName := "Threads";
+    t := left;
+    a := rite;
+    b := left0;
+    c := left1;
+    d := left2;
+    e := left3;
+    k := rite0;
+    l := rite1;
+    m := xxxx;
+    os := {t, a, b, c, d, e, k, l, m, rite2};
+    oq := [t, a, b, c, d, e, k, l, m, rite2];
+                  }
+
+
+
+predicate isThread(o : Object) reads o`nick { (o.nick != "" ) && (o.nick[0] == 't') }
+
+
+
+
+
+
+
+
+
+
 
 method {:isolate_assertions} zandal10()
 //sets up a two "columns" of objects to show permissible links - five objects, t, a..e
