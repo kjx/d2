@@ -16,7 +16,7 @@ include "Printing.dfy"
 
 type SSO = set<set<Object>>
 
-function ownr2sso(o : OWNR) : SSO                           { set x : Object <- o :: x.AMFO }
+function      ownr2sso(o : OWNR) : SSO                           { set x : Object <- o :: x.AMFO }
 function obj2sso(o : Object) : SSO      requires o.Ready()  { ownr2sso(o.AMFO) } // requires o.Ready() ?
 function concensso(sso : SSO) : OWNR { set so : set<Object> <- sso, o : Object <- so :: o }
 
@@ -105,16 +105,12 @@ function sso2setstr(sso: SSO) : set<string>  reads concensso(sso)`nick  { set so
 function  fmtsso(sso: SSO) : string reads concensso(sso)`nick { fmtsetstr(sso2setstr(sso)) }
 function ffmtsso(sso: SSO) : string reads concensso(sso)`nick { "«"+fmtsetstr(sso2setstr(sso))+"»" }
 
-function ffmtnickset(so : Owner) : string  reads so`nick { "‹"+fmtnickset(so)+"›" }
 
 
 
 function fmtamfosso(y : Object) : string reads y`nick, y.AMFO`nick, concensso(ownr2sso(y.AMFO))`nick  { y.nick + "  " + fmtownrsso(y.AMFO) }
 
 function fmtownrsso(y_AMFO : OWNR) : string reads y_AMFO`nick, concensso(ownr2sso(y_AMFO))`nick { "AMFO=‹" + fmtnickset(y_AMFO) + "›  sso=«" + fmtsso(ownr2sso(y_AMFO)) + "»" }
-
-function fmtamfo(y : Object) : string reads y`nick, y.AMFO`nick               { y.nick + "  AMFO=" + ffmtnickset(y.AMFO) }
-function fmtamfob(y : Object) : string reads y`nick, y.AMFO`nick, y.AMFB`nick { y.nick + "  AMFO=" + ffmtnickset(y.AMFO) + " AMFB="+ ffmtnickset(y.AMFB) }
 
 
 method printobjectamfoset(s : set<Object>)
