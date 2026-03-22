@@ -214,12 +214,6 @@ function fmtnickset(Y: set<Object>) : string
    fmtsetstr( set y <- Y :: y.nick )
  }
 
-method mlurk(x: set<string>) returns (r: string)
- requires |x| > 0
- {
-  r :| r in x;
- }
-
 
 lemma {:axiom} StrLEQ1(a : string,  b : string)
   ensures (strLEQ(a, b) && strLEQ(b, a)) <==> (a == b)
@@ -915,3 +909,65 @@ assert (m in z && forall x | x in z && strLEQ(x, m) :: strLEQ(m, x));
 // //    print " (recurse on field ",n,") ", isIsomorphicMappingOWNED(a.fields[n], o, m, os - {a,b}),"\n";
 //    }
 // }
+
+
+
+
+
+method printownership(o : Object) {
+  printAllOwnershipsAndBounds(o.owner, {}, o.nick, o.bound);
+}
+
+method printAllOwnershipsAndBounds(oo : Owner, context : set<Object>, name : string, mb : Owner := oo)
+//warning - this doesn't do what it should (print stuff out of an object)
+//but prints stuff from the arguments handed in only
+{
+print "============================================================\nprintAllOwnershipsAndBounds ";
+print name, "\n";
+
+print "context= ", ffmtnickset(context), "\n";
+print "oo= ", ffmtnickset(oo), "\n";
+print "flatten(oo)= ", ffmtnickset(flatten(oo)), "\n";
+print "mb= ", ffmtnickset(mb), "\n";
+print "flatten(mb)= ", ffmtnickset(flatten(mb)), "\n";
+print "collectBounds(flatten(oo))= ", ffmtnickset(collectBounds(flatten(oo))), "\n";
+// print "set oo.AMFB=", fmtsso( set oo <- flatten(mb) :: oo.AMFB  ), "\n";
+
+print "ctxt>=flatten(oo)= ", (context >= flatten(oo)), "\n";
+print "flatten(oo)>=flatten(mb)= ", (flatten(oo) >= flatten(mb)), "\n";
+print "AllReady(oo)= ", AllReady(oo), "\n";
+print "flatten(mb) >= collectBounds(flatten(oo))= ", flatten(mb) >= collectBounds(flatten(oo)), "\n";
+print "forall oo <- mb :: (flatten(mb) <= oo.AMFB)=", (forall oo <- mb :: (flatten(mb) <= oo.AMFB)) ,"\n";
+}
+
+
+
+
+method printrefs(s : seq<Object>)
+  modifies {}
+{
+  print "PRINTREFS-------------------------------------\n";
+
+    for f := 0 to |s| {
+      for t := 0 to |s| {
+           print s[f].nick, " -> ", s[t].nick, "  ";
+
+           print if (s[f]==s[t]) then "== " else "   ";
+           print if (refDI(s[f],s[t])) then "D " else "  ";
+           print if (refBI(s[f],s[t])) then "B " else "  ";
+           print if (r_efOI(s[f],s[t])) then "O " else "  ";
+           print if (r_efOO(s[f],s[t])) then "OO " else "   ";
+           print if (refOK(s[f],s[t])) then "OK " else "   ";
+
+           nl();
+      }
+    }
+}
+
+
+/////formatters
+
+function ffmtnickset(so : Owner) : string  reads so`nick { "‹"+fmtnickset(so)+"›" }
+
+function fmtamfo(y : Object) : string reads y`nick, y.AMFO`nick               { y.nick + "  AMFO=" + ffmtnickset(y.AMFO) }
+function fmtamfob(y : Object) : string reads y`nick, y.AMFO`nick, y.AMFB`nick { y.nick + "  AMFO=" + ffmtnickset(y.AMFO) + " AMFB="+ ffmtnickset(y.AMFB) }
