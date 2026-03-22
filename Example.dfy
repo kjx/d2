@@ -16,7 +16,7 @@ method NotMain()
     counter := counter + 1;
  }
 
-const application : Owner := {};
+const application : Owner := {}
 
 method LinkedList() {
 
@@ -65,13 +65,14 @@ type Frame = Object
 type U = Owner
 
 predicate without(frame : Frame, u : U)  {
-  frame !in u
+ // frame !in u
+ true
 }
 
 method drop(frame : Frame, u : U)
  ensures without(frame, u)
 {
-  assume without(frame, u);
+//  assume without(frame, u);
 }
 
 method {:isolate_assertions} {:timeLimit 30} Paper_Embedded_add(a : nat, b : nat, caller : Frame, u : U)
@@ -89,6 +90,14 @@ method {:isolate_assertions} {:timeLimit 30} Paper_Embedded_add(a : nat, b : nat
 
 
 
+const listX : map<string, Mode> := fields({"head"})
+const linkX : map<string, Mode> := fields({"data","next"})
+lemma shitX()
+  ensures listX == fields({"head"})
+  ensures "head" in listX
+  ensures linkX == fields({"data","next"})
+  ensures "next"  in linkX
+ {}
 
 method {:isolate_assertions} {:timeLimit 30} MakeList(caller : Frame, u : U)
     returns(frame : Frame) ensures without(frame, u)
@@ -96,67 +105,111 @@ method {:isolate_assertions} {:timeLimit 30} MakeList(caller : Frame, u : U)
     requires caller.bound == caller.owner
     requires "ret" in caller.fieldModes.Keys
     requires u >= flatten({  caller   })
+    modifies caller
   {
-     frame := new Object.make(fields({"a"}), {caller}, u, "", {});
+    frame := new Object.make(fields({"list"}), {caller}, u, "", {});
 
-     var list  := new Object.make(fields({"head"}), {caller}, u, "list", caller.bound);
+    var list  := new Object.make(listX, {caller}, u, "list", caller.bound);
 
-    assert forall o <- flatten({list}) :: o.Ready();
-    assert nuBoundsOK({list}, {});
+    assert nuBoundsOK({list}, {   });   ///attempting to get verification times down;
 
-      var i     := new Object.make(fields({"next", "data"}), {list}, {list}, "i", {} );
-      var j     := new Object.make(fields({"next", "data"}), {list}, {list}, "j", {} );
+    var i := new Object.make(linkX, {list}, flatten({list}), "i", {} );
+    var j := new Object.make(linkX, {list}, flatten({list}), "j", {} );
 
-      frame.setf("list", list);
-      list.setf("head", i);
-      i.setf("next", j);
+    frame.setf("list", list);
+    list.setf("head", i);
+    i.setf("next", j);
 
-      caller.setf("ret", frame.getf("list"));
-      drop(frame,u);
+    caller.setf("ret", frame.getf("list"));
+    drop(frame,u);
   }
 
 
 
 method {:isolate_assertions} {:timeLimit 30} list_method(list : Object, caller : Frame, u : U)
-    returns(frame : Frame) ensures without(frame, u)
-//    requires ownerInside(caller.self, list.owner)
-    requires caller.Ready()
-    // requires caller.bound == caller.owner
-    // requires list.bound == list.owner
-    requires u >= flatten({  caller   })
-    requires AllReady({caller,list})
-    requires nuBoundsOK({caller},{caller})
-//    requires forall o : Object <- {caller,list} :: o.AMFB >= flatten({caller,list})
-    requires refOK(caller, list)
-  {
-     frame := new Object.make(fields({"self"}), {caller,list}, u, "", {caller,list});
-     assert refOK(frame, list);
-
-      var i     := new Object.make(fields({"next", "data"}), {list}, {list}, "i", {} );
-      var j     := new Object.make(fields({"next", "data"}), {list}, {list}, "j", {} );
-
+      returns(frame : Frame) ensures without(frame, u)
+      requires caller.Ready()
+      requires u >= flatten({  caller, list   })
+                                                                                                                                                                                                                                                                                                                                                                                     requires AllReady({caller,list})
+      requires nuBoundsOK({caller},{caller})
+//NO_FIELDMODES      requires list.fieldModes == listX
+      requires list.ownerf("head", {list})
+      requires "ret" in caller.fieldModes.Keys
+      requires refOK(caller, list)
+      modifies list, caller
+    {
+      frame := new Object.make(fields({"list","n","link"}), {caller,list}, flatten({caller,list}+u), "", {caller,list});
+                          assert frame.owner == {list, caller};
+                          assert refOK(frame, list);
       frame.setf("list", list);
-      list.setf("head", i);
-      i.setf("next", j);
+                         assert frame.fields == map["list":=list];
+                         assert frame.fields["list"] == list;
+                         assert frame.ownerf("list", list.owner);
+      frame.setn("n", 0);
+                         assert "list" in frame.fields;
+                         assert frame.fields["list"] == list;
+                         assert list.ownerf("head", {list});
 
-      caller.setf("ret", frame.getf("list"));
-      drop(frame,u);
-  }
+      if ( frame.getf("list").isf("head") )
+        {
+            frame.incrn("n");
+                            assert frame.fields["list"] == list;
+                            assert frame.getf("list") == list;
+                            var current_link := frame.getf("list").getf("head");
+                            assert current_link == list.getf("head");
+                            assert current_link.owner == {list};
+                            assert frame.owner == {list, caller};
+                            assert refBI(frame, current_link);
+                            assert refOK(frame, current_link);
 
 
+            frame.setf("link", frame.getf("list").getf("head"));
+                            assert frame.fields["link"] == current_link;
+                            assert frame.getf("link") == current_link;
+                            expect frame.ownerf("link", {list});
+                            assert frame.ownerf("link", {list});
+                            assert frame.fields["link"] == current_link;
+                            var gas : nat := 100;
 
 
+              while ( frame.getf("link").isf("next")  && gas > 1)
+                            decreases gas
+                            invariant frame.Valid()
+                            invariant frame.isf("link")
+                            invariant frame.fields["link"] == current_link
+                            invariant frame.getf("link") == current_link
+                            invariant frame.ownerf("link", {list})
 
-predicate allCompatible(oo : Owner)
-{ forall a <- oo, b <- oo :: (a != b) ==> compatible(a,b) }
+              {
+                            assert current_link.isf("next");
+                            assert frame.fields["link"] == current_link;
+                            assert frame.getf("link") == current_link;
+                            assert frame.ownerf("link", {list});
+                            assert current_link.owner == {list};
+                            gas := gas - 1;
+                frame.incrn("n");
+                            assert frame.fields["link"] == current_link;
+                            assert frame.getf("link") == current_link;
+                            assert frame.ownerf("link", {list});
+                            assert current_link.owner == {list};
+                            assert frame.owner == {list, caller};
 
+              } //while
+         } //if
+        drop(frame,u);
+    }
 
-predicate isThread(a : Object) reads a`fieldModes {"THRED" in a.fieldModes.Keys}
-
-
-predicate compatible(a : Object, b : Object)
- reads a`fieldModes, b`fieldModes
-  { not(isThread(a) && isThread(b)) }
+//
+// predicate allCompatible(oo : Owner)
+// { forall a <- oo, b <- oo :: (a != b) ==> compatible(a,b) }
+//
+//
+// predicate isThread(a : Object) reads a`fieldModes {"THRED" in a.fieldModes.Keys}
+//
+//
+// predicate compatible(a : Object, b : Object)
+//  reads a`fieldModes, b`fieldModes
+//   { not(isThread(a) && isThread(b)) }
 
 type Thread = Object
 
