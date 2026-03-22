@@ -47,7 +47,7 @@ class Object {
 
 //refactored 30 Jan 2026!! //bunch of commented-out-stuff excised
 
-//    requires context >= flatten(oo) >= flatten(mb)   //GRR
+    requires context >= flatten(oo) >= flatten(mb)   //GRR
     requires flatten(oo) >= flatten(mb)
     requires forall o <- flatten(oo) :: o.Ready()
     requires nuBoundsOK(oo, mb)   ///attempting to get verification times down
@@ -314,12 +314,12 @@ lemma MakeOwnerSelfies(oo : Owner, mb : Owner)
   {
       //some comments here cos some earlier seperate things were inlined.
     && Ready()
-    && (fields.Keys <= fieldModes.Keys)
-    //aka AllFieldsAreDeclared()
+//NO_FIELDMODES       && (fields.Keys <= fieldModes.Keys)
+                //aka AllFieldsAreDeclared()
     && (forall n <- fields :: refOK(this, fields[n]))
-    //sortof AllOutgoingReferencesAreOwnership(…)
-    && (forall n <- fields :: modeOK(this, fieldModes[n], fields[n]))
-    //aka AllFieldsContentsConsistentWithTheirDeclaration()
+               //sortof AllOutgoingReferencesAreOwnership(…)
+//NO_FIELDMODES       && (forall n <- fields :: modeOK(this, fieldModes[n], fields[n]))
+               //aka AllFieldsContentsConsistentWithTheirDeclaration()
   }
 
 predicate FieldValidNV(n : string, v : Object)
@@ -327,9 +327,9 @@ predicate FieldValidNV(n : string, v : Object)
   //should work whether or not v is currently the field value
     reads this`fields, this`fieldModes
 {
-    && (n in fieldModes.Keys)
+//NO_FIELDMODES           && (n in fieldModes.Keys)
     && (refOK(this, v))
-    && (modeOK(this, fieldModes[n], v))
+//NO_FIELDMODES           && (modeOK(this, fieldModes[n], v))
 }
 
   predicate OwnersWithin(context : set<Object>)
@@ -382,7 +382,9 @@ lemma WhereOwnersGoBoundsHaveGone(os : set<Object>)
   function allExternalOwners() : set<Object> { AMFX }
   function allExternalBounds() : set<Object> { AMFB }
 
-  predicate AllFieldsAreDeclared() reads this`fields, this`fieldModes { fields.Keys <= fieldModes.Keys }
+  predicate AllFieldsAreDeclared() reads this`fields, this`fieldModes
+   //NO_FIELDMODES   { fields.Keys <= fieldModes.Keys }
+   { true }
 
   predicate AllFieldsContentsConsistentWithTheirDeclaration()
     requires AllFieldsAreDeclared()
@@ -412,42 +414,81 @@ lemma ValidMeansAllFieldsValid()
   ensures Valid() <==> AllFieldsValid()
 {}
 
-
-
-  method setf(n : string, v : Object)
+  method usetf(n : string, v : Object)
     requires Ready()
     requires n  in fieldModes.Keys
-    requires refOO(this, v)
+    requires refOK(this, v)
      ensures fields == old(fields)[n:=v]
     modifies this`fields
        { fields := fields[n:=v]; }
 
-  function getf(n : string) : (v : Object)
+  function ugetf(n : string) : (v : Object)
     requires n in fieldModes.Keys
     requires n in fields.Keys
        reads `fields, `fieldModes
        { fields[n] }
 
+  method {:isolate_assertions} setf(n : string, v : Object)
+    requires Ready()
+    requires Valid()
+    requires n  in fieldModes.Keys
+    requires refOK(this, v)
+ //   requires v.Ready()  //READYREADY
+    requires forall n <- fields :: (n in fieldModes) && modeOK(this, fieldModes[n], fields[n])
+    requires modeOK(this, fieldModes[n], v)
+    requires v.bound == v.owner //OWNERBOUND
+     ensures fields == old(fields)[n:=v]
+     ensures refOK(this, fields[n])
+     ensures ownerf(n, v.owner)
+     ensures Valid()
+     ensures forall n <- fields :: (n in fieldModes) && modeOK(this, fieldModes[n], fields[n]) //OWNERBOUND
+    modifies this`fields
+       { fields := fields[n:=v];
+         assume n in fieldModes.Keys; //OWNERBOUND
+         assume modeOK(this, fieldModes[n], v); //OWNERBOUND
+         assume forall n <- fields :: (n in fieldModes) &&  modeOK(this, fieldModes[n], fields[n]); //OWNERBOUND
+        }
 
-lemma {:isolate_assertions} I_HATE_BOUNDS()
-  requires Ready()
-   ensures ( (set ooo : Object <- {this}, omb : Object <-  ooo.AMFB :: omb) + {this} ) == (AMFB + {this})
-   ensures (forall oo <- owner :: oo.AMFB >= AMFB)
- {
-  calc {
-     (set ooo : Object <- {this}, omb : Object <-  ooo.AMFB :: omb) + {this};
-     (set                         omb : Object <- this.AMFB :: omb) + {this};
-     (                                                 AMFB       ) + {this};
-     AMFB + {this};
-   }
-   assert (AMFO > AMFX >= AMFB);
-   assert flatten(bound) == AMFB;
-   assert flatten(owner) == AMFX;
-   assert flatten(owner) + {this} == AMFO;
-   assert flatten(owner) >= flatten(bound);
+  function getf(n : string) : (v : Object)
+//NO_FIELDMODES    requires n in fieldModes.Keys
+//NO_FIELDMODES    requires n in fields.Keys
+       ensures v.owner == v.bound //OWNERBOUND
+       ensures v.Ready() //READYREADY
+       reads `fields, `fieldModes
+       { assume {:axiom} n in fields.Keys;  //NO_FIELDMODES
+         assume fields[n].owner == fields[n].bound; //OWNERBOUND
+         assume fields[n].Ready(); //READYREADY
+           fields[n] }
 
-   assert this !in AMFX;  assert this !in AMFB;
-}
+   predicate ownerf(n : string, oo : Owner)
+       //does field n have owner oo?   (and - for now -  is it accessible from me?)
+       reads `fields, `fieldModes
+       {&& (n in fields.Keys)
+        && (fields[n].owner == oo)
+        && (fields[n].bound == oo)  //OWNERBOUND
+        && (refOK(this,fields[n]))
+        //NO_FIELDMODES      shioujdl be a mode check here too I guess??
+        && ((fields[n].owner == oo) == (fields[n].owner == oo)) }  //OWNERBOUND
+
+        // lemma {:isolate_assertions} I_HATE_BOUNDS()
+//   requires Ready()
+//    ensures ( (set ooo : Object <- {this}, omb : Object <-  ooo.AMFB :: omb) + {this} ) == (AMFB + {this})
+//    ensures (forall oo <- owner :: oo.AMFB >= AMFB)
+//  {
+//   calc {
+//      (set ooo : Object <- {this}, omb : Object <-  ooo.AMFB :: omb) + {this};
+//      (set                         omb : Object <- this.AMFB :: omb) + {this};
+//      (                                                 AMFB       ) + {this};
+//      AMFB + {this};
+//    }
+//    assert (AMFO > AMFX >= AMFB);
+//    assert flatten(bound) == AMFB;
+//    assert flatten(owner) == AMFX;
+//    assert flatten(owner) + {this} == AMFO;
+//    assert flatten(owner) >= flatten(bound);
+//
+//    assert this !in AMFX;  assert this !in AMFB;
+// }
 
 
 function collectOwnersBounds() : set<set<Object>>  { set o <- owner :: o.AMFB }
@@ -479,37 +520,12 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
 //   assert (forall o <- oo :: o.AMFB >= flatten(oo)) ;
 //
 //   }
-//
-//
-//
-// lemma {:isolate_assertions} {:timeLimit 20} SOOB(oo : Owner)
-//    requires forall o <- oo :: o.bound == o.owner
-//    requires AllReady(oo)
-//   //  ensures nuBoundsOK(oo, oo)
-//   {
-//     assert forall o <- oo :: o.AMFX == o.AMFB;
-//     assert forall o <- oo :: flatten(oo) >= o.AMFO > o.AMFX == o.AMFB;
-//
-//     var set_of_owners_bounds : set<set<Object>> := set o <- oo :: o.AMFB;
-//     assert set_of_owners_bounds == set o <- oo :: o.AMFX;
-//
-//     var interset_bounds : set<Object> := intersetion( set_of_owners_bounds );
-//     assert interset_bounds == intersetion( set o <- oo :: o.AMFB );
-//     assert interset_bounds == intersetion( set o <- oo :: o.AMFX );
-//
-//   //
-//   //     assert forall o <- oo :: o.AMFB >= interset_bounds;
-//   //
-//   //   assert (flatten(oo) >= flatten(oo)) ; //aka effectiveowner is INSIDE effectivebound
-//   //   assert (forall o <- oo :: o.AMFB >= flatten(oo)) ;
-//
-//   }
-//
 
 
-  method {:isolate_assertions} setn(n : string, v : nat)
+  method {:isolate_assertions} usetn(n : string, v : nat)
     requires Ready()
     requires Valid()
+    requires (forall n <- fields :: (n in fieldModes) && modeOK(this, fieldModes[n], fields[n]))
     requires n in fieldModes.Keys
     requires fieldModes[n] in {Evil} //Rep too?
      ensures fields.Keys == old(fields.Keys) + {n}
@@ -523,42 +539,12 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
          assert Ready();
          assert (forall n <- fields :: refOK(this, fields[n]));
          MODE_INDIGO(this ,fieldModes[n], vObj);
-         assert (forall n <- fields :: modeOK(this, fieldModes[n], fields[n]));
+         assert (forall n <- fields :: (n in fieldModes) && modeOK(this, fieldModes[n], fields[n]));
        }
 
-//   method {:isolate_assertions} Xset(n : string, v : nat)
-//     requires Ready()
-//     requires Valid()
-//
-//     requires n in fieldModes.Keys
-//     requires forall m <- fieldModes.Keys :: fieldModes[m] == Evil
-//     requires nuBoundsOK(owner, bound)
-//      ensures flatten({this}) <= (set ooo : Object <- {this}, omb <- ooo.AMFB :: omb) + {this}
-//      ensures fields.Keys == old(fields.Keys) + {n}
-//      ensures Ready()
-//      ensures Valid()
-//     modifies this`fields
-//        {
-//   assert (flatten({this}) >= flatten({this}));
-//   I_HATE_BOUNDS();
-//   assert flatten({this})  <= (AMFB + {this});
-//   assert (flatten({this}) <= (set ooo : Object <- {this}, omb : Object <- ooo.AMFB :: omb) + {this});
-//          assert nuBoundsOK({this}, {this});
-//          var vObj := new Object.make(map[],{this},AMFO, natToString(v), {this});
-//          assert refOK(this, vObj);
-//          fields := fields[n:=vObj];
-//          assert Ready();
-//          assert (fields.Keys <= fieldModes.Keys);
-//          assert (forall n <- fields :: refOK(this, fields[n]));
-//          MODE_INDIGO(this ,fieldModes[n], vObj);
-//          assert (forall n <- fields :: modeOK(this, fieldModes[n], fields[n]));
-//
-//          assert Valid();
-//        }
 
 
-
-  function getn(n : string) : (v : nat)
+  function ugetn(n : string) : (v : nat)
     requires n in fieldModes.Keys
     requires n in fields.Keys
        reads `fields, `fieldModes, fields.Values`nick
@@ -566,6 +552,86 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
          if (forall c <- vObj.nick :: c in "0123456789")
            then (stringToNat(vObj.nick))
            else 0 }
+
+
+
+  method {:isolate_assertions} uincrn(n : string)
+    requires Ready()
+    requires Valid()
+//NO_FIELDMODES    requires n in fieldModes.Keys
+//NO_FIELDMODES    requires n in fields.Keys
+//NO_FIELDMODES    requires fieldModes[n] in {Evil}
+     ensures fields.Keys == old(fields.Keys) + {n}
+     ensures forall k <- old(fields.Keys) | k != n :: fields[k] == old(fields[k])
+     ensures Ready()
+     ensures Valid()
+    modifies this`fields
+       {
+         assume {:axiom} n in fields.Keys;  //NO_FIELDMODES
+         var val := getn(n) + 1;
+         setn(n, val);
+       }
+
+
+  method {:isolate_assertions} setn(n : string, v : nat)
+    requires Ready()
+    requires Valid()
+//NO_FIELDMODES    requires n in fieldModes.Keys
+//NO_FIELDMODES    requires fieldModes[n] in {Evil}  //Rep too?
+     ensures fields.Keys == old(fields.Keys) + {n}
+     ensures forall k <- old(fields.Keys) | k != n :: fields[k] == old(fields[k])
+     ensures Ready()
+     ensures Valid()
+    modifies this`fields
+       {
+         var vObj := new Object.make(map[],{this},AMFO, natToString(v), {this});
+         assert refOK(this, vObj);
+         fields := fields[n:=vObj];
+         assert Ready();
+         assert (forall n <- fields :: refOK(this, fields[n]));
+ assume {:axiom} n in fields.Keys;  //NO_FIELDMODES
+//NO_FIELDMODES          MODE_INDIGO(this ,fieldModes[n], vObj);
+// assume (forall n <- fields :: modeOK(this, fieldModes[n], fields[n]));
+    assume Valid();  // //NO_FIELDMODES ??
+       }
+
+  method {:isolate_assertions} incrn(n : string)
+    requires Ready()
+    requires Valid()
+//NO_FIELDMODES    requires n in fieldModes.Keys
+//NO_FIELDMODES    requires n in fields.Keys
+//NO_FIELDMODES    requires fieldModes[n] in {Evil}
+     ensures fields.Keys == old(fields.Keys) + {n}
+     ensures forall k <- old(fields.Keys) | k != n :: fields[k] == old(fields[k])
+     ensures Ready()
+     ensures Valid()
+    modifies this`fields
+       {
+         assume {:axiom} n in fields.Keys;  //NO_FIELDMODES
+         var val := getn(n) + 1;
+         setn(n, val);
+       }
+
+
+  function getn(n : string) : (v : nat)
+//NO_FIELDMODES    requires n in fieldModes.Keys
+//NO_FIELDMODES    requires n in fields.Keys
+       reads `fields, `fieldModes, fields.Values`nick
+       {
+//NO_FIELDMODES assume n in fields.Keys
+         assume {:axiom} n in fields.Keys;  //NO_FIELDMODES
+          var vObj := fields[n];
+         if (forall c <- vObj.nick :: c in "0123456789")
+           then (stringToNat(vObj.nick))
+           else 0 }
+
+
+  predicate isf(n : string)
+   //is field n set on this object?
+//NO_FIELDMODES    requires n in fieldModes.Keys //yuck
+    reads `fields, `fieldModes, fields.Values`nick
+       { n in fields.Keys }
+
 
 
 
