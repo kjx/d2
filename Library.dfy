@@ -313,7 +313,7 @@ forall a <- ts, b <- ts
  { LemmaSingletonEquality(ts,a,b); }
 }
 
-//james version, edited down.
+//home version, edited down.
 lemma IAmTheOnlyOne<T>( t : T,  ts : set<T>)
    requires ((t in ts) && (|ts| == 1))
     ensures ts == {t}
@@ -720,6 +720,9 @@ type vmap<K,V> = u : map<K,V> | AllMapEntriesAreUnique(u)
 //   m := map[1:=11,2:=11];
 // }
 
+function map2vmap<K,V>(m : map<K,V>) : vmap<K,V>
+  requires AllMapEntriesAreUnique(m)
+  { m }
 
 
 
