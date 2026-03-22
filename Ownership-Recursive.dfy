@@ -436,7 +436,7 @@ predicate goodCloneOwnershipWithin(left : Object, right : Object, pivot : Object
   }
 
 
-lemma {:isolate_assertions}  KJX_is_paranoid(left : Object, right : Object, pivot : Object,  m : Klon)
+lemma {:isolate_assertions}  prog_is_paranoid(left : Object, right : Object, pivot : Object,  m : Klon)
 ///checks left' ownership matches right, based on the Klojn
   decreases left.AMFO, right.AMFO
    requires left.Ready()
@@ -677,7 +677,7 @@ function  {:isolate_assertions} {:timeLimit 20} flowrin(o : Object, pivot : Obje
 //    assert AllReady(oo);  assert o.Ready(); assert AllReady({o});
 //
 //  //    assert (allAMFOs(oo) decreases to allAMFOs({o})) by { assert o in oo; assert (oo-{o}) !! {o}; }
-//   // FrownFratten({o}) by { assume (allAMFOs(oo) decreases to allAMFOs({o})); }  //KJX too late to fix!
+//   // FrownFratten({o}) by { assume (allAMFOs(oo) decreases to allAMFOs({o})); }  //prog too late to fix!
 //
 //
 // //  var rest : Owner  := oo - {o};

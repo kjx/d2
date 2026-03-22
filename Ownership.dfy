@@ -96,7 +96,8 @@ lemma transitiveInside(a : Object, b : Object, c : Object)
 
 predicate refBI(f : Object, t : Object) {(f.AMFB > {}) &&  (f.AMFB >=  t.AMFX)}
 
-predicate refDI(f : Object, t : Object) {f.AMFO == t.AMFX}
+// predicate refDI(f : Object, t : Object) {f in t.owner}
+predicate refDI(f : Object, t : Object)      {f.AMFO == t.AMFX}  // trial 20Mar 2026
 
 predicate refDI_seqo(f : Object, t : Object) {f.AMFO == t.AMFX}
 predicate refDI_fint(f : Object, t : Object) {f in t.owner} //AMDI_FINT
@@ -104,24 +105,24 @@ predicate refDI_fall(f : Object, t : Object) {t.owner == {f}} //AMDI_FINT
 
 predicate refOK(f : Object, t : Object) {(f==t) || refBI(f,t) || refDI(f,t)}
 
-//older version
-predicate refOI(f : Object, t : Object) {f.AMFO >= t.AMFX}
-predicate refOO(f : Object, t : Object) {(f==t) || refOI(f,t) || refDI(f,t)}
+//older version -- horrible namese so I don't write them by accident!!
+predicate r_efOI(f : Object, t : Object) {f.AMFO >= t.AMFX}
+predicate r_efOO(f : Object, t : Object) {(f==t) || r_efOI(f,t) || refDI(f,t)}
 
-
-lemma {:isolate_assertions} PaperVersions(f : Object, t : Object)
- requires f.Ready() && t.Ready()
-  ensures ownerEquals(f.self, t.owner)  == refDI(f,t)
-  ensures ownerInside(f.self, t.owner)  == refOI(f,t)
-
- { }
+//
+// lemma {:isolate_assertions} PaperVersions(f : Object, t : Object)
+//  requires f.Ready() && t.Ready()
+//   ensures ownerEquals(f.self, t.owner)  == refDI(f,t)
+//   ensures ownerInside(f.self, t.owner)  == refOI(f,t)
+//   ensures ownerInside(f.self, t.owner)  == refOI(f,t)
+//  { }
 
 
 lemma {:isolate_assertions} RefOKvsOO(f : Object, t : Object)
   requires f.Ready()
   requires t.Ready()
-    ensures refOK(f,t)  ==> refOO(f,t)
-  //  ensures not(refOK(f,t) <==  refOO(f,t))
+    ensures refOK(f,t)  ==> r_efOO(f,t)
+  //  ensures not(refOK(f,t) <==  r_efOO(f,t))
 {}
 
 
@@ -162,7 +163,20 @@ lemma ALLFEWERFIELDS(os : set<Object>)
 
 
 
+////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
+// threads
+
+predicate isThread(o : Object) reads o`nick { (o.nick != "" ) && (o.nick[0] == 't') }
+
+predicate compatible(a : Object, b : Object)
+ reads a`nick, b`nick
+{ not( isThread(a) && isThread(b) ) }
+
+predicate allCompatible(os: set<Object>)
+  reads os`nick
+ { forall a <- os, b <- os :: (a != b) ==> compatible(a,b) }
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -178,7 +192,7 @@ predicate nuBoundsOK(oo : Owner, mb : Owner) {
 //arguments are local fields, unflattened...
 //&& (flatten(mb) <= flatten(oo))  //bound is a subset of owner
   && (flatten(oo) >= flatten(mb)) //aka effectiveowner is INSIDE effectivebound
-  && (forall o <- oo :: o.AMFB >= flatten(mb))
+//  && (forall o <- oo :: o.AMFB >= flatten(mb))
 
 //  && (flatten(mb) <= (set ooo <- oo, omb <- ooo.AMFB :: omb) + oo)
       //AKA (I think) effectivebound is subseteq/surroundingeq the union of owners' bounds.
