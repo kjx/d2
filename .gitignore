@@ -8,8 +8,22 @@
 **/*.synctex.gz
 *.pdf
 **/*.blg
-
+					
 journal.pdf
+
+*.dfy.txt
+*.dfy.log
+*.csproj
+*.dll
+*.pdb
+*.json
+*.cs
+
+olde
+Main
+xx01
+DUMP.txt
+
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
