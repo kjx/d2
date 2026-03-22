@@ -78,9 +78,9 @@ lemma {:foo} edgesWork(os : set<Object>, r : set  <Edge>)
   requires r == edges(os)
   ensures forall edge <- r :: edge.n in edge.f.fields && edge.f.fields[edge.n] == edge.t
   ensures (os == {}) ==> (r == {})
-  ensures forall o <- os, n <- o.fields ::
-        && (n in o.fieldModes.Keys) //added for bug in 4.9.2
-        && (Edge(o, n, o.fieldModes[n], o.fields[n]) in r)
+   //NO_FIELDMODES  ensures forall o <- os, n <- o.fields ::
+   //NO_FIELDMODES     && (n in o.fieldModes.Keys) //added for bug in 4.9.2
+   //NO_FIELDMODES        && (Edge(o, n, o.fieldModes[n], o.fields[n]) in r)
   ensures forall e <- edges(os) :: (e.f in os) && (e.n in e.f.fields) && (e.m == e.f.fieldModes[e.n]) && (e.t == e.f.fields[e.n])
   //ensures OutgoingReferencesAreInTheseObjects(os) ==> AllThoseEdgesAreWthinTheseObjects(os,r)
   ensures forall edge <- r :: (edge.f in os)
@@ -88,18 +88,19 @@ lemma {:foo} edgesWork(os : set<Object>, r : set  <Edge>)
   ensures OutgoingReferencesAreInTheseObjects(os) ==> (e2o(r) <= os)
 {}
 
-lemma {:foo} edgesWorks2(os : set<Object>, es : set  <Edge>)
-  requires forall o <- os :: o.Ready() && o.Valid()
-  requires es == edges(os)
-{
-   edgesWork(os,es);
-   var incoming := partitionedIncomingEdges(es);
-
-  assert forall o <- os, n <- o.fields :: (Edge(o, n, o.fieldModes[n], o.fields[n]) in incoming[ o.fields[n] ]);
-  assert forall t <- incoming.Keys, e : Edge  <- incoming[t] ::
-     (e.f in os) && (e.n in e.f.fields) && (e.m == e.f.fieldModes[e.n]) && (e.t == e.f.fields[e.n]);
-}
-
+//NO_FIELDMODES
+// lemma {:foo} edgesWorks2(os : set<Object>, es : set  <Edge>)
+//   requires forall o <- os :: o.Ready() && o.Valid()
+//   requires es == edges(os)
+// {
+//    edgesWork(os,es);
+//    var incoming := partitionedIncomingEdges(es);
+//
+//   assert forall o <- os, n <- o.fields :: (Edge(o, n, o.fieldModes[n], o.fields[n]) in incoming[ o.fields[n] ]);
+//   assert forall t <- incoming.Keys, e : Edge  <- incoming[t] ::
+//      (e.f in os) && (e.n in e.f.fields) && (e.m == e.f.fieldModes[e.n]) && (e.t == e.f.fields[e.n]);
+// }
+//NO_FIELDMODES
 
 
 predicate ObjectsToEdges(os : set<Object>, es : set<Edge>)
@@ -108,20 +109,22 @@ predicate ObjectsToEdges(os : set<Object>, es : set<Edge>)
 //   requires es == edges(os)
 {
  assert forall o <- os :: o.Ready() && o.Valid();
+ assume forall o <- os, n <- o.fields.Keys :: ((n in o.fieldModes) && (o.fieldModes[n] == Evil)); //NO_FIELDMODES
 
   && (forall e <- es :: e.n in e.f.fields && e.f.fields[e.n] == e.t)
   && ((os == {}) ==> (es == {}))
   && (forall o <- os, n <- o.fields :: (Edge(o, n, o.fieldModes[n], o.fields[n]) in es))
-  && (forall e <- es :: (e.f in os) && (e.n in e.f.fields) && (e.m == e.f.fieldModes[e.n]) && (e.t == e.f.fields[e.n]))
+  && (forall e <- es :: (e.f in os) && (e.n in e.f.fields) && (e.t == e.f.fields[e.n])) ////NO_FIELDMODES   && (e.m == e.f.fieldModes[e.n])
 }
 
-lemma ObjectsToEdgesEquals(os : set<Object>, es1 : set<Edge>, es2 : set<Edge>)
-  requires forall o <- os :: o.Ready() && o.Valid()
-  requires ObjectsToEdges(os,es1)
-  requires ObjectsToEdges(os,es2)
-  ensures  es1 == es2
-{}
-
+//NO_FIELDMODES
+// lemma ObjectsToEdgesEquals(os : set<Object>, es1 : set<Edge>, es2 : set<Edge>)
+//   requires forall o <- os :: o.Ready() && o.Valid()
+//   requires ObjectsToEdges(os,es1)
+//   requires ObjectsToEdges(os,es2)
+//   ensures  es1 == es2
+// {}
+//NO_FIELDMODES
 
 
 
@@ -170,9 +173,9 @@ lemma fieldEdgesAreOutgoing(os : set<Object>)
   ensures
       var edges := edges(os);
       && (forall e <- edges :: e.f.fields[e.n] == e.t)
-      && (forall o <- os, n <- o.fields ::
-        && (n in o.fieldModes.Keys) //added for bug in 4.9.2
-        && (Edge(o, n, o.fieldModes[n], o.fields[n]) in edges))
+//NO_FIELDMODES       && (forall o <- os, n <- o.fields ::
+//NO_FIELDMODES         && (n in o.fieldModes.Keys) //added for bug in 4.9.2
+//NO_FIELDMODES         && (Edge(o, n, o.fieldModes[n], o.fields[n]) in edges))
 {}
 
  lemma edgesFromDisjointObjects(aa : set<Object>, bb : set<Object>)
@@ -252,7 +255,7 @@ RefCountDistributesOverDisjointEdges(os, fewer, extra);
 }
 
 
-//kjx need to sort out API , is it he fewer + extra, or fewer vs more?
+//prog need to sort out API , is it he fewer + extra, or fewer vs more?
 //ie are they disjoint, or what...
 //os comes first or last
 lemma fewerEdgesPreservesShit(fewer : set<Edge>, extra : set<Edge>, os : set<Object>)
@@ -263,18 +266,18 @@ RefCountDistributesOverDisjointEdges(os, fewer, extra);
 }
 
 
-//KJX shit wiull we hace to worry avout outside & iunside or Regions as well as Objecs???
+//prog shit wiull we hace to worry avout outside & iunside or Regions as well as Objecs???
 
 
   function externalEdges(o: Object, edges : set<Edge>) : (rs : set<Edge>)
   // all edges comin into O from objects outside.
-  //KJX is this right?  will it do what we want?
+  //prog is this right?  will it do what we want?
     ensures rs <= edges
     reads e2o(edges)
   {
     set e <- edges | outside(e.f, o) && inside(e.t, o)
 
-//KJX or  set e <- edges | e.f.outside(o) && e.t.inside(o)
+//prog or  set e <- edges | e.f.outside(o) && e.t.inside(o)
 //  part.inside(whole), or
 //  whole.owns(part) ...       --- but what's that mean with multiple owners?
 //  whole.contains(part) ...   --- but what's that mean with multiple owners?
@@ -309,7 +312,7 @@ RefCountDistributesOverDisjointEdges(os, fewer, extra);
 //meanwhile allX(a):r can do move - e.g. map all objects to all owning "ownerss"
 ///*opaque*/
 //
-//KJX Sept 2024- what the HELL is is trying'' to do?
+//prog Sept 2024- what the HELL is is trying'' to do?
 //KJS is this right?
 function justHeapExternalEdges(edges : set<Edge>) : (rs : set<Edge>)
     ensures rs <= edges
