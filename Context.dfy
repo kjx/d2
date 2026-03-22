@@ -284,7 +284,7 @@ opaque predicate COK(a : Object, context : set<Object>) : (r : bool)
     && (a.Context(context))
 
 //    && AllTheseOwnersAreFlatOK(a.AMFX)   //point here is we don't want a loop  in the definitoin of the COK predicate I think()
-//KJX redo to be a.AllExternalOwners() (or AMXO?)
+//progr redo to be a.AllExternalOwners() (or AMXO?)
 //now surfaced by COKowner :-)
 //also check BoundsNeating, BoundsNeswtingFromReady, and AMFOsisAMFOs5
 //should it be within the context?? (or owners are within this heap doe sthat!)
