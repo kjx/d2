@@ -55,7 +55,7 @@ datatype Klon = Klon
 
   predicate HeapContextReady()
     reads oHeap
-  {///KJX 1 Augu 2025 - not sure this is right cos
+  {///prog 1 Augu 2025 - not sure this is right cos
    ///do3esentt that contradict the heap p      ointoting to na
    ///i.e. heap ispart of hns isn't it?
    ///answer yes, but that doen't happen during a clone() operation...
@@ -65,8 +65,8 @@ datatype Klon = Klon
   predicate ValuesContextReady()
     reads m.Values, oHeap
   {
-    //KJX experimental!! 11 aug 2025
-   forall x <- m.Values :: x.Context(hns())  ///KJX HACKED 4 Oct 2025    ///shojld this say "READY"
+    //prog experimental!! 11 aug 2025
+   forall x <- m.Values :: x.Context(hns())  ///prog HACKED 4 Oct 2025    ///shojld this say "READY"
   //or should this be hns too?
 //    (forall x <- m.Values :: (x.Ready() && x.Valid() && x.Context(hns())))
   }
@@ -91,13 +91,13 @@ predicate ValueInContext(v : Object)
     //note that the pivot object being clone "o"
     //does not hace to be in the map at the start.
 
-    //&& (isFlat(oHeap))  //KJXFEARSATAN
+    //&& (isFlat(oHeap))  //progFEARSATAN
 
     && HeapContextReady()
     && ValuesContextReady()
 
     && (o in oHeap)
-    && (objectInKlown(o))  //KJXFUCK  do i want this in here? really?   ///Can U do without it??
+    && (objectInKlown(o))  //progFUCK  do i want this in here? really?   ///Can U do without it??
     && (o.AMFX == o_amfx)
 //WTF    && (flatten(clbound) >= o.AMFB)
     && (nuBoundsOK(o.owner, o.bound))
@@ -285,7 +285,7 @@ predicate ValueInContext(v : Object)
 
     && (k in oHeap)    //this one is easy - what to do for things like v.AMFO aren't...
     //or perhaps it is - they either ibn the preheap or ns newstuff
-        //KJX - 10 Aug 2025
+        //prog - 10 Aug 2025
 
     //the fundamental something-or-other
     && (not(inside(k,o)) ==> (v == k))
@@ -306,7 +306,7 @@ predicate ValueInContext(v : Object)
     && (checkOwnershipOfClone(k,v,this))
     && (checkBoundOfClone(k,v,this))
 
-  //MAPPING - KJXFEARSATAN
+  //MAPPING - progFEARSATAN
     && (mappingOwnersThruKlownKV(k,v,this))
 
 ///k.fieldModes == v.fieldModes  ///or shoudl otherwise be compatible
@@ -958,7 +958,7 @@ assert v.bound == k.bound;
     // && HeapOwnersReady()    ///hmm
     // && ValuesOwnersReady()
     && (o.Ready() && (o in oHeap))
-    && (objectInKlown(o))  //KJXFUCK  do i want this in here? really?   ///Can U do without it??
+    && (objectInKlown(o))  //progFUCK  do i want this in here? really?   ///Can U do without it??
     && (o.AMFX == o_amfx)
     && (flatten(clbound) >= o.AMFB)
     && (o.AMFO == o_amfx+{o})
@@ -1020,7 +1020,7 @@ assert v.bound == k.bound;
     && (not(inside(k,o)) ==> (v == k))
     && (   (inside(k,o)) ==> ((v !in oHeap)) )
 
-  //MAPPING - KJXFEARSATAN
+  //MAPPING - progFEARSATAN
     && (mappingOwnersThruKlownKV(k,v,this))
   }
 
@@ -1116,7 +1116,7 @@ predicate {:isolate_assertions}  checkOwnershipOfClone(k : Object, v : Object, m
 
 
   predicate {:isolate_assertions} mappingOwnersThruKlownKV(k : Object, v : Object, m : Klon) : (r : bool)
-    //KJX FEAR SATAN
+    //prog FEAR SATAN
     //this vrsion currently matches CalidLineKV, i.e. k and v don't have to be in the klon
     //but that means we can't mapp intl and AMFO  //um,,
     //i think this is th4e INVARIANT
@@ -1128,7 +1128,7 @@ predicate {:isolate_assertions}  checkOwnershipOfClone(k : Object, v : Object, m
 //    requires v.Ready()
     reads m.oHeap, m.m.Values
     {
-      // KJX FEAR SATAN!!
+      // prog FEAR SATAN!!
 
       if (k == m.o) then (
           && (v == m.m[m.o])
@@ -1153,7 +1153,7 @@ predicate {:isolate_assertions}  checkOwnershipOfClone(k : Object, v : Object, m
     predicate {:isolate_assertions} mappingOWNRsThruKlownKV(kk : OWNR, vv : OWNR, m : Klon) : (r : bool)
       //actual OWNR version of mappingOwnersThruKlownKV
       //within the pivot anyway!
-      //KJX FEAR SATAN
+      //prog FEAR SATAN
           //OK so wher doe this asy "inside the pivot"?   - it DO#ESNT
           //does that matter?  who knows?
       requires m.apoCalidse()
@@ -1187,7 +1187,7 @@ function {:isolate_assertions} computeOwnerForClone(oo : Owner, m : Klon) : (nuo
   //EXCEPT OWNERS SHOULDNT BE FLATTENNED!!!
 ///TODO//Libertarian  //requires (flatten(oo) >= m.o.AMFO)   //should this be there or not?
   //
-  //     7 Aug 2025 - kjx thinks - this doesn't work if we're flatting the bound
+  //     7 Aug 2025 - prog thinks - this doesn't work if we're flatting the bound
   //             I removed the constraint hopijng it doesn't break too  much stuff..
   //
   //  I think this makes sense for owners of subparts being clonedj
@@ -1198,7 +1198,7 @@ function {:isolate_assertions} computeOwnerForClone(oo : Owner, m : Klon) : (nuo
   //
 ///seemss to survive without oo being ready!
 ///seemss to survive without ANYUTHING being Ready
-///KJXA Naa will need Values...
+///progA Naa will need Values...
   requires m.apoCalidse()  //note that this requires m.o already in m.m.Keys
   requires oo <= m.m.Keys
 //  requires flatten(oo) >= m.o.AMFO //hmmmA
@@ -1276,7 +1276,7 @@ predicate klonVMapOK(m : vmap<Object,Object>, ks : set<Object> := m.Keys)
   //klonVMapOK the vmap parts of a klon are OK
   //still need to do something for iHeap and ns etc
   //should probably swizzle this to take a Klon, not a vmap/...
-  //KJX AND that shoud something like klonReady
+  //prog AND that shoud something like klonReady
   //meaning that for all targets (m.Keys)
   //the coresponding klon  m[k] is
   // - ready
@@ -1292,7 +1292,7 @@ predicate klonVMapOK(m : vmap<Object,Object>, ks : set<Object> := m.Keys)
   reads m.Values`fieldModes
   reads ks`fieldModes
 {
-//Readiness???  //KJXFEARSATAN
+//Readiness???  //progFEARSATAN
    && (forall k <- ks :: k.Ready() && m[k].Ready() )
 
   //AMFO
@@ -1303,14 +1303,14 @@ predicate klonVMapOK(m : vmap<Object,Object>, ks : set<Object> := m.Keys)
   && (forall k <- ks :: k.AMFB <= m.Keys)
   //  && (forall k <- ks :: mapThruVMap(k.AMFB, m) == m[k].AMFB)
 
-  //KJXOWNERS
+  //progOWNERS
   //region & owners?
-  //  && (forall x <- ks :: x.owaner <= x.AMFO)//KJXOWNERS
+  //  && (forall x <- ks :: x.owaner <= x.AMFO)//progOWNERS
 //  && (forall x <- ks :: x.bound <= x.owner <= m.Keys) //should that bound be ks?
   //  && (forall k <- ks :: mapThruVMap(k.owner, m) == m[k].owner)
   //  && (forall k <- ks :: mapThruVMap(k.bound, m) == m[k].bound)
 
-  //field values? //KJX
+  //field values? //prog
   //
   //
   //  && (forall k <- ks :: k.fieldModes == m[k].fieldModes)
@@ -1423,7 +1423,7 @@ predicate klonCanKV(m' : Klon, k : Object, v : Object)
 {
   && klonVMapOK(m'.m) //BOWIE
   && canVMapKV(m'.m, k, v)
-  && (k in m'.oHeap)  //KJX do I want this here?
+  && (k in m'.oHeap)  //prog do I want this here?
   && (if (v==k) then (v in m'.oHeap) else (v !in m'.oHeap)) //nope - happens after  wards
 
   //grrr. should refactor this
@@ -1435,7 +1435,7 @@ predicate klonCanKV(m' : Klon, k : Object, v : Object)
   && (k.fieldModes == v.fieldModes)//hhhmm see anbove
 
   //  && (v.AMFX >= v.AMFB >= k.AMFB) //is this right?   really?
-  //17 June 2025 kjx thinks this iswrong & shoud be in CalidLineKV
+  //17 June 2025 prog thinks this iswrong & shoud be in CalidLineKV
 
 
   //END DOOUBLE BOWIE

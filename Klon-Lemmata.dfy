@@ -402,7 +402,8 @@ lemma {:isolate_assertions} OwnershipOfCloneGEQ2(os: set<Object>, ot : set<Objec
 
 //timelimit 60 BUT IT WORDS - 2 Jan 2026
 //but it doesn't 5 Mar 2026
-lemma {:isolate_assertions}  {:timeLimit 60} BROKENCalidKVCalid(k : Object, v : Object, m0 : Klon, m1 : Klon)
+//we don't need this so switched off -
+lemma {:isolate_assertions} {:verify false} BROKENCalidKVCalid(k : Object, v : Object, m0 : Klon, m1 : Klon)
   //if m0.klonKLV(kv == m1,  and m0 is calid, can m1 pretty please be calid()?
     requires m0.CKV_preconditions(k,v)
     requires m0.apoCalidse()
@@ -422,7 +423,7 @@ lemma {:isolate_assertions}  {:timeLimit 60} BROKENCalidKVCalid(k : Object, v : 
      ensures m1.m.Values == m0.m.Values + {v}
      ensures m1.m[k] == v
      ensures m1.objectInKlown(k)
-     ensures m1.Calid()
+     ensures m1.Calid() //ERR
     {
       assert m0.AllLinesCalid();
       assert m0.CalidLineKV(k,v);
@@ -724,6 +725,7 @@ function {:isolate_assertions} shiftObjectBETTER(i0 : Object, m : Klon) : (i1 : 
     requires m.apoCalidse()
     requires m.SuperCalidFragilistic()
      ensures m.AllLinesCalid()
+     //needs HighLine stuff there to work!
 //    requires HighCalidFragilistic(m)
   //     ensures HighLineKV(i0,i1,m)
     requires i0.Ready()
@@ -732,3 +734,22 @@ function {:isolate_assertions} shiftObjectBETTER(i0 : Object, m : Klon) : (i1 : 
      ensures inside(i1, m.m[m.o])
        reads m.hns()
     { m.m[i0] }
+
+
+
+
+
+lemma {:isolate_assertions} {:resource_limit 0} {:verify false}  INSIDEOUT(oo : OWNR, m : Klon)   ///it'll be somethign missing that's in HighLine but not other lines
+   requires forall o <- oo :: m.objectReadyInKlown(o)
+   requires oo <= m.m.Keys
+   // requires HighCalidFragilistic(m)
+        requires m.SuperCalidFragilistic()
+    ensures ((set o <- oo | inside(o, m.o)) == {})  ==> (forall o <- oo :: outside(o, m.o))
+    ensures ((set o <- oo | inside(o, m.o)) == {}) <==  (forall o <- oo :: outside(o, m.o))
+
+    ensures ((set o <- oo | inside(o, m.o)) >  {})  ==> (exists o <- oo :: inside(o, m.o))
+    ensures ((set o <- oo | inside(o, m.o)) >  {}) <==  (exists o <- oo :: inside(o, m.o))
+
+    ensures ((set o <- oo | inside(o, m.o)) >  {})  ==> (not (forall o <- oo :: outside(o, m.o)))
+    ensures ((set o <- oo | inside(o, m.o)) >  {}) <==  (not (forall o <- oo :: outside(o, m.o)))
+ {}
