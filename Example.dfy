@@ -1,16 +1,71 @@
-include "Object.dfy"
+        include "Object.dfy"
+include "Printing.dfy"
+include "Ownership-Recursive.dfy"
 
-method Main()
+method  {:isolate_assertions} ExampleMain(args : seq<string>)
 {
-  var frame := new Object.make(fields({"counter"}), {}, {}, "frame");
+  print "Yaunch\n";
+
+  var frame := new Object.make(fields({"counter","ret"}), {}, {}, "top");
 
   frame.setn("counter", 0);
   frame.setn("counter", 1 + frame.getn("counter"));
+  print "1 == ", frame.getn("counter"), "\n";
+  frame.setn("counter", 41 + frame.getn("counter"));
+  print "42 == ", frame.getn("counter"), "\n";
+
+  print "c should be *33* ";
+  var deadFrame := Paper_Embedded_add(11,22,frame,{frame});
+
+  deadFrame := MakeList(frame,{frame});
+  print "Makelist returns - ret shoudl be    list\n";
+  printobject(frame);
+
+print "PRUNTOBBJ-OJECT\n";
+
+var list : Object;
+
+assert frame.ownerf("ret", {frame});
+
+print "TRAVERSE\n";
+print "frame.fields=", frame.fields, "\n";
+print "frame.fields.Keys=", fmtsetstr(frame.fields.Keys),"\n";
+print "retrieving link_1\n";
+list := frame.fields["ret"];
+assume list.Ready();  //READYREADY
+print "got frame.fields[\"ret\"]",fmtobj(list),"\n";
+printobject(list);
+    assume ("head" in list.fields.Keys);
+    var link1 := list.getf("head");
+                          print "GOT LKINK1\n";
+        printobject(link1);
+    assume ("next" in link1.fields.Keys);
+    var link2 := link1.getf("next");
+    print "GOT LKINK2\n";
+    printobject(link2);
+    print "\nrefOK list->link1 ", refOK(list,link1);
+    print "\nrefOK list->link2 ", refOK(list,link2);
+    print "\nrefOK link1->link2 ", refOK(link1,link2);
+    print "\nrefOK link2->link1 ", refOK(link2,link1);
+    print "\nrefOK link1->list ", refOK(link1,list);
+    print "\nrefOK link2->list ", refOK(link2,list);
+    print "\n";
+
+
+assert frame.ownerf("ret", {frame});
+
+expect list.ownerf("head", {list});
+assert list.ownerf("head", {list});
+
+  deadFrame := list_method(list,frame,flatten({list,frame}));
+
+printobject(deadFrame);
+
+  print "Mulberry\n";
 
 }
 
-
-method NotMain()
+method NotMain2()
  {
     var counter : nat := 0;
     counter := counter + 1;
@@ -20,12 +75,12 @@ const application : Owner := {}
 
 method LinkedList() {
 
-var list  := new Object.make(fields({"head", "tail"}), application, application, "list");
+var list  := new Object.make(fields({"head", "tail"   }), application, application, "list");
 
-var link0 := new Object.make(fields({"next", "data"}), {list}, {list}, "link0", {} );
-var link1 := new Object.make(fields({"next", "data"}), {list}, {list}, "link1", {} );
-var link2 := new Object.make(fields({"next", "data"}), {list}, {list}, "link2", {} );
-var link3 := new Object.make(fields({"next", "data"}), {list}, {list}, "link3", {} );
+var link0 := new Object.make(fields({"next", "data"}), {list}, {list}, "link0", {list} );
+var link1 := new Object.make(fields({"next", "data"}), {list}, {list}, "link1", {list} );
+var link2 := new Object.make(fields({"next", "data"}), {list}, {list}, "link2", {list} );
+var link3 := new Object.make(fields({"next", "data"}), {list}, {list}, "link3", {list} );
 
  list.setf("head", link0); list.setf("tail", link3);
 
@@ -75,7 +130,7 @@ method drop(frame : Frame, u : U)
 //  assume without(frame, u);
 }
 
-method {:isolate_assertions} {:timeLimit 30} Paper_Embedded_add(a : nat, b : nat, caller : Frame, u : U)
+method {:isolate_assertions} {:timeLimit 10} Paper_Embedded_add(a : nat, b : nat, caller : Frame, u : U)
     returns(frame : Frame) ensures without(frame, u)
     requires caller.Ready()
     requires u >= flatten({caller})
@@ -99,48 +154,68 @@ lemma shitX()
   ensures "next"  in linkX
  {}
 
+
 method {:isolate_assertions} {:timeLimit 30} MakeList(caller : Frame, u : U)
     returns(frame : Frame) ensures without(frame, u)
     requires caller.Ready()
+    requires caller.Valid()
     requires caller.bound == caller.owner
     requires "ret" in caller.fieldModes.Keys
     requires u >= flatten({  caller   })
+     ensures caller.ownerf("ret", {caller})
     modifies caller
   {
-    frame := new Object.make(fields({"list"}), {caller}, u, "", {});
-
-    var list  := new Object.make(listX, {caller}, u, "list", caller.bound);
-
-    assert nuBoundsOK({list}, {   });   ///attempting to get verification times down;
-
-    var i := new Object.make(linkX, {list}, flatten({list}), "i", {} );
-    var j := new Object.make(linkX, {list}, flatten({list}), "j", {} );
-
+    assert CV: caller.Valid();
+    frame := new Object.make(fields({"list"}), {caller}, u, "", {caller});
+    var list  := new Object.make(listX, {caller}, u, "list", {caller});
+    assert list.owner == {caller};
     frame.setf("list", list);
+assert caller.Valid() by { reveal CV; }  assert list.owner == {caller};  assert frame.fields["list"] == list;
+    assert nuBoundsOK({list}, {list});   ///attempting to get verification times down;
+
+    var i := new Object.make(linkX, {list}, flatten({list}), "i", {list} );
+    var j := new Object.make(linkX, {list}, flatten({list}), "j", {list} );  assert JV: j.Valid();
+    var k := new Object.make(linkX, {list}, flatten({list}), "k", {list} );
+    var l := new Object.make(linkX, {list}, flatten({list}), "l", {list} );
+assert caller.Valid() by { reveal CV; }
     list.setf("head", i);
     i.setf("next", j);
+    j.setf("next", k) by { reveal JV; assert j.Valid(); }
+    k.setf("next", l);
 
+assume caller.Valid(); assume frame.fields["list"] == list;  assume list.owner == {caller};
     caller.setf("ret", frame.getf("list"));
+    assert caller.ownerf("ret", {caller});
     drop(frame,u);
   }
 
 
+lemma DifferentOwnersDifferentObjects(a : Object, b : Object)
+  requires a.owner != b.owner
+   ensures a != b
+{}
 
 method {:isolate_assertions} {:timeLimit 30} list_method(list : Object, caller : Frame, u : U)
       returns(frame : Frame) ensures without(frame, u)
       requires caller.Ready()
+      requires list.Ready()
+      requires list != caller
+      requires AllReady(u)
       requires u >= flatten({  caller, list   })
-                                                                                                                                                                                                                                                                                                                                                                                     requires AllReady({caller,list})
       requires nuBoundsOK({caller},{caller})
 //NO_FIELDMODES      requires list.fieldModes == listX
       requires list.ownerf("head", {list})
-      requires "ret" in caller.fieldModes.Keys
+      requires list.bound == list.owner
+//NO_FIELDMODES            requires "ret" in caller.fieldModes.Keys
       requires refOK(caller, list)
       modifies list, caller
     {
-      frame := new Object.make(fields({"list","n","link"}), {caller,list}, flatten({caller,list}+u), "", {caller,list});
+      frame := new Object.make(fields({"list","n","link"}), {caller,list}, flatten({caller,list}+u), "frame", {caller,list});
                           assert frame.owner == {list, caller};
                           assert refOK(frame, list);
+
+assert forall o <- u :: o != frame;
+
       frame.setf("list", list);
                          assert frame.fields == map["list":=list];
                          assert frame.fields["list"] == list;
@@ -150,27 +225,43 @@ method {:isolate_assertions} {:timeLimit 30} list_method(list : Object, caller :
                          assert frame.fields["list"] == list;
                          assert list.ownerf("head", {list});
 
+ assert frame.Valid();
+
       if ( frame.getf("list").isf("head") )
         {
             frame.incrn("n");
                             assert frame.fields["list"] == list;
                             assert frame.getf("list") == list;
+                            assert frame.owner == frame.bound == {list, caller};
+                            assert FO: frame.owner == frame.bound == {list, caller};
                             var current_link := frame.getf("list").getf("head");
+                            assert current_link.Ready();
                             assert current_link == list.getf("head");
-                            assert current_link.owner == {list};
-                            assert frame.owner == {list, caller};
+                            assert current_link.owner == current_link.bound == {list};
+                            assert CL: current_link.owner == current_link.bound == {list};
+                            DifferentOwnersDifferentObjects(frame,current_link) by
+                                {
+                                  reveal FO, CL;
+                                  assert frame.owner == frame.bound == {list, caller};
+                                  assert current_link.owner == current_link.bound == {list};
+                                  assert {list} != {list, caller};
+                                }
                             assert refBI(frame, current_link);
                             assert refOK(frame, current_link);
 
+ assert frame.Valid();
 
             frame.setf("link", frame.getf("list").getf("head"));
+
+ assert frame.Valid();
                             assert frame.fields["link"] == current_link;
                             assert frame.getf("link") == current_link;
                             expect frame.ownerf("link", {list});
                             assert frame.ownerf("link", {list});
                             assert frame.fields["link"] == current_link;
+                            assert current_link.owner == current_link.bound == {list};
+                            assert frame.fields["link"].owner == frame.fields["link"].bound == {list};
                             var gas : nat := 100;
-
 
               while ( frame.getf("link").isf("next")  && gas > 1)
                             decreases gas
@@ -179,22 +270,83 @@ method {:isolate_assertions} {:timeLimit 30} list_method(list : Object, caller :
                             invariant frame.fields["link"] == current_link
                             invariant frame.getf("link") == current_link
                             invariant frame.ownerf("link", {list})
-
+                            invariant frame.owner == frame.bound == {caller, list}
+                            invariant frame.fields["link"].owner == frame.fields["link"].bound == {list}
+                            invariant current_link.Ready()
+                            invariant current_link.owner == current_link.bound == {list}
+                            invariant current_link != frame
               {
                             assert current_link.isf("next");
                             assert frame.fields["link"] == current_link;
                             assert frame.getf("link") == current_link;
                             assert frame.ownerf("link", {list});
-                            assert current_link.owner == {list};
+                            assert current_link.owner == current_link.bound == {list};
+                            assert frame.fields["link"].owner == frame.fields["link"].bound == {list};
+                            assert frame.owner == frame.bound == {caller, list};
+
+                            print "HOP  ", fmtobj(frame), " ", fmtobj(current_link), " ", current_link.isf("next"), "\n";
+
+ assert frame.Valid();
+
                             gas := gas - 1;
                 frame.incrn("n");
+                        //    assert frame.Valid();
+ assert frame.Valid();
                             assert frame.fields["link"] == current_link;
                             assert frame.getf("link") == current_link;
                             assert frame.ownerf("link", {list});
-                            assert current_link.owner == {list};
-                            assert frame.owner == {list, caller};
+                            assert current_link.owner == current_link.bound == {list};
+                            assert frame.fields["link"].owner == frame.fields["link"].bound == {list};
+                            assert frame.owner == frame.bound == {caller, list};
 
-              } //while
+                            expect current_link.ownerf("next", {list});
+                            assert current_link.ownerf("next", {list});
+                            current_link := current_link.fields["next"]; assume current_link.Ready();
+                            printobject(frame); printobject(current_link);
+                            assert current_link.owner == current_link.bound == {list};
+                            assert current_link.Ready();
+                            assert current_link.AMFX == flatten(current_link.owner) == flatten({list}) == list.AMFO;
+                            assert current_link.AMFB == flatten(current_link.bound) == flatten({list}) == list.AMFO         ;
+                            assert current_link.owner == {list};  assert current_link.AMFX == list.AMFO;
+                            print (current_link.AMFX == current_link.AMFB == flatten({list}) == ({list} + flatten(list.owner)) == (list.AMFO)), "<<<===\n";
+                            assert current_link.AMFX == current_link.AMFB == flatten({list}) == ({list} + flatten(list.owner)) == (list.AMFO);
+                            assert frame.owner == frame.bound == {caller, list};
+                            DifferentOwnersDifferentObjects(frame, current_link);
+                            assert current_link != frame;
+                            print "SKIP ", fmtobj(frame), " ", fmtobj(current_link), " refOK=", refOK(frame,current_link), " next=", current_link.isf("next"), "\n";
+                            assert current_link.owner == {list};
+                            assert flatten(current_link.owner) == flatten({list}) == ({list} + flatten(list.owner)) >= flatten(list.owner);
+                            assert current_link.AMFX == current_link.AMFB == list.AMFO;
+                            assert frame.owner == frame.bound == {caller, list};
+                            assert flatten(frame.owner) == flatten({caller, list}) == (flatten({caller}) + flatten({list})) == (flatten({caller}) + ({list} + flatten(list.owner)));
+                            assert frame.Ready();
+                            assert flatten({frame}) == frame.AMFO == ({frame} + flatten(frame.owner));
+                            assert frame.AMFX == frame.AMFB == (caller.AMFO + list.AMFO) >= list.AMFO > list.AMFX;
+                            assert frame.AMFB == (caller.AMFO + list.AMFO);
+                            assert current_link.owner == {list};   assert flatten(current_link.owner) == flatten({list}) == list.AMFO;
+                            assert current_link.AMFX == list.AMFO;
+                            assert (caller.AMFO + list.AMFO) >= list.AMFO;
+                            assert frame.AMFB >= current_link.AMFX;
+                            assert frame != list;
+                            assert frame != current_link;
+                            assert refBI(frame, current_link);
+                            assert refOK(frame,current_link);
+                            print "FUCKER ", refOK(frame,current_link), "\n";
+ assert frame.Valid();
+
+                frame.setf("link", frame.getf("link").getf("next"));
+
+ assert frame.Valid();
+                            print "JUMP\n";
+                            assert frame.fields["link"] == current_link;
+                            assert frame.getf("link") == current_link;
+                            assert frame.ownerf("link", {list});
+                            assert current_link.owner == current_link.bound == {list};
+                            assert frame.fields["link"].owner == frame.fields["link"].bound == {list};
+                            assert frame.owner == frame.bound == {caller, list};
+
+//                          assume frame.Valid();
+             } //while
          } //if
         drop(frame,u);
     }
