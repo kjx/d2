@@ -48,7 +48,7 @@ include "Library.dfy"
 //this needs to be added!!!
 //   && (k.fieldModes  == v.fieldModes)
 
-  //MAPPING - KJXFEARSATAN
+  //MAPPING - progFEARSATAN
     && (mappingOwnersThruKlownKV(k,v,m))
   }
 
@@ -228,7 +228,7 @@ lemma MappingOWNRsThruKlownKVFrom(kk : OWNR, vv: OWNR, m : Klon, m' : Klon)
 //   ensures (
 //   && klonVMapOK(m'.m) //BOWIE
 //   && canVMapKV(m'.m, k, v)
-//   && (k in m'.oHeap)  //KJX do I want this here?
+//   && (k in m'.oHeap)  //prog do I want this here?
 //   && (if (v==k) then (v in m'.oHeap) else (v !in m'.oHeap)) //nope - happens after  wards
 //
 //   //grrr. should refactor this
