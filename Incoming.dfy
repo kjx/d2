@@ -209,45 +209,46 @@ function IncomingReadSet(ins : Incoming) : set<Object>
     o : Object <- ({e.f} + {e.t}) :: o
 }
 
-
-predicate ObjectsToIncoming(os : set<Object>, ins : Incoming)
-//  requires IncomingReadSet(ins) <= o
-  //reads (set es <- ins.Values, e <- es, o <- {e.f}:: o)`fields
-  reads (set es <- ins.Values, e <- es :: e.f)`fields
-  //reads os`fields
-  reads os + (set o <- os, v <- o.ValidReadSet() :: v)
-  reads (set o <- os, v <- o.fields.Values :: v)
-  reads ins.Keys + IncomingReadSet(ins)
-  reads IncomingReadSet(ins)`fields
-  requires forall o <- os :: o.Ready() && o.Valid() //DO I want this or not? or a separate lemma
-{
-  && (forall o <- os :: o.AllFieldsAreDeclared())
-  && (forall es <- ins.Values, e <- es :: e.n in e.f.fields && e.f.fields[e.n] == e.t)
-  && ((os == {}) ==> ((IncomingReadSet(ins)) + ins.Keys) == {})   //but not the other way cos of solitary nodes (incoming & outgoing = 0)
-  && (var es := edges(os); forall e <- es :: (e.t in ins.Keys && e in ins[e.t]))
-  && (forall o <- os, n <- o.fields.Keys ::  o.fields[n] in ins.Keys && edge(o,n) in ins[o.fields[n]])
-  && (forall es <- ins.Values, e <- es :: (e.f in os) && (e.n in e.f.fields) && (e.m == e.f.fieldModes[e.n]) && (e.t == e.f.fields[e.n]))
-}
-//note that this doesn't require e.t to be in os, i.e. we don't require os is "ClosedHeap"
-//or whatever we call it.
-//perhaps we need more invairants or something to handle that case. grrr.
-//how much should be explicit!!! how much implicit??
-
-
-lemma {:timeLimit 120}
-  ObjectsToIncomingLemma(os : set<Object>, ins : Incoming)
-    requires forall o <- os :: o.Ready() && o.Valid()
-    requires edgesAreConsistentWithDafnyHeap(edges(os))
-    requires ins == partitionedIncomingEdges(edges(os))
-    ensures  ObjectsToIncoming(os,ins)
-{
-  assert (forall es <- ins.Values, e <- es :: e.n in e.f.fields && e.f.fields[e.n] == e.t);
-  assert ((os == {}) ==> ((IncomingReadSet(ins)) + ins.Keys) == {});  //but not the other way cos of solitary nodes (incoming & outgoing = 0)
-  assert (var es := edges(os); forall e <- es :: (e.t in ins.Keys && e in ins[e.t]));
-  //assert (forall o <- os, n <- o.fields.Keys :: o.fields[n] in ins.Keys); //HERE
-  assert (forall o <- os, n <- o.fields.Keys :: edge(o,n) in ins[o.fields[n]]);
-  assert (forall es <- ins.Values, e <- es :: (e.f in os) && (e.n in e.f.fields) && (e.m == e.f.fieldModes[e.n]) && (e.t == e.f.fields[e.n]));
-
-
-  assert ObjectsToIncoming(os,ins);
-}
+///NO_FIELDMODES
+// predicate ObjectsToIncoming(os : set<Object>, ins : Incoming)
+// //  requires IncomingReadSet(ins) <= o
+//   //reads (set es <- ins.Values, e <- es, o <- {e.f}:: o)`fields
+//   reads (set es <- ins.Values, e <- es :: e.f)`fields
+//   //reads os`fields
+//   reads os + (set o <- os, v <- o.ValidReadSet() :: v)
+//   reads (set o <- os, v <- o.fields.Values :: v)
+//   reads ins.Keys + IncomingReadSet(ins)
+//   reads IncomingReadSet(ins)`fields
+//   requires forall o <- os :: o.Ready() && o.Valid() //DO I want this or not? or a separate lemma
+// {
+//   && (forall o <- os :: o.AllFieldsAreDeclared())
+//   && (forall es <- ins.Values, e <- es :: e.n in e.f.fields && e.f.fields[e.n] == e.t)
+//   && ((os == {}) ==> ((IncomingReadSet(ins)) + ins.Keys) == {})   //but not the other way cos of solitary nodes (incoming & outgoing = 0)
+//   && (var es := edges(os); forall e <- es :: (e.t in ins.Keys && e in ins[e.t]))
+//   && (forall o <- os, n <- o.fields.Keys ::  o.fields[n] in ins.Keys && edge(o,n) in ins[o.fields[n]])
+//   && (forall es <- ins.Values, e <- es :: (e.f in os) && (e.n in e.f.fields) && (e.m == e.f.fieldModes[e.n]) && (e.t == e.f.fields[e.n]))
+// }
+// //note that this doesn't require e.t to be in os, i.e. we don't require os is "ClosedHeap"
+// //or whatever we call it.
+// //perhaps we need more invairants or something to handle that case. grrr.
+// //how much should be explicit!!! how much implicit??
+//
+//
+// lemma {:timeLimit 120}
+//   ObjectsToIncomingLemma(os : set<Object>, ins : Incoming)
+//     requires forall o <- os :: o.Ready() && o.Valid()
+//     requires edgesAreConsistentWithDafnyHeap(edges(os))
+//     requires ins == partitionedIncomingEdges(edges(os))
+//     ensures  ObjectsToIncoming(os,ins)
+// {
+//   assert (forall es <- ins.Values, e <- es :: e.n in e.f.fields && e.f.fields[e.n] == e.t);
+//   assert ((os == {}) ==> ((IncomingReadSet(ins)) + ins.Keys) == {});  //but not the other way cos of solitary nodes (incoming & outgoing = 0)
+//   assert (var es := edges(os); forall e <- es :: (e.t in ins.Keys && e in ins[e.t]));
+//   //assert (forall o <- os, n <- o.fields.Keys :: o.fields[n] in ins.Keys); //HERE
+//   assert (forall o <- os, n <- o.fields.Keys :: edge(o,n) in ins[o.fields[n]]);
+//   assert (forall es <- ins.Values, e <- es :: (e.f in os) && (e.n in e.f.fields) && (e.m == e.f.fieldModes[e.n]) && (e.t == e.f.fields[e.n]));
+//
+//
+//   assert ObjectsToIncoming(os,ins);
+// }
+///NO_FIELDMODES
