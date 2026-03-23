@@ -175,15 +175,16 @@ assert caller.Valid() by { reveal CV; }  assert list.owner == {caller};  assert 
 
     var i := new Object.make(linkX, {list}, flatten({list}), "i", {list} );
     var j := new Object.make(linkX, {list}, flatten({list}), "j", {list} );  assert JV: j.Valid();
-    var k := new Object.make(linkX, {list}, flatten({list}), "k", {list} );
+    var k := new Object.make(linkX, {list}, flatten({list}), "k", {list} );  assert KV: k.Valid();
     var l := new Object.make(linkX, {list}, flatten({list}), "l", {list} );
 assert caller.Valid() by { reveal CV; }
     list.setf("head", i);
     i.setf("next", j);
     j.setf("next", k) by { reveal JV; assert j.Valid(); }
-    k.setf("next", l);
+    k.setf("next", l) by { reveal JV; assert j.Valid(); }
 
 assume caller.Valid(); assume frame.fields["list"] == list;  assume list.owner == {caller};
+assume frame.Valid();
     caller.setf("ret", frame.getf("list"));
     assert caller.ownerf("ret", {caller});
     drop(frame,u);
