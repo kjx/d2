@@ -431,11 +431,11 @@ lemma ValidMeansAllFieldsValid()
   method {:isolate_assertions} setf(n : string, v : Object)
     requires Ready()
     requires Valid()
-    requires n  in fieldModes.Keys
+//NO_FIELDMODES         requires n  in fieldModes.Keys
     requires refOK(this, v)
  //   requires v.Ready()  //READYREADY
-    requires forall n <- fields :: (n in fieldModes) && modeOK(this, fieldModes[n], fields[n])
-    requires modeOK(this, fieldModes[n], v)
+    //NO_FIELDMODES         requires forall n <- fields :: (n in fieldModes) && modeOK(this, fieldModes[n], fields[n])
+    //NO_FIELDMODES             requires modeOK(this, fieldModes[n], v)
     requires v.bound == v.owner //OWNERBOUND
      ensures fields == old(fields)[n:=v]
      ensures refOK(this, fields[n])
@@ -451,7 +451,7 @@ lemma ValidMeansAllFieldsValid()
 
   function getf(n : string) : (v : Object)
 //NO_FIELDMODES    requires n in fieldModes.Keys
-//NO_FIELDMODES    requires n in fields.Keys
+        requires n in fields.Keys
        ensures v.owner == v.bound //OWNERBOUND
        ensures v.Ready() //READYREADY
        reads `fields, `fieldModes
