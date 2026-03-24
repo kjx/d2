@@ -1,6 +1,7 @@
 include "Klon-HighLine.dfy"
 
 include "Example.dfy"
+include "Xlone-Main.dfy"
 
 include "Ownership-Recursive.dfy"
 include "Printing.dfy"
@@ -36,6 +37,7 @@ const protoTypes : map<string, Mode> := fields({"t","a","b","c","d","e","k","l",
 
 
 method {:verify false} Main(args : seq<string>)
+ decreases * //sob
 {
   print "Snick! Snack! Snock!\n";
 
@@ -58,7 +60,8 @@ method {:verify false} Main(args : seq<string>)
  if (gops.graph == "l") { t,a,b,c,d,e,k,l,m,os,oq, loutName := zandalList(); }
  if (gops.graph == "t") { t,a,b,c,d,e,k,l,m,os,oq, loutName := zandalThreads(); }
 
- if (gops.graph == "X") { print "launch\n"; ExampleMain(args[1..]); return; }
+ if (gops.graph == "E") { print "launch\n"; ExampleMain(args[1..]); return; }
+ if (gops.graph == "X") { print "launch\n"; XloneMain(args[1..]); return; }
 
 
 

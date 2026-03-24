@@ -78,13 +78,13 @@ decreases *
 
 
 
-function seed(o : Object, clowner : Owner, oHeap : set<Object>) : (m : Klon)
+function {:isolate_assertions} {:timeLimit 30}  seed(o : Object, clowner : Owner, oHeap : set<Object>) : (m : Klon)
 //seed Klon for cloning object o,  owner of clone being clowner, within heap oHeap...
     requires COK(o, oHeap)
     requires CallOK(oHeap)
     requires forall x <- oHeap :: x.Ready() && x.AllOutgoingReferencesWithinThisHeap(oHeap)
-
-//    ensures m.ownersInKlown(o)
+    ensures m.apoCalidse()
+//    ensures m.ownersInKlow n(o)
 //    ensures m.SuperCalidFragilistic()
 //    ensures COK(o, m.oHeap)
 
@@ -150,6 +150,8 @@ function seed(o : Object, clowner : Owner, oHeap : set<Object>) : (m : Klon)
 
     assert COK(o, oHeap);
     assert COK(o, m.oHeap);
+
+
 
 //
 //     assert m.calidObjects() by {

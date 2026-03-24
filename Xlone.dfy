@@ -377,7 +377,7 @@ lemma  {:isolate_assertions} ThereIsNoSpoon(part : Object, whole : Object)
 // //  print "VARIANT CCC ", |(m'.oHeap - m'.m.Keys)|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 15, "\n";
 //   print "VARIANT CCC ", |(m'.oHeap - m'.m.Keys +  {a})|, " ", |a.AMFO|, " ", |(a.fields.Keys)|, " ", 15, "\n";
 //
-//   print "Clone_Clone_Clone ", fmtobj(a), " calling CAO", fmtown(a.owner) ,"\n";
+//   print "Clone_Clone_Clone ", fmtobj(a), " calling CAO ", fmtown(a.owner) ,"\n";
 //   printmapping(m'.m);
 //
 // XCC_decreases_to_XAO(m',a);
@@ -875,6 +875,8 @@ lemma  {:isolate_assertions} ThereIsNoSpoon(part : Object, whole : Object)
       //whichever method actually guarantees theyll be done later should do soethign abotu this.
       //could track this with an extra ghost field n the Klon.  or, I dunno. something??
 {
+  print "PRECALL Clone_Clone_CLone of:", fmtobj(k), " owned by ", fmtown(k.owner) ,"\n";
+
   assert HighCalidFragilistic(m');
   assert forall k <- m'.m.Keys :: HighLineKV(k, m'.m[k], m');
   assert FUCK: forall k <- m'.m.Keys :: HighLineKV(k, m'.m[k], m');
@@ -947,23 +949,29 @@ assert nuBoundsOK(k.owner, k.bound);
 //  print "VARIANT CCC ", |(m'.oHeap - m'.m.Keys)|, " ", |k.AMFO|, " ", |(k.fields.Keys)|, " ", 15, "\n";
   print "VARIANT CCC ", |(m'.oHeap - m'.m.Keys +  {k})|, " ", |k.AMFO|, " ", |(k.fields.Keys)|, " ", 15, "\n";
 
-  print "Clone_Clone_Clone ", fmtobj(k), " calling CAO", fmtown(k.owner) ,"\n";
+  print "Clone_Clone_Clone ", fmtobj(k), " precall CAO ", fmtown(k.owner) ,"\n";
   printmapping(m'.m);
 
    assert forall k <- m'.m.Keys :: HighLineKV(k, m'.m[k], m') by { reveal FUCK; }
 
   XCC_decreases_to_XAO(m',k);
 
+  print "Clone_Clone_Clone ", fmtobj(k), " calling CAO ", fmtown(k.owner) ,"\n";
 ///////////////////////////////////////////////////////////////////////// ////////
     var rm := /*FAKE_*/Xlone_All_Owners(k, m')
      by { reveal COKA; assert COK(k, m'.oHeap);
           reveal FUCK; assert forall k <- m'.m.Keys :: HighLineKV(k, m'.m[k], m');
           reveal HCF;  assert HighCalidFragilistic(m');
   }
-//////////////////////////////////////////////////////////////ttv
+//////////////////////////////////////////////////////////////
+  print "Clone_Clone_Clone ", fmtobj(k), " back from CAO ", fmtown(k.owner) ,"\n";
+  print "CCC rm.owersInKlown ", fmtobj(k), " = ", rm.ownersInKlown(k), "\n";
+  print "CCC k in rm.m.Keys ", fmtobj(k), " = ", (k in rm.m.Keys), "\n";
+
    assert rm.ownersInKlown(k);
 
   if (k in rm.m.Keys) {
+     print "CCC we got it\n";
 
     m := rm;
     v := m.m[k]; //HMMmgv
@@ -990,7 +998,7 @@ v := k;  m := m';
 ///HERE///
 
 
-
+print "CCC 1001 HERE! WEESA HERE!\n";
 
 
 
@@ -1015,7 +1023,7 @@ v := k;  m := m';
 
 
 //
-// //TOUT LES POSTCONDITIONS// //  // //  // //  // //  // //  // //  // //
+// //TOUT LES POSTCONDITIONS// //  // //  // //  // //  // //  // //  // //    postconditions de quoi?
 {
    var m := rm;
    assert forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes;
@@ -1053,6 +1061,8 @@ v := k;  m := m';
 
 
 
+
+print "CCC 1065   HERE! WEESA HERE!\n";
 
 
 
@@ -1148,10 +1158,25 @@ v := k;  m := m';
   //  // assert flatten(k.bound) >= collectBounds(flatten(k.owner));
 //
 //
+
+    print (m.m.Keys <= m.oHeap);
+    print (m.m.Values <= m.hns());
+    print (m.objectReadyInKlown(m.o));
+    print (m.HeapOwnersReady());
+    print (m.c_amfx <= m.oHeap);
+  print m.apoCalidse();
+  print (k.owner <= m.m.Keys);
+//  print m.SuperCalidFragilistic();
+  nl();
+
   k.ExtraReady();
-  var rowner := computeOwnerForClone(k.owner, rm); ///dunno when I wrote it but...
-  var rbound := computeOwnerForClone(k.bound, rm);
+  var rowner := mapThruKlon(k.owner, rm); ///dunno when I wrote it but...
+  var rbound := mapThruKlon(k.bound, rm);
   var context := rm.hns();
+
+ print "CCC mapped=", fmtown(rowner), " bound=", fmtown(rbound), "\n";
+
+
 //
 // assert mappingOWNRsThruKlownKV(k.owner, rowner, rm);
 // assert mappingOWNRsThruKlownKV(k.bound, rbound, rm);
@@ -1453,8 +1478,8 @@ assume nuBoundsOK(rowner, rbound);  ///TRUMP TRUMPP TRUMPPP
 // //// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// ///
 // /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// ///
 // // /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// ///
-  v := new Object.make(k.fieldModes, rowner, context, "clone of " + k.nick, rbound);
-print "BACK FROM MAKE with ",fmtobj(v),"\n";
+  v := new Object.make(k.fieldModes, rowner, context, "clone_of_" + k.nick, rbound);
+print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 // //// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// ///
 // /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// ///
 // // /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// ///

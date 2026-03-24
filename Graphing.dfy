@@ -82,7 +82,8 @@ const refOK_attrs := "[penwidth=2,layer=mapping,weight=0,color=purple ,constrain
 const refNK_attrs := "[penwidth=2,layer=mapping,weight=0,color=red,constraint=false,style=dashed]"  //label=\"X\", fontname=Helvetica,fontsize=30,fontcolor=red,labelOverlay=\"true\"
 
 
-const field_attrs := "[penwidth=1,layer=fields,weight=0.5,fontsize=9,arrowhead=normal]"
+const field_attrs := "[penwidth=1,layer=fields,weight=0.5,fontsize=9,arrowhead=vee]"
+const nfield_attrs := "[penwidth=2,layer=fields,weight=0.5,fontsize=9,arrowhead=vee,color=red,style=dotted]"
 
 method {:verify false}  graphobjectset(s : set<Object>, m : Klon, gops : GraphOptions)
 {
@@ -105,12 +106,18 @@ method {:verify false}  graphobjectset(s : set<Object>, m : Klon, gops : GraphOp
 
 
 
-method {:verify false}  graphobject(o : Object, gops : GraphOptions)
+method {:verify false} graphobject(o : Object, gops : GraphOptions)
 {
   //ownership
 
-  print "\n//object ";
-  print o.nick, "\n";
+  print "\n//object ", o.nick, "\n";
+  if ((|o.nick| > 6)) { print "// ", |o.nick|, " > 6 ",o.nick[0..5],"\n"; }
+
+
+  if ((|o.nick| > 6) && (o.nick[0..6] == "clone_"))  {
+    print o.nick,"[color=\"blue\",fontcolor=\"blue\"]\n";
+  }
+
 
   var oo := o.owner;
 
@@ -190,7 +197,8 @@ method {:verify false}  graphobject(o : Object, gops : GraphOptions)
     var nf := o.nick;
     var nt := o.fields[f].nick;
     if (gops.nodeOpt(nf) || gops.nodeOpt(nt)) {
-            print nf, " -> ", nt,     " ", field_attrs;
+            print nf, " -> ", nt,     " ",
+                (if (refOK(o,o.fields[f])) then (field_attrs) else (nfield_attrs));
             print "[label=\"", f, "\"]";
             if (f == "contents") { print "[weight=2.5]"; }
             if (f == "next") { print "[weight=5]"; }

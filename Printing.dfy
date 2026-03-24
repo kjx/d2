@@ -51,21 +51,21 @@ method printobjectset(s : set<Object>)
 function fmtobj(o : Object) : string
    reads o
 {
-  "Obj(" + o.nick + ")"
+  "❪" + o.nick + "❫"
 }
 
 method printobj(o : Object)
   ensures unchanged(o)
   modifies {}
 {
- print "Obj(", o.nick, ")";
+ print fmtobj(o);
 }
 
 
 function fmtown(oo : Owner) : string
    reads oo
 {
-  "Own(" + fmtnickset(oo) + ")"
+  ffmtnickset(oo)
 }
 
 method printown(oo : Owner)
