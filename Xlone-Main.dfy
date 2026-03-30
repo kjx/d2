@@ -26,6 +26,8 @@ method {:verify false} XloneMain(s : seq<string>)
    match (s[1][0]) {
      case '0' =>  Main0();
      case '1' =>  Main1(s[2..]);
+     case '5' =>  Main5(s[2..]);  //yeah "5"
+
      case '2' =>  Main2();
      case '3' =>  Main3();
      case '4' =>  Main4();
@@ -484,7 +486,7 @@ var m : Klon := seed(t,{t},os);
 if ((|s| > 0) && (|s[0]| > 0)) {
     if (s[0][0] == 'd')  // deeep
         {
-          var k := a;
+      var k := a;
       m := seed(k, {t}, os);
       var v := new Object.make(k.fieldModes, m.clowner, m.oHeap, "clone_of_" + k.nick, m.clbound);
       m := m.CalidKV(k,v);
@@ -494,7 +496,7 @@ if ((|s| > 0) && (|s[0]| > 0)) {
         }
       else if (s[0][0] == 's')  // shallow
       {
-        var k := f;
+      var k := f;
       m := seed(k, {b}, os);
       var v := new Object.make(k.fieldModes, m.clowner, m.oHeap, "clone_of_" + k.nick, m.clbound);
       m := m.CalidKV(k,v);
@@ -503,6 +505,17 @@ if ((|s| > 0) && (|s[0]| > 0)) {
       var ra := v;
       m := rm;
       }
+      else if (s[0][0] == 'k')  // sheep *k*lone
+      {
+      var k := f;
+      m := seed(k, {b}, os);
+      var v := new Object.make(k.fieldModes, m.clowner, m.oHeap, "clone_of_" + k.nick, m.clbound);
+      m := m.CalidKV(k,v);
+      var rm := Xlone_All_Fields(k,v,m);
+        var ra := v;
+      m := rm;
+      }  else if (s[0][0] == 'n')  // noclone
+      { print "//noclone\n"; }
  }
 
 
@@ -656,6 +669,280 @@ print "\nDone\n";
 
 }
 // end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+method {:verify false} Main5(s : seq<string>)
+ decreases *
+ {
+
+print "Main5\n";
+
+for x := 0 to |s| {
+  print x, "  ", s[x],"\n";
+}
+
+var t := new Object.make(protoTypesX, {}, {}, "t");
+
+var l := new Object.make(protoTypesX, {t}, {t},       "l");
+var r := new Object.make(protoTypesX, {t}, {t},       "r");
+
+var o := new Object.make(protoTypesX, {l}, {t,l},     "o");
+var p := new Object.make(protoTypesX, {l}, {t,l},     "p");
+var q := new Object.make(protoTypesX, {l}, {t,l},     "q");
+
+var b := new Object.make(protoTypesX, {p}, {t,l,p},     "b", {l});
+var a := new Object.make(protoTypesX, {b}, {t,l,p,b},   "a", {l});
+var c := new Object.make(protoTypesX, {b}, {t,l,p,b},   "c", {l});
+
+a.fields := map["x":=o];
+b.fields := map["x":=q,"c":=c];
+c.fields := map["x":=q,"c":=a];
+
+
+var os : set<Object> := {t,  l, r, o, p, q, a, b, c};
+var oq : seq<Object> := [t,  l, r, o, p, q, a, b, c];
+
+print "|os| == ", |os|, "\n";
+var orig := os;
+
+// print "+++++++++++++\n";
+// print "original store (os)\n";
+// print "+++++++++++++\n";
+// printobjectset(os);
+// print "+++++++++++++\n";
+
+print "done setup\n";
+
+//assert isIsomorphicMappingOWNED(d, d, isomap, os);
+
+// var ros := walkies(d, d, isomap, os);
+
+print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
+
+print "about to Xlone a\n";
+
+assert CallOK(os);
+assert COK(a, os);
+assert CallOK(a.owner,os) by { reveal COK(), CallOK(); }
+
+assert forall o <- os :: (o.Ready());
+//assert forall o <- os :: (o.AllOwnersAreWithinThisHeap(os));
+
+assert forall x <- os ::  x.AllOutgoingReferencesWithinThisHeap(os);
+
+/////////////////////////////////////////////////////       ///////
+
+var m : Klon := seed(t,{t},os);
+
+
+      var k := b;
+      m := seed(k, {r}, os);
+      var v := new Object.make(k.fieldModes, m.clowner, m.oHeap, "clone_of_" + k.nick, m.clbound);
+      m := m.CalidKV(k,v);
+      var rm := Xlone_All_Fields(k,v,m);
+      m := rm;
+
+
+
+
+os := m.hns();
+var ot := set2seq(os);
+
+/// POSTGRAPH
+/// POSTGRAPH
+/// POSTGRAPH
+/// POSTGRAPH
+/// POSTGRAPH
+
+
+      print "\n\n//STARTGRAPH\n";
+      print "////////////////////////////////////////////////////////////////////////////////\n";
+      print "////////////////////////////////////////////////////////////////////////////////\n";
+      print "////////////////////////////////////////////////////////////////////////////////\n";
+      print "//  ", "CLONEY=WONEY", "\n";
+
+//  gops := GraphOptions(graph, lines, nodes, extra);
+var gops := GraphOptions("",    "OBR",  "",    "");
+
+  print "\n\ndigraph dafny {\n";
+  print "   rankdir=\"BT\";\n";
+  print "   layers=\"mapping:fields:owner:bound:amfo:bg\";\n";
+  print "   node [shape=box]\n\n";
+
+  print "{rank=same}\n";
+
+  //pencolor=invis;
+
+  print "subgraph cluster1 {pencolor=invis; rankdir=\"LR\";  t; r;\n";
+  print "   subgraph cluster11 {pencolor=invis; l;\n";
+  print "     subgraph cluster111 {pencolor=invis; o; q;\n";
+  print "        subgraph cluster3 { p;   \n";
+  print               "subgraph cluster2 {pencolor=invis; rankdir=\"RL\"; {rank=sink; b;}  subgraph cluster21 { a; c;}}}}}}\n";
+
+if ((b in m.m.Keys) && (m.m[b].nick == "clone_of_b")) {
+  print "subgraph cluster3 {pencolor=invis; rankdir=\"TB\"; {rank=sink; clone_of_b;}  subgraph cluster21 {pencolor=invis; rankdir=\"TB\"; clone_of_a; clone_of_c;}}\n";
+}
+
+  graphobjectset(os, m, gops);
+
+  graphmapping(m.m, gops);
+
+  graphrefs(ot, gops);  //was commennt out earlier
+
+ print "}\n\n\n";
+
+    print "//ENDGRAPH\n";
+    print "////////////////////////////////////////////////////////////////////////////////\n";
+    print "///////////////////////////////////////////////////////////////////////////////\n";
+    print "////////////////////////////////////////////////////////////////////////////////\n";
+
+
+/// POSTGRAPH
+/// POSTGRAPH
+/// POSTGRAPH
+/// POSTGRAPH
+/// POSTGRAPH
+
+
+
+
+
+//
+//
+//
+//
+// assert a in rm.m.Keys;
+// assert rm.from(m);
+// assert m.Calid();
+// assert m.ownersInKlown(a);
+//
+// print "+++++++++++++\n";
+// print "original store (orig)\n";
+// print "+++++++++++++\n";
+// printobjectset(orig);
+// print "+++++++++++++\n";
+// print "clones rm.Values - orig\n";
+// print "+++++++++++++\n";
+// printobjectset(rm.m.Values - orig);
+// print "+++++++++++++\n";
+// printmapping(rm.m);
+
+
+
+// print "\n\n\n\nwaiting...\\n\n";
+//
+// var context : set<Object> := rm.oHeap + rm.ns();
+// assert os <= context;
+// assert rm.m.Values <= context;
+//
+// var oz := set2seq(context);
+//
+//
+//
+// // var result : bool :=  jeSuisClone(a, rm, context);
+//
+// var result : bool :=  istEinKlon(c, rm, context);
+//
+// print "istEinKlon = ", result;
+//
+// print "\n\n";
+//
+// print "\n$$$$$$$$$$$$$$$$$$\n";
+// //                HeyHoLetsGo(rm);
+//
+//
+//       for i := 0 to |oz|
+//        {
+//          printobj(oz[i]);
+//          print "  AMFO==";
+//          printown(oz[i].AMFO);
+//
+//         var oo := oz[i].AMFO;
+//         if (oo >= rm.o.AMFO) { print "  (inside)\n"; } else { print "  (outside)\n";}
+//
+//         if (oz[i] in rm.m.Keys)  {
+//             print "  mapsto ";
+//             printobj(rm.m[oz[i]]);
+//
+//             if (oz[i].AMFO <= rm.m.Keys)
+//               {
+//                 print "\n mapThruKlon ==";
+//                 printown( mapThruKlon(oo, rm));
+//                 print "\n   calc      ==";
+//                 // printown( calculateClownership(oo, rm));
+//                 // print "\n   mTKlown   ==";
+//                 // printown( mapThruKlown(oo, rm));
+//                 // print "\n   mTKlownII ==";
+//                 // printown( mapThruKlownIfInside(oo, rm));
+//                 // print "\n   OLDmapTKl ==";
+//                 // printown( OLDmapThruKlown(oo, rm));
+//               }
+//              else
+//              {
+//               print "  but AMFO not in Keys??? extra bits:";
+//               printown( oz[i].AMFO - rm.m.Keys );
+//              }
+//             print "\n";
+//         }
+//         else {
+//           print "  NOT IN rm.m\n";
+//         }
+//
+//        }
+//
+//
+
+print "\n$$$$$$$$$$$$$$$$$$\n";
+
+
+print "\nDone\n";
+
+}
+// end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

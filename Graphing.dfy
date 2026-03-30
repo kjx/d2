@@ -77,6 +77,7 @@ const AMFB_attrs := "[penwidth=0.1,layer=amfo,weight=1,arrowhead=invempty,constr
 const mapping_attrs := "[penwidth=2,layer=mapping,weight=0,color=blue,constraint=false]"
 
 const refOKOattrs := "[penwidth=2,layer=mapping,weight=0,color=green,constraint=false]"  //both
+const refOKOattrs_clone := "[penwidth=2,layer=mapping,weight=0,color=blue,fontcolor=blue,constraint=false]"  //both
 const refOO_attrs := "[penwidth=2,layer=mapping,weight=0,color=orange,constraint=false,style=dashed]" //  label=O
 const refOK_attrs := "[penwidth=2,layer=mapping,weight=0,color=purple ,constraint=false]"
 const refNK_attrs := "[penwidth=2,layer=mapping,weight=0,color=red,constraint=false,style=dashed]"  //label=\"X\", fontname=Helvetica,fontsize=30,fontcolor=red,labelOverlay=\"true\"
@@ -111,7 +112,7 @@ method {:verify false} graphobject(o : Object, gops : GraphOptions)
   //ownership
 
   print "\n//object ", o.nick, "\n";
-  if ((|o.nick| > 6)) { print "// ", |o.nick|, " > 6 ",o.nick[0..5],"\n"; }
+//    if ((|o.nick| > 6)) { print "// ", |o.nick|, " > 6 ",o.nick[0..5],"\n"; }
 
 
   if ((|o.nick| > 6) && (o.nick[0..6] == "clone_"))  {
@@ -127,10 +128,19 @@ method {:verify false} graphobject(o : Object, gops : GraphOptions)
     var y: Object;
     y :| y in oo;
 
-  if gops.lineOpt('O') { print o.nick, " -> ", y.nick, " ", owner_attrs, "\n"; }
-     else { print o.nick, " -> ", y.nick, " ", nowner_attrs, "\n"; }
+  if gops.lineOpt('O') { print o.nick, " -> ", y.nick, " ", owner_attrs, " ";
+  if ( ((|o.nick| > 6) && (o.nick[0..6] == "clone_")) &&
+       ((|y.nick| > 6) && (y.nick[0..6] == "clone_")) )
+    {
+    print "[color=\"blue\",fontcolor=\"blue\"]";
+  }
+   }
+     else { print o.nick, " -> ", y.nick, " ", nowner_attrs, " "; }
 
 
+
+
+    print "\n";
     oo := oo - {y};
   }
 
@@ -143,8 +153,18 @@ method {:verify false} graphobject(o : Object, gops : GraphOptions)
     y :| y in oo;
 
    if gops.lineOpt('o') {
-       if (o != y) { print o.nick, " -> ", y.nick, " ", AMFO_attrs, "\n"; }
-   }
+       if (o != y) { print o.nick, " -> ", y.nick, " ", AMFO_attrs, "";
+
+         if ( ((|o.nick| > 6) && (o.nick[0..6] == "clone_")) &&
+            ((|y.nick| > 6) && (y.nick[0..6] == "clone_")) )
+          {
+          print "[color=\"blue\",fontcolor=\"blue\"]";
+          }
+       print "\n";
+
+      }
+  }
+
 
     oo := oo - {y};
   }
@@ -197,13 +217,18 @@ method {:verify false} graphobject(o : Object, gops : GraphOptions)
     var nf := o.nick;
     var nt := o.fields[f].nick;
     if (gops.nodeOpt(nf) || gops.nodeOpt(nt)) {
-            print nf, " -> ", nt,     " ",
+            print nf, " -> ", nt, " ",
                 (if (refOK(o,o.fields[f])) then (field_attrs) else (nfield_attrs));
             print "[label=\"", f, "\"]";
             if (f == "contents") { print "[weight=2.5]"; }
             if (f == "next") { print "[weight=5]"; }
+  if ( ((|nf| > 6) && (nf[0..6] == "clone_")) &&
+       ((|nt| > 6) && (nt[0..6] == "clone_")) )
+    {
+    print "[color=\"blue\",fontcolor=\"blue\"]";
+  }
             print "\n";
-        }
+    }
     fs := fs - {f};
   }
 
@@ -245,9 +270,19 @@ method graphrefs(s : seq<Object>, gops : GraphOptions)
   //       var attrs := if (refOK(s[f],s[t])) then refOK_attrs else refNK_attrs;
 
           var attrs := refNK_attrs; //not permitted reference - red, X
-          if  (refOK(s[f],s[t])) { attrs := refOK_attrs; } //reference permitted w/ boundary - but not without (purple,. shouldn't happen)
+          if  (refOK(s[f],s[t])) {  attrs := refOK_attrs; } //reference permitted w/ boundary - but not without (purple,. shouldn't happen)
           if  (r_efOO(s[f],s[t])) { attrs := refOO_attrs; } //reference without w/ boundary - but NOT permitted with bounday - ORANGE, "O"
-          if ((refOK(s[f],s[t])) && (r_efOO(s[f],s[t]))) { attrs := refOKOattrs; } //OK either way - GREEN
+          if ((refOK(s[f],s[t])) && (r_efOO(s[f],s[t]))) {
+            attrs := refOKOattrs;
+
+            if ( ((|s[f].nick| > 6) && (s[f].nick[0..6] == "clone_")) &&
+                 ((|s[t].nick| > 6) && (s[t].nick[0..6] == "clone_")) )
+          {
+              attrs := refOKOattrs_clone;
+          }
+
+
+             } //OK either way - GREEN
 
 
 //      if ((s[f].nick == "c") || (s[t].nick == "c"))
@@ -257,6 +292,8 @@ method graphrefs(s : seq<Object>, gops : GraphOptions)
      if (gops.nodeOpt(s[f].nick) || gops.nodeOpt(s[t].nick))
         {
         print s[f].nick, " -> ", s[t].nick, " ", attrs, "\n";
+
+
        }
     }
    }
