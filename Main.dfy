@@ -54,14 +54,16 @@ method {:verify false} Main(args : seq<string>)
  if (gops.graph == "b") { t,a,b,c,d,e,k,l,m,os,oq, loutName := zandal9bounded(); }
  if (gops.graph == "c") { t,a,b,c,d,e,k,l,m,os,oq, loutName := zandal9capsul(); }
  if (gops.graph == "d") { t,a,b,c,d,e,k,l,m,os,oq, loutName := zandal9tapsul(); }
+ if (gops.graph == "r") { t,a,b,c,d,e,k,l,m,os,oq, loutName := zandal9rusty(); }
+ if (gops.graph == "i") { t,a,b,c,d,e,k,l,m,os,oq, loutName := zandal9inverted(); }
 
  if (gops.graph == "0") { t,a,b,c,d,e,k,l,m,os,oq, loutName := zandal10(); }
  if (gops.graph == "1") { t,a,b,c,d,e,k,l,m,os,oq, loutName := zandal11(); }
  if (gops.graph == "l") { t,a,b,c,d,e,k,l,m,os,oq, loutName := zandalList(); }
  if (gops.graph == "t") { t,a,b,c,d,e,k,l,m,os,oq, loutName := zandalThreads(); }
 
- if (gops.graph == "E") { print "launch\n"; ExampleMain(args[1..]); return; }
- if (gops.graph == "X") { print "launch\n"; XloneMain(args[1..]); return; }
+ if (gops.graph == "E") { print "launch E\n"; ExampleMain(args[1..]); return; }
+ if (gops.graph == "X") { print "launch X\n"; XloneMain(args[1..]); return; }
 
 
 
@@ -126,6 +128,22 @@ method {:verify false} Main(args : seq<string>)
         if (gops.lineOpt('M')) { graphmapping(km.m, gops); }
 
         if (gops.lineOpt('R')) {    graphrefs(hq, gops); }
+
+
+if (loutName == "zandall9rusty") {
+    print "subgraph clustert {pencolor=invis; rankdir=\"RL\"; t; \n";
+    print "subgraph clustera {pencolor=invis; rankdir=\"RL\"; a; \n";
+    print "subgraph clusterb {pencolor=invis; rankdir=\"RL\"; b; \n";
+    print "subgraph clusterc {pencolor=invis; rankdir=\"RL\"; c; \n";
+    print "subgraph clusterd {pencolor=invis; rankdir=\"RL\"; d; \n";
+    print "subgraph clustere {pencolor=invis; rankdir=\"RL\"; e; \n";
+    print "}}}}}}\n";
+    print "  b -> a [pencolor=invis;  weight=100000; ]\n";
+    print "  c -> b [pencolor=invis;  weight=100000; ]\n";
+    print "  d -> c [pencolor=invis;  weight=100000; ]\n";
+    print "  e -> d [pencolor=invis;  weight=100000; ]\n";
+
+}
 
 
  print "}\n\n\n";
@@ -703,6 +721,11 @@ printAllOwnershipsAndBounds(m_oo, m_context, "m");
 method {:isolate_assertions} zandal9()
 //sets up a single "row" of objects to show permissible links - five objects, t, a..d
 //in this version, all boundaries == owners
+//
+//time lately run Main.dfy c ORB "" "rankdir=\"RL\"; margin=0; "  --allow-warnings --no-verify | tee DUMP.txt
+//time lately run Main.dfy c ORB "c" "rankdir=\"RL\"; margin=0; "  --allow-warnings --no-verify | tee DUMP.txt
+//csplit -s  DUMP.txt %//STARTGRAPH%  ///ENDGRAPH/ ; dpdf xx00; open xx00.pdf
+//
   returns (t : Object, a : Object, b : Object, c : Object, d : Object, e : Object,
            k : Object, l : Object, m : Object,
            os : set<Object>, oq : seq<Object>, loutName : string)
@@ -718,7 +741,7 @@ method {:isolate_assertions} zandal9()
  ensures AllReady(os)
 //  ensures inside(d,c)
 //  ensures inside(d,e)
- {
+  {
     loutName := "zandall9";
     print loutName, " NINE NINE NINE\n";
 
@@ -821,8 +844,12 @@ k := t; l := t; m := t;
 
 
 method {:isolate_assertions} zandal9capsul()
-//aims to show a capsule - but so far DOESNT
 //
+//aims to show a capsul
+//
+//time lately run Main.dfy c ORB "" "rankdir=\"RL\"; margin=0; "  --allow-warnings --no-verify | tee DUMP.txt
+//csplit -s  DUMP.txt %//STARTGRAPH%  ///ENDGRAPH/ ; dpdf xx00; open xx00.pdf
+
   returns (t : Object, a : Object, b : Object, c : Object, d : Object, e : Object,
            k : Object, l : Object, m : Object,
            os : set<Object>, oq : seq<Object>, loutName : string)
@@ -850,6 +877,8 @@ method {:isolate_assertions} zandal9capsul()
       d := new Object.make(protoTypes, {c}, {t,a,b,c}, "d", {});
       e := new Object.make(protoTypes, {d}, {t,a,b,c,d}, "e", {});
 
+      m := new Object.make(protoTypes, {}, {t}, "X", {});
+
 assert t.AMFO == {t};
 assert a.AMFO == {t,a};
 assert b.AMFO == {t,a,b};
@@ -857,10 +886,10 @@ assert c.AMFO == {t,a,b,c};
 assert d.AMFO == {t,a,b,c,d};
 assert e.AMFO == {t,a,b,c,d,e};
 
-k := t; l := t; m := t;
+k := t; l := t;
 
-    os := {t, a, b, c, d, e};
-    oq := [t, a, b, c, d, e];
+    os := {t, a, b, c, d, e, m};
+    oq := [t, a, b, c, d, e, m];
 
     print "zandl9capsul";
 
@@ -870,6 +899,11 @@ k := t; l := t; m := t;
 //{:timeLimit 15}
   method {:isolate_assertions}  zandal9tapsul()
 //aims to show a capsule - bounding eveything at {t} not {}
+//time lately run Main.dfy d ORB "" "rankdir=\"RL\"; margin=0; "  --allow-warnings --no-verify | grep -v SATAN | tee DUMP.txt
+//
+//time lately run Main.dfy d ORB "" "rankdir=\"RL\"; margin=0; "  --allow-warnings --no-verify | grep -v SATAN |  grep -v X | tee DUMP.txt
+//
+//csplit -s  DUMP.txt %//STARTGRAPH%  ///ENDGRAPH/ ; dpdf xx00; open xx00.pdf
 
   returns (t : Object, a : Object, b : Object, c : Object, d : Object, e : Object,
            k : Object, l : Object, m : Object,
@@ -891,12 +925,18 @@ k := t; l := t; m := t;
     print loutName, " NINE NINE NINE\n";
 
 
-      t := new Object.make(protoTypes, {},  {},"t", {});
-      a := new Object.make(protoTypes, {t}, {t}, "a", {t});
-      b := new Object.make(protoTypes, {a}, {t,a}, "b", {t});
-      c := new Object.make(protoTypes, {b}, {t,a,b}, "c", {t});
-      d := new Object.make(protoTypes, {c}, {t,a,b,c}, "d", {t});
-      e := new Object.make(protoTypes, {d}, {t,a,b,c,d}, "e", {t});
+      l := new Object.make(protoTypes, {},  {},"SATAN", {});
+      k := new Object.make(protoTypes, {l},  {},"SATAN2", {l});
+
+      t := new Object.make(protoTypes, {l},  {l},"t", {l});
+      a := new Object.make(protoTypes, {t}, {l,t}, "a", {t});
+      b := new Object.make(protoTypes, {a}, {l,t,a}, "b", {t});
+      c := new Object.make(protoTypes, {b}, {l,t,a,b}, "c", {t});
+      d := new Object.make(protoTypes, {c}, {l,t,a,b,c}, "d", {t});
+      e := new Object.make(protoTypes, {d}, {l,t,a,b,c,d}, "e", {t});
+
+      m := new Object.make(protoTypes, {a}, {t}, "X", {a});
+
 
 // assert t.AMFO == {t};
 // assert a.AMFO == {t,a};
@@ -905,10 +945,10 @@ k := t; l := t; m := t;
 // assert d.AMFO == {t,a,b,c,d};
 // assert e.AMFO == {t,a,b,c,d,e};
 
-k := t; l := t; m := t;
+// k := t; // l := t; //m := t;
 
-    os := {t, a, b, c, d, e};
-    oq := [t, a, b, c, d, e];
+    os := {m, t, a, b, c, d, e, k, l};
+    oq := [m, t, a, b, c, d, e, k, l];
 
     print "zandl9tapsul";
 
@@ -916,6 +956,66 @@ k := t; l := t; m := t;
    }
 
 
+
+
+//{:timeLimit 15}
+  method {:isolate_assertions}  zandal9rusty()
+//aims to show a capsule - bounding eveything at {t} not {}
+//
+//.time lately run Main.dfy r  ORB "cX" "rankdir=\"RL\"; margin=0;"  --allow-warnings --no-verify | grep -v SATAN | tee DUMP.txt
+//csplit -s  DUMP.txt %//STARTGRAPH%  ///ENDGRAPH/ ; dpdf xx00; open xx00.pdf
+
+  returns (t : Object, a : Object, b : Object, c : Object, d : Object, e : Object,
+           k : Object, l : Object, m : Object,
+           os : set<Object>, oq : seq<Object>, loutName : string)
+ ensures t.Ready()
+ ensures a.Ready()
+ ensures b.Ready()
+ ensures c.Ready()   //should be the centre
+ ensures d.Ready()
+ ensures e.Ready()
+ ensures k.Ready()
+ ensures l.Ready()
+ ensures m.Ready()
+ ensures AllReady(os)
+//  ensures inside(d,c)
+//  ensures inside(d,e)
+ {
+    loutName := "zandall9rusty";
+    print loutName, " RUST RUST RUST\n";
+
+
+      l := new Object.make(protoTypes, {},  {},"SATAN", {});
+      k := new Object.make(protoTypes, {l},  {},"SATAN2", {l});
+
+      t := new Object.make(protoTypes, {l},  {l},"t", {l});
+      a := new Object.make(protoTypes, {t}, {l,t}, "a", {t});
+      b := new Object.make(protoTypes, {a}, {l,t,a}, "b", {t});
+      c := new Object.make(protoTypes, {a}, {l,t,a,b}, "c", {t});
+      d := new Object.make(protoTypes, {a}, {l,t,a,b,c}, "d", {t});
+      e := new Object.make(protoTypes, {a}, {l,t,a,b,c,d}, "e", {t});
+
+      m := new Object.make(protoTypes, {a}, {t}, "X", {a});
+
+
+
+
+// assert t.AMFO == {t};
+// assert a.AMFO == {t,a};
+// assert b.AMFO == {t,a,b};
+// assert c.AMFO == {t,a,b,c};
+// assert d.AMFO == {t,a,b,c,d};
+// assert e.AMFO == {t,a,b,c,d,e};
+
+// k := t; // l := t; //m := t;
+
+    os := {m, t, a, b, c, d, e, k, l};
+    oq := [m, t, a, b, c, d, e, k, l];
+
+    print "zandl9rusty";
+
+    return;
+   }
 
 
 
@@ -1150,6 +1250,53 @@ assume AllReady(os);
 
 
 
+
+
+
+method {:isolate_assertions} zandal9inverted()
+//sets up a single "row" of objects to show permissible links - five objects, t, a..d
+//in this version, all boundaries == owners
+//
+//time lately run Main.dfy c ORB "" "rankdir=\"RL\"; margin=0; "  --allow-warnings --no-verify | tee DUMP.txt
+//time lately run Main.dfy c ORB "c" "rankdir=\"RL\"; margin=0; "  --allow-warnings --no-verify | tee DUMP.txt
+//csplit -s  DUMP.txt %//STARTGRAPH%  ///ENDGRAPH/ ; dpdf xx00; open xx00.pdf
+//
+  returns (t : Object, a : Object, b : Object, c : Object, d : Object, e : Object,
+           k : Object, l : Object, m : Object,
+           os : set<Object>, oq : seq<Object>, loutName : string)
+ ensures t.Ready()
+ ensures a.Ready()
+ ensures b.Ready()
+ ensures c.Ready()   //should be the centre
+ ensures d.Ready()
+ ensures e.Ready()
+ ensures k.Ready()
+ ensures l.Ready()
+ ensures m.Ready()
+ ensures AllReady(os)
+//  ensures inside(d,c)
+//  ensures inside(d,e)
+  {
+    loutName := "zandall9inverted";
+    print loutName, " ENIN ENIN ENIN\n";
+
+
+      t := new Object.make(protoTypes, {},  {},"t");
+      a := new Object.make(protoTypes, {t}, {t}, "a", {});
+      b := new Object.make(protoTypes, {a}, {t,a}, "b", {});
+      c := new Object.make(protoTypes, {b}, {t,a,b}, "c", {});
+      d := new Object.make(protoTypes, {c}, {t,a,b,c}, "d", {});
+      e := new Object.make(protoTypes, {d}, {t,a,b,c,d}, "e", {});
+
+    k := t;
+    l := t;
+    m := t;
+
+    os := {t, a, b, c, d, e};
+    oq := [t, a, b, c, d, e];
+
+    print "zandall9 inverted!!! \n";
+  }
 
 
 

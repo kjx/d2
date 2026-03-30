@@ -1,4 +1,4 @@
- include "Library.dfy"
+include "Library.dfy"
 include "Mode.dfy"
 include "Ownership.dfy" //comes in via Mode anyway..
 
@@ -659,3 +659,16 @@ function intersetion<T>(intersets : set<set<T>>) : set<T>
 //   requires  mb == intersetion( set o <- oo :: o.AMFB )
 //    ensures forall x <- mb, t <- oo :: x in t.AMFB
 //   {}
+
+// function recIntersectAll (intersets : set<set<T>>) : set<T>
+//  // return a set of only the elements in all other sets
+//  {
+//     if (intersets == {})
+//        then ({})
+//        else (  if (|interests| == 1) then (interests)
+//            else ( if (|interests| == 2) then (
+//                 var l :| l in intersects;
+//                 var r :| r in  intersects && r != l ;
+//
+//
+//            )
