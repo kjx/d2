@@ -42,7 +42,7 @@ class Object {
 
 
 //LILLE constructor arguments
-  constructor {:isolate_assertions} {:timeLimit 10} make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := oo)
+  constructor {:isolate_assertions} {:timeLimit 20} make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := oo)
     //make an object.  owner & (opt) bound should be local owners, not flattened OWNRS
 
 //refactored 30 Jan 2026!! //bunch of commented-out-stuff excised
@@ -51,6 +51,7 @@ class Object {
     requires flatten(oo) >= flatten(mb)
     requires forall o <- flatten(oo) :: o.Ready()
     requires nuBoundsOK(oo, mb)   ///attempting to get verification times down
+    requires myBoundsOK(oo, mb)   ///attempting to get verification times down
 
 //"rephrase" precondtions
     ensures context >= AMFX >= AMFB
@@ -94,7 +95,6 @@ class Object {
     MakeOwnerOwners(oo, mb);
     MakeOwnerSelfies(oo,mb);
     MakeInContext(context);
-
     assert unchanged( context );
   }
 
@@ -254,6 +254,7 @@ lemma MakeOwnerOwners(oo : Owner, mb : Owner)
    ensures forall oo <- AMFX :: oo.Ready()
    ensures AMFO > AMFX >= AMFB
    ensures forall oo <- AMFX :: AMFO > oo.AMFO
+   ensures nuBoundsOK(oo, mb)
   {}
 
 
@@ -275,7 +276,8 @@ lemma MakeOwnerSelfies(oo : Owner, mb : Owner)
 
    ensures AMFO  == flatten(oo)+{this}
    ensures AMFO  == flatten(self)
-  {
+   ensures nuBoundsOK(oo, mb)
+    {
         MakeOwnerOwners(oo, mb);
         assert self == owner + {this};
         assert flatten(self) == flatten(owner+{this});
@@ -286,7 +288,7 @@ lemma MakeOwnerSelfies(oo : Owner, mb : Owner)
 
   }
 
-  lemma MakeInContext(context : set<Object>)
+  lemma {:isolate_assertions}    MakeInContext(context : set<Object>)
   //helper to make
    requires Ready()
    requires context >= flatten(owner)
@@ -533,7 +535,8 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
      ensures Valid()
     modifies this`fields
        {
-         var vObj := new Object.make(map[],{this},AMFO, natToString(v), {this});
+         var vBnd := proposeBounds({this});
+         var vObj := new Object.make(map[],{this},AMFO, natToString(v), vBnd);
          assert refOK(this, vObj);
          fields := fields[n:=vObj];
          assert Ready();
@@ -584,7 +587,8 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
      ensures Valid()
     modifies this`fields
        {
-         var vObj := new Object.make(map[],{this},AMFO, natToString(v), {this});
+         var vBnd := proposeBounds({this});
+         var vObj := new Object.make(map[],{this},AMFO, natToString(v), vBnd);
          assert refOK(this, vObj);
          fields := fields[n:=vObj];
          assert Ready();

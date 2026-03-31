@@ -1,11 +1,12 @@
-include "Ownership.dfy"
+//include "Ownership.dfy"
+include "Ownership-Recursive.dfy"
 
 type Bound = Owner
 
 
 predicate myBoundsOK(oo : Owner, mb : Bound)
  //basic defiintin: my flattened boumd must be outside any owners bound(s)
- { forall o <- oo :: o.AMFB >= flatten(mb) }
+  { forall o <- oo :: o.AMFB >= flatten(mb) }
 
 lemma testBounds1(oo : Owner, mb : Bound)
   //bound of {} is always OK
@@ -138,11 +139,40 @@ method proposeBoundsFLAT(os : set<Object>) returns (b : Bound)
  }
 
 
-method proposeBounds(os : set<Object>) returns (b : Bound)
- //computes the intersection of the *flattened* bounds of each owner
+method opposeBounds(os : set<Object>) returns (b : Bound)
+ //computes the intersection of the nominal bounds of each owner
   requires AllReady(os)
+   ensures myBoundsOK(os, b)
+   ensures b == proposeBounds(os)
    ensures myBoundsOK(os, b)
  {
     var all : set<Object> := set o <- os, a <- o.bound :: a;
     b := set a <- all | forall o <- os :: a in o.AMFB;
  }
+
+ function proposeBounds(os : set<Object>) : (b : Bound)
+ //propose boubnsf but it;'s a function
+  requires AllReady(os)
+   ensures myBoundsOK(os, b)
+ {
+    var all : set<Object> := set o <- os, a <- o.bound :: a;
+    set a <- all | forall o <- os :: a in o.AMFB
+ }
+
+lemma {:isolate_assertions} TransitiveBounds(part : Object,  whole : Object)
+ decreases part.AMFO
+  requires part.Ready() && whole.Ready()
+  requires inside(part,whole)
+  requires myBoundsOK(part.owner, part.bound)
+   ensures part.AMFB <= whole.AMFB //contravariuant
+  {
+     InsideRecInside2(part, whole);
+
+    if  ((part == whole) || (whole in part.owner)) { return; }
+
+    assert (exists x <- part.owner :: recInside(x,whole));
+
+    var next :| ((next in part.owner) && recInside(next,whole));
+    InsideRecInside1(next, whole);
+    TransitiveBounds(next,whole);
+}
