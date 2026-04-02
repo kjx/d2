@@ -175,8 +175,8 @@ assert forall k <- me.Keys :: ( (inside(k,o)) ==> (me[k] !in oHeap));
                             clbound,
                             oHeap,
                             o.AMFX,
-                            flatten(clbound),
-                            clamfx);
+                            clamfx,
+                            flatten(clbound));
 assert inside(o, o);
 assert inside(c, c);
 assert inside(m0.o, m0.o);

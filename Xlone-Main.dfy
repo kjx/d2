@@ -39,13 +39,14 @@ method {:verify false} XloneMain(s : seq<string>)
 
 
 //{:verify false} //{:only}
-method makeDemo() returns (t : Object, a : Object, b : Object, os : set<Object>)
+method {:isolate_assertions} {:timeLimit 0}  makeDemo() returns (t : Object, a : Object, b : Object, os : set<Object>)
   ensures t in os
   ensures a in os
   ensures b in os
   ensures forall o <- os :: o.Ready()
 //  ensures forall o <- os :: o.AllOwnersAreWithinThisHeap(os)
   ensures forall o <- os :: o.AllOutgoingReferencesWithinThisHeap(os)
+
   ensures forall o <- os :: o.fieldModes == protoTypesX
   ensures COK(a, os)
   ensures CallOK(os)
@@ -71,6 +72,17 @@ assert t.AMFX == {};
 assert forall o : Object <- {t}, ooo <- o.AMFO :: o.AMFO >= ooo.AMFO;
 
 assert CallOK({t},{t}) by { reveal COK(), CallOK(); }
+
+assert t.owner == {};
+assert t.bound == {};
+assert t.AMFB  == {};
+assert flatten({}) == {};
+assert flatten({t}) == {t};
+
+assert proposeBounds({t}) == {};
+assert myBoundsOK({t},{});
+assert t.AMFB >= flatten({});
+
 
 a := new Object.make(protoTypesX, {t}, {t}, "a");
 
@@ -200,7 +212,7 @@ assert forall x <- os ::  x.AllOutgoingReferencesWithinThisHeap(os);
 
 var k := a;
 
-var m : Klon := seed(k, {b}, os);
+var m : Klon := sheepKlon(k, {b}, os);
 
 
 //
@@ -249,32 +261,6 @@ var m : Klon := seed(k, {b}, os);
 // /// PREGRAPH
 //
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//at this point we've got all the owners in the map
-//what we DON"T have is the object itself. So:
-
-
-
-var v := new Object.make(k.fieldModes, m.clowner, m.oHeap, "clone_of_" + k.nick, m.clbound);
-
-m := m.CalidKV(k,v);
-
-var rm := Xlone_All_Fields(k,v,m);
-var ra := v;
-m := rm;
 
 os := m.hns();
 
@@ -327,8 +313,6 @@ var gops := GraphOptions("",    "OF",  "",    "");
 
 
 
-assert a in rm.m.Keys;
-assert rm.from(m);
 assert m.Calid();
 assert m.ownersInKlown(a);
 
@@ -339,9 +323,9 @@ printobjectset(orig);
 print "+++++++++++++\n";
 print "clones rm.Values - orig\n";
 print "+++++++++++++\n";
-printobjectset(rm.m.Values - orig);
+printobjectset(m.m.Values - orig);
 print "+++++++++++++\n";
-printmapping(rm.m);
+printmapping(m.m);
 //
 // print "\n\n\n\nwaiting...\\n\n";
 //
@@ -481,39 +465,39 @@ assert forall x <- os ::  x.AllOutgoingReferencesWithinThisHeap(os);
 
 /////////////////////////////////////////////////////       ///////
 
-var m : Klon := seed(t,{t},os);
+var m : Klon :=  sheepKlon(t,{t},os);
 
 if ((|s| > 0) && (|s[0]| > 0)) {
     if (s[0][0] == 'd')  // deeep
         {
       var k := a;
-      m := seed(k, {t}, os);
-      var v := new Object.make(k.fieldModes, m.clowner, m.oHeap, "clone_of_" + k.nick, m.clbound);
-      m := m.CalidKV(k,v);
-      var rm := Xlone_All_Fields(k,v,m);
-      var ra := v;
-      m := rm;
+      m := sheepKlon(k, {t}, os);
+      // var v := new Object.make(k.fieldModes, m.clowner, m.oHeap, "clone_of_" + k.nick, m.clbound);
+      // m := m.CalidKV(k,v);
+      // var rm := Xlone_All_Fields(k,v,m);
+      // var ra := v;
+      // m := rm;
         }
       else if (s[0][0] == 's')  // shallow
       {
       var k := f;
-      m := seed(k, {b}, os);
-      var v := new Object.make(k.fieldModes, m.clowner, m.oHeap, "clone_of_" + k.nick, m.clbound);
-      m := m.CalidKV(k,v);
-      v.fields :=   k.fields;
-      var rm := m;
-      var ra := v;
-      m := rm;
+      m := sheepKlon(k, {t}, os);
+      // var v := new Object.make(k.fieldModes, m.clowner, m.oHeap, "clone_of_" + k.nick, m.clbound);
+      // m := m.CalidKV(k,v);
+      // v.fields :=   k.fields;
+      // var rm := m;
+      // var ra := v;
+      // m := rm;
       }
       else if (s[0][0] == 'k')  // sheep *k*lone
       {
       var k := f;
-      m := seed(k, {b}, os);
-      var v := new Object.make(k.fieldModes, m.clowner, m.oHeap, "clone_of_" + k.nick, m.clbound);
-      m := m.CalidKV(k,v);
-      var rm := Xlone_All_Fields(k,v,m);
-        var ra := v;
-      m := rm;
+      m := sheepKlon(k, {b}, os);
+      // var v := new Object.make(k.fieldModes, m.clowner, m.oHeap, "clone_of_" + k.nick, m.clbound);
+      // m := m.CalidKV(k,v);
+      // var rm := Xlone_All_Fields(k,v,m);
+      //   var ra := v;
+      // m := rm;
       }  else if (s[0][0] == 'n')  // noclone
       { print "//noclone\n"; }
  }
@@ -760,15 +744,15 @@ assert forall x <- os ::  x.AllOutgoingReferencesWithinThisHeap(os);
 
 /////////////////////////////////////////////////////       ///////
 
-var m : Klon := seed(t,{t},os);
+var m : Klon := sheepKlon(t,{t},os);
 
-
-      var k := b;
-      m := seed(k, {r}, os);
-      var v := new Object.make(k.fieldModes, m.clowner, m.oHeap, "clone_of_" + k.nick, m.clbound);
-      m := m.CalidKV(k,v);
-      var rm := Xlone_All_Fields(k,v,m);
-      m := rm;
+//
+//       var k := b;
+//       m := seed(k, {r}, os);
+//       var v := new Object.make(k.fieldModes, m.clowner, m.oHeap, "clone_of_" + k.nick, m.clbound);
+//       m := m.CalidKV(k,v);
+//       var rm := Xlone_All_Fields(k,v,m);
+//       m := rm;
 
 
 

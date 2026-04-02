@@ -6,7 +6,11 @@ type Bound = Owner
 
 predicate myBoundsOK(oo : Owner, mb : Bound)
  //basic defiintin: my flattened boumd must be outside any owners bound(s)
-  { forall o <- oo :: o.AMFB >= flatten(mb) }
+//  { (forall o <- oo :: o.AMFB >= flatten(mb)) }
+    { (forall o <- oo :: flatten(mb) <= o.AMFB) }
+
+// && (flatten(oo) >= flatten(mb)) //aka effectiveowner is INSIDE effectivebound
+// && (forall o <- oo :: o.AMFB >= flatten(mb))
 
 lemma testBounds1(oo : Owner, mb : Bound)
   //bound of {} is always OK
@@ -160,12 +164,20 @@ method opposeBounds(os : set<Object>) returns (b : Bound)
  }
 
  function froposeBounds(os : set<Object>) : (b : Bound)
- //propose boubnsf but it;'s a function
+ //propose boubnsf but it;'s a function withtout READY as a precondition.
  //  ensures myBoundsOK(os, b)
  {
     var all : set<Object> := set o <- os, a <- o.bound :: a;
     set a <- all | forall o <- os :: a in o.AMFB
  }
+
+lemma froposeGetsBoundsOK(os : set<Object>, fp  : set<Object>)
+    requires froposeBounds(os) == fp
+    requires AllReady(os)
+     ensures proposeBounds(os) == fp
+     ensures myBoundsOK(os, fp)
+{}
+
 
 lemma {:isolate_assertions} TransitiveBounds(part : Object,  whole : Object)
  decreases part.AMFO

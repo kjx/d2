@@ -42,7 +42,7 @@ class Object {
 
 
 //LILLE constructor arguments
-  constructor {:isolate_assertions} {:timeLimit 20} make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := oo)
+  constructor {:isolate_assertions} {:timeLimit 20} make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := froposeBounds(oo))
     //make an object.  owner & (opt) bound should be local owners, not flattened OWNRS
 
 //refactored 30 Jan 2026!! //bunch of commented-out-stuff excised
@@ -51,7 +51,7 @@ class Object {
     requires flatten(oo) >= flatten(mb)
     requires forall o <- flatten(oo) :: o.Ready()
     requires nuBoundsOK(oo, mb)   ///attempting to get verification times down
-    requires myBoundsOK(oo, mb)   ///attempting to get verification times down
+//    requires myBoundsOK(oo, mb)   ///attempting to get verification times down
 
 //"rephrase" precondtions
     ensures context >= AMFX >= AMFB

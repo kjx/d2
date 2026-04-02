@@ -22,9 +22,9 @@ datatype Klon = Klon
   clowner : Owner,            //owner of the clone
   clbound : Owner,            //bound of the clone
   oHeap : set<Object>,        //heap
-  o_amfx : Owner,             //the AMFX of o
-  c_amfb : OWNR,              //expected flattened bound of the clone..
-  c_amfx : Owner              //epected flattened ownershio of the clone..
+  o_amfx : OWNR,              //the AMFX of o
+  c_amfx : OWNR,              //epected flattened ownershio of the clone..
+  c_amfb : OWNR              //expected flattened bound of the clone..
 )
 {
   function  ns(os : set<Object> := {}) : set<Object> { m.Values+os        }

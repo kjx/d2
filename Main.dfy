@@ -31,11 +31,6 @@ const protoTypes : map<string, Mode> := fields({"t","a","b","c","d","e","k","l",
 
 
 
-
-
-
-
-
 method {:verify false} Main(args : seq<string>)
  decreases * //sob
 {
@@ -85,7 +80,7 @@ method {:verify false} Main(args : seq<string>)
 
 
 //  print "WARNING WARNING KLON KLON KLON\n";
-  var km := Klon(v', b, k.owner, k.bound, hs, b.AMFX, flatten(k.owner) );
+  var km := Klon(v', b, k, k.owner, k.bound, hs, b.AMFX,  flatten(k.owner), flatten(k.bound) );
 
   assert km.o == b;
   assert km.o.Ready();
@@ -820,7 +815,7 @@ method {:isolate_assertions} zandal9bounded()
 printAllOwnershipsAndBounds({},  {},"t");
 printAllOwnershipsAndBounds({t}, {t}, "a");
 printAllOwnershipsAndBounds({a}, {t,a}, "b");
-printAllOwnershipsAndBounds({b}, {t,a,b}, "c");
+printAllOwnershipsAndBounds({b}, {t,a,b}, "c", {a});
 printAllOwnershipsAndBounds({c}, {t,a,b,c}, "d", {a});
 printAllOwnershipsAndBounds({d}, {t,a,b,c,d}, "e", {a});
 
