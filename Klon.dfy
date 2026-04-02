@@ -1,5 +1,5 @@
 include "Ownership.dfy"
-
+include "Bound.dfy"
 
 // //[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
 // //[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
@@ -17,12 +17,13 @@ include "Ownership.dfy"
 datatype Klon = Klon
 (
   m : vmap<Object,Object>,    //the  klon map
-  o : Object,                 //object being copied
+  o : Object,                 //"pivot" object being copied
+  c : Object,                 //"trivet" object being built
   clowner : Owner,            //owner of the clone
   clbound : Owner,            //bound of the clone
   oHeap : set<Object>,        //heap
-  o_amfx : Owner,             //was o. so the AMFX of o
-  //  c_amfb : OWNR,              //epected flattened bound of the clone..
+  o_amfx : Owner,             //the AMFX of o
+  c_amfb : OWNR,              //expected flattened bound of the clone..
   c_amfx : Owner              //epected flattened ownershio of the clone..
 )
 {
@@ -34,10 +35,12 @@ datatype Klon = Klon
   {
     && mapGEQ(m,  prev.m)
     && o       == prev.o
+    && c       == prev.c
     && clowner == prev.clowner
     && clbound == prev.clbound
     && oHeap   == prev.oHeap     //OPTION - considere incorporating ApoCalidseNow...
     && o_amfx  == prev.o_amfx
+    && c_amfb  == prev.c_amfb
     && c_amfx  == prev.c_amfx
        //option ie allow heaps to get bigger, so long as all keys are in the heap
   }
@@ -164,6 +167,70 @@ predicate ValueInContext(v : Object)
     && ValuesContextReady()
     && Calid()
   }
+
+
+// lemma {:isolate_assertions} STOOPID_TOO(m : Klon)
+//    requires m.StupidCalidFragilistic()
+//    requires m.objectInKlown(m.o)
+//     ensures m.SuperCalidFragilistic()
+// {}
+//
+// predicate {:isolate_assertions} StupidCalidFragilistic() : (r : bool)
+//    //like supercalid BUT without the object in the Keys
+//     reads oHeap, m.Values
+//   {
+//     && HeapContextReady()
+//     && ValuesContextReady()
+//     && (ownersInKlown(o)) ///////////****************///////////////********///////
+//     && (o.AMFX == o_amfx)
+//     && (myBoundsOK(o.owner, o.bound))
+//     && (o.AMFO == o_amfx+{o})
+// //precalid2
+//     && (c_amfx <= oHeap) //should goto precalid1??
+//       //Llooks kinda odd...
+//
+//     && ((o in m.Keys) ==> (   ///so this one is an IF.
+//           var c := m[o]; //WE HAS KLONE
+//          ///&& add in c.Ready()???
+//           && (c_amfx  == c.AMFX)
+//           && (clowner == c.owner)
+//           && (clbound == c.bound)
+//           && (c  in m.Values)
+//           && (c !in oHeap)
+//
+//           && (o in oHeap) ///////////****************///////////////********///////
+//           && (objectInKlown(o))  ///////////****************///////////////********///////
+//        ))
+//     //calidObjects - mostly about oHeap and ns and stuff
+//     && (m.Keys <= oHeap)
+//     && (forall k <- m.Keys :: (k.Ready() && k.Valid()))   //note no Context
+//
+//     //this recapitulates ValuesContextReady() but putting it here lets things work
+//     && (forall v <- m.Values :: (v.Ready() && v.Valid()))    //note no Context
+//
+//     //the pivot object "o" being cloned
+//     // && (o.Ready() && o.Valid() && o.Context(oHeap) && objectInKlown(o))
+//     && (o.Ready() && o.Valid() && o.Context(oHeap))   // && objectInKlown(o))
+//
+//     && (forall k <- m.Keys   :: m[k].AMFO  >= m[k].AMFB  >= k.AMFB)
+//
+//     && (forall k <- m.Keys   :: (not(inside(k,o)) ==> (m[k] == k)))
+//     && (forall k <- m.Keys   :: (   (inside(k,o)) ==> (m[k] !in oHeap)))
+//
+//     && (forall k <- m.Keys :: k.AMFO <= m.Keys)
+//     && (forall k <- m.Keys :: k.AMFB <= m.Keys)
+//
+//     && (&& (HeapOwnersReady())
+//         && (ValuesOwnersReady())
+//         && (    forall k <- m.Keys :: (
+//                             && (k.Ready())
+//                             && (ownersInKlown(k))
+//                             && (m[k].Ready())
+//                             && (m[k] in hns())
+//                           ))
+//         && (AllLinesCalid()))
+//   }
+
 
   //opaque
   ghost predicate {:isolate_assertions} Calid() : (r : bool)

@@ -3033,7 +3033,8 @@ method {:isolate_assertions} {:timeLimit 0}  Xlone_All_Fields(a : Object, b : Ob
   requires m'.oHeap >= flatten(m'.clowner) >= flatten(m'.clbound)
   requires m'.objectInKlown(a)
 //prog inside
-  requires strictlyInside(a, m'.o)
+//  requires strictlyInside(a, m'.o)
+  requires inside(a, m'.o)
 //prog inside
   requires a in m'.m.Keys
   requires m'.m[a] == b
