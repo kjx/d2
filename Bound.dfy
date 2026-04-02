@@ -159,6 +159,14 @@ method opposeBounds(os : set<Object>) returns (b : Bound)
     set a <- all | forall o <- os :: a in o.AMFB
  }
 
+ function froposeBounds(os : set<Object>) : (b : Bound)
+ //propose boubnsf but it;'s a function
+ //  ensures myBoundsOK(os, b)
+ {
+    var all : set<Object> := set o <- os, a <- o.bound :: a;
+    set a <- all | forall o <- os :: a in o.AMFB
+ }
+
 lemma {:isolate_assertions} TransitiveBounds(part : Object,  whole : Object)
  decreases part.AMFO
   requires part.Ready() && whole.Ready()
