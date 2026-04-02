@@ -28,6 +28,22 @@ lemma {:isolate_assertions} NoOutgoingPointers(f : Object, o : Object, t : Objec
 
 
 
+lemma {:isolate_assertions} MovingOnUp(f : Object, o : Object, oo  : Object, t : Object)
+  requires f.Ready() && o.Ready() && t.Ready() && oo.Ready()
+
+  requires refOK(o,t)
+  requires strictlyInside(o,oo)
+  requires outside(t,o)
+   ensures flatten(o.bound) <= flatten(oo.bound)
+   ensures refOK(oo,t)
+{
+    TransitiveBounds(o,oo);
+}
+
+
+
+
+
 lemma Goop(f : Object, t : Object)
   requires f.Ready() && t.Ready()
   requires t.owner == {f}
