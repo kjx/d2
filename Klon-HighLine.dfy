@@ -3,7 +3,8 @@ include "Klon-Lemmata.dfy"
 include "Library.dfy"
 
 
-  ghost predicate {:isolate_assertions} HighCalidFragilistic(m : Klon) : (r : bool)
+  predicate {:isolate_assertions} HighCalidFragilistic(m : Klon) : (r : bool)
+    requires m.apoCalidse()
     reads m.oHeap, m.hns()
      {
                 && (forall k <- m.m.Keys :: HighLineKV(k, m.m[k], m))
@@ -727,3 +728,324 @@ lemma MappingOWNRsThruKlownKVFrom(kk : OWNR, vv: OWNR, m : Klon, m' : Klon)
 //    ensures flatten(mapThruKlon(os, m)) >= flatten(mapThruKlon(ot, m))
 // {
 // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+lemma {:isolate_assertions}  AMFO_PIVOT(k : Object, v : Object, m : Klon)
+  requires k.Ready()
+  requires v.Ready()
+  requires m.objectInKlown(k)
+  requires m.SuperCalidFragilistic()
+  requires HighCalidFragilistic(m)
+  requires HighLineKV(k,v,m)
+  requires k == m.o
+      ensures v == m.c
+      ensures v.owner == m.clowner
+      ensures v.AMFX  == flatten(m.clowner)
+      ensures v.AMFO  == m.c_amfx + {m.c}
+{}
+
+
+lemma {:isolate_assertions} {:timeLimit 40} MAP_THRU_IDENTITY_SET(ks : Owner, m : Klon)
+   requires AllReady(ks)
+   requires ks <= m.m.Keys
+   requires m.SuperCalidFragilistic()
+   requires HighCalidFragilistic(m)
+   requires forall x <- ks :: m.m[x] == x
+    ensures ks == set x <- ks :: x
+    ensures ks == set x <- ks :: m.m[x]
+    ensures (set x <- ks :: x) == (set x <- ks :: m.m[x])
+{}
+
+//{:timeLimit 60}
+lemma {:isolate_assertions} {:timeLimit 60} AMFO_OUTSIDE(k : Object, v : Object, m : Klon)
+  requires k.Ready()
+  requires v.Ready()
+  requires m.objectInKlown(k)
+  requires m.SuperCalidFragilistic()
+  requires HighCalidFragilistic(m)
+  requires HighLineKV(k,v,m)
+  requires outside(k, m.o)
+   ensures k == v
+   ensures k.owner == v.owner
+   ensures k.AMFO  == v.AMFO
+//             ensures v.AMFO  == mapThruKlon(k.AMFO,m)
+{
+   assert k.AMFO <= m.m.Keys;
+   assert forall x <- k.AMFO :: outside(x, m.o);
+   assert forall x <- k.AMFO :: m.m[x] == x;
+   assert k.AMFO == (set x <- k.AMFO :: x);
+   assert (set x <- k.AMFO :: x) == (set x <- k.AMFO :: m.m[x]);
+   assert (set x <- k.AMFO :: m.m[x]) == v.AMFO;
+}
+
+predicate effectivelyDirectlyInside(part : Object, whole : Object)
+ {
+  && part.Ready()
+  && whole.Ready()
+  && part.AMFX == whole.AMFO  //haw h aw haw
+ }
+
+
+lemma  {:isolate_assertions} {:timeLimit 7} AXIOM_DI(part : Object, whole : Object)
+ requires part.Ready()
+ requires whole.Ready()
+ requires part.AMFX == whole.AMFO
+  ensures whole in part.owner
+  ensures forall p <- part.owner :: inside(whole, p)
+  ensures forall p <- part.owner :: p in whole.AMFO
+
+//  ensures part.owner == whole.self // can't have this, because
+// part.owner can have any other flattened owner of whole in it
+// semanticlaly the same as just having whole.  but...
+{
+  assert flatten(part.owner) == part.AMFX;
+  assert flatten(whole.self) == flatten(whole.owner + {whole}) == whole.AMFO;
+  assert flatten(part.owner) == flatten(whole.self);
+  assert flatten(part.owner) == flatten(whole.owner + {whole});
+  assert whole in part.owner;
+
+  AXIOMAMFODIRECT(part, whole);
+  assert forall p <- part.owner :: inside(whole, p);
+
+
+}
+
+
+lemma  {:isolate_assertions} {:timeLimit 7}  InsideIsInside(k : Object, v : Object, m : Klon)
+  requires k.Ready()
+  requires v.Ready()
+  requires m.objectInKlown(k)
+  requires m.SuperCalidFragilistic()
+  requires HighCalidFragilistic(m)
+  requires HighLineKV(k,v,m)
+  requires inside(k, m.o)
+   ensures inside(v, m.c)
+   ensures strictlyInside(k,m.o) <==> strictlyInside(v,m.c)
+   {}
+
+
+lemma  {:isolate_assertions} {:timeLimit 30}   RefOKisRefOK(f' : Object, t' : Object, f : Object, t : Object, m : Klon)
+   // Heap if RefiOJ then clone is REFOK
+   // note this only works for Refs what are inside m.o
+ requires f'.Ready()
+ requires t'.Ready()
+ requires f.Ready()
+ requires t.Ready()
+ requires m.objectInKlown(f')
+ requires m.objectInKlown(t')
+ requires m.SuperCalidFragilistic()
+ requires HighCalidFragilistic(m)
+ requires refOK(f',t')
+ requires m.CalidLineKV(f', f)
+ requires m.CalidLineKV(t', t)
+ requires HighLineKV(f', f, m)
+ requires HighLineKV(t', t, m)
+
+  //i.e thees are ACTUAL CLONES not POTENTIAL CLONES
+ requires f == m.m[f']
+ requires t == m.m[t']
+
+
+//YET MORE FFECKING CASES cos SubAMFOsGeq is more restrictive
+ requires inside(f', m.o)
+ requires strictlyInside(t', m.o)
+//   ensures inside(f, m.m[m.o])
+//   ensures strictlyInside(t, m.m[m.o])
+//
+//   ensures HighLineKV(f', f, m)
+//   ensures HighLineKV(t', t, m)
+//
+//   ensures mappingOwnersThruKlownKV(f', f, m)
+//   ensures mappingOwnersThruKlownKV(t', t, m)
+//
+//   ensures m.SuperCalidFragilistic()
+//   ensures m.m.Keys >= f'.AMFB
+//
+// ensures refOK(f,t)
+  {
+assert  refOK(f',t');
+
+assert t' != m.o;
+assert t'.AMFO > m.o.AMFO;
+assert mappingOwnersThruKlownKV(t', t, m);
+assert mappingOWNRsThruKlownKV(t'.owner, t.owner, m);
+assert t.owner == (mapThruKlon(t'.owner - m.o.AMFO, m) + m.m[m.o].AMFO);
+// assert t.owner == shiftAMFO(t'.owner, m.o.AMFO, m.m[m.o].AMFO, m.m);
+if (f' in t'.owner)  { assert f in t.owner; }
+
+
+    if (f' == t')
+     {
+      assert f==t;
+      return;
+     }
+
+    if (refBI(f',t'))
+     {
+      // assert f'.AMFB >= t'.AMFX;  //GREENLAND
+      // assert f.AMFB  >= t.AMFX;  //GREENLAND
+
+      assert (f'.AMFB > {}) && (f'.AMFB >=  t'.AMFX);
+      assert (f'.AMFB > {});
+      assert (f'.AMFB >= t'.AMFX);
+
+
+  SubAMFOsGeq(f'.AMFB, t'.AMFX, f.AMFB, t.AMFX, m);
+      assert (f .AMFB >=  t .AMFX);
+      assert (f .AMFB > {});
+      assert refBI(f,t);
+
+      return;
+     }
+
+    if (refDI(f',t'))
+     {
+///////////////////////////////////////////////////////////////////////////
+//       // assert f' in t'.owner;  //AMDI_FINT //GREENLAND
+//       assert f'.AMFO == t'.AMFX;
+//       assert flatten(f'.owner + {f'}) == f'.AMFO;
+//       assert flatten(t'.owner) == t'.AMFX;
+//       assert flatten(f'.owner + {f'}) == flatten(t'.owner);
+//       assert (f'.owner + {f'}) == t'.owner;
+//
+//       assert flatten(f'.owner) == f'.AMFX;
+//       assert flatten(f'.self ) == f'.AMFO;
+//       assert flatten(t'.owner) == t'.AMFX;
+//       assert flatten(t'.self ) == t'.AMFO;
+//
+//       assert flatten(f'.self) == flatten(t'.owner);
+// //      AXIOMAMFOS();
+//       assert f'.self == t'.owner;
+//
+//       if (f' == m.o) {
+//         //give up for now!!
+//           assert f'.AMFO == m.o.AMFO;
+//           assert f .AMFO == m.c.AMFO;
+//           assert t'.AMFX == m.o.AMFO;
+//           assert flatten(t'.owner) == t'.AMFX;
+//           assert flatten(t'.owner) + {t'} == t'.AMFO;
+//           assert flatten(t'.owner + {t'}) == t'.AMFO;
+//
+//           assert flatten(f'.owner) + {f'} == f'.AMFO;
+//
+//       assert m.CalidLineKV(t',t);
+//       assert mappingOwnersThruKlownKV(t', t, m);
+//       assert mappingOWNRsThruKlownKV(t'.bound, t.bound, m);
+//       assert mappingOWNRsThruKlownKV(t'.owner, t.owner, m);
+//       assert t.owner == mapThruKlon(t'.owner - m.o.AMFO, m) + m.c.AMFO;
+//       assert flatten(t'.owner) == t'.AMFX;
+//       assert flatten(t .owner) == t .AMFX;
+//       assert t.owner == mapThruKlon(t'.owner - m.o.AMFO, m) + m.c.AMFO;
+//       assert flatten(t.owner) == t.AMFX;
+//
+//
+//       assert m.CalidLineKV(f',f);
+//       assert mappingOwnersThruKlownKV(f', f, m);
+//       assert mappingOWNRsThruKlownKV(f'.bound, f.bound, m);
+//       assert mappingOWNRsThruKlownKV(f'.owner, f.owner, m);
+//       assert f.owner == mapThruKlon(f'.owner - m.o.AMFO, m) + m.c.AMFO;
+//       assert inside(f', m.o);
+//       assert flatten(f'.owner + {f'}) == f'.AMFO;
+//       assert flatten(f'.owner) == f'.AMFX;
+//       assert f'.AMFO == t'.AMFX;
+//       assert f.owner == mapThruKlon(f'.owner - m.o.AMFO, m) + m.c.AMFO;
+
+///////////////////////////////////////////////////////////////////////////
+
+
+          assert t .AMFX == m.c.AMFO;
+          assert f .AMFO == m.c.AMFO == t .AMFX;
+
+          assert refDI(f',t');
+          return;
+      }
+
+
+InsideIsInside(f',f,m);
+InsideIsInside(t',t,m);
+
+assert strictlyInside(f',m.o);
+assert strictlyInside(t',m.o);
+
+assert strictlyInside(f ,m.c);
+assert strictlyInside(t ,m.c);
+
+
+
+//       assert m.CalidLineKV(t',t);
+//       assert mappingOwnersThruKlownKV(t', t, m);
+//       assert mappingOWNRsThruKlownKV(t'.bound, t.bound, m);
+//       assert mappingOWNRsThruKlownKV(t'.owner, t.owner, m);
+//
+//       assert mappingOWNRsThruKlownKV(f'.bound, f.bound, m);
+//       assert mappingOWNRsThruKlownKV(f'.owner, f.owner, m);
+//
+//       assert strictlyInside(t', m.o);
+//       assert f'.AMFO == t'.AMFX;
+
+
+
+
+    // // assert SupaLine(t',t,m);
+    // assert flatten(t'.owner) >= m.o.AMFO by { assert strictlyInside(t', m.o);       }
+    // assert t.owner == (mapThruKlon(t'.owner - m.o.AMFO, m) + m.m[m.o].AMFO);
+    // //assert t.owner == shiftAMFOZ(t'.owner, m.o.AMFO, m.m[m.o].AMFO, m.m);
+    //       assert f  in t .owner;  //AMDI_FINT //GREENLAND
+    //       assert f.AMFO == t.AMFX;
+      assert refDI(f,t);
+      return;
+     }
+
+assert false;
+  }

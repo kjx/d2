@@ -127,6 +127,11 @@ lemma {:isolate_assertions} RefOKvsOO(f : Object, t : Object)
 
 
 
+
+
+
+
+
 //[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
 //
 //flatness
@@ -191,14 +196,39 @@ function collectBounds(os : Owner) : Owner    //TODO old should delete  //THULE
 predicate nuBoundsOK(oo : Owner, mb : Owner) {
 //arguments are local fields, unflattened...
 //&& (flatten(mb) <= flatten(oo))  //bound is a subset of owner
-  && (flatten(oo) >= flatten(mb)) //aka effectiveowner is INSIDE effectivebound
+//  && (flatten(oo) >= flatten(mb)) //aka effectiveowner is INSIDE effectivebound
+  //  && (forall o <- oo :: ((o.AMFB) >= flatten(mb)))
 
-  && (forall o <- oo :: o.AMFB >= flatten(mb))
+  && (myBoundsOK(oo,mb))
+
+//  && (forall o <- oo :: ((o.AMFB + {o} ) >= flatten(mb)))
 
 //  && (flatten(mb) <= (set ooo <- oo, omb <- ooo.AMFB :: omb) + oo)
-      //AKA (I think) effectivebound is subseteq/surroundingeq the union of owners' bounds.
-}
+        //AKA (I think) effectivebound is subseteq/surroundingeq the union of owners' bounds.
+  }
 
+lemma {:verify false}  OldPolonium(oo : Owner, mb : Owner, m : Klon)
+  requires m.apoCalidse()
+  requires m.SuperCalidFragilistic()
+  requires oo <= m.m.Keys
+  requires mb <= m.m.Keys
+  requires nuBoundsOK(oo, mb)
+  requires flatten(oo) > m.o.AMFO
+  requires flatten(mb) > m.o.AMFO
+//   ensures nuBoundsOK(computeOwnerForClone(oo,m), computeOwnerForClone(mb,m))
+ {
+  assert (flatten(oo) >= flatten(mb));
+  assert (forall o <- oo ::( (o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(mb))));
+
+  // var ro := computeOwnerForClone(oo,m);
+  // var rb := computeOwnerForClone(mb,m);
+
+var ro := mapThruKlon(oo, m);
+var rb := mapThruKlon(mb, m);
+
+  assert (flatten(ro) >= flatten(rb));
+//  assert (forall o <- ro ::( (o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(rb))));
+ }
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////

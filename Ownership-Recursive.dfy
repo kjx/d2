@@ -321,6 +321,19 @@ lemma AXIOMAMFOS(a : Object, b : Object)
   ensures  (a != b) <==> (a.AMFO != b.AMFO)
 {}
 
+lemma  {:isolate_assertions} AXIOMOWNERSFLAT(a : Owner, b : Owner)
+  requires AllReady(a)
+  requires AllReady(b)
+   ensures  (a == b)  ==> (flatten(a) == flatten(b))
+   ensures  (a != b)  <== (flatten(a) != flatten(b))
+
+  //  ensures  (a == b) <==  (flatten(a) == flatten(b))
+  //  ensures  (a == b) <==> (flatten(a) == flatten(b))
+//    ensures  (a != b) <==> (flatten(a) != flatten(b))
+{}
+
+
+
 lemma AXIOMAMFO(part : Object, whole : Object)
 // o in AMFO ==> o.AMFO <= AMFO
    requires  part.Ready()
@@ -340,6 +353,33 @@ lemma AXIOMAMFOREVERSE(part : Object, whole : Object)
     assert whole in whole.AMFO;
    }
 
+
+
+lemma {:isolate_assertions} AXIOMAMFODIRECT0(part : Object, whole : Object)
+   requires part.Ready()
+   requires whole.Ready()
+   requires part.owner == {whole}
+    ensures part.AMFX == whole.AMFO
+{ }
+
+
+lemma {:isolate_assertions} AXIOMAMFODIRECT(part : Object, whole : Object)
+// inside(part,whole) ==> whole in part.AMFO
+   requires part.Ready()
+   requires whole.Ready()
+   requires part.AMFX == whole.AMFO
+    ensures whole in part.owner
+    ensures forall w <- part.owner :: inside(whole, w)
+    ensures isFlat(part.AMFX)
+{
+   assert part.AMFX == whole.AMFO;
+   assert isFlat(part.AMFX);
+
+   FLATAMFO(whole);
+   assert forall w <- whole.AMFO :: inside(whole, w);
+   assert whole in whole.AMFO;
+   assert forall w <- whole.self :: inside(whole, w);
+}
 
 //should go off to flatten... or owners-flatten.dfy...
 predicate goodFlatten(o : Object, myAMFO : Owner)

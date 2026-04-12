@@ -105,7 +105,6 @@ predicate {:isolate_assertions} Ready()
     decreases AMFO, 20
   {
     && (self  == owner +  {this})
-    && (self  == self)
     && (AMFB == flatten(bound))
     && (AMFX == flatten(owner))
     && (AMFO == flatten(self ))
@@ -117,7 +116,10 @@ predicate {:isolate_assertions} Ready()
     && (forall oo <- AMFX  :: (AMFO > oo.AMFO) && oo.Ready())
 //    && (forall oo <- owner :: AMFB <= oo.AMFB)  //Beady2()
     //NUBOUND
-    && (nuBoundsOK(owner, bound))
+  //  && (nuBoundsOK(owner, bound))
+
+    && (myBoundsOK(owner, bound))
+
     && (this !in AMFX) && (this !in owner) &&  (this !in bound)
   }
 

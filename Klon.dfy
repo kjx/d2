@@ -337,6 +337,19 @@ predicate ValueInContext(v : Object)
 {}
 
 
+  lemma {:isolate_assertions} {:timeLimit 20} CalidLineKVFrom(k : Object, v : Object, prev : Klon)
+    requires prev.apoCalidse()
+    requires k.Ready()// && k.Valid() // should context go in here too? probasbly?
+    requires prev.ownersInKlown(k)
+    requires v.Ready()
+    requires prev.CalidLineKV(k,v)
+    requires from(prev)
+    requires apoCalidse()
+     ensures CalidLineKV(k,v)
+{}
+
+
+
   predicate {:isolate_assertions} CalidLineKV(k : Object, v : Object)
     //conditions for individual mappings (pairs aka lines) in the overall Klon map
     //this shoiuld work for lines *already* in the Klon
@@ -1082,7 +1095,7 @@ assert v.bound == k.bound;
     && (v.Ready() && (v in hns({v})))
 
  //   && (v.AMFO  >= v.AMFB  >= k.AMFB)  //GREENLAND
-    && (   (inside(k,o)) ==> (k.AMFB  <= o.AMFB))  //GREENLAND
+      && (   (inside(k,o)) ==> (k.AMFB  <= o.AMFB))  //GREENLAND
 
     && (not(inside(k,o)) ==> (v == k))
     && (   (inside(k,o)) ==> ((v !in oHeap)) )
@@ -1198,7 +1211,7 @@ predicate {:isolate_assertions}  checkOwnershipOfClone(k : Object, v : Object, m
       // prog FEAR SATAN!!
 
       if (k == m.o) then (
-          && (v == m.m[m.o])
+          && (v == m.c)
           && (v.owner == m.clowner)
           && (v.bound == m.clbound)
         ) else if (outside(k, m.o) )
