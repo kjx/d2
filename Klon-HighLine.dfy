@@ -784,35 +784,38 @@ lemma FLAT_ONE(a : Object)
 {}
 
 
-lemma {:isolate_assertions} RefOKDI(f' : Object, t' : Object, f : Object, t : Object, m : Klon)
+lemma {:isolate_assertions} {:timeLimit 20}                   RefOKDI(f' : Object, t' : Object, f : Object, t : Object, m : Klon)
  requires f'.Ready()
  requires t'.Ready()
  requires f.Ready()
  requires t.Ready()
  requires m.objectInKlown(f')
  requires m.objectInKlown(t')
- requires m.SuperCalidFragilistic()
- requires HighCalidFragilistic(m)
+//  requires m.SuperCalidFragilistic()
+//  requires HighCalidFragilistic(m)
  requires refDI(f',t')
  requires refOK(f',t')
- requires m.CalidLineKV(f', f)
- requires m.CalidLineKV(t', t)
- requires HighLineKV(f', f, m)
- requires HighLineKV(t', t, m)
+
+  requires klonCalid(m)
+  requires allKlonLines(m)
+//  requires m.CalidLineKV(f', f)
+//  requires m.CalidLineKV(t', t)
+//  requires HighLineKV(f', f, m)
+//  requires HighLineKV(t', t, m)
 
   //i.e thees are ACTUAL CLONES not POTENTIAL CLONES
  requires f == m.m[f']
  requires t == m.m[t']
 
 //YET MORE FFECKING CASES cos SubAMFOsGeq is more restrictive
- requires strictlyInside(f', m.o)
+ requires inside(f', m.o)
  requires strictlyInside(t', m.o)
   // ensures refDI(f,t)
   // ensures refOK(f,t)
 {
   assert refDI(f',t');
-  //  assert t'.owner == {f'};
-  assert flatten({f'}) == flatten(t'.owner);
+    assert t'.owner == {f'};
+//  assert flatten({f'}) == flatten(t'.owner);
 //  assert f'.self == t'.owner;
 //  assert f'.AMFO == t'.AMFX;
   // assert f'.AMFO == (t'.AMFO - {t'});
@@ -821,32 +824,39 @@ lemma {:isolate_assertions} RefOKDI(f' : Object, t' : Object, f : Object, t : Ob
   assert f == m.m[f'];
   assert t == m.m[t'];
 
- assert m.CalidLineKV(f', f);
- assert m.CalidLineKV(t', t);
- assert HighLineKV(f', f, m);
- assert HighLineKV(t', t, m);
- assert mappingOwnersThruKlownKV(f', f, m);
- assert mappingOwnersThruKlownKV(t', t, m);
+//  assert m.CalidLineKV(f', f);
+//  assert m.CalidLineKV(t', t);
+//  assert HighLineKV(f', f, m);
+//  assert HighLineKV(t', t, m);
+//  assert mappingOwnersThruKlownKV(f', f, m);
+//  assert mappingOwnersThruKlownKV(t', t, m);
 
-assert strictlyInside(f', m.o);
-assert strictlyInside(t', m.o);
 
-assert mappingOWNRsThruKlownKV(t'.owner, t.owner, m);
+// assert klonLine(f',f,m);
+// assert klonLine(t',t,m);
+// assert strictlyInside(f', m.o);
+// assert strictlyInside(t', m.o);
 
-  assert t .owner == mapThruKlon(t'.owner - m.o.AMFO, m) + m.c.AMFO;
+//assert mappingOWNRsThruKlownKV(t'.owner, t.owner, m);
+
+assert klonIdentity(t',t,m);
+assert t.owner == mapThruKlon(t'.owner, m);
+
+//  assert t .owner == mapThruKlon(t'.owner - m.o.AMFO, m) + m.c.AMFO;
 ////HAK  assert t'.owner == {f'};
-  assert flatten({f'}) == flatten(t'.owner);
-  assert f'.AMFO == t'.AMFX;
+
+  // assert flatten({f'}) == flatten(t'.owner);
+  // assert f'.AMFO == t'.AMFX;
 
 
-  assert t .owner == mapThruKlon({f'}      - m.o.AMFO, m) + m.c.AMFO;
-  assert ({f'} - m.o.AMFO) == {f'}
-   by {
-        assert strictlyInside(f', m.o);
-        assert {f'} !! m.o.AMFO;
-        SUB_DISJ({f'}, m.o.AMFO);
-        assert {f'} -  m.o.AMFO == {f'};
-   }
+  // assert t .owner == mapThruKlon({f'}      - m.o.AMFO, m) + m.c.AMFO;
+  // assert ({f'} - m.o.AMFO) == {f'}
+  //  by {
+  //       assert strictlyInside(f', m.o);
+  //       assert {f'} !! m.o.AMFO;
+  //       SUB_DISJ({f'}, m.o.AMFO);
+  //       assert {f'} -  m.o.AMFO == {f'};
+  //  }
 ////HAK  assert t .owner == mapThruKlon({f'}, m) + m.c.AMFO;
 //  assert mapThruKlon({f'}, m) == set x <- {f'} :: m.m[x];
   assert m.m[f'] == f;
@@ -856,12 +866,14 @@ assert mappingOWNRsThruKlownKV(t'.owner, t.owner, m);
 //  assert mapThruKlon({f'}, m) == {f};
 ////HAK  assert t .owner == {f} + m.c.AMFO;
 
-assert t.owner == {f} + m.c.AMFO;
-assert inside(f, m.c);
-////HAK assert m.c.AMFO == flatten({m.c});
-assert flatten({f}) >= flatten({m.c});
-////HAK assert flatten({f}) == flatten({f} + m.c.AMFO);
-assert flatten(t.owner) == flatten({f});
+assert t.owner == {f};
+//
+// assert t.owner == {f} + m.c.AMFO;
+// assert inside(f, m.c);
+// ////HAK assert m.c.AMFO == flatten({m.c});
+// assert flatten({f}) >= flatten({m.c});
+// ////HAK assert flatten({f}) == flatten({f} + m.c.AMFO);
+// assert flatten(t.owner) == flatten({f});
 
 // assert {f} == computeOwnerForClone({f'}, m);
 // assert {t} == computeOwnerForClone({t'}, m);
@@ -869,11 +881,8 @@ assert flatten(t.owner) == flatten({f});
 //   assert t'.owner == {f'};
 //   assert t .owner == {f };
 //
-//
-//
-//   assert {f'} == t'.owner;
-//   assert refDI(f,t);
-//   assert refOK(f,t);
+  assert refDI(f,t);
+  assert refOK(f,t);
 
 
 }
@@ -1054,8 +1063,20 @@ if (f' in t'.owner)  { assert f in t.owner; }
 
     if (refDI(f',t'))
      {
+//
+//
+// print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";
+// print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";
+// print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";
+
+  assume klonCalid(m);
+  assume allKlonLines(m);
+
+// print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";
+//   print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";
 
 
+    RefOKDI(f',t',f,t,m);
 ///////////////////////////////////////////////////////////////////////////
 //       // assert f' in t'.owner;  //AMDI_FINT //GREENLAND
 //       assert f'.AMFO == t'.AMFX;

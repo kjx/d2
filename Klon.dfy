@@ -1251,7 +1251,11 @@ predicate {:isolate_assertions}  checkOwnershipOfClone(k : Object, v : Object, m
 //but stil - 21 Sept 2025
 
 
-        && (vv == (mapThruKlon(kk - m.o.AMFO, m) + m.m[m.o].AMFO))
+//FUCK!!! this is AMFO not OWNER!!!!!!!!!! !!!!!!!!!! !!!!!!!!! !!!!!!!!!!!
+//the argument types are called OWNR
+//they are passed in "owner" and "bound" - ie objects not Owners.  //FUCK.
+
+        && (vv == (mapThruKlon(kk - m.o.AMFO, m) + m.c.AMFO))
         && (flatten(kk) <= m.oHeap)
         && (flatten(vv) <= m.hns(vv))
 

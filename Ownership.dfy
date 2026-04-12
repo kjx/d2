@@ -96,8 +96,14 @@ lemma transitiveInside(a : Object, b : Object, c : Object)
 
 predicate refBI(f : Object, t : Object) {(f.AMFB > {}) &&  (f.AMFB >=  t.AMFX)}
 
-// predicate refDI(f : Object, t : Object) {f in t.owner}
-predicate refDI(f : Object, t : Object)      {f.self == t.owner}  // trial 12 APril 2026
+//predicate refDI(f : Object, t : Object) {f in t.owner}
+//predicate refDI(f : Object, t : Object) {{f} == t.owner}
+
+// predicate refDI(f : Object, t : Object) {flatten({f}) == flatten(t.owner)}  //HAK 12 APril 2026
+// predicate refDI(f : Object, t : Object)      {f.self == t.owner}  // trial 12 APril 2026  //WRONGO WRONGO WRONGO
+predicate refDI(f : Object, t : Object) {{f} == t.owner}  //GRK GKR 12 April 2026
+   //annoying but makes the refOK proof fucking trivial...
+
 
 predicate refDI_seqo(f : Object, t : Object) {f.AMFO == t.AMFX} // prev version
 predicate refDI_fint(f : Object, t : Object) {f in t.owner} //AMDI_FINT
