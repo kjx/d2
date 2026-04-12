@@ -97,9 +97,9 @@ lemma transitiveInside(a : Object, b : Object, c : Object)
 predicate refBI(f : Object, t : Object) {(f.AMFB > {}) &&  (f.AMFB >=  t.AMFX)}
 
 // predicate refDI(f : Object, t : Object) {f in t.owner}
-predicate refDI(f : Object, t : Object)      {f.AMFO == t.AMFX}  // trial 20Mar 2026
+predicate refDI(f : Object, t : Object)      {f.self == t.owner}  // trial 12 APril 2026
 
-predicate refDI_seqo(f : Object, t : Object) {f.AMFO == t.AMFX}
+predicate refDI_seqo(f : Object, t : Object) {f.AMFO == t.AMFX} // prev version
 predicate refDI_fint(f : Object, t : Object) {f in t.owner} //AMDI_FINT
 predicate refDI_fall(f : Object, t : Object) {t.owner == {f}} //AMDI_FINT
 
