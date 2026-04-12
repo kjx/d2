@@ -1000,17 +1000,17 @@ if (f' in t'.owner)  { assert f in t.owner; }
 //       assert flatten(f'.owner) == f'.AMFX;
 //       assert f'.AMFO == t'.AMFX;
 //       assert f.owner == mapThruKlon(f'.owner - m.o.AMFO, m) + m.c.AMFO;
-
+//
+//
+//
+//
+//           assert t .AMFX == m.c.AMFO;
+//           assert f .AMFO == m.c.AMFO == t .AMFX;
+//
+//           assert refDI(f',t');
+//           return;
+//       }
 ///////////////////////////////////////////////////////////////////////////
-
-
-          assert t .AMFX == m.c.AMFO;
-          assert f .AMFO == m.c.AMFO == t .AMFX;
-
-          assert refDI(f',t');
-          return;
-      }
-
 
 InsideIsInside(f',f,m);
 InsideIsInside(t',t,m);
