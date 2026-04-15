@@ -1,5 +1,5 @@
 include "Library.dfy"
-include "Mode.dfy"
+  //include "Mode.dfy"
 include "Ownership.dfy" //comes in via Mode anyway..
 
 //TODOS when valid - precondition on comoputeWOwnerForClone - see JDVANCE
@@ -13,15 +13,22 @@ include "Ownership.dfy" //comes in via Mode anyway..
   //AMFB-NOT-NULL null  bound bans outgoing references
 //REVERT - revertig defintion of flatten to have the extra +os (and so tolerate un-Ready() arguments)
 //Libertarin - input constraints on computeOwnershiOfClone
+//OWNERBOUND
+//NO_FIELDMODES
 //verifies clear 25 Jan 2025
 
 type Owner = set<Object>
 
-type OWNR  = Owner // except OWNRs should be flattened
+type OWNR  = Owner
+//// newtype OWNR  = Owner // except OWNRs should be flattened
+
+
+
+
 
 //these types are declared mostly so "printing" can be linked in (or not)
-// datatype Edge = Edge(f : Object, n : string, m : Mode, t : Object)
-// type Incoming = map<Object,set<Edge>>
+datatype Edge = Edge(f : Object, n : string, m : Mode, t : Object)
+    type Incoming = map<Object,set<Edge>>
 
 class Object {
 
@@ -418,63 +425,16 @@ lemma ValidMeansAllFieldsValid()
   ensures Valid() <==> AllFieldsValid()
 {}
 
-  method usetf(n : string, v : Object)
-    requires Ready()
-    requires n  in fieldModes.Keys
-    requires refOK(this, v)
-     ensures fields == old(fields)[n:=v]
-    modifies this`fields
-       { fields := fields[n:=v]; }
 
-  function ugetf(n : string) : (v : Object)
-    requires n in fieldModes.Keys
-    requires n in fields.Keys
-       reads `fields, `fieldModes
-       { fields[n] }
 
-  method {:isolate_assertions} setf(n : string, v : Object)
-    requires Ready()
-    requires Valid()
-//NO_FIELDMODES         requires n  in fieldModes.Keys
-    requires refOK(this, v)
- //   requires v.Ready()  //READYREADY
-    //NO_FIELDMODES         requires forall n <- fields :: (n in fieldModes) && modeOK(this, fieldModes[n], fields[n])
-    //NO_FIELDMODES             requires modeOK(this, fieldModes[n], v)
-    requires v.bound == v.owner //OWNERBOUND
-     ensures fields == old(fields)[n:=v]
-     ensures refOK(this, fields[n])
-     ensures ownerf(n, v.owner)
-     ensures Valid()
-     ensures forall n <- fields :: (n in fieldModes) && modeOK(this, fieldModes[n], fields[n]) //OWNERBOUND
-    modifies this`fields
-       { fields := fields[n:=v];
-         assume n in fieldModes.Keys; //OWNERBOUND
-         assume modeOK(this, fieldModes[n], v); //OWNERBOUND
-         assume forall n <- fields :: (n in fieldModes) &&  modeOK(this, fieldModes[n], fields[n]); //OWNERBOUND
-        }
 
-  function getf(n : string) : (v : Object)
-//NO_FIELDMODES    requires n in fieldModes.Keys
-        requires n in fields.Keys
-       ensures v.owner == v.bound //OWNERBOUND
-       ensures v.Ready() //READYREADY
-       reads `fields, `fieldModes
-       { assume {:axiom} n in fields.Keys;  //NO_FIELDMODES
-         assume fields[n].owner == fields[n].bound; //OWNERBOUND
-         assume fields[n].Ready(); //READYREADY
-           fields[n] }
 
-   predicate ownerf(n : string, oo : Owner)
-       //does field n have owner oo?   (and - for now -  is it accessible from me?)
-       reads `fields, `fieldModes
-       {&& (n in fields.Keys)
-        && (fields[n].owner == oo)
-        && (fields[n].bound == oo)  //OWNERBOUND
-        && (refOK(this,fields[n]))
-        //NO_FIELDMODES      shioujdl be a mode check here too I guess??
-        && ((fields[n].owner == oo) == (fields[n].owner == oo)) }  //OWNERBOUND
 
-        // lemma {:isolate_assertions} I_HATE_BOUNDS()
+
+//////////////////////
+////  I think most of this can go?
+/////////////////////
+// lemma {:isolate_assertions} I_HATE_BOUNDS()
 //   requires Ready()
 //    ensures ( (set ooo : Object <- {this}, omb : Object <-  ooo.AMFB :: omb) + {this} ) == (AMFB + {this})
 //    ensures (forall oo <- owner :: oo.AMFB >= AMFB)
@@ -494,6 +454,9 @@ lemma ValidMeansAllFieldsValid()
 //    assert this !in AMFX;  assert this !in AMFB;
 // }
 
+function ownerBound() : Bound {  if (owner == bound) then (self) else (bound) }
+   //the bound for directly owned objects to use to set their own bounds...
+       //AMFB == AMFX or owner == bound  ???
 
 function collectOwnersBounds() : set<set<Object>>  { set o <- owner :: o.AMFB }
 
@@ -526,7 +489,76 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
 //   }
 
 
+
+//////////////////////////////////
+//
+// accessors
+//
+//////////////////////////////////
+
+  method usetf(n : string, v : Object)
+  //unchcked no guranatees - set field
+    requires Ready()
+    requires n  in fieldModes.Keys
+    requires refOK(this, v)
+     ensures fields == old(fields)[n:=v]
+    modifies this`fields
+       { fields := fields[n:=v]; }
+
+  function ugetf(n : string) : (v : Object)
+    //unchcked no guranatees - get field
+    requires n in fieldModes.Keys
+    requires n in fields.Keys
+       reads `fields, `fieldModes
+       { fields[n] }
+
+  method {:isolate_assertions} setf(n : string, v : Object)
+   ///set field maintains validity
+    requires Ready()
+    requires Valid()
+//NO_FIELDMODES         requires n  in fieldModes.Keys
+    requires refOK(this, v)
+ //   requires v.Ready()  //READYREADY
+    //NO_FIELDMODES         requires forall n <- fields :: (n in fieldModes) && modeOK(this, fieldModes[n], fields[n])
+    //NO_FIELDMODES             requires modeOK(this, fieldModes[n], v)
+    requires v.bound == v.owner //OWNERBOUND
+     ensures fields == old(fields)[n:=v]
+     ensures refOK(this, fields[n])
+     ensures ownerf(n, v.owner)
+     ensures Valid()
+     ensures forall n <- fields :: (n in fieldModes) && modeOK(this, fieldModes[n], fields[n]) //NO_FIELDMODES
+    modifies this`fields
+       { fields := fields[n:=v];
+         assume n in fieldModes.Keys; //NO_FIELDMODES
+         assume modeOK(this, fieldModes[n], v); //NO_FIELDMODES
+         assume forall n <- fields :: (n in fieldModes) &&  modeOK(this, fieldModes[n], fields[n]); //NO_FIELDMODES
+        }
+
+  function getf(n : string) : (v : Object)
+     ///get field maintains validity
+//NO_FIELDMODES    requires n in fieldModes.Keys
+        requires n in fields.Keys
+       ensures v.owner == v.bound //OWNERBOUND
+       ensures v.Ready() //READYREADY
+       reads `fields, `fieldModes
+       { assume {:axiom} n in fields.Keys;  //NO_FIELDMODES
+         assume fields[n].owner == fields[n].bound; //OWNERBOUND
+         assume fields[n].Ready(); //READYREADY
+           fields[n] }
+
+   predicate ownerf(n : string, oo : Owner)
+       //does field n have owner oo?   (and - for now -  is it accessible from me?)
+       reads `fields, `fieldModes
+       {&& (n in fields.Keys)
+        && (fields[n].owner == oo)
+        && (fields[n].bound == oo)  //OWNERBOUND
+        && (refOK(this,fields[n]))
+        //NO_FIELDMODES      shioujdl be a mode check here too I guess??
+        && ((fields[n].owner == oo) == (fields[n].owner == oo)) }  //OWNERBOUND
+
+
   method {:isolate_assertions} usetn(n : string, v : nat)
+     //unchecked set nat
     requires Ready()
     requires Valid()
     requires (forall n <- fields :: (n in fieldModes) && modeOK(this, fieldModes[n], fields[n]))
@@ -550,6 +582,7 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
 
 
   function ugetn(n : string) : (v : nat)
+       //unchecked get nat
     requires n in fieldModes.Keys
     requires n in fields.Keys
        reads `fields, `fieldModes, fields.Values`nick
@@ -561,6 +594,7 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
 
 
   method {:isolate_assertions} uincrn(n : string)
+       //unchecked incr nat
     requires Ready()
     requires Valid()
 //NO_FIELDMODES    requires n in fieldModes.Keys
@@ -579,6 +613,7 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
 
 
   method {:isolate_assertions} setn(n : string, v : nat)
+    //set nat maitains validity
     requires Ready()
     requires Valid()
 //NO_FIELDMODES    requires n in fieldModes.Keys
@@ -602,6 +637,7 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
        }
 
   method {:isolate_assertions} incrn(n : string)
+      //incr nat maitains validity
     requires Ready()
     requires Valid()
 //NO_FIELDMODES    requires n in fieldModes.Keys
@@ -620,6 +656,7 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
 
 
   function getn(n : string) : (v : nat)
+    //get nat maitains validity
 //NO_FIELDMODES    requires n in fieldModes.Keys
 //NO_FIELDMODES    requires n in fields.Keys
        reads `fields, `fieldModes, fields.Values`nick
@@ -637,8 +674,6 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
 //NO_FIELDMODES    requires n in fieldModes.Keys //yuck
     reads `fields, `fieldModes, fields.Values`nick
        { n in fields.Keys }
-
-
 
 
 }//end class Object
@@ -678,3 +713,369 @@ function intersetion<T>(intersets : set<set<T>>) : set<T>
 //
 //
 //            )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////
+//modes aka "reference capabilities"  YUCK
+//
+//
+//  Modes tacked on the bottom of Object.dfy to avoid circular imports.
+//  also this isn't that important right now
+//
+// //[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+// //[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+//
+datatype Mode =
+  | Rep // owned by me
+  | Peer // owned by my owner
+    //For all the Owner & Read "Modes" sholdn't the owner always be "self" i.e; the object containing the reernce.
+  | Owned(perm : Perm) //unrestricted, Rust-style owning reference - with no borrows!
+  | Loaned(perm : Perm) //owning reference, but currently there are "borrowed" references to it
+  | Borrow(perm: Perm, owner: Owner, from : Object, name : string) //borrowed reference, borrowe from that object!
+    //when one does a "stack-pop-return" into the obejct that this was borrowed from
+    //then the Mode of the owning refernece goes from Loaned -> Owned
+  | Self // points to yourself
+  | Evil //type dyanmic.  So I don't hace to do the full checks right now --- kjx 7 May 2024
+
+
+datatype Perm = Read | Write | Local   ///or should these be object kinds???>  ARGH!!
+
+predicate modeOK(f : Object, m : Mode, t : Object)
+  //can object o point to object v?
+  //can object v be assigned to a field of Mode t within object o?
+  //NOTE EVIL cutrently ignor4s OWNERSHIP in this definition!!!!!
+{
+  true
+//NO_FIELDMODES //NO_FIELDMODES //NO_FIELDMODES //NO_FIELDMODES //NO_FIELDMODES
+  // match m
+  // case Evil => true
+  // case Rep | Owned(_) | Loaned(_) => refDI(f,t)
+  // case Peer => (f.owner == t.owner)
+  // case Borrow(_,_,_,_) => refOK(f,t)
+  // case Self => (f == t) // this is apparently redundant, dont' know what
+//NO_FIELDMODES //NO_FIELDMODES //NO_FIELDMODES //NO_FIELDMODES //NO_FIELDMODES
+}
+
+lemma MODE_INDIGO(f : Object, m : Mode, t : Object)
+    requires m == Evil
+     ensures modeOK(f,m,t)
+{}
+
+//
+lemma MODE_SANITY(m : Mode, o : Object)
+  requires m.Self?
+   ensures modeOK(o,m,o)
+{}

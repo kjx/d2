@@ -1,4 +1,4 @@
-include "Ownership.dfy"
+  include "Ownership.dfy"
 include "Incoming.dfy"
 include "Printing.dfy"
 
@@ -18,7 +18,7 @@ include "Printing.dfy"
 // f=from object, n=field name in f, t=to object
 
 
-datatype Edge = Edge(f : Object, n : string, m : Mode, t : Object)
+//  datatype Edge = Edge(f : Object, n : string, m : Mode, t : Object)
 
 
 //messier than I would like...
@@ -179,7 +179,7 @@ lemma fieldEdgesAreOutgoing(os : set<Object>)
 {}
 
  lemma edgesFromDisjointObjects(aa : set<Object>, bb : set<Object>)
-      requires forall o <- (aa + bb) :: o.Ready() && o.Valid()
+      requires forall o : Object   <- (aa + bb) :: o.Ready() && o.Valid()
       requires aa !! bb
       ensures
         edges(aa + bb) == edges(aa) + edges(bb)
@@ -189,10 +189,10 @@ lemma fieldEdgesAreOutgoing(os : set<Object>)
 //verifies fine on the command line but not in the IDE!
 //but NOT ACTUALLY USED!
  lemma {:verify false} edgesFromWholeSetOfSetsOfDisjointObjects(ooo : set<set<Object>>)
-      requires forall oo <- ooo, o <- oo :: o.Ready() && o.Valid()
-      requires forall aa <- ooo, bb <- ooo :: aa !! bb
-      ensures  forall oo <- ooo, o <- oo :: o.Ready() && o.Valid()
-      ensures  forall aa <- ooo, bb <- ooo :: aa !! bb
+      requires forall oo : set<Object>  <- ooo, o <- oo :: o.Ready() && o.Valid()
+      requires forall aa : set<Object>  <- ooo, bb <- ooo :: aa !! bb
+      ensures  forall oo : set<Object>  <- ooo, o <- oo :: o.Ready() && o.Valid()
+      ensures  forall aa : set<Object>  <- ooo, bb <- ooo :: aa !! bb
       ensures
         edges(set oo <- ooo, o <- oo :: o)
           == (set oo <- ooo, e <- edges(oo) :: e)

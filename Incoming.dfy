@@ -3,7 +3,7 @@ include "Ownership.dfy"
 include "Edges.dfy"
 include "Predicates.dfy"
 
-type Incoming = map<Object,set<Edge>>
+// type Incoming = map<Object,set<Edge>>
 
 function partitionedIncomingEdges(es : set<Edge>) : (r : map<Object,set<Edge>>)
 
