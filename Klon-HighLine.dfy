@@ -33,7 +33,7 @@ include "Klon-KlonLine.dfy"
         //i.e "moving down" which is a perfectly sensible thing to do.
         //perhaps have outgoing...
 
-        //point is that v can be outside  m.o  but also  inside m.c (inside m.m[m.o])
+        //point is that v can be outside  m.o  but also  inside      m.c (inside m.m[m.o])
         //outgoing is outside both m.o and m.\c
 
     && ( inside(k, m.o)   <==>  inside(v, m.m[m.o]) )   //aka inside(k, m.o) <==>  inside(k, m.c)
@@ -735,28 +735,106 @@ lemma MappingOWNRsThruKlownKVFrom(kk : OWNR, vv: OWNR, m : Klon, m' : Klon)
 
 
 
+//moved into class
+// function boundForChildren(o : Object) : Bound
+//  {
+//   if (o.AMFB == o.AMFX) then (o.self) else (o.bound)
+//  }
+
+
+lemma {:isolate_assertions} BOUNDS_ALL_GOOD_TOO(k : Object, v : Object, m : Klon)
+  decreases k.AMFO
+  requires k.Ready()
+  requires v.Ready()
+  requires m.c.Ready()
+  requires m.objectInKlown(k)
+  requires klonLine(k,v,m)
+   ensures klonPivot(m)
+   ensures klonIdentity(k,v,m)
+   ensures owner_of_clone(k,m) == v.owner
+{}
 
 
 
 
 
 
+lemma {:isolate_assertions} its_all_good_mate(k : Object, v : Object, m : Klon)
+  decreases k.AMFO
+  requires k.Ready()
+  requires v.Ready()
+  requires m.c.Ready()
+  requires m.objectInKlown(k)
+  requires klonLine(k,v,m)
+   ensures klonPivot(m)
+   ensures klonIdentity(k,v,m)
+   ensures owner_of_clone(k,m) == v.owner
+{
+  if (k == m.o) {
+        assert v == m.c;
+        assert v.owner == m.clowner;
+        assert v.owner == owner_of_clone(k,m);
+        return;
+  }
+
+  if (outside(k, m.o)) {
+      assert outside(v, m.c);
+      assert k == v;
+      assert v.owner == k.owner == owner_of_clone(k,m);
+      return;
+  }
+
+  if (strictlyInside(k, m.o)) {
+      // assert inside(k,m.o);
+      // assert inside(v,m.c);
+      // assert k != m.o;
+      // assert v != m.c;
+      // assert inside(v,m.c) && v != m.c;
+      // v.ExtraReady();
+      assert strictlyInside(v, m.c);
+      assert v.owner == owner_of_clone(k,m);
+      return;
+  }
+
+
+  assert false;
+}
+
+
+lemma {:isolate_assertions} strictly_ballroom(v : Object, m : Klon)
+  requires klonPivot(m)
+  requires v.Ready()
+  requires m.c.Ready()
+  requires inside(v,m.c)
+  requires v != m.c
+   ensures strictlyInside(v, m.c)
+   {
+    assert inside(v,m.c);
+    assert v.AMFO >= m.c.AMFO;
+    assert v != m.c;
+    assert v.AMFO > m.c.AMFO;
+    assert strictlyInside(v, m.c);
+   }
+
+function {:isolate_assertions} owner_of_clone(k : Object, m : Klon) : (vo : Owner)
+  requires k.Ready()
+  requires m.objectInKlown(k)
+{
+    if (k == m.o) then ( m.clowner )
+     else if (outside(k, m.o)) then ( k.owner )
+     else mapThruKlon(k.owner, m)
+}
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+function {:isolate_assertions} AMFO_of_clone(k : Object, m : Klon) : (vo : OWNR)
+  requires k.Ready()
+  requires m.objectInKlown(k)
+{
+    if (k == m.o) then ( m.c_amfx )
+     else if (outside(k, m.o)) then ( k.AMFX )
+     else flatten(mapThruKlon(k.owner, m))
+}
 
 
 lemma {:isolate_assertions} MAP_THRU_IDS(os: set<Object>, m : Klon)
@@ -784,7 +862,7 @@ lemma FLAT_ONE(a : Object)
 {}
 
 
-lemma {:isolate_assertions} {:timeLimit 20}                   RefOKDI(f' : Object, t' : Object, f : Object, t : Object, m : Klon)
+lemma {:isolate_assertions} {:timeLimit 20} RefOKDI(f' : Object, t' : Object, f : Object, t : Object, m : Klon)
  requires f'.Ready()
  requires t'.Ready()
  requires f.Ready()
