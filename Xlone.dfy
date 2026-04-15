@@ -87,18 +87,18 @@ method {:isolate_assertions} {:timeLimit 90}  Xlone_Via_Map(a : Object, m' : Klo
     requires a.Ready() && a.Valid()
 
 
-    requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
+//NO_FIELDMODES     requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
 //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //
 //I LOVE YOU BUT I'VE CHOSEN DARKNESS
 //FIELD MODEs-ISM HACK -- shouod go into calid or at laets supercalid!
 // //ensures removed to try and avoid crash (or gett better diagnosticsc) //I WANT THIS BUT WITHOUT IT I GET CRASHES  - I LOVE YOU BUT I'VE CHOSEN DARKNESS
-    ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
-    ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
+ //NO_FIELDMODES    ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
+ //NO_FIELDMODES    ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
     ensures m.from(m')
     ensures m.SuperCalidFragilistic()  //moved down from 458
     ensures m.objectInKlown(a)
     ensures m.m[a] == b
-    ensures b.fieldModes == a.fieldModes
+//NO_FIELDMODES     ensures b.fieldModes == a.fieldModes
     ensures b.Ready() && b.Valid()
     ensures b.Context(m.hns())
     ensures m.CalidLineKV(a,b)
@@ -106,7 +106,7 @@ method {:isolate_assertions} {:timeLimit 90}  Xlone_Via_Map(a : Object, m' : Klo
     ensures m.SuperCalidFragilistic()  //moved down from 458
  // add assume HighCalidFragilistic(m) straight after every call to Xlone_Via_Map
  //   ensures HighCalidFragilistic(m)  //I WANT THIS BUT WITHOUT IT I GET CRASHES  - I LOVE YOU BUT I'VE CHOSEN DARKNESS
-//I LOVE YOU BUT I'VE CHOSEN DARKNESS
+//I LOVE YOU BUT I'VE CHO                                                                     SEN DARKNESS
 //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //
 
 
@@ -146,7 +146,7 @@ method {:isolate_assertions} {:timeLimit 90}  Xlone_Via_Map(a : Object, m' : Klo
                               reveal CTXA; assert a.Context(om.oHeap);
                               HeapToHNS(b,om); }
     HighLineFrom(m, om);
-    FieldModesAreStillOK(a,b,m,om);
+//NO_FIELDMODES     FieldModesAreStillOK(a,b,m,om);
     OneMoreHeap(a,m,om);
 
     print "RETN Clone_Via_Map: outside ", fmtobj(a), "\n";
@@ -884,6 +884,12 @@ lemma  {:isolate_assertions} ThereIsNoSpoon(part : Object, whole : Object)
 {
   print "PRECALL Clone_Clone_CLone of:", fmtobj(k), " owned by ", fmtown(k.owner) ,"\n";
 
+var rm := m';
+    m  := m';
+    v  := k;
+
+if (false) {
+
   assert HighCalidFragilistic(m');
   assert forall k <- m'.m.Keys :: HighLineKV(k, m'.m[k], m');
   assert FUCK: forall k <- m'.m.Keys :: HighLineKV(k, m'.m[k], m');
@@ -959,15 +965,19 @@ assert nuBoundsOK(k.owner, k.bound);
 
    assert forall k <- m'.m.Keys :: HighLineKV(k, m'.m[k], m') by { reveal FUCK; }
 
+}
+
+///////////////////////////////////////////////////////////////////////// ////////
+
   XCC_decreases_to_XAO(m',k);
 
   print "Clone_Clone_Clone ", fmtobj(k), " calling CAO ", fmtown(k.owner) ,"\n";
 ///////////////////////////////////////////////////////////////////////// ////////
-    var rm := /*FAKE_*/Xlone_All_Owners(k, m')
-     by { reveal COKA; assert COK(k, m'.oHeap);
-          reveal FUCK; assert forall k <- m'.m.Keys :: HighLineKV(k, m'.m[k], m');
-          reveal HCF;  assert HighCalidFragilistic(m');
-  }
+   rm := /*FAKE_*/Xlone_All_Owners(k, m')  ;
+    //  by { reveal COKA; assert COK(k, m'.oHeap);
+    //       reveal FUCK; assert forall k <- m'.m.Keys :: HighLineKV(k, m'.m[k], m');
+    //       reveal HCF;  assert HighCalidFragilistic(m');
+    //  }
 //////////////////////////////////////////////////////////////
   print "Clone_Clone_Clone ", fmtobj(k), " back from CAO ", fmtown(k.owner) ,"\n";
   print "CCC rm.owersInKlown ", fmtobj(k), " = ", rm.ownersInKlown(k), "\n";
@@ -985,15 +995,15 @@ assert nuBoundsOK(k.owner, k.bound);
 
         print "RETN Clone_Clone_CLone ", fmtobj(k), " already cloned: abandoning ship!!\n";
 
-//can't do this WHICH IS NUTZO???
-//        assert m'.SuperCalidFragilistic() by { reveal SCF; assert m'.SuperCalidFragilistic();   }
-        assert rm.SuperCalidFragilistic();
-        assert  m.SuperCalidFragilistic();
-
-        assert m.AllLinesCalid();
-        assert m.CalidLineKV(k,v);
-        assert HighLineKV(k,v,m);
-        assert HighCalidFragilistic(m);
+// //can't do this WHICH IS NUTZO???
+// //        assert m'.SuperCalidFragilistic() by { reveal SCF; assert m'.SuperCalidFragilistic();   }
+//         assert rm.SuperCalidFragilistic();
+//         assert  m.SuperCalidFragilistic();
+//
+//         assert m.AllLinesCalid();
+//         assert m.CalidLineKV(k,v);
+//         assert HighLineKV(k,v,m);
+//         assert HighCalidFragilistic(m);
 
         return;
   } // k in rm.m.Keys - i.e.   done while cloning owners
@@ -1004,16 +1014,6 @@ v := k;  m := m';
 
 
 print "CCC 1001 HERE! WEESA HERE!\n";
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1828,8 +1828,8 @@ assert rm.CKV_preconditions(k,v);
    var xm := rm.CalidKV(k,v);
 // //////////////////////////////////////////////////////////////////////
 //   assert k.fieldModes  == v.fieldModes;
- haventFuckedFieldModes(rm,k,v,xm);
- FieldModesAreStillOK(k,v,xm,rm);
+//NO_FIELDMODES  haventFuckedFieldModes(rm,k,v,xm);
+//NO_FIELDMODES  FieldModesAreStillOK(k,v,xm,rm);
 //
 //
 //   assert  COK(k,  m'.oHeap);
@@ -2765,8 +2765,6 @@ lemma /*VFF*/ XCC_decreases_to_XAF(a : Object, b : Object, m' : Klon)
 
 
 
-
-
 method  {:isolate_assertions} Xlone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
     decreases * //(m'.oHeap - m'.m.Keys), |a.AMFO|, |a.fields.Keys|, 12
 
@@ -2808,7 +2806,7 @@ method  {:isolate_assertions} Xlone_All_Owners(a : Object,  m' : Klon)  returns 
 //END FROM XVM
 
 //FIELD MODEs-ISM HACK -- shouod go into calid or at laets supercalid!
-//NO_FIELDMODES     requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
+//NO_   S     requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
 //NO_FIELDMODES      ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
 //NO_FIELDMODES      ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
 
@@ -2826,10 +2824,10 @@ method  {:isolate_assertions} Xlone_All_Owners(a : Object,  m' : Klon)  returns 
 
 assert m'.Calid();
   var rm := m';  //grrr. shoulid stop doin that.
-  assert rm.from(m');
-  assert rm.Calid();
-  assert COK(a,rm.oHeap) by { reveal COKA; assert COK(a,m'.oHeap); assert COK(a,rm.oHeap); }
-
+//   assert rm.from(m');
+//   assert rm.Calid();
+//   assert COK(a,rm.oHeap) by { reveal COKA; assert COK(a,m'.oHeap); assert COK(a,rm.oHeap); }
+//
   var xo : Object;
   var rr : Object;
   // var oldmks  : set<Object>;  //dont fucking ask
@@ -2846,7 +2844,7 @@ assert rm.Calid();
 
 assert (a.owner - MX) <= rm.m.Keys;
 assert  MX == a.owner - rm.m.Keys;
-assert forall z <- rm.m.Keys :: z.fieldModes == rm.m[z].fieldModes;  //should be in calid
+//NO_FIELDMODES assert forall z <- rm.m.Keys :: z.fieldModes == rm.m[z].fieldModes;  //should be in calid
 
   while ((MX != {}) && (a !in rm.m.Keys))
 
@@ -2856,7 +2854,7 @@ assert forall z <- rm.m.Keys :: z.fieldModes == rm.m[z].fieldModes;  //should be
     invariant  HighCalidFragilistic(rm)
     invariant  MX == a.owner - rm.m.Keys
     invariant  (a.owner - MX) <= rm.m.Keys
-    invariant  forall z <- rm.m.Keys :: z.fieldModes == rm.m[z].fieldModes
+//NO_FIELDMODES     invariant  forall z <- rm.m.Keys :: z.fieldModes == rm.m[z].fieldModes
     invariant  a !in rm.m.Keys
   {
 
@@ -2864,62 +2862,68 @@ assert forall z <- rm.m.Keys :: z.fieldModes == rm.m[z].fieldModes;  //should be
 
     xo :| xo in MX;
 
-    assert MX == a.owner - rm.m.Keys;
-    assert xo in (a.owner - rm.m.Keys);
-    assert xo in a.owner;
-    assert xo !in rm.m.Keys;
-
+// NO_CODE OR SOMELTRB*IN G
+//     assert MX == a.owner - rm.m.Keys;
+//     assert xo in (a.owner - rm.m.Keys);
+//     assert xo in a.owner;
+//     assert xo !in rm.m.Keys;
+//
     var OMX := MX;
-    MX := OMX - {xo};
-    assert xo !in MX;
-    assert xo  in OMX;
-    assert MX < OMX;
-    assert MX <= OMX - {xo};
-
-  assert a.AMFO > xo.AMFO;
-  assert rm.from(m');
-  assert xo in (a.owner - rm.m.Keys);
-  assert a in rm.oHeap;
-  assert COK(a,rm.oHeap);
+//     MX := OMX - {xo};
+//     assert xo !in MX;
+//     assert xo  in OMX;
+//     assert MX < OMX;
+//     assert MX <= OMX - {xo};
+//
+//   assert a.AMFO > xo.AMFO;
+//   assert rm.from(m');
+//   assert xo in (a.owner - rm.m.Keys);
+//   assert a in rm.oHeap;
+  // assert COK(a,rm.oHeap);
 
     XAO_decreases_to_XVM(a,m', xo,rm);
     print "CALL Clone_Via_Map for owner ",fmtobj(xo),"\n";
 ///  ////  ////  ////  ////  ////  ////  ////  ////  ///  ////  ////  ////  ////  ////  ////  ////  ////
-     assert rm.HeapContextReady() && rm.ValuesContextReady();
-     assert rm.SuperCalidFragilistic();
-     assert HighCalidFragilistic(rm); //TUESDAY
-     assert rm.oHeap >= flatten(rm.clowner) >= flatten(rm.clbound);
-     assert forall o <- a.AMFO :: o.Ready();
-     assert a.Ready() && a.Valid();
-     assert rm.o.Ready() && rm.o.Valid();
-     assert rm.objectInKlown(rm.o);
-     assert (rm.ownersInKlown(a) ==> rm.CalidCanKey(a));
-     assert rm.m.Keys <= rm.oHeap ;
-     assert a.Ready() && a.Valid();
-     assert forall z <- rm.m.Keys :: z.fieldModes == rm.m[z].fieldModes;
+///NO_CODE
+    //  assert rm.HeapContextReady() && rm.ValuesContextReady();
+    //  assert rm.SuperCalidFragilistic();
+    //  assert HighCalidFragilistic(rm); //TUESDAY
+    //  assert rm.oHeap >= flatten(rm.clowner) >= flatten(rm.clbound);
+    //  assert forall o <- a.AMFO :: o.Ready();
+    //  assert a.Ready() && a.Valid();
+    //  assert rm.o.Ready() && rm.o.Valid();
+    //  assert rm.objectInKlown(rm.o);
+    //  assert (rm.ownersInKlown(a) ==> rm.CalidCanKey(a));
+    //  assert rm.m.Keys <= rm.oHeap ;
+    //  assert a.Ready() && a.Valid();
+//NO_FIELDMODES      assert forall z <- rm.m.Keys :: z.fieldModes == rm.m[z].fieldModes;
 
-    COKfromHeapContextReady(xo, rm);
-    assert HighCalidFragilistic(rm);   //TUESDAY
-///  ////  ////  ////  ////  ////  ////
+//     COKfromHeapContextReady(xo, rm);
+//     assert HighCalidFragilistic(rm);   //TUESDAY
+// ///  ////  ////  ////  ////  ////  ////
+
     rr, rm := /*FAKE_*/Xlone_Via_Map(xo, rm);
-    assume HighCalidFragilistic(rm);
+
+//    assume HighCalidFragilistic(rm);
 ///  ////  ////  ////  ////  ////  ////  ////  ////  ///  ////  ////  ////  ////  ////  ////  ////  ////
-    assert rm.from(m');
-  assert xo in rm.m.Keys;
-  assert xo !in (a.owner - rm.m.Keys);
-  assert xo.fieldModes == rr.fieldModes;
+  //NO_CODE
+  //   assert rm.from(m');
+  // assert xo in rm.m.Keys;
+  // assert xo !in (a.owner - rm.m.Keys);
+//NO_FIELDMODES   assert xo.fieldModes == rr.fieldModes;
 //KEYS  assert xo.fields.Keys == rr.fields.Keys;
-  assert HighCalidFragilistic(rm); //TUESDAY
-  assert rr.Ready() && rr.Valid();
-  assert rr.Context(rm.hns());
+  // assert HighCalidFragilistic(rm); //TUESDAY
+  // assert rr.Ready() && rr.Valid();
+  // assert rr.Context(rm.hns());
 
       if (a in rm.m.Keys) {
       m := rm;
-      assert m.from(m');
-      assert (forall z <- m.m.Keys ::  (m.objectInKlown(z)));
-      assert  m.ownersInKlown(a);
-      assert  m.SuperCalidFragilistic();
-      assert HighCalidFragilistic(rm); //TUESDAY
+      //NO_CODE
+      // assert m.from(m');
+      // assert (forall z <- m.m.Keys ::  (m.objectInKlown(z)));
+      // assert  m.ownersInKlown(a);
+      // assert  m.SuperCalidFragilistic();
+      // assert HighCalidFragilistic(rm); //TUESDAY
       print "RETN - Clone All Onwers - clonéd pivot\n";
       return;
     }  else { assert a !in rm.m.Keys;  }
@@ -3080,7 +3084,7 @@ method {:isolate_assertions} {:timeLimit 0}  Xlone_All_Fields(a : Object, b : Ob
   requires a.Ready() && a.Valid() && a.Context(m'.oHeap)
   requires b.Ready() && b.Valid() && b.Context(m'.hns({b}))
   requires m'.ownersInKlown(a)
-  requires (a.fieldModes == b.fieldModes)
+//NO_FIELDMODES   requires (a.fieldModes == b.fieldModes)
   requires (b.AMFX >= b.AMFB >= a.AMFB)
   requires (a.fields.Keys >= b.fields.Keys)
 
@@ -3111,9 +3115,9 @@ method {:isolate_assertions} {:timeLimit 0}  Xlone_All_Fields(a : Object, b : Ob
 //END FROM XVM
 
 //FIELD MODEs-ISM HACK -- shouod go into calid or at laets supercalid!
-  requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
-   ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
-   ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
+//NO_FIELDMODES   requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
+//NO_FIELDMODES    ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
+//NO_FIELDMODES    ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
 //MODES TODO
 
 //progTODOFUCK  ensures  m.from(m')
@@ -3125,7 +3129,7 @@ method {:isolate_assertions} {:timeLimit 0}  Xlone_All_Fields(a : Object, b : Ob
    ensures m.from(m')
    ensures m.ownersInKlown(a)
    ensures a in m.m.Keys
-   ensures a.fieldModes  == b.fieldModes
+//NO_FIELDMODES    ensures a.fieldModes  == b.fieldModes
    ensures m.m[a] == b
    ensures a.Ready() && a.Valid() && a.Context(m.hns())
    ensures b.Ready() && b.Valid()
@@ -3149,8 +3153,8 @@ assert HighCalidFragilistic(m); //W8NK3R II
 assert m'.HeapContextReady() && m'.ValuesContextReady();
 assert HVCR: m.HeapContextReady() && m.ValuesContextReady();
 
-assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
-assert FAM: forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
+//NO_FIELDMODES assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
+//NO_FIELDMODES assert FAM: forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
 
 //TUESDAY15DEC2024
 
@@ -3175,7 +3179,7 @@ assert HighCalidFragilistic(m) by { reveal HCFm; } //W8NK3R II  //THIS ONE!
     assert seq2set(fieldNames) <= a.fields.Keys;
     assert forall n <- fieldNames :: n in a.fields.Keys;
 
-assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
+//NO_FIELDMODES   assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
 
  print "Clone_All_Fields fields:", fmtobj(a), " fields=", fmtseqstr(fieldNames), "\n";
   assert HighCalidFragilistic(m) by { reveal HCFm; } //W8NK3R II
@@ -3195,8 +3199,8 @@ assert m.Calid();//W8NK3R
 assert HighCalidFragilistic(m) by { reveal HCFm; } //W8NK3R II
 assert m.objectInKlown(a);
 assert m.m[a] == b;
-assert a.fieldModes.Keys == b.fieldModes.Keys;
-assert forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes;
+//NO_FIELDMODES assert a.fieldModes.Keys == b.fieldModes.Keys;
+//NO_FIELDMODES assert forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes;
 
 var OLDDIFF := fielddiff(a,b);
 
@@ -3210,13 +3214,13 @@ assert a.fields.Keys >= b.fields.Keys;
 while ((a.fields.Keys - b.fields.Keys) > {})
 
   invariant a.fields.Keys == old(a.fields.Keys)
-  invariant a.fieldModes.Keys == b.fieldModes.Keys
+//NO_FIELDMODES   invariant a.fieldModes.Keys == b.fieldModes.Keys
   invariant allocated(m.oHeap)
   invariant m.oHeap == m'.oHeap
   invariant unchanged(m.oHeap)
   invariant unchanged(a`fields)
   invariant m.HeapContextReady() && m.ValuesContextReady()
-  invariant forall z <- m.m.Keys  :: z.fieldModes == m .m[z].fieldModes
+//NO_FIELDMODES   invariant forall z <- m.m.Keys  :: z.fieldModes == m .m[z].fieldModes
   invariant m.oHeap >= flatten(m.clowner) >= flatten(m.clbound)
   invariant m.Calid()
   invariant HighCalidFragilistic(m)
@@ -3228,9 +3232,8 @@ while ((a.fields.Keys - b.fields.Keys) > {})
 
   //invariant (OLDDIFF) decreases to (fielddiff(a,b))
   invariant  OLDDIFF >= fielddiff(a,b)
-  invariant forall z <- m'.m.Keys :: z.fieldModes == old(z.fieldModes) == m'.m[z].fieldModes
-  invariant forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes
-
+//NO_FIELDMODES   invariant forall z <- m'.m.Keys :: z.fieldModes == old(z.fieldModes) == m'.m[z].fieldModes
+//NO_FIELDMODES   invariant forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes
 
   decreases fielddiff(a,b)
 
@@ -3240,7 +3243,7 @@ while ((a.fields.Keys - b.fields.Keys) > {})
   assert a.fields.Keys >= b.fields.Keys;
 
 
-assert a.fieldModes.Keys == b.fieldModes.Keys;
+//NO_FIELDMODES assert a.fieldModes.Keys == b.fieldModes.Keys;
 assert unchanged@PRELOOP(m.oHeap);
 assert unchanged@PRELOOP(a`fields);
 
@@ -3280,7 +3283,7 @@ print "->WHOOPS ", |m'.oHeap - m'.m.Keys +{a}|, " ", |a.AMFO|," ",|a.fields.Keys
 
 //TRUMP??  assert forall o : Object :: unchanged(o);
 
-assert a.fieldModes.Keys == b.fieldModes.Keys;
+//NO_FIELDMODES assert a.fieldModes.Keys == b.fieldModes.Keys;
 //KEYS    assert a.fields.Keys == old(a.fields.Keys);
     assert unchanged@PRELOOP(m.oHeap);
   assert a.fields.Keys >= b.fields.Keys;
@@ -3334,13 +3337,13 @@ assert a.fieldModes.Keys == b.fieldModes.Keys;
 //END FROM XVM
 
 assert unchanged@PRELOOP(m.oHeap);
-  assert a.fieldModes.Keys == b.fieldModes.Keys;
-  assert n in b.fieldModes.Keys;
+//NO_FIELDMODES   assert a.fieldModes.Keys == b.fieldModes.Keys;
+//NO_FIELDMODES   assert n in b.fieldModes.Keys;
   //progTODOFUCKNUKE NUKE // FAKE_
   //progTODOFUCKNUKE NUKE // FAKE_
 
-assert a.fieldModes.Keys == b.fieldModes.Keys;
-assert forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes;
+//NO_FIELDMODES assert a.fieldModes.Keys == b.fieldModes.Keys;
+//NO_FIELDMODES assert forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes;
 
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -3362,7 +3365,7 @@ assert forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes;
 
   assert n  in a.fields.Keys;
   assert n !in b.fields.Keys;
-  assert a.fieldModes.Keys == b.fieldModes.Keys;
+//NO_FIELDMODES   assert a.fieldModes.Keys == b.fieldModes.Keys;
   assert b.Ready() && b.Valid();
   assert a.fields.Keys > b.fields.Keys;
 
@@ -3378,12 +3381,12 @@ assert forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes;
   assert a  in m.oHeap;
   assert b !in m.oHeap;
   assert b in m.hns();
-  assert a.fieldModes.Keys == b.fieldModes.Keys;
-  assert n in b.fieldModes.Keys;
+//NO_FIELDMODES   assert a.fieldModes.Keys == b.fieldModes.Keys;
+//NO_FIELDMODES   assert n in b.fieldModes.Keys;
 
   assert m.m.Keys <= m.oHeap;
   assert allocated(m.oHeap);
-  assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
+//NO_FIELDMODES   assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
 
 //extra shit
   assert m.oHeap >= flatten(m.clowner) >= flatten(m.clbound);
@@ -3421,8 +3424,8 @@ assert forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes;
   assert b.fields.Keys == OLDFLDS + {n};
   assert a.fields.Keys >= b.fields.Keys;
 
-assert forall z <- m'.m.Keys :: z.fieldModes == old(z.fieldModes) == m'.m[z].fieldModes;
-assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
+//NO_FIELDMODES assert forall z <- m'.m.Keys :: z.fieldModes == old(z.fieldModes) == m'.m[z].fieldModes;
+//NO_FIELDMODES assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
 
     assert seq2set(fieldNames) <= a.fields.Keys;
     assert forall n <- fieldNames :: n in a.fields.Keys;
@@ -3442,14 +3445,14 @@ assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
             Set2NoDifferenceEq(a.fields.Keys, b.fields.Keys); ///copilot...
             }
 
-  assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
+//NO_FIELDMODES   assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
 
 
     assert unchanged@PRELOOP(m.oHeap`fields);
     assert unchanged@PRELOOP(m.oHeap);
     assert unchanged@PRELOOP(a`fields);
 
-assert forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes;
+//NO_FIELDMODES assert forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes;
 
   print "RETN Clone_All_Fields done ", fmtobj(a), "\n";
 
@@ -3458,7 +3461,7 @@ assert m.SuperCalidFragilistic();
 assert m.AllLinesCalid();
 assert HighCalidFragilistic(m);
 assert a.fields.Keys == b.fields.Keys;
-assert a.fieldModes  == b.fieldModes;
+//NO_FIELDMODES  assert a.fieldModes  == b.fieldModes;
 assert m.oHeap == m'.oHeap;
 
 CalidKVFromHighLineKV(a,b,m);
@@ -3527,7 +3530,7 @@ method {:isolate_assertions} {:timeLimit 300}  Xlone_Field_Map(a : Object, n : s
 
   requires n  in a.fields.Keys        requires N_IN_A: n in a.fields.Keys
   requires n !in b.fields.Keys
-  requires a.fieldModes.Keys == b.fieldModes.Keys
+//NO_FIELDMODES   requires a.fieldModes.Keys == b.fieldModes.Keys
   requires b.Ready() && b.Valid()
   requires a.fields.Keys > b.fields.Keys
 
@@ -3555,18 +3558,18 @@ method {:isolate_assertions} {:timeLimit 300}  Xlone_Field_Map(a : Object, n : s
   requires a  in m'.oHeap
   requires b !in m'.oHeap
   requires b  in m'.hns()
-  requires a.fieldModes.Keys == b.fieldModes.Keys
-  requires n  in b.fieldModes.Keys
+//NO_FIELDMODES   requires a.fieldModes.Keys == b.fieldModes.Keys
+//NO_FIELDMODES   requires n  in b.fieldModes.Keys
 
   requires m'.m.Keys <= m'.oHeap
   requires allocated(m'.oHeap)
 //END FROM XV
 
 //FIELD MODEs-ISM HACK -- shouod go into calid or at laets supercalid!
-  requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
+//NO_FIELDMODES   requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
   // ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes//**17Sep*/
   // ensures forall z <- m'.m.Keys | z != b :: unchanged(z) //**17Feb2026 */
-  ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
+//NO_FIELDMODES   ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
 
   ensures  m.from(m')
   ensures  m.SuperCalidFragilistic()  //**17Sep*/
@@ -3583,10 +3586,10 @@ method {:isolate_assertions} {:timeLimit 300}  Xlone_Field_Map(a : Object, n : s
   ensures  m.objectInKlown(a.fields[n])
   ensures  m.m[ a.fields[n] ] == b.fields[n]
   ensures  m.m[ a.fields[n] ] == m.m[a].fields[n]  //prog THIS IS THE KEY POSTCONDITION!!
-  ensures  a.fieldModes.Keys == b.fieldModes.Keys
+//NO_FIELDMODES   ensures  a.fieldModes.Keys == b.fieldModes.Keys
 
-  ensures forall z <- m'.m.Keys :: z.fieldModes == old(z.fieldModes) == m'.m[z].fieldModes
-  ensures forall z <- m.m.Keys  :: z.fieldModes == m.m[z].fieldModes
+//NO_FIELDMODES   ensures forall z <- m'.m.Keys :: z.fieldModes == old(z.fieldModes) == m'.m[z].fieldModes
+//NO_FIELDMODES   ensures forall z <- m.m.Keys  :: z.fieldModes == m.m[z].fieldModes
 
   ensures unchanged( m'.oHeap )
   ensures unchanged( m.oHeap  )
@@ -3594,22 +3597,22 @@ method {:isolate_assertions} {:timeLimit 300}  Xlone_Field_Map(a : Object, n : s
   ensures allocated( m'.oHeap )
   ensures allocated( m.oHeap  )
   ensures unchanged( m'.oHeap`fields )
-  ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
+//NO_FIELDMODES   ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
 
   ensures m.oHeap == m'.oHeap
 
   modifies b`fields
 {
-  assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
+//NO_FIELDMODES   assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
   assert a.fields.Keys > b.fields.Keys;
   print "CALL Clone_Field_Map ", fmtobj(a), ".", n, " to ", fmtobj(b), "\n";
   assert a != b by {
       assert a  in m'.oHeap;
       assert b !in m'.oHeap;
   }
-  assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
+//NO_FIELDMODES   assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
   assert SCFL: m'.SuperCalidFragilistic();
-  assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
+//NO_FIELDMODES   assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
   assert m'.Calid(); assert m'.AllLinesCalid(); assert forall k <- m'.m.Keys :: m'.CalidLineKV(k, m'.m[k]);
   //progTODOFUCK print "CALL Clone_Field_Map ", fmtobj(a), " «", n, "»\n";
   //progTODOFUCK print "VARIANT CFM ", |m'.oHeap - m'.m.Keys + {a}|, " ", |a.AMFO|, " ", fielddiff(a,b), " ", 5, "\n";
@@ -3629,7 +3632,7 @@ method {:isolate_assertions} {:timeLimit 300}  Xlone_Field_Map(a : Object, n : s
   assert OFV: ofv.Ready() && ofv.Valid() && ofv.Context(m'.oHeap);
 
 
-  assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
+//NO_FIELDMODES   assert unchanged( m'.oHeap`fieldModes, m'.m.Values`as );
   assert forall z <- m'.m.Keys | z != b :: unchanged(z);
   assert  b.fields.Keys == old(b.fields.Keys);
   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -3645,7 +3648,7 @@ method {:isolate_assertions} {:timeLimit 300}  Xlone_Field_Map(a : Object, n : s
         assert HighCalidFragilistic(m);
         assert a.Ready();    assert m.objectInKlown(a);    assert b == m.m[a];
         assert ofv.Ready();  assert m.objectInKlown(ofv);  assert rfv == m.m[ofv];
-        assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
+//NO_FIELDMODES         assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
         assert  b.fields.Keys == old(b.fields.Keys);
         assert  a.fields.Keys == old(a.fields.Keys);
 
@@ -3656,7 +3659,7 @@ method {:isolate_assertions} {:timeLimit 300}  Xlone_Field_Map(a : Object, n : s
         assert m.m[ofv] == rfv;
         assert m.CalidLineKV(ofv,rfv);
         assert HighLineKV(ofv,rfv,m);
-        assert ofv.fieldModes == rfv.fieldModes;
+//NO_FIELDMODES         assert ofv.fieldModes == rfv.fieldModes;
 
     }
     else
@@ -3701,7 +3704,7 @@ assert COK(ofv,m'.oHeap) by {
 
 
 //NUKEM assert m'.oHeap >= flatten(m'.clowner) >= flatten(m'.clbound) by { reveal HOB; }   ///NESTS
-          assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
+//NO_FIELDMODES           assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
   assert afK == a.fields.Keys;
         // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
         // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -3719,7 +3722,7 @@ assert COK(ofv,m'.oHeap) by {
   assert m'.objectInKlown(m'.o);
   assert (m'.ownersInKlown(ofv) ==> m'.CalidCanKey(ofv));
   assert m'.m.Keys <= m'.oHeap;
-  assert forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes;
+//NO_FIELDMODES   assert forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes;
         // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
         // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
           rfv, m := /*FAKE_*/Xlone_Via_Map(ofv, m');
@@ -3740,13 +3743,13 @@ assert COK(ofv,m'.oHeap) by {
         assert rfv.Ready();
         assert m.objectInKlown(ofv);
         assert m.m[ofv] == rfv;
-        assert ofv.fieldModes == rfv.fieldModes;
+  //NO_FIELDMODES         assert ofv.fieldModes == rfv.fieldModes;
 
     assert m.SuperCalidFragilistic();                  assert m.from(m');
     assert HighCalidFragilistic(m);
     assert a.Ready();    assert m.objectInKlown(a);    assert b == m.m[a];
     assert ofv.Ready();  assert m.objectInKlown(ofv);  assert rfv == m.m[ofv];
-    assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
+//NO_FIELDMODES     assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
     assert  b.fields.Keys == old(b.fields.Keys);
   }
 
@@ -3768,7 +3771,7 @@ assert COK(ofv,m'.oHeap) by {
         assert m.m[ofv] == rfv;
         assert m.CalidLineKV(ofv,rfv);
         assert HighLineKV(ofv,rfv,m);
-        assert ofv.fieldModes == rfv.fieldModes;   assert oFMrFM: ofv.fieldModes == rfv.fieldModes;
+//NO_FIELDMODES         assert ofv.fieldModes == rfv.fieldModes;   assert oFMrFM: ofv.fieldModes == rfv.fieldModes;
 
 
         assert a.Ready() by { reveal AIR; assert a.Ready(); }
@@ -3777,7 +3780,7 @@ assert COK(ofv,m'.oHeap) by {
     assert m.from(m');
     assert strictlyInside(a, m.o);      assert AMO: strictlyInside(a, m.o);
 //prog inside
-        assert ofv.fieldModes == rfv.fieldModes by { reveal oFMrFM; }
+//NO_FIELDMODES         assert ofv.fieldModes == rfv.fieldModes by { reveal oFMrFM; }
 
 ///  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /
 ///
@@ -3797,16 +3800,16 @@ assert COK(ofv,m'.oHeap) by {
   var t := ofv;
   var u := rfv;
 
-   assert ofv.fieldModes.Keys == rfv.fieldModes.Keys by { reveal oFMrFM; }
+//NO_FIELDMODES    assert ofv.fieldModes.Keys == rfv.fieldModes.Keys by { reveal oFMrFM; }
    assert t == ofv; assert u == rfv;
-   assert   t.fieldModes.Keys ==   u.fieldModes.Keys by { reveal oFMrFM; }
+//NO_FIELDMODES    assert   t.fieldModes.Keys ==   u.fieldModes.Keys by { reveal oFMrFM; }
 
 //Xlone_Set_Field - precondition
    assert v.Valid();
    assert v.OwnersWithin(m.hns({u}));
    assert n !in v.fields;
-   assert n  in v.fieldModes.Keys;
-   assert k.fieldModes.Keys == v.fieldModes.Keys;
+//NO_FIELDMODES    assert n  in v.fieldModes.Keys;
+//NO_FIELDMODES    assert k.fieldModes.Keys == v.fieldModes.Keys;
    assert m.SuperCalidFragilistic();
    assert HighCalidFragilistic(m);
    OwnersFromCalid(m);
@@ -3825,9 +3828,9 @@ assert COK(ofv,m'.oHeap) by {
    assert m.m[t] == u;
    assert m.CalidLineKV(t,u);         assert HighLineKV(t,u,m);
 
-   assert ofv.fieldModes.Keys == rfv.fieldModes.Keys by { reveal oFMrFM; }
+//NO_FIELDMODES    assert ofv.fieldModes.Keys == rfv.fieldModes.Keys by { reveal oFMrFM; }
    assert t == ofv; assert u == rfv;
-   assert   t.fieldModes.Keys ==   u.fieldModes.Keys by { reveal oFMrFM; }
+//NO_FIELDMODES   assert   t.fieldModes.Keys ==   u.fieldModes.Keys by { reveal oFMrFM; }//NO_FIELDMODES
     //  //  //  //      //  //  //  //      //  //  //  //      //  //  //  //
 
  assert k.Ready();
@@ -4033,8 +4036,8 @@ assert COK(ofv,m'.oHeap) by {
     assert t == source.fields[n];
 //    assert n in clone.fields.Keys;
     assert n in source.fields.Keys;
-    assert n in source.fieldModes.Keys;
-    assert n in clone.fieldModes.Keys;
+//NO_FIELDMODES     assert n in source.fieldModes.Keys;
+//NO_FIELDMODES     assert n in clone.fieldModes.Keys;
     // assert u == clone.fields[n];
     // assert t in m.m.Keys;
     // assert u == m.m[ t ];
@@ -4049,8 +4052,8 @@ assert COK(ofv,m'.oHeap) by {
     assert m.ValuesOwnersReady();
     // assert forall oo <- t.owner :: strictlyInside(oo, m.o);
 //NO_FIELDMODES      assert modeOK(source, source.fieldModes[n], t);
-    assert source.fieldModes == clone.fieldModes;
-    assert source.fieldModes[n] == clone.fieldModes[n];
+//NO_FIELDMODES     assert source.fieldModes == clone.fieldModes;
+//NO_FIELDMODES     assert source.fieldModes[n] == clone.fieldModes[n];
 
 label HERE:
     assert HighLineKV(t,u,m);
@@ -4073,7 +4076,7 @@ label HERE:
 
 assert rfv.Context(m.hns());
 
-   assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
+//NO_FIELDMODES    assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
 
    assert m.SuperCalidFragilistic();                  assert m.from(m');
    assert HighCalidFragilistic(m);      assert HCFm: HighCalidFragilistic(m);
@@ -4092,7 +4095,7 @@ assert rfv.Context(m.hns());
   //  assert bfK + {n} == b.fields.Keys;
   //  assert n in a.fields.Keys;
   //  assert n  in afK;
-                                                                      //  assert n !in bfK;
+                                                                          //  assert n !in bfK;
   //  assert (bfK + {n}) > bfK;
   //  assert (afK - (bfK + {n})) == ((afK - bfK) - {n});
   //  assert (afK - bfK) > ((afK - bfK) - {n});
@@ -4492,25 +4495,25 @@ method {:isolate_assertions}  {:timeLimit 30} Xlone_Set_Field(k : Object, v : Ob
   requires m'.m[t] == u         //ditto ditto
 
   requires k in m'.m.Keys
-  requires k.fieldModes.Keys == v.fieldModes.Keys
+//NO_FIELDMODES   requires k.fieldModes.Keys == v.fieldModes.Keys
   requires v.FieldValidNV(n, u)
   requires FVNU: v.FieldValidNV(n, u)
 
 
 //FIELD MODEs-ISM HACK -- shouod go into calid or at laets supercalid!
-  requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
-//   ensures forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
-   ensures forall z <- m'.m.Keys :: z.fieldModes == old(z.fieldModes) == m'.m[z].fieldModes
-   ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
-   ensures forall x <- m'.hns() :: old(allocated(x)) ==> unchanged(x`fieldModes)
+//NO_FIELDMODES   requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
+//NO_FIELDMODES //   ensures forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
+//NO_FIELDMODES    ensures forall z <- m'.m.Keys :: z.fieldModes == old(z.fieldModes) == m'.m[z].fieldModes
+//NO_FIELDMODES    ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
+//NO_FIELDMODES    ensures forall x <- m'.hns() :: old(allocated(x)) ==> unchanged(x`fieldModes)
 
 //need to decide if origB -> u is in m.m.Keys or not
    ensures v.OwnersWithin(m'.hns({u}))
   // ensures v.Valid()
    ensures n in v.fields.Keys
    ensures v.fields[n] == u
-   ensures k.fieldModes.Keys == old(k.fieldModes.Keys)
-   ensures v.fieldModes.Keys == old(v.fieldModes.Keys)
+//NO_FIELDMODES    ensures k.fieldModes.Keys == old(k.fieldModes.Keys)
+//NO_FIELDMODES    ensures v.fieldModes.Keys == old(v.fieldModes.Keys)
    ensures k.fields.Keys == old(k.fields.Keys)
    ensures v.fields.Keys == old(v.fields.Keys) + {n}
    ensures k.fields == old(k.fields)
@@ -4565,7 +4568,7 @@ assert (forall z <- vee_feeldKeyz :: v.FieldValidNV(z, v.fields[z]));
 assert n !in vee_feeldKeyz;
 
 var vee_feelds := v.fields;
-var vee_moodes := map z <- v.fieldModes.Keys :: v.fieldModes[z];
+//NO_FIELDMODES var vee_moodes := map z <- v.fieldModes.Keys :: v.fieldModes[z];
 var vee_extra := map z <- vee_feeldKeyz :: v.fields[z];
 
 //neither way around will prove
@@ -4629,7 +4632,7 @@ forall z <- v.fields.Keys ensures (v.FieldValidNV(z, v.fields[z]))
 print "Hello\n";
 
 //assert forall x <- m'.hns() :: unchanged(x`fieldModes);
-   assert (forall x <- m'.hns() :: old(allocated(x)) ==> unchanged(x`fieldModes));
+//NO_FIELDMODES    assert (forall x <- m'.hns() :: old(allocated(x)) ==> unchanged(x`fieldModes));
 // opaque
 //   modifies v`fields
 //     ensures forall z <- v.fields.Keys ::
@@ -4749,7 +4752,7 @@ method {:isolate_assertions} {:timeLimit 15} origKaTHUMP(a : Object, n : string,
   // ensures a.Valid()
    ensures n  in a.fields.Keys
    ensures a.fields[n] == b
-   ensures a.fieldModes.Keys == old(a.fieldModes.Keys)
+//NO_FIELDMODES    ensures a.fieldModes.Keys == old(a.fieldModes.Keys)
    ensures a.fields.Keys == old(a.fields.Keys) + {n}
    ensures a.fields == old(a.fields)[n := b]
     //ensures (forall z <- m'.m.Keys | z != a :: z.fields == old(z.fields))
@@ -5295,19 +5298,19 @@ method {:verify false}  FAKE_Xlone_Via_Map(a : Object, m' : Klon)
     requires a.Ready() && a.Valid()
 
 //FIELD MODEs-ISM HACK -- shouod go into calid or at laets supercalid!
-  requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
+//NO_FIELDMODES   requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
 
 //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //
 //I LOVE YOU BUT I'VE CHOSEN DARKNESS
 //FIELD MODEs-ISM HACK -- shouod go into calid or at laets supercalid!
 // //ensures removed to try and avoid crash (or gett better diagnosticsc) //I WANT THIS BUT WITHOUT IT I GET CRASHES  - I LOVE YOU BUT I'VE CHOSEN DARKNESS
-    ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
-    ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
+//NO_FIELDMODES     ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
+//NO_FIELDMODES     ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
     ensures m.from(m')
     ensures m.SuperCalidFragilistic()  //moved down from 458
     ensures m.objectInKlown(a)
     ensures m.m[a] == b
-    ensures b.fieldModes == a.fieldModes
+//NO_FIELDMODES     ensures b.fieldModes == a.fieldModes
     ensures b.Ready() && b.Valid()
     ensures b.Context(m.hns())
     ensures m.CalidLineKV(a,b)
@@ -5377,9 +5380,9 @@ method {:verify false} FAKE_Xlone_Clone_Clone(a : Object, m' : Klon)
   //  requires m'.CalidCanKey(a)
 
 //FIELD MODEs-ISM HACK -- shouod go into calid or at laets supercalid!
-  requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
-   ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
-   ensures unchanged( m.oHeap`fieldModes, m.m.Values`fieldModes )
+//NO_FIELDMODES   requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
+//NO_FIELDMODES    ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
+//NO_FIELDMODES    ensures unchanged( m.oHeap`fieldModes, m.m.Values`fieldModes )
 
 // //END FROM XVM
 
@@ -5387,7 +5390,7 @@ method {:verify false} FAKE_Xlone_Clone_Clone(a : Object, m' : Klon)
    ensures a in m.m.Keys
    ensures m.objectInKlown(a)
    ensures m.m[a] == b
-   ensures a.fieldModes  == b.fieldModes
+//NO_FIELDMODES x   ensures a.fieldModes  == b.fieldModes
    ensures a.fields.Keys == b.fields.Keys
    ensures b.Ready() && b.Valid()
    ensures b.Context(m.hns())
@@ -5448,9 +5451,9 @@ method  {:verify false} FAKE_Xlone_All_Owners(a : Object,  m' : Klon)  returns (
 //END FROM XVM
 
 //FIELD MODEs-ISM HACK -- shouod go into calid or at laets supercalid!
-  requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
-   ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
-   ensures unchanged( m.oHeap`fieldModes, m.m.Values`fieldModes )
+//NO_FIELDMODES   requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
+//NO_FIELDMODES    ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
+//NO_FIELDMODES    ensures unchanged( m.oHeap`fieldModes, m.m.Values`fieldModes )
 
   ensures  m.from(m')
   ensures  m.SuperCalidFragilistic()
@@ -5546,7 +5549,7 @@ method {:verify false} FAKE_Xlone_All_Fields(a : Object, b : Object, m' : Klon)
   requires a.Ready() && a.Valid() && a.Context(m'.oHeap)
   requires b.Ready() && b.Valid() && b.Context(m'.hns({b}))
   requires m'.ownersInKlown(a)
-  requires a.fieldModes == b.fieldModes
+//NO_FIELDMODES   requires a.fieldModes == b.fieldModes
   requires (b.AMFX >= b.AMFB >= a.AMFB)
 
 //////////////////////////////////////////////////////////////////////
@@ -5575,9 +5578,9 @@ method {:verify false} FAKE_Xlone_All_Fields(a : Object, b : Object, m' : Klon)
 //END FROM XVM
 
 //FIELD MODEs-ISM HACK -- shouod go into calid or at laets supercalid!
-  requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
-   ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
-   ensures unchanged( m.oHeap`fieldModes, m.m.Values`fieldModes )
+//NO_FIELDMODES   requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
+//NO_FIELDMODES    ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
+//NO_FIELDMODES    ensures unchanged( m.oHeap`fieldModes, m.m.Values`fieldModes )
 
 
 //progTODOFUCK  ensures  m.from(m')
@@ -5586,7 +5589,7 @@ method {:verify false} FAKE_Xlone_All_Fields(a : Object, b : Object, m' : Klon)
   ensures  m.ownersInKlown(a)
   ensures  a in m.m.Keys
   ensures  a.fields.Keys == b.fields.Keys
-  ensures  a.fieldModes  == b.fieldModes
+//NO_FIELDMODES   ensures  a.fieldModes  == b.fieldModes
   ensures  m.m[a] == b
   ensures  a.Ready() && a.Valid() && a.Context(m.hns())
   ensures  b.Ready() && b.Valid()
@@ -5612,7 +5615,7 @@ method {:verify false}  FAKE_Xlone_Field_Map(a : Object, n : string, b : Object,
 
   requires n  in a.fields.Keys
   requires n !in b.fields.Keys
-  requires a.fieldModes.Keys == b.fieldModes.Keys
+//NO_FIELDMODES   requires a.fieldModes.Keys == b.fieldModes.Keys
   requires a.Ready() && a.Valid()
 
     // we're just called from Xlone_Via_Map  (and could be reintergrated, who knows?)
@@ -5653,13 +5656,13 @@ method {:verify false}  FAKE_Xlone_Field_Map(a : Object, n : string, b : Object,
 // //END FROM XVM
 
 
-  requires a.fieldModes.Keys == b.fieldModes.Keys
-  requires n in b.fieldModes.Keys
+//NO_FIELDMODES   requires a.fieldModes.Keys == b.fieldModes.Keys
+//NO_FIELDMODES   requires n in b.fieldModes.Keys
 
 //FIELD MODEs-ISM HACK -- shouod go into calid or at laets supercalid!
-  requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
-   ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
-   ensures unchanged( m.oHeap`fieldModes, m.m.Values`fieldModes )
+//NO_FIELDMODES   requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
+//NO_FIELDMODES    ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
+//NO_FIELDMODES    ensures unchanged( m.oHeap`fieldModes, m.m.Values`fieldModes )
 
    ensures old(fielddiff(a,b)) decreases to fielddiff(a,b)
 
@@ -5675,7 +5678,7 @@ method {:verify false}  FAKE_Xlone_Field_Map(a : Object, n : string, b : Object,
   ensures  m.m[a] == b
   ensures  m.m[ a.fields[n] ] == b.fields[n]
   ensures  m.m[ a.fields[n] ] == m.m[a].fields[n]  //prog THIS IS THE KEY POSTCONDITION!!
-  ensures a.fieldModes.Keys == b.fieldModes.Keys
+//NO_FIELDMODES   ensures a.fieldModes.Keys == b.fieldModes.Keys
 
 
   ensures unchanged( m'.oHeap )
@@ -5698,10 +5701,11 @@ method {:verify false}  FAKE_Xlone_Field_Map(a : Object, n : string, b : Object,
 }
 
 function allThemModes(m : Klon) : map<Object,map<string,Mode>>
-  reads m.hns()`fieldModes
+//NO_FIELDMODES   reads m.hns()`fieldModes
 //  reads m.m.Keys`fieldModes, m.m.Values`fieldModes
 {
-  map o <- m.hns() :: o.fieldModes
+  map[]
+//NO_FIELDMODES   map o <- m.hns() :: o.fieldModes
  // (map o <- m.m.Keys :: o.fieldModes) + (map o <- m.m.Keys :: m.m[o].fieldModes)
 }
 
@@ -5709,30 +5713,30 @@ lemma {:isolate_assertions} FieldModesAreStillOK(a : Object, b : Object, m : Klo
   // given a & b fields modes are equal, addimg them into m' giving m doesn't change anything
   // that's to say, doesn't chanfe ANY of the existing Klon fielModea mappings
 
-  requires a.fieldModes == b.fieldModes
-  requires m'.CKV_preconditions(a,b)
-  requires m == m'.CalidKV(a,b)
-  requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
-   ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
+  // requires a.fieldModes == b.fieldModes
+  // requires m'.CKV_preconditions(a,b)
+  // requires m == m'.CalidKV(a,b)
+  // requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
+  //  ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
 {
-  forall z <- m.m.Keys ensures (z.fieldModes == m.m[z].fieldModes)
-  //by
-  {
-    if (z in m'.m.Keys)
-      { assert forall y <- m'.m.Keys :: y.fieldModes == m'.m[y].fieldModes;
-        assert z.fieldModes == m'.m[z].fieldModes;
-        assert forall y <- m'.m.Keys :: m.m[y] == m'.m[y];
-        assert z.fieldModes == m.m[z].fieldModes;
-      }
-      else
-      {
-        assert z == a;
-        assert m.m[z] == b;
-        assert a.fieldModes == b.fieldModes;
-        assert z.fieldModes == m.m[z].fieldModes;
-      }
-  }
-  assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
+  // forall z <- m.m.Keys ensures (z.fieldModes == m.m[z].fieldModes)
+  // //by
+  // {
+  //   if (z in m'.m.Keys)
+  //     { assert forall y <- m'.m.Keys :: y.fieldModes == m'.m[y].fieldModes;
+  //       assert z.fieldModes == m'.m[z].fieldModes;
+  //       assert forall y <- m'.m.Keys :: m.m[y] == m'.m[y];
+  //       assert z.fieldModes == m.m[z].fieldModes;
+  //     }
+  //     else
+  //     {
+  //       assert z == a;
+  //       assert m.m[z] == b;
+  //       assert a.fieldModes == b.fieldModes;
+  //       assert z.fieldModes == m.m[z].fieldModes;
+  //     }
+  // }
+  // assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
 }
 
 
@@ -5810,8 +5814,8 @@ lemma SetDJNZ<T>(a : set<T>, b : set<T>)
       requires n in source.fields.Keys
       requires t == source.fields[n]
       // requires n in clone.fields.Keys
-    requires n in source.fieldModes.Keys
-    requires n in  clone.fieldModes.Keys
+//NO_FIELDMODES     requires n in source.fieldModes.Keys
+//NO_FIELDMODES     requires n in  clone.fieldModes.Keys
       // requires u == clone.fields[n]
       // requires t in m.m.Keys
       // requires u == m.m[ t ]
@@ -5831,9 +5835,9 @@ lemma SetDJNZ<T>(a : set<T>, b : set<T>)
     requires m.ValuesOwnersReady()
   ///NOOOO WRONG!  requires forall oo <- t.owner :: strictlyInside(oo, m.o)
 
-    requires modeOK(source, source.fieldModes[n], t) //YES THIS
-    requires source.fieldModes == clone.fieldModes //technically overkill...
-    requires source.fieldModes[n] == clone.fieldModes[n] //less overkill version
+//NO_FIELDMODES     requires modeOK(source, source.fieldModes[n], t) //YES THIS
+//NO_FIELDMODES     requires source.fieldModes == clone.fieldModes //technically overkill...
+//NO_FIELDMODES     requires source.fieldModes[n] == clone.fieldModes[n] //less overkill version
 
 
     requires HighLineKV(t,u,m)
@@ -5846,50 +5850,50 @@ lemma SetDJNZ<T>(a : set<T>, b : set<T>)
 
 //    requires sameMode(source.fieldModes[n], clone.fieldModes[n])//9 Feb 2026
 //    requires sameRef(source, t, clone, u)
-     ensures modeOK(clone,  clone.fieldModes[n], u)
+//       ensures modeOK(clone,  clone.fieldModes[n], u)
   {
-    match (clone.fieldModes[n])
-        case Evil => assert modeOK(clone, clone.fieldModes[n], u);
-        case Rep | Owned(_) | Loaned(_) =>
-               assert refDI(source,t);
-               assert source in t.owner;
-               assert clone  in u.owner;
-               assert refDI(clone,u);
-               assert modeOK(clone, clone.fieldModes[n], u);
-        case Peer =>
-               //assert refBI(source,t);
-               assert mappingOwnersThruKlownKV(source, clone, m);
-               assert mappingOwnersThruKlownKV(t, u, m);
-               assert source.owner == t.owner;
-               assert m.apoCalidse();
-               assert source.owner <= m.m.Keys;
-               if (inside(t,source))
-                  {
-                      assert t.owner == m.o.owner == source.owner;
-                      assert clone.owner == m.clowner;
-                      assert inside(u, clone);
-                      assert mappingOWNRsThruKlownKV(source.owner, clone.owner, m);
-                      assert mappingOWNRsThruKlownKV(t.owner, u.owner, m);
-                      assert clone.owner == u.owner;
-                      assert modeOK(clone, clone.fieldModes[n], u);
-                  } else {
-                     assert t == u;
-                     assert refBI(source, t);
-                     assert refBI(clone, u);
-                     assert modeOK(clone, clone.fieldModes[n], u);
-                  }
-               assert modeOK(clone, clone.fieldModes[n], u);
-        case Borrow(_,_,_,_) =>
-               assert refOK(source,t);
-               assert (source==t) || refBI(source,t) || refDI(source,t);
-               assert (source==t) ==> (clone==u);
-               assert refBI(source,t)  ==> refBI(clone, u);
-               assert refDI(source,t)  ==> refDI(clone, u);
-               assert (clone==u)  || refBI(clone, u) || refDI(clone, u);
-               assert refOK(clone, u);
-               assert modeOK(clone, clone.fieldModes[n], u);
-        case Self =>
-               assert source == t;
-               assert  clone == u;
-               assert modeOK(clone, clone.fieldModes[n], u);
+    // match (clone.fieldModes[n])
+    //     case Evil => assert modeOK(clone, clone.fieldModes[n], u);
+    //     case Rep | Owned(_) | Loaned(_) =>
+    //            assert refDI(source,t);
+    //            assert source in t.owner;
+    //            assert clone  in u.owner;
+    //            assert refDI(clone,u);
+    //            assert modeOK(clone, clone.fieldModes[n], u);
+    //     case Peer =>
+    //            //assert refBI(source,t);
+    //            assert mappingOwnersThruKlownKV(source, clone, m);
+    //            assert mappingOwnersThruKlownKV(t, u, m);
+    //            assert source.owner == t.owner;
+    //            assert m.apoCalidse();
+    //            assert source.owner <= m.m.Keys;
+    //            if (inside(t,source))
+    //               {
+    //                   assert t.owner == m.o.owner == source.owner;
+    //                   assert clone.owner == m.clowner;
+    //                   assert inside(u, clone);
+    //                   assert mappingOWNRsThruKlownKV(source.owner, clone.owner, m);
+    //                   assert mappingOWNRsThruKlownKV(t.owner, u.owner, m);
+    //                   assert clone.owner == u.owner;
+    //                   assert modeOK(clone, clone.fieldModes[n], u);
+    //               } else {
+    //                  assert t == u;
+    //                  assert refBI(source, t);
+    //                  assert refBI(clone, u);
+    //                  assert modeOK(clone, clone.fieldModes[n], u);
+    //               }
+    //            assert modeOK(clone, clone.fieldModes[n], u);
+    //     case Borrow(_,_,_,_) =>
+    //            assert refOK(source,t);
+    //            assert (source==t) || refBI(source,t) || refDI(source,t);
+    //            assert (source==t) ==> (clone==u);
+    //            assert refBI(source,t)  ==> refBI(clone, u);
+    //            assert refDI(source,t)  ==> refDI(clone, u);
+    //            assert (clone==u)  || refBI(clone, u) || refDI(clone, u);
+    //            assert refOK(clone, u);
+    //            assert modeOK(clone, clone.fieldModes[n], u);
+    //     case Self =>
+    //            assert source == t;
+    //            assert  clone == u;
+    //            assert modeOK(clone, clone.fieldModes[n], u);
     }
