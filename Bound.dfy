@@ -3,24 +3,17 @@ include "Ownership-Recursive.dfy"
 
 type Bound = Owner
 
-predicate myBoundsOK(oo : Owner, mb : Bound)
+predicate  myBoundsOK(oo : Owner, mb : Bound)
  //basic defiintin: my flattened boumd must be outside any owners bound(s)
 //  { (forall o <- oo :: o.AMFB >= flatten(mb)) }
 //bnst so far    { (forall o <- oo :: flatten(mb) <= o.AMFB) }
 //next trial
  {
   && (flatten(oo) >= flatten(mb))
+  && (forall o <- oo :: o.ownerBound() >= flatten(mb))
 //  && (forall o <- oo ::( ((o.AMFB) >= flatten(mb))))
-   && (forall o <- oo ::( (o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(mb))))
+//  && (forall o <- oo ::( (o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(mb))))
   }
-
-predicate subBound(o : Object, mb : Bound)
-  {
-//     (o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(mb))
-     (o.AMFX > {}) ==> ((o.AMFB) >= flatten(mb))
-  }
-//  ensures (whole.AMFO > {}) ==> ({part}+part.AMFB)   <= ({whole}+whole.AMFB)
-//  ensures (whole.AMFO > {}) ==> ({whole}+whole.AMFB) >= ({part}+part.AMFB)
 
 
 lemma boundSanity(part : Object, whole : Object, po : Object)
@@ -39,9 +32,8 @@ lemma boundSanity(part : Object, whole : Object, po : Object)
    ensures (flatten(part.owner) >= flatten(part.bound))
    ensures (part.owner == {po}) ==> (po.AMFX > {}) ==> ((po.AMFB+{po}) >= flatten(part.bound))
    ensures (part.owner == {po}) ==> (po.AMFX > {}) ==> (flatten(part.bound)) <= (po.AMFB+{po})
-   ensures subBound(po, part.bound)
 
-//   ensures (whole.AMFO > {}) ==> (whole.AMFB > {})
+//   ensures (whole.AMFO > {}) ==> (whole.AMFB > {}) /// basically horrid here.
 {}
 
 //next trial
@@ -178,10 +170,13 @@ lemma testBounds15(a : Object, b : Object, c : Object, d : Object)
 
 //////////////////////////////////////////////////////////////////////
 ////////
-/////// note all these proposedBNounds doesn't indlude the PLUSo
+/////// note all these proposedBNounds doesn't indlude the ?PLUS?
+///////     - I've no idea what that is!
+///////
 
 method proposeBoundsFLAT(os : set<Object>) returns (b : Bound)
  //computes the intersection of the *flattened* bounds of each owner
+ //does it?  are we sure?
   requires AllReady(os)
    ensures myBoundsOK(os, b)
  {
@@ -192,6 +187,7 @@ method proposeBoundsFLAT(os : set<Object>) returns (b : Bound)
 
 method opposeBounds(os : set<Object>) returns (b : Bound)
  //computes the intersection of the nominal bounds of each owner
+ //does it?  are we sure?
   requires AllReady(os)
    ensures myBoundsOK(os, b)
    ensures b == proposeBounds(os)
@@ -212,7 +208,10 @@ method opposeBounds(os : set<Object>) returns (b : Bound)
 
 
  function froposeBounds(os : set<Object>) : (b : Bound)
+ //os - prooposed owners for an object
  //propose boubnsf but it;'s a function withtout READY as a precondition.
+ //which mean it can be used to set default argument values (ege in make())
+ //but can't guarantee anything
 //   ensures myBoundsOK(os, b)
  {
     var all : set<Object> := set o <- os, a <- o.bound :: a;
@@ -232,6 +231,7 @@ lemma {:isolate_assertions} froposeGetsBoundsOK(os : set<Object>, fp  : set<Obje
 //////////////////////////////////////////////////////////////////////
 
 lemma {:isolate_assertions} {:timeLimit 30} TransitiveBounds(part : Object,  whole : Object)
+ /// warning - this reqhires SingleOwnership ie is BAD
  decreases part.AMFO
   requires part.Ready() && whole.Ready()
   requires inside(part,whole)
@@ -301,3 +301,11 @@ predicate {:isolate_assertions} SingleOwnership(o : Object)
     && ((|o.owner| < 2))
     && ((|o.owner| == 1) ==> (forall oo <- o.owner :: SingleOwnership(oo)))
   }
+
+  lemma SingleOwnershipIsSingletonOwnership(o : Object)
+   requires o.Ready()
+   requires SingleOwnership(o)
+    ensures forall x <- o.owner, y <- o.owner :: x == y
+    {
+      LemmaIsSingleton(o.owner);
+    }
