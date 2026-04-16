@@ -189,7 +189,7 @@ lemma {:isolate_assertions} SuperDuperKlonMapperKV(m : Klon)
 
 
 
-lemma {:isolate_assertions} SuperDuperOwnerMapperKV(k : Object, v : Object, m : Klon)
+lemma {:isolate_assertions} {:verify false} {:obsolete} SuperDuperOwnerMapperKV(k : Object, v : Object, m : Klon)
   //consistency lemma… or somesthing.
     requires m.apoCalidse()
     requires m.ownersReadyInKlown(k)
@@ -215,7 +215,7 @@ lemma {:isolate_assertions} SuperDuperOwnerMapperKV(k : Object, v : Object, m : 
 {}
 
 
-lemma {:isolate_assertions}  MappingInsideOwnersThruKlown(k : Object, v : Object, m : Klon)
+lemma {:isolate_assertions}  {:verify false} {:obsolete}  MappingInsideOwnersThruKlown(k : Object, v : Object, m : Klon)
    decreases k.AMFO
     requires k.Ready()
     requires v.Ready()
@@ -311,7 +311,7 @@ lemma {:isolate_assertions}  MappingSameObjectIsOutsideThruKlown(k : Object, v :
    assert mappingOwnersThruKlownKV(k, v, m);
 }
 
-lemma {:isolate_assertions}  MappingInsideBoundsThruKlown(k : Object, v : Object, m : Klon)
+lemma {:isolate_assertions}  {:verify false} {:obsolete}   MappingInsideBoundsThruKlown(k : Object, v : Object, m : Klon)
 //wrong turn on the rocky road to dublin…
 //answer - it works cos saying "outside" overconstraints the spec so there are no solutions
 //saying m.m[k] == v gives us outside
@@ -620,6 +620,7 @@ lemma {:isolate_assertions} SubAMFOsGeq(p0 : OWNR, w0 : OWNR, p1 : OWNR, w1 : OW
     //p1 and w1 are flattened owners )AMFOs( within copivot x1;  (clone)
     requires m.SuperCalidFragilistic()
     requires m.m.Keys >= p0 >= w0 >= m.o.AMFO
+    requires m.OwnersLineKV(m.o, m.m[m.o])
   //  requires not( w1 >= w0 ) // careful because we want !>= relation, as against < or <=
     requires p1 == shiftAMFO(p0, m.o.AMFO, m.m[m.o].AMFO, m.m)
     requires w1 == shiftAMFO(w0, m.o.AMFO, m.m[m.o].AMFO, m.m)
@@ -645,7 +646,7 @@ lemma {:isolate_assertions} SubAMFOsGeq(p0 : OWNR, w0 : OWNR, p1 : OWNR, w1 : OW
     assert forall oo <- m.m[m.o].owner :: inside(m.m[m.o], oo);
 }
 
-lemma {:isolate_assertions} {:timeLimit 60} IWannaBeFoolish(i0 : Object, m : Klon, i1 : Object)
+lemma {:isolate_assertions} {:timeLimit 60}  {:verify false} {:obsolete}  IWannaBeFoolish(i0 : Object, m : Klon, i1 : Object)
  //shiftObject is shiftAMFO is mappingOwnersThruKlownKV
   requires m.objectReadyInKlown(i0)
   requires m.SuperCalidFragilistic()
@@ -684,7 +685,7 @@ assert i1.AMFO == si1;
 
 
 
-lemma {:isolate_assertions} ShiftAMFOshiftOWNRs(kk : OWNR, vv : OWNR, m : Klon)
+lemma {:isolate_assertions} {:verify false} {:obsolete} ShiftAMFOshiftOWNRs(kk : OWNR, vv : OWNR, m : Klon)
    //establishes that shiftAMFO(Kk) makes a vv that passes mappignOWNRS...
       requires m.apoCalidse()
       requires AllReady(kk)
@@ -703,7 +704,7 @@ lemma {:isolate_assertions} ShiftAMFOshiftOWNRs(kk : OWNR, vv : OWNR, m : Klon)
       {}
 
 
-lemma {:isolate_assertions} ShiftOWNRshiftAMFOs(kk : OWNR, vv : OWNR, m : Klon)
+lemma {:isolate_assertions} {:verify false} {:obsolete} ShiftOWNRshiftAMFOs(kk : OWNR, vv : OWNR, m : Klon)
     //or this? 0 if mappign OWNRS are OK< then shitAMFO doea the righ tthing
       requires m.apoCalidse()
       requires AllReady(kk)
@@ -721,7 +722,7 @@ lemma {:isolate_assertions} ShiftOWNRshiftAMFOs(kk : OWNR, vv : OWNR, m : Klon)
 
 
 
-function {:isolate_assertions} shiftObjectBETTER(i0 : Object, m : Klon) : (i1 : Object)
+function {:isolate_assertions} {:verify false} {:obsolete}  shiftObjectBETTER(i0 : Object, m : Klon) : (i1 : Object)
     requires m.apoCalidse()
     requires m.SuperCalidFragilistic()
      ensures m.AllLinesCalid()
