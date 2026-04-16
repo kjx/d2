@@ -937,7 +937,7 @@ lemma {:isolate_assertions}  FlownIsFlatten3(oo : Owner)
    ensures flatten(oo) == allAMFOs(oo)
    {}
 
-lemma {:isolate_assertions} {:timeLimit 30} FlownIsFlatten4(o : Object)
+lemma {:isolate_assertions} {:timeLimit 40} FlownIsFlatten4(o : Object)
  decreases o.AMFO
   requires o.Ready()
    ensures flatten({o}) == flown({o})

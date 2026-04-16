@@ -54,7 +54,7 @@ class Object {
 
 //refactored 30 Jan 2026!! //bunch of commented-out-stuff excised
 
-    requires context >= flatten(oo) >= flatten(mb)   //GRR
+    requires /* context >= */ flatten(oo) >= flatten(mb)   //FUCK_CONTEXT!!!
     requires flatten(oo) >= flatten(mb)
     requires forall o <- flatten(oo) :: o.Ready()
     requires nuBoundsOK(oo, mb)   ///attempting to get verification times down
@@ -454,9 +454,14 @@ lemma ValidMeansAllFieldsValid()
 //    assert this !in AMFX;  assert this !in AMFB;
 // }
 
-function ownerBound() : Bound {  if (owner == bound) then (self) else (bound) }
+function ownerBound() : Bound {  if (owner == bound) then ({this}) else (bound) }
    //the bound for directly owned objects to use to set their own bounds...
        //AMFB == AMFX or owner == bound  ???
+
+lemma OWNRsOwners(o : Object)
+ requires o.Ready()
+  ensures (o.owner == o.bound) ==> (o.AMFX == o.AMFB)
+{}
 
 function collectOwnersBounds() : set<set<Object>>  { set o <- owner :: o.AMFB }
 

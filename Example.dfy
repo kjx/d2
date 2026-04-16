@@ -1,12 +1,20 @@
-        include "Object.dfy"
+include "Object.dfy"
 include "Printing.dfy"
 include "Ownership-Recursive.dfy"
+
+//examples from the draft paper - March 2026
 
 method  {:isolate_assertions} ExampleMain(args : seq<string>)
 {
   print "Yaunch\n";
 
-  var frame := new Object.make(fields({"counter","ret"}), {}, {}, "top");
+  var frume := new Object.make(fields({"counter","ret"}), {}, {}, "frume", {});
+  var frome := new Object.make(fields({"counter","ret"}), {frume}, {}, "frome", {frume});
+  var frime := new Object.make(fields({"counter","ret"}), {frome}, {}, "frime", {frome});
+  var freme := new Object.make(fields({"counter","ret"}), {frime}, {}, "freme", {frime});
+  var frame := new Object.make(fields({"counter","ret"}), {freme}, {}, "frame", {freme});
+
+  assert frame.ownerBound() == {frame};
 
   frame.setn("counter", 0);
   frame.setn("counter", 1 + frame.getn("counter"));
@@ -16,33 +24,38 @@ method  {:isolate_assertions} ExampleMain(args : seq<string>)
 
   print "c should be *33* ";
   var deadFrame := Paper_Embedded_add(11,22,frame,{frame});
+     ///remember: frame is the *calling* / **caller** / callor frame.
+     ///the method will build the *callee* frame, run in it, then kill it ...
+      ////but it writes its return value into the "ret" field of the CALLING FRAME.
 
   deadFrame := MakeList(frame,{frame});
-  print "Makelist returns - ret shoudl be    list\n";
+  print "Makelist returns: ret field in the frame below should be lyst\n";
   printobject(frame);
 
-print "PRUNTOBBJ-OJECT\n";
 
 var list : Object;
 
 assert frame.ownerf("ret", {frame});
 
 print "TRAVERSE\n";
-print "frame.fields=", frame.fields, "\n";
+//print "frame.fields=", frame.fields, "\n";
 print "frame.fields.Keys=", fmtsetstr(frame.fields.Keys),"\n";
-print "retrieving link_1\n";
+print "retrieving the list\n";
 list := frame.fields["ret"];
-assume list.Ready();  //READYREADY
 print "got frame.fields[\"ret\"]",fmtobj(list),"\n";
+expect list.Ready();  //READYREADY
+print "got the list:\n";
 printobject(list);
-    assume ("head" in list.fields.Keys);
+
+    expect ("head" in list.fields.Keys); assert ("head" in list.fields.Keys);
     var link1 := list.getf("head");
                           print "GOT LKINK1\n";
-        printobject(link1);
-    assume ("next" in link1.fields.Keys);
+//        printobject(link1);
+    expect ("next" in link1.fields.Keys); assert ("next" in link1.fields.Keys);
+
     var link2 := link1.getf("next");
     print "GOT LKINK2\n";
-    printobject(link2);
+//    printobject(link2);
     print "\nrefOK list->link1 ", refOK(list,link1);
     print "\nrefOK list->link2 ", refOK(list,link2);
     print "\nrefOK link1->link2 ", refOK(link1,link2);
@@ -56,6 +69,25 @@ assert frame.ownerf("ret", {frame});
 
 expect list.ownerf("head", {list});
 assert list.ownerf("head", {list});
+
+print "about to call list_method with:\n";
+printobject(list);
+print "ownerBound() = ", ffmtnickset(list.ownerBound()), "\n\n";
+printobject(frame);
+print "ownerBound() = ", ffmtnickset(frame.ownerBound()), "\n\n";
+
+print "proposed bounds for owner {list,frame}=", ffmtnickset( proposeBounds({list,frame}) ),"\n";
+
+var frameO := list.owner;
+var fremeO := set x : Object <- frameO, y : Object <- x.owner :: y;
+
+expect |fremeO| == 1;
+
+print "boundOK({list,frame},frameO)=", myBoundsOK({list,frame},frameO),"\n";
+print "boundOK({list,frame},fremeO)=", myBoundsOK({list,frame},fremeO),"\n";
+print "boundOK({list,frame},{list,frame})=", myBoundsOK({list,frame},{list,frame}),"\n";
+print "boundOK({list,frame},frameO+{list,frame})=", myBoundsOK({list,frame},frameO+{list,frame}),"\n";
+nl();
 
   deadFrame := list_method(list,frame,flatten({list,frame}));
 
@@ -165,27 +197,28 @@ method {:isolate_assertions} {:timeLimit 30} MakeList(caller : Frame, u : U)
      ensures caller.ownerf("ret", {caller})
     modifies caller
   {
+    print "called MakeList from caller=", caller.nick,"\n";
     assert CV: caller.Valid();
-    frame := new Object.make(fields({"list"}), {caller}, u, "", {caller});
-    var list  := new Object.make(listX, {caller}, u, "list", {caller});
-    assert list.owner == {caller};
-    frame.setf("list", list);
-assert caller.Valid() by { reveal CV; }  assert list.owner == {caller};  assert frame.fields["list"] == list;
-    assert nuBoundsOK({list}, {list});   ///attempting to get verification times down;
+    frame := new Object.make(fields({"lyst"}), {caller}, u, "MakeListFrame", {caller});
+    var lyst  := new Object.make(listX, {caller}, u, "lyst", {caller});
+    assert lyst.owner == {caller};
+    frame.setf("lyst", lyst);
+assert caller.Valid() by { reveal CV; }  assert lyst.owner == {caller};  assert frame.fields["lyst"] == lyst;
+    assert nuBoundsOK({lyst}, {lyst});   ///attempting to get verification times down;
 
-    var i := new Object.make(linkX, {list}, flatten({list}), "i", {list} );
-    var j := new Object.make(linkX, {list}, flatten({list}), "j", {list} );  assert JV: j.Valid();
-    var k := new Object.make(linkX, {list}, flatten({list}), "k", {list} );  assert KV: k.Valid();
-    var l := new Object.make(linkX, {list}, flatten({list}), "l", {list} );
+    var i := new Object.make(linkX, {lyst}, flatten({lyst}), "i", {lyst} );
+    var j := new Object.make(linkX, {lyst}, flatten({lyst}), "j", {lyst} );  assert JV: j.Valid();
+    var k := new Object.make(linkX, {lyst}, flatten({lyst}), "k", {lyst} );  assert KV: k.Valid();
+    var l := new Object.make(linkX, {lyst}, flatten({lyst}), "l", {lyst} );
 assert caller.Valid() by { reveal CV; }
-    list.setf("head", i);
+    lyst.setf("head", i);
     i.setf("next", j);
     j.setf("next", k) by { reveal JV; assert j.Valid(); }
     k.setf("next", l) by { reveal JV; assert j.Valid(); }
 
-assume caller.Valid(); assume frame.fields["list"] == list;  assume list.owner == {caller};
-assume frame.Valid();
-    caller.setf("ret", frame.getf("list"));
+expect caller.Valid(); expect frame.fields["lyst"] == lyst;  expect lyst.owner == {caller};
+expect frame.Valid();
+    caller.setf("ret", frame.getf("lyst"));
     assert caller.ownerf("ret", {caller});
     drop(frame,u);
   }
@@ -196,24 +229,82 @@ lemma DifferentOwnersDifferentObjects(a : Object, b : Object)
    ensures a != b
 {}
 
-method {:isolate_assertions} {:timeLimit 30} list_method(list : Object, caller : Frame, u : U)
+method {:isolate_assertions} {:timeLimit 100} list_method(list : Object, caller : Frame, u : U)
       returns(frame : Frame) ensures without(frame, u)
       requires caller.Ready()
       requires list.Ready()
       requires list != caller
       requires AllReady(u)
       requires u >= flatten({  caller, list   })
-      requires nuBoundsOK({caller},{caller})
+      //requires nuBoundsOK({caller},{caller}) //seems WEIRD
 //NO_FIELDMODES      requires list.fieldModes == listX
       requires list.ownerf("head", {list})
+      requires caller.bound == caller.owner
       requires list.bound == list.owner
+      requires list.owner == {caller}
 //NO_FIELDMODES            requires "ret" in caller.fieldModes.Keys
       requires refOK(caller, list)
       modifies list, caller
     {
-      frame := new Object.make(fields({"list","n","link"}), {caller,list}, flatten({caller,list}+u), "frame", {caller,list});
-                          assert frame.owner == {list, caller};
-                          assert refOK(frame, list);
+      print "starting list_method\n";
+
+      print "caller = ", fmtobj(caller),"\n";
+      print "list   = ", fmtobj(list),"\n";
+      print "caller.ownerBound() = ", fmtown(caller.ownerBound()),"\n";
+      print "list.ownerBound()   = ", fmtown(list.ownerBound()),"\n";
+
+      assert caller.ownerBound() == {caller};
+      assert list.ownerBound() == {list};
+
+      print "owner  = ", fmtown({caller,list}),"\n";
+      print "proposed   =", fmtown(proposeBounds({caller,list})),"\n";
+      print "myBoundsOK =", myBoundsOK({caller,list}, {caller}),"\n";
+
+      var os := {caller,list};
+      var mb := proposeBounds(os);
+      print "mb = ", fmtown(proposeBounds(os)), "\n";
+      print "mb =={caller} :", mb == {caller}, "\n";
+      assert caller.ownerBound() == {caller};
+      assert list.ownerBound() == {list};
+
+    var all : set<Object> := set o <- os, a <- o.ownerBound() :: a;
+
+    print "all = ", fmtown(all),"\n";
+    assert all == {caller,list};
+    var mmbb := (set a <- all | forall o <- os :: flatten({a}) <= flatten(o.ownerBound()));
+      print "mmbb ==", fmtown(mmbb), "\n";
+      print "mmbb == {caller} :", mb == {caller}, "\n";
+
+      print "flatten(caller.ownerBound()) =",fmtown(flatten(caller.ownerBound())),"\n";
+      print "flatten(list.ownerBound()) =",fmtown(flatten(list.ownerBound())),"\n";
+      print "flatten(mb) =",fmtown(flatten(mb)),"\n";
+
+assert flatten(caller.ownerBound()) >= flatten(mb);
+assert flatten(list.ownerBound())   >= flatten(mb);
+      assert mb == {caller};
+      assert mmbb == mb;
+
+      print "flatten(caller.ownerBound()) >= flatten(mb) =", flatten(caller.ownerBound()) >= flatten(mb),"\n";
+      print "flatten(list.ownerBound()) >= flatten(mb) =", flatten(list.ownerBound()) >= flatten(mb),"\n";
+
+
+
+      assert flatten(caller.ownerBound()) >= flatten(mb);
+      assert flatten(list.ownerBound())   >= flatten(mb);
+      assert forall o : Object <- {caller,list} :: flatten(o.ownerBound()) >= flatten(mb);
+assert myBoundsOK({caller,list}, {caller});
+
+      frame := new Object.make(fields({"list","n","link"}), {caller,list}, flatten({caller,list}+u), "list_method_frame");
+      assert frame.owner == {caller,list};
+      assert refOK(frame, list);
+      print "REFOK refOK(frame, list) == ", refOK(frame, list), "\n";
+      print "made frame object:\n";
+
+
+      printobject(frame);
+      print "bailing out\n";
+      return; //BOOM THERE SHE WASS!!
+
 
 assert forall o <- u :: o != frame;
 

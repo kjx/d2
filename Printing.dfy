@@ -10,6 +10,8 @@ method printobject(o : Object)
       printobj(o);
       print "\n  owner:";
       printset(o.owner);
+      print "\n  bound:";
+      printset(o.bound);
       print "\n   AMFO:";
       printset(o.AMFO);
       print "\n   AMFB:";

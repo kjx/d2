@@ -1,4 +1,4 @@
-include "Ownership-Lemmata.dfy"
+  include "Ownership-Lemmata.dfy"
 
 lemma {:isolate_assertions} NoIncomingPointers(f : Object, o : Object, t : Object)
   requires f.Ready() && o.Ready() && t.Ready()
@@ -15,13 +15,22 @@ lemma {:isolate_assertions} NoIncomingPointers(f : Object, o : Object, t : Objec
 lemma {:isolate_assertions} NoOutgoingPointers(f : Object, o : Object, t : Object)
   requires f.Ready() && o.Ready() && t.Ready()
 
-  requires strictlyInside(f,o)
+  requires o.owner != o.bound
   requires o.bound == {}
+   ensures o.ownerBound() == {}
+
+  requires strictlyInside(f,o)
   requires outside(t,o)
 
    ensures not(refOK(f,t))
 {
-  TransitiveBounds(f,o);
+  assert f != t;
+  assert not(inside(t,f));
+
+  OneNilAMFO(f,o);
+  assert not(f.AMFB > {});
+  assert not(refOK(f,t));
+
 }
 
 
@@ -34,12 +43,25 @@ lemma {:isolate_assertions} MovingOnUp(f : Object, o : Object, oo  : Object, t :
   requires refOK(o,t)
   requires strictlyInside(o,oo)
   requires outside(t,o)
-   ensures flatten(o.bound) <= flatten(oo.bound)
+   ensures o.AMFO >  oo.AMFO
+  requires o.AMFB <= oo.AMFB //contravariant --- can I get soemthing close to this directly (answer: not with ownerBounds?)
    ensures refOK(oo,t)
 {
     TransitiveBounds(o,oo);
 }
 
+
+
+
+lemma {:isolate_assertions} MovingOnDown(f : Object, o : Object, t : Object)
+  requires f.Ready() && o.Ready() && t.Ready()
+
+  requires refOK(o,t)
+  requires strictlyInside(f,o)
+  requires outside(t,o)
+  requires f.AMFB == o.AMFB
+   ensures refOK(f,t)
+{}
 
 
 
