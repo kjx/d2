@@ -875,7 +875,7 @@ lemma {:isolate_assertions} {:timeLimit 20} RefOKDI(f' : Object, t' : Object, f 
  requires refOK(f',t')
 
   requires klonCalid(m)
-  requires allKlonLines(m)
+  requires klonAllLines(m)
 //  requires m.CalidLineKV(f', f)
 //  requires m.CalidLineKV(t', t)
 //  requires HighLineKV(f', f, m)
@@ -1148,7 +1148,7 @@ if (f' in t'.owner)  { assert f in t.owner; }
 // print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";
 
   assume klonCalid(m);
-  assume allKlonLines(m);
+  assume klonAllLines(m);
 
 // print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";
 //   print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";

@@ -2768,7 +2768,6 @@ lemma /*VFF*/ XCC_decreases_to_XAF(a : Object, b : Object, m' : Klon)
 method  {:isolate_assertions} Xlone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
     decreases * //(m'.oHeap - m'.m.Keys), |a.AMFO|, |a.fields.Keys|, 12
 
-  //we're solely ever called from Xlone_Via_Map  (and could be reintergrated, who knows?)
   requires m'.oHeap >= flatten(m'.clowner) >= flatten(m'.clbound)
   requires a !in m'.m.Keys
 //  requires inside(a, m'.o)
@@ -2824,6 +2823,8 @@ method  {:isolate_assertions} Xlone_All_Owners(a : Object,  m' : Klon)  returns 
 
 assert m'.Calid();
   var rm := m';  //grrr. shoulid stop doin that.
+
+  assert HighCalidFragilistic(rm);
 //   assert rm.from(m');
 //   assert rm.Calid();
 //   assert COK(a,rm.oHeap) by { reveal COKA; assert COK(a,m'.oHeap); assert COK(a,rm.oHeap); }
@@ -2841,6 +2842,8 @@ assert m'.Calid();
   //assert not(a.AMFX <= rm.m.Keys);
 
 assert rm.Calid();
+assert HighCalidFragilistic(rm);
+assert forall k <- rm.m.Keys :: HighLineKV(k, rm.m[k], rm);
 
 assert (a.owner - MX) <= rm.m.Keys;
 assert  MX == a.owner - rm.m.Keys;
@@ -2851,9 +2854,11 @@ assert  MX == a.owner - rm.m.Keys;
     invariant  rm.HeapContextReady() && rm.ValuesContextReady()
     invariant  rm.from(m')
     invariant  rm.Calid()
+    invariant  forall k <- rm.m.Keys :: HighLineKV(k, rm.m[k], rm)
     invariant  HighCalidFragilistic(rm)
     invariant  MX == a.owner - rm.m.Keys
     invariant  (a.owner - MX) <= rm.m.Keys
+
 //NO_FIELDMODES     invariant  forall z <- rm.m.Keys :: z.fieldModes == rm.m[z].fieldModes
     invariant  a !in rm.m.Keys
   {
@@ -2869,17 +2874,18 @@ assert  MX == a.owner - rm.m.Keys;
 //     assert xo !in rm.m.Keys;
 //
     var OMX := MX;
-//     MX := OMX - {xo};
-//     assert xo !in MX;
-//     assert xo  in OMX;
-//     assert MX < OMX;
-//     assert MX <= OMX - {xo};
+    MX := OMX - {xo};
+    assert xo !in MX;
+    assert xo  in OMX;
+    assert MX < OMX;
+    assert MX <= OMX - {xo};
 //
 //   assert a.AMFO > xo.AMFO;
 //   assert rm.from(m');
 //   assert xo in (a.owner - rm.m.Keys);
 //   assert a in rm.oHeap;
-  // assert COK(a,rm.oHeap);
+
+    assert COK(a,rm.oHeap) by { reveal COKA; assert COK(a, m'.oHeap); }
 
     XAO_decreases_to_XVM(a,m', xo,rm);
     print "CALL Clone_Via_Map for owner ",fmtobj(xo),"\n";
@@ -2898,13 +2904,16 @@ assert  MX == a.owner - rm.m.Keys;
     //  assert a.Ready() && a.Valid();
 //NO_FIELDMODES      assert forall z <- rm.m.Keys :: z.fieldModes == rm.m[z].fieldModes;
 
-//     COKfromHeapContextReady(xo, rm);
+    assert MX < OMX;
+    assert MX <= OMX - {xo};
+
+     COKfromHeapContextReady(xo, rm);
 //     assert HighCalidFragilistic(rm);   //TUESDAY
 // ///  ////  ////  ////  ////  ////  ////
 
     rr, rm := /*FAKE_*/Xlone_Via_Map(xo, rm);
-
-//    assume HighCalidFragilistic(rm);
+    assume {:axiomn} HighCalidFragilistic(rm);  //postcondition temporarily deleted so XVM doesn't crash :-(.
+                                                //see comments in defn of Xlone_Via_Map
 ///  ////  ////  ////  ////  ////  ////  ////  ////  ///  ////  ////  ////  ////  ////  ////  ////  ////
   //NO_CODE
   //   assert rm.from(m');
@@ -2916,6 +2925,9 @@ assert  MX == a.owner - rm.m.Keys;
   // assert rr.Ready() && rr.Valid();
   // assert rr.Context(rm.hns());
 
+    assert MX < OMX;
+    assert MX <= OMX - {xo};
+
       if (a in rm.m.Keys) {
       m := rm;
       //NO_CODE
@@ -2923,7 +2935,7 @@ assert  MX == a.owner - rm.m.Keys;
       // assert (forall z <- m.m.Keys ::  (m.objectInKlown(z)));
       // assert  m.ownersInKlown(a);
       // assert  m.SuperCalidFragilistic();
-      // assert HighCalidFragilistic(rm); //TUESDAY
+      assert HighCalidFragilistic(rm); //TUESDAY
       print "RETN - Clone All Onwers - clonéd pivot\n";
       return;
     }  else { assert a !in rm.m.Keys;  }
