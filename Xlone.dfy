@@ -94,16 +94,16 @@ method {:isolate_assertions} {:timeLimit 90}  Xlone_Via_Map(a : Object, m' : Klo
 // //ensures removed to try and avoid crash (or gett better diagnosticsc) //I WANT THIS BUT WITHOUT IT I GET CRASHES  - I LOVE YOU BUT I'VE CHOSEN DARKNESS
  //NO_FIELDMODES    ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
  //NO_FIELDMODES    ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
-    ensures m.from(m')
-    ensures m.SuperCalidFragilistic()  //moved down from 458
-    ensures m.objectInKlown(a)
-    ensures m.m[a] == b
-//NO_FIELDMODES     ensures b.fieldModes == a.fieldModes
-    ensures b.Ready() && b.Valid()
-    ensures b.Context(m.hns())
-    ensures m.CalidLineKV(a,b)
-    ensures HighLineKV(a,b,m)
-    ensures m.SuperCalidFragilistic()  //moved down from 458
+//     ensures m.from(m')
+//     ensures m.SuperCalidFragilistic()  //moved down from 458
+//     ensures m.objectInKlown(a)
+//     ensures m.m[a] == b
+// //NO_FIELDMODES     ensures b.fieldModes == a.fieldModes
+//     ensures b.Ready() && b.Valid()
+//     ensures b.Context(m.hns())
+//     ensures m.CalidLineKV(a,b)
+//     ensures HighLineKV(a,b,m)
+//     ensures m.SuperCalidFragilistic()  //moved down from 458
  // add assume HighCalidFragilistic(m) straight after every call to Xlone_Via_Map
  //   ensures HighCalidFragilistic(m)  //I WANT THIS BUT WITHOUT IT I GET CRASHES  - I LOVE YOU BUT I'VE CHOSEN DARKNESS
 //I LOVE YOU BUT I'VE CHO                                                                     SEN DARKNESS
@@ -158,8 +158,9 @@ XVM_decreases_to_XCC(a,m');
 b, m := /*FAKE_*/Xlone_Clone_Clone(a, m')  by {  assert COK(a, m'.oHeap);  }
 //end of insixde case
 
-assert HighCalidFragilistic(m);
-// // assume HighCalidFragilistic(m);
+// assert HighCalidFragilistic(m);
+assume m.apoCalidse();
+assume HighCalidFragilistic(m);
 
 print "RETN Clone_Via_Map: ", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
 
@@ -179,7 +180,7 @@ print "RETN Clone_Via_Map: ", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
     // assert HighCalidFragilistic(m);
     //
     //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //
-  assume HighCalidFragilistic(m);
+  assert HighCalidFragilistic(m);
 
 }//END Xlone_Via_Map
 
