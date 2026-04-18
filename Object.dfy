@@ -13,8 +13,9 @@ include "Ownership.dfy" //comes in via Mode anyway..
   //AMFB-NOT-NULL null  bound bans outgoing references
 //REVERT - revertig defintion of flatten to have the extra +os (and so tolerate un-Ready() arguments)
 //Libertarin - input constraints on computeOwnershiOfClone
-//OWNERBOUND
-//NO_FIELDMODES
+//OWNERBOUND - chamges to ownerbound.
+//NO_FIELDMODES - not checking anythign azbout fieldmodes
+//NOCONTEXT - removing the context constraints pretty much everywhere.
 //verifies clear 25 Jan 2025
 
 type Owner = set<Object>
@@ -49,19 +50,19 @@ class Object {
 
 
 //LILLE constructor arguments
-  constructor {:isolate_assertions} {:timeLimit 20} make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := froposeBounds(oo))
+  constructor {:isolate_assertions} {:timeLimit 20} make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := aroposeBounds(oo))
     //make an object.  owner & (opt) bound should be local owners, not flattened OWNRS
 
 //refactored 30 Jan 2026!! //bunch of commented-out-stuff excised
-
+    requires AllReady(oo)     //when was this deleted?
+    requires AllReady(mb)     //because of this? who knows!
     requires /* context >= */ flatten(oo) >= flatten(mb)   //FUCK_CONTEXT!!!
     requires flatten(oo) >= flatten(mb)
     requires forall o <- flatten(oo) :: o.Ready()
     requires nuBoundsOK(oo, mb)   ///attempting to get verification times down
-//    requires myBoundsOK(oo, mb)   ///attempting to get verification times down
 
 //"rephrase" precondtions
-    ensures context >= AMFX >= AMFB
+    ensures /* context >= */  AMFX >= AMFB
     ensures forall o <- AMFX :: o.Ready()
     ensures nuBoundsOK(owner, bound)
 
@@ -76,9 +77,9 @@ class Object {
  //correctness invariants etc
     ensures Ready()
     ensures Valid()
-    ensures context+{this} >= AMFO   //do I need on plus the one below?
-    ensures Context(context+{this}) //only possible cos we go no fields?
-    ensures unchanged( context )
+//    ensures context+{this} >= AMFO   //do I need on plus the one below?
+//    ensures Context(context+{this}) //only possible cos we go no fields?
+//    ensures unchanged( context )
     ensures fresh(this)
     modifies {}
   {
@@ -300,16 +301,16 @@ lemma MakeOwnerSelfies(oo : Owner, mb : Owner)
   lemma {:isolate_assertions}    MakeInContext(context : set<Object>)
   //helper to make
    requires Ready()
-   requires context >= flatten(owner)
+//NOCONTEXT   requires context >= flatten(owner)
    requires fields == map[]
-    ensures Context(context+{this})
+//NOCONTEXT     ensures Context(context+{this})
 {
       assert Ready();
-      assert (this in context+{this});
-      assert context >= flatten(owner);
-      assert context+{this} >= flatten(owner)+{this};
+//NOCONTEXT         assert (this in context+{this});
+//NOCONTEXT         assert context >= flatten(owner);
+//NOCONTEXT         assert context+{this} >= flatten(owner)+{this};
       assert flatten(owner)+{this} == AMFO;
-      assert (context+{this} >= AMFO);
+//NOCONTEXT         assert (context+{this} >= AMFO);
 
       assert fields == map[];
       assert fields.Keys == {};
