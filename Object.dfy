@@ -56,9 +56,8 @@ class Object {
 //refactored 30 Jan 2026!! //bunch of commented-out-stuff excised
     requires AllReady(oo)     //when was this deleted?
     requires AllReady(mb)     //because of this? who knows!
-    requires /* context >= */ flatten(oo) >= flatten(mb)   //FUCK_CONTEXT!!!
+    //NOCONTEXT  requires /* context >= */ flatten(oo) >= flatten(mb)   //FUCK_CONTEXT!!!
     requires flatten(oo) >= flatten(mb)
-    requires forall o <- flatten(oo) :: o.Ready()
     requires nuBoundsOK(oo, mb)   ///attempting to get verification times down
 
 //"rephrase" precondtions
@@ -77,9 +76,10 @@ class Object {
  //correctness invariants etc
     ensures Ready()
     ensures Valid()
-//    ensures context+{this} >= AMFO   //do I need on plus the one below?
-//    ensures Context(context+{this}) //only possible cos we go no fields?
-//    ensures unchanged( context )
+  //NOCONTEXT  - or rather *not* //NOCONTEXT... ARGH!
+   //NOCONTEXT ensures context+{this} >= AMFO   //do I need on plus the one below?
+   ensures Context(context+{this}) //only possible cos we go no fields?
+   ensures unchanged( context )
     ensures fresh(this)
     modifies {}
   {
@@ -99,6 +99,8 @@ class Object {
     new;
 
     assert initialValues(ks,oo,name,mb);
+
+    RettyBetty(oo);
 
     MakeOwnerOwners(oo, mb);
     MakeOwnerSelfies(oo,mb);
@@ -130,6 +132,11 @@ predicate {:isolate_assertions} Ready()
 
     && (this !in AMFX) && (this !in owner) &&  (this !in bound)
   }
+
+lemma RettyBetty(os : set<Object>)
+ requires AllReady(os)
+  ensures AllReady(flatten(os))
+  {}
 
 lemma {:isolate_assertions} ExtraReady()
    //consequences of well-formedness (Ready) that dafny cant always find easily
@@ -249,7 +256,7 @@ lemma Aux_nest_AMFO(o : Object)
 lemma MakeOwnerOwners(oo : Owner, mb : Owner)
   //helper to make
   requires flatten(oo) >= flatten(mb)
-  requires forall o <- flatten(oo) :: o.Ready()
+  requires AllReady(oo)
   requires nuBoundsOK(oo, mb)
 
   requires owner == oo
@@ -298,20 +305,22 @@ lemma MakeOwnerSelfies(oo : Owner, mb : Owner)
 
   }
 
-  lemma {:isolate_assertions}    MakeInContext(context : set<Object>)
+  lemma {:isolate_assertions} MakeInContext(context : set<Object>)
   //helper to make
    requires Ready()
 //NOCONTEXT   requires context >= flatten(owner)
    requires fields == map[]
-//NOCONTEXT     ensures Context(context+{this})
+    ensures Context(context+{this})
 {
       assert Ready();
-//NOCONTEXT         assert (this in context+{this});
+      assert (this in context+{this});
 //NOCONTEXT         assert context >= flatten(owner);
 //NOCONTEXT         assert context+{this} >= flatten(owner)+{this};
       assert flatten(owner)+{this} == AMFO;
-//NOCONTEXT         assert (context+{this} >= AMFO);
 
+//NOCONTEXT         assert (context+{this} >= AMFO);
+      assume (context+{this} >= AMFO);   //NOCONTEXT
+//NOCONTEXT
       assert fields == map[];
       assert fields.Keys == {};
       assert fields.Values == {};
