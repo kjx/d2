@@ -77,7 +77,7 @@ class Object {
     ensures Ready()
     ensures Valid()
   //NOCONTEXT  - or rather *not* //NOCONTEXT... ARGH!
-   //NOCONTEXT ensures context+{this} >= AMFO   //do I need on plus the one below?
+   ensures context+{this} >= AMFO   //do I need on plus the one below?
    ensures Context(context+{this}) //only possible cos we go no fields?
    ensures unchanged( context )
     ensures fresh(this)
