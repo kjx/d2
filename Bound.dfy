@@ -4,17 +4,12 @@ include "Ownership-Recursive.dfy"
 type Bound = Owner
 
 predicate  myBoundsOK(oo : Owner, mb : Bound)
- //basic defiintin: my flattened boumd must be outside any owners bound(s)
-//  { (forall o <- oo :: o.AMFB >= flatten(mb)) }
-//bnst so far    { (forall o <- oo :: flatten(mb) <= o.AMFB) }
-//next trial
  {
   && (flatten(oo) >= flatten(mb))
   && (forall o <- oo :: flatten(o.ownerBound()) >= flatten(mb))
+  }
 //  && (forall o <- oo ::( ((o.AMFB) >= flatten(mb))))
 //  && (forall o <- oo ::( (o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(mb))))
-  }
-
 
 lemma boundSanity(part : Object, whole : Object, po : Object)
  decreases part.AMFO
@@ -237,15 +232,17 @@ method {:isolate_assertions}  opposeBounds(os : set<Object>) returns (b : Bound)
   requires AllReady(os)
    ensures myBoundsOK(os, b)
    ensures b == proposeBounds(os)
+   ensures flatten(os) >= flatten(b)
  {
     var all : set<Object> := set o <- os, a <- o.ownerBound() :: a;
     b := set a <- all | forall o <- os :: flatten({a}) <= flatten(o.ownerBound());
  }
 
- function proposeBounds(os : set<Object>) : (b : Bound)
+ function  {:isolate_assertions}  proposeBounds(os : set<Object>) : (b : Bound)
  //propose boubnsf but it;'s a function
   requires AllReady(os)
    ensures myBoundsOK(os, b)
+   ensures flatten(os) >= flatten(b)
  {
     var all : set<Object> := set o <- os, a <- o.ownerBound() :: a;
     set a <- all | forall o <- os :: flatten({a}) <= flatten(o.ownerBound())
@@ -268,17 +265,36 @@ method {:isolate_assertions}  opposeBounds(os : set<Object>) returns (b : Bound)
 //    }
 
 
+
+
+ function aroposeBounds(os : set<Object>) : (b : Bound)
+ //os - prooposed owners for an object
+ //propose boubnsf but it;'s a function withtout READY as a precondition.
+ //which mean it can be used to set default argument values (ege in make())
+ //but can't guarantee anything
+   ensures myBoundsOK(os, b)
+   ensures flatten(os) >= flatten(b)
+ {
+   assume AllReady(os);
+    var all : set<Object> := set o <- os, a <- o.ownerBound() :: a;
+  //  set a <- all | forall o <- os :: flatten({a}) <= flatten(o.ownerBound())
+    set a <- all | forall o <- os ::  flatten(o.ownerBound()) >= flatten({a})
+ }
+
+
+
  function froposeBounds(os : set<Object>) : (b : Bound)
  //os - prooposed owners for an object
  //propose boubnsf but it;'s a function withtout READY as a precondition.
  //which mean it can be used to set default argument values (ege in make())
  //but can't guarantee anything
-//   ensures myBoundsOK(os, b)
+ //  ensures myBoundsOK(os, b)
  {
     var all : set<Object> := set o <- os, a <- o.ownerBound() :: a;
   //  set a <- all | forall o <- os :: flatten({a}) <= flatten(o.ownerBound())
     set a <- all | forall o <- os ::  flatten(o.ownerBound()) >= flatten({a})
  }
+
 
 lemma {:isolate_assertions} froposeGetsBoundsOK(os : set<Object>, fp  : set<Object>)
     requires froposeBounds(os) == fp

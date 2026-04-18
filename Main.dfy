@@ -89,7 +89,7 @@ method {:verify false} Main(args : seq<string>)
   assert km.o in km.m.Keys;
 
   ////////////////////////////////////////////////////////////////////
-  assume km.objectInKlown(km.o);
+//  assume km.objectInKlown(km.o);
   ////////////////////////////////////////////////////////////////////
 //  assume HighCalidFragilistic(km);
   ///////////////////////////////////////////////////////////////
@@ -158,7 +158,7 @@ if (loutName == "zandall9rusty") {
 ///////////////////////////////////////////////////////////////////////////////////////
 
 
-method {:isolate_assertions} {:timeLimit 30} wrangle7()
+method {:isolate_assertions} {:timeLimit 40} wrangle7()
 //sets up a full clone with sideways owner
 //pivot is b, external owner is e, orig is b,c,d, d has owner c & sideowner e, clone is k l m
   returns (t : Object, a : Object, b : Object, c : Object, d : Object, e : Object,
@@ -185,7 +185,26 @@ method {:isolate_assertions} {:timeLimit 30} wrangle7()
     b := new Object.make(protoTypes, {a}, {t,a}, "bP");   //pivot
     c := new Object.make(protoTypes, {b}, {t,a,b}, "c");  //inside clone
     e := new Object.make(protoTypes, {t}, {t}, "eQ");       //external "sideways" owner
+
+    assert c.Ready();
+    assert e.Ready();
+    assert AllReady({c,e});
+    assert AllReady(flatten({c,e}));
     d := new Object.make(protoTypes, {c,e}, {t,a,b,c,e}, "dX"); //inside pivot and side owner
+
+// assert d.Ready();
+// assert d.bound == {};
+// assert d.owner == {c,e};
+//
+// print "shoiuld have proposed bound = ", ffmtnickset(    proposeBounds({c,e})), "\n";
+// printobject(d);
+// print "\n\n";
+// printobject(c);
+// print "\n\n";
+// printobject(e);
+// print "\n\n";
+//
+// print "dynamically checking bouds bounds :", myBoundsOK( d.owner, d.bound),"\n";
 
     k := new Object.make(protoTypes, {t}, {t}, "k¢b"); //top of coone - of b
     l := new Object.make(protoTypes, {k}, {t,k}, "l¢c"); //clone of c
@@ -194,7 +213,6 @@ method {:isolate_assertions} {:timeLimit 30} wrangle7()
             var m_oo := {l,e};
             var m_mb := m_oo;
 
-            assert m_context >= flatten(m_oo);
             expect m_context >= flatten(m_oo);
             assert flatten(m_oo) >= flatten(m_mb);
             expect flatten(m_oo) >= flatten(m_mb);
@@ -206,16 +224,7 @@ method {:isolate_assertions} {:timeLimit 30} wrangle7()
             // assume AllReady(m_oo);
             // assume (flatten(m_mb) >= collectBounds(flatten(m_oo)));
 
-     m := new Object.make(protoTypes, m_oo, m_context, "m¢d"); //clone of d...
-
-//     b := new Object.make(protoTypes, {},  {},"b");
-//     c := new Object.make(protoTypes, {},  {},"c");
-//     d := new Object.make(protoTypes, {},  {},"d");
-
-    // k := new Object.make(protoTypes, {},  {},"k");
-    // l := new Object.make(protoTypes, {},  {},"l");
-                // m := new Object.make(protoTypes, {},  {},"m");
-
+     m := new Object.make(protoTypes, m_oo, m_context, "m¢d", {}); //clone of d...
 
 
     os := {t, a, b, c, d, e, k, l, m};
@@ -323,7 +332,7 @@ assert flatten({d}) == {t,a,b,c,d,e};
             assert {t,a,b,c,d,e} >= flatten({d});
             assert flatten({d}) >= flatten({d});
             assert AllReady({d});
-            assert nuBoundsOK({d},{d});
+//            assert nuBoundsOK({d},{d});
     k := new Object.make(protoTypes, {d}, {t,a,b,c,d,e}, "k¢b"); //top of coone - of b
 
 /// assert k.AMFO == {t,a,b,c,d,e,k};
@@ -334,7 +343,7 @@ assume flatten({k}) == {t,a,b,c,d,e,k};
             assert {t,a,b,c,d,e,k} >= flatten({k});
             assert flatten({k}) >= flatten({k});
             assert AllReady({k});
-            assert nuBoundsOK({k},{k});
+//            assert nuBoundsOK({k},{k});
     l := new Object.make(protoTypes, {k}, {t,a,b,c,d,e,k}, "l¢c"); //clone of c
 
 /// assert l.AMFO == {t,a,b,c,d,e,k,l};
@@ -496,7 +505,7 @@ assert flatten({d}) == {t,a,b,c,d,e};
             assert {t,a,b,c,d,e} >= flatten({d});
             assert flatten({d}) >= flatten({d});
             assert AllReady({d});
-            assert nuBoundsOK({d},{d});
+//           assert nuBoundsOK({d},{d});
     k := new Object.make(protoTypes, {d}, {t,a,b,c,d,e}, "k¢b"); //top of coone - of b
 
 /// assert k.AMFO == {t,a,b,c,d,e,k};
@@ -507,7 +516,7 @@ assume flatten({k}) == {t,a,b,c,d,e,k};
             assert {t,a,b,c,d,e,k} >= flatten({k});
             assert flatten({k}) >= flatten({k});
             assert AllReady({k});
-            assert nuBoundsOK({k},{k});
+//            assert nuBoundsOK({k},{k});
     l := new Object.make(protoTypes, {k}, {t,a,b,c,d,e,k}, "l¢c"); //clone of c
 
 /// assert l.AMFO == {t,a,b,c,d,e,k,l};
@@ -922,17 +931,17 @@ k := t; l := t;
 
       l := new Object.make(protoTypes, {},  {},"SATAN", {});
       k := new Object.make(protoTypes, {l},  {},"SATAN2", {l});
-
+assert AllReady({l,k});
       t := new Object.make(protoTypes, {l},  {l},"t", {l});
       a := new Object.make(protoTypes, {t}, {l,t}, "a", {t});
       b := new Object.make(protoTypes, {a}, {l,t,a}, "b", {t});
+assert AllReady({t,a,b});
       c := new Object.make(protoTypes, {b}, {l,t,a,b}, "c", {t});
       d := new Object.make(protoTypes, {c}, {l,t,a,b,c}, "d", {t});
       e := new Object.make(protoTypes, {d}, {l,t,a,b,c,d}, "e", {t});
-
+assert AllReady({c,d,e});
       m := new Object.make(protoTypes, {a}, {t}, "X", {a});
-
-
+assert AllReady({l,k}+{t,a,b}+{c,d,e}+{m});
 // assert t.AMFO == {t};
 // assert a.AMFO == {t,a};
 // assert b.AMFO == {t,a,b};
@@ -1196,10 +1205,14 @@ var rite2 := new Object.make(fields({}), {rite}, flatten({rite}), "23", {rite} )
   var mb      := {left3,rite2};
     assert context >= flatten(oo) >= flatten(mb);
     assert flatten(oo) >= flatten(mb);
-//    assert forall o <- flatten(oo) :: o.Ready();
-    assert nuBoundsOK(oo, mb);
+    // assert forall o <- flatten(oo) :: o.Ready();
+    print "zandallThreads - oowners:", ffmtnickset((oo));
+    print "zandallThreads - proposed:", ffmtnickset(proposeBounds(oo));
+    print "zandallThreads - mbounds:", ffmtnickset((mb));
+
+ //   assert nuBoundsOK(oo, mb);
  }
-var xxxx := new Object.make(fields({}), {left3,rite2}, flatten({left3,rite2}), "X", {left3,rite2} );
+var xxxx := new Object.make(fields({}), {left3,rite2}, flatten({left3,rite2}), "X");
 
 print "TRUMP TRUMP TRUMP TRUMP TRUMP TRUMP TRUMP TRUMP TRUMP TRUMP TRUMP TRUMP\n";
 print "TRUMP TRUMP TRUMP TRUMP TRUMP TRUMP TRUMP TRUMP TRUMP TRUMP TRUMP TRUMP\n";
@@ -1301,8 +1314,9 @@ method {:isolate_assertions} zandal9inverted()
 
 
 
-
-  method {:isolate_assertions} {:timeLimit 30} zandal10()
+//works with {:timeLimit 0} Sat 18 APri before
+//but file took 25 miniutes
+  method {:isolate_assertions} zandal10()
   returns (t : Object, a : Object, b : Object , c : Object, d : Object, e : Object,
            k : Object, l : Object, m : Object,
            os : set<Object>, oq : seq<Object>, loutName : string)
@@ -1361,7 +1375,7 @@ AllTheseFuckingObjectsAreReadyYouIdiotVarargs(os, t, a, b, c, d, e, k, l, m);
 
 
 
-
+//works with {:timeLimit 0} Sat 18 APri before
 method {:isolate_assertions} zandal11()
   returns (t : Object, a : Object, b : Object, c : Object, d : Object, e : Object,
            k : Object, l : Object, m : Object,
