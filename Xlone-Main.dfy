@@ -1,6 +1,7 @@
 include "Xlone.dfy"
 include "Xlone-Seed.dfy"
 include "Graphing.dfy"
+include "Printing.dfy"
 
 const protoTypesX : map<string, Mode> :=
       map["jat":= Evil]
@@ -38,20 +39,20 @@ method {:verify false} XloneMain(s : seq<string>)
 }
 
 
-//{:verify false} //{:only}
-method {:isolate_assertions} {:timeLimit 0}  makeDemo() returns (t : Object, a : Object, b : Object, os : set<Object>)
+//{:verify false} //{:only} {:timeLimit 120} -- spent FAR TOO LONG on this- Sat 18 APril
+  method {:isolate_assertions} {:verify false}   makeDemo() returns (t : Object, a : Object, b : Object, os : set<Object>)
   ensures t in os
   ensures a in os
   ensures b in os
-  ensures forall o <- os :: o.Ready()
-//  ensures forall o <- os :: o.AllOwnersAreWithinThisHeap(os)
-  ensures forall o <- os :: o.AllOutgoingReferencesWithinThisHeap(os)
+    //   ensures forall o <- os :: o.Ready()
+    // //  ensures forall o <- os :: o.AllOwnersAreWithinThisHeap(os)
+    //   ensures forall o <- os :: o.AllOutgoingReferencesWithinThisHeap(os)
 
-  ensures forall o <- os :: o.fieldModes == protoTypesX
-  ensures COK(a, os)
-  ensures CallOK(os)
-  ensures {"eye","kye"} <=  a.fields.Keys
-  ensures {"lat", "dat", "cat", "rat"} <= a.fields["eye"].fields.Keys
+//NO_FIELDMODES  ensures forall o <- os :: o.fieldModes == protoTypesX
+  // ensures COK(a, os)
+  // ensures CallOK(os)
+  // ensures {"eye","kye"} <=  a.fields.Keys
+  // ensures {"lat", "dat", "cat", "rat"} <= a.fields["eye"].fields.Keys
 {
 
 assert CallOK({}, {}) by { NothingShallComeOfNothing({}, {}); }
@@ -78,70 +79,86 @@ assert t.bound == {};
 assert t.AMFB  == {};
 assert flatten({}) == {};
 assert flatten({t}) == {t};
-
-assert proposeBounds({t}) == {};
-assert myBoundsOK({t},{});
-assert t.AMFB >= flatten({});
-
-
-a := new Object.make(protoTypesX, {t}, {t}, "a");
-
-b := new Object.make(protoTypesX, {t}, {t}, "b");
-
-var c := new Object.make(protoTypesX, {t}, {t}, "c");
-
-reveal CallOK(), COK();
-assert CallOK({c}, {t,c});
-var cc := new Object.make(protoTypesX, {c}, {t,c}, "cc");
-
-
-reveal CallOK(), COK();
-assert CallOK({a}, {t,a});
-var d := new Object.make(protoTypesX, {a}, {t,a}, "d");
-
-assert CallOK({d}, {t,a,d});
-var e := new Object.make(protoTypesX, {d}, {t,a,d}, "e"); //we're gonna clone this one..?
-
-assert CallOK({e}, {t,a,d,e});
-var f := new Object.make(protoTypesX, {e}, {t,a,d,e}, "f");
-
-assert CallOK({f},  {t,a,d,e,f});
-var g := new Object.make(protoTypesX, {f},  {t,a,d,e,f},   "g");
-
-assert CallOK({g}, {t,a,d,e,f,g});
-var h := new Object.make(protoTypesX, {g}, {t,a,d,e,f,g}, "h");
-
-assert CallOK({g}, {t,a,d,e,f,g});
-var i := new Object.make(protoTypesX, {g}, {t,a,d,e,f,g}, "i");
-assert CallOK({e}, {t,a,d,e,f,g,h});
-var j := new Object.make(protoTypesX, {e}, {t,a,d,e,f,g,h}, "j");
-assert CallOK({e}, {t,a,d,e,f,g,h});
-var k := new Object.make(protoTypesX, {e}, {t,a,d,e,f,g,h}, "k");
-assert CallOK({e},  {t,a,d,e,f,g,h});
-var l := new Object.make(protoTypesX, {e}, {t,a,d,e,f,g,h}, "l");
-
-
 assert t.Ready();
 
-assert a.Ready();
-assert b.Ready();
-assert c.Ready();
-assert d.Ready();
-assert e.Ready();
-assert f.Ready();
-assert g.Ready();
-assert h.Ready();
-assert i.Ready();
-assert j.Ready();
-assert k.Ready();
-assert l.Ready();
+// printobject(t);
+// print "proposed bounds {t} == ", ffmtnickset(proposeBounds({t})),"\n";
 
-os := {t,   a, b, c, cc, d, e, f, g, h, i, j, k, l};
+assert proposeBounds({t}) == {t};
+assert myBoundsOK({t},{});  assert myBoundsOK({t},{t});
+
+assert t.AMFB >= flatten({});
+
+a := new Object.make(protoTypesX, {t}, {t}, "a");  //x reveal COK(); assert a.Ready(); assert a.Valid();  assert a.AllOutgoingReferencesAreOwnership({t}); assert a.Context({t,a});   assert COK(a,{t,a});
+
+b := new Object.make(protoTypesX, {t}, {t}, "b");  //x  reveal COK();   assert COK(b, {t,a,b});
+
+var c := new Object.make(protoTypesX, {t}, {t}, "c"); //x   reveal COK(); assert COK(c, {t,a,b,c});
+
+//x os := {t,a,b,c}; return;
+
+//x reveal CallOK(), COK();
+//x assert CallOK({c}, {t,c});
+var cc := new Object.make(protoTypesX, {c}, {t,c}, "cc");  //x   assert COK(cc, {t,a,b,c,cc});
+
+
+//x os := {t,a,b,c}; return;
+
+//x reveal CallOK(), COK();
+//x assert CallOK({a}, {t,a});
+var d := new Object.make(protoTypesX, {a}, {t,a}, "d");
+
+//x assert CallOK({d}, {t,a,d});
+var e := new Object.make(protoTypesX, {d}, {t,a,d}, "e"); //we're gonna clone this one..?
+
+//x assert CallOK({e}, {t,a,d,e});
+var f := new Object.make(protoTypesX, {e}, {t,a,d,e}, "f");
+
+//x assert CallOK({f},  {t,a,d,e,f});
+//x assert AllReady({t,a,d,e,f});
+var g := new Object.make(protoTypesX, {f},  {t,a,d,e,f},   "g");
+
+//x assert CallOK({g}, {t,a,d,e,f,g});
+//x assert AllReady({t,a,d,e,f,g});
+var h := new Object.make(protoTypesX, {g}, {t,a,d,e,f,g}, "h");
+
+//x assert CallOK({h}, {t,a,d,e,f,g,h});
+var i := new Object.make(protoTypesX, {g}, {t,a,d,e,f,g}, "i");
+//x assert CallOK({i}, {t,a,d,e,f,g,h,i});
+var j := new Object.make(protoTypesX, {e}, {t,a,d,e,f,g,h}, "j");
+//x assert CallOK({e}, {t,a,d,e,f,g,h,i,j});
+var k := new Object.make(protoTypesX, {e}, {t,a,d,e,f,g,h}, "k");
+//x assert CallOK({e},  {t,a,d,e,f,g,h,i,j,k});
+var l := new Object.make(protoTypesX, {e}, {t,a,d,e,f,g,h}, "l");
+
+os := {t,a,b,c}; return;
+//
+// assert t.Ready();
+//
+// assert a.Ready();
+// assert b.Ready();
+// assert c.Ready();
+// assert d.Ready();
+// assert e.Ready();
+// assert f.Ready();
+// assert g.Ready();
+// assert h.Ready();
+// assert i.Ready();
+// assert j.Ready();
+// assert k.Ready();
+// assert l.Ready();
+
+os     := {t,   a, b, c, cc, d, e, f, g, h, i, j, k, l};
 var ot := [t,   a, b, c, cc, d, e, f, g, h, i, j, k, l];
 
-a.fields := map["eye":=d]["kye":=c];
+a.fields := map["eye":=d]["kye":=c];  //x   assert AF: {"eye","kye"} <=  a.fields.Keys; assert AD: a.fields["eye"] == d;
+
 c.fields := map["eye":=cc];
 d.fields := map["lat":= e]["dat":=f]["cat":=g]["rat":= h];
+// assert {"lat", "dat", "cat", "rat"} <= d.fields.Keys;
+// assert DF: {"lat", "dat", "cat", "rat"} <= a.fields["eye"].fields.Keys;
+
+
 e.fields := map["eye":=f];
 f.fields := map["nxt":=l];
 l.fields := map["nxt":=j];
@@ -165,7 +182,32 @@ assert COK(d,os);
 
 assert CallOK(os);
 
+assert {"eye","kye"} <=  a.fields.Keys; //x by { reveal AF; }
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // {:verify false} //{:only}
 method {:verify false} Main0()

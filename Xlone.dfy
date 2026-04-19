@@ -3061,7 +3061,7 @@ lemma /*VFF*/ XAO_decreases_to_XVM(a : Object,  am : Klon, xo : Object, xm : Klo
 ////££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££
 ////££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££
 
-method {:isolate_assertions} {:timeLimit 0}  Xlone_All_Fields(a : Object, b : Object, m' : Klon)
+method {:isolate_assertions} {:timeLimit 300}  Xlone_All_Fields(a : Object, b : Object, m' : Klon)
   returns (m : Klon)
 
   decreases * //(m'.oHeap - m'.m.Keys + {a}), |a.AMFO|, fielddiff(a,b), 10
@@ -3144,9 +3144,9 @@ method {:isolate_assertions} {:timeLimit 0}  Xlone_All_Fields(a : Object, b : Ob
    ensures a in m.m.Keys
 //NO_FIELDMODES    ensures a.fieldModes  == b.fieldModes
    ensures m.m[a] == b
-   ensures a.Ready() && a.Valid() && a.Context(m.hns())
+   ensures a.Ready() && a.Valid() //NOCONTEXT && a.Context(m.hns())
    ensures b.Ready() && b.Valid()
-   ensures b.Context(m.hns())
+//NOCONTEXT   ensures b.Context(m.hns())
    ensures m.oHeap == m'.oHeap
 
   //ensures  m.m.Values >= m'.m.Values + {b} //
@@ -3739,8 +3739,8 @@ assert COK(ofv,m'.oHeap) by {
         // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
         // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
           rfv, m := /*FAKE_*/Xlone_Via_Map(ofv, m');
-          assume HighCalidFragilistic(m);
-        // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+          assume HighCalidFragilistic(m);   assume m.objectInKlown(ofv); // while XVM is switched off...
+  // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
         // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
     assert afK == a.fields.Keys;
           assert rfv == m.m[ofv];

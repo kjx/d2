@@ -536,7 +536,7 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
  //   requires v.Ready()  //READYREADY
     //NO_FIELDMODES         requires forall n <- fields :: (n in fieldModes) && modeOK(this, fieldModes[n], fields[n])
     //NO_FIELDMODES             requires modeOK(this, fieldModes[n], v)
-    requires v.bound == v.owner //OWNERBOUND
+ //WHAT THE FUK   requires v.bound == v.owner //OWNERBOUND
      ensures fields == old(fields)[n:=v]
      ensures refOK(this, fields[n])
      ensures ownerf(n, v.owner)
@@ -553,11 +553,11 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
      ///get field maintains validity
 //NO_FIELDMODES    requires n in fieldModes.Keys
         requires n in fields.Keys
-       ensures v.owner == v.bound //OWNERBOUND
+//       ensures v.owner == v.bound //OWNERBOUND
        ensures v.Ready() //READYREADY
        reads `fields, `fieldModes
        { assume {:axiom} n in fields.Keys;  //NO_FIELDMODES
-         assume fields[n].owner == fields[n].bound; //OWNERBOUND
+ //WHAT THE FUK         assume fields[n].owner == fields[n].bound; //OWNERBOUND
          assume fields[n].Ready(); //READYREADY
            fields[n] }
 

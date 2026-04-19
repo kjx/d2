@@ -8,6 +8,8 @@ include "Printing.dfy"
 include "Graphing.dfy"
 
 
+//this file works slowly with timeLimit 0 on the various *andal* methods...
+
 //try this:
   //time lately run Main.dfy c OF "" "{ rank=min; 3; } {rank=same; 2;} {rank=same; 1;} {rank=max; 0; 00;} { rank=same; i; j}  rankdir="TB"; margin=0; "  --allow-warnings --no-verify | tee DUMP.txt
 //then thid
@@ -265,7 +267,7 @@ print "AllReady(m_oo)= ", AllReady(m_oo), "\n";
 ///////////////////////////////////////////////////////////////////////////////////////
 
 
-method {:isolate_assertions} jandal8()
+method {:isolate_assertions} {:timeLimit 20} jandal8()
 //sets up a full-done clone *reentrantly*
 //otherwise compatible with wrangle - except klone owned by d  from
 //pivot is b, external owner is e, orig is b,c,d, d has owner c & sideowner e, clone is k l m BUT now owned by **d**
@@ -722,7 +724,7 @@ printAllOwnershipsAndBounds(m_oo, m_context, "m");
 
 
 
-method {:isolate_assertions} zandal9()
+method {:isolate_assertions} {:timeLimit 20} zandal9()
 //sets up a single "row" of objects to show permissible links - five objects, t, a..d
 //in this version, all boundaries == owners
 //
@@ -789,7 +791,7 @@ k := t; l := t; m := t;
 
 
 
-method {:isolate_assertions} zandal9bounded()
+method {:isolate_assertions} {:timeLimit 40}  zandal9bounded()
 //sets up a single "row" of objects to show permissible links - five objects, t,a..d, with c & d boundary pushed up to a.
 //
   returns (t : Object, a : Object, b : Object, c : Object, d : Object, e : Object,
@@ -901,7 +903,7 @@ k := t; l := t;
    }
 
 //{:timeLimit 15}
-  method {:isolate_assertions}  zandal9tapsul()
+method {:isolate_assertions}  zandal9tapsul()
 //aims to show a capsule - bounding eveything at {t} not {}
 //time lately run Main.dfy d ORB "" "rankdir=\"RL\"; margin=0; "  --allow-warnings --no-verify | grep -v SATAN | tee DUMP.txt
 //
@@ -963,7 +965,7 @@ assert AllReady({l,k}+{t,a,b}+{c,d,e}+{m});
 
 
 //{:timeLimit 15}
-  method {:isolate_assertions}  zandal9rusty()
+method {:isolate_assertions}  zandal9rusty()
 //aims to show a capsule - bounding eveything at {t} not {}
 //
 //.time lately run Main.dfy r  ORB "cX" "rankdir=\"RL\"; margin=0;"  --allow-warnings --no-verify | grep -v SATAN | tee DUMP.txt
@@ -1085,7 +1087,7 @@ method {:isolate_assertions} zandal0()
 
 
 
-method {:isolate_assertions} {:timeLimit 20} zandalList()
+method {:isolate_assertions} {:timeLimit 40} zandalList()
   returns (t : Object, a : Object, b : Object, c : Object, d : Object, e : Object,
            k : Object, l : Object, m : Object,
            os : set<Object>, oq : seq<Object>, loutName : string)
@@ -1316,7 +1318,7 @@ method {:isolate_assertions} zandal9inverted()
 
 //works with {:timeLimit 0} Sat 18 APri before
 //but file took 25 miniutes
-  method {:isolate_assertions} zandal10()
+method {:isolate_assertions} {:timeLimit 20} zandal10()
   returns (t : Object, a : Object, b : Object , c : Object, d : Object, e : Object,
            k : Object, l : Object, m : Object,
            os : set<Object>, oq : seq<Object>, loutName : string)
@@ -1352,14 +1354,17 @@ method {:isolate_assertions} zandal9inverted()
 
       e := new Object.make(protoTypes, {k,l}, {t,a,b,c,d,k,l,m}, "00");
 
+    expect ("a" in t.fieldModes.Keys) && (t.fieldModes["a"] == Evil);
     t.setf("a",m);
+    expect ("a" in b.fieldModes.Keys) && (b.fieldModes["a"] == Evil);
     b.setf("a",l);
 
     shit();
-    assume ("head" in l.fieldModes.Keys) && (l.fieldModes["head"] == Evil);
+    expect ("head" in l.fieldModes.Keys) && (l.fieldModes["head"] == Evil);
+    expect l.Valid();
     l.setf("head",c);
-    assume ("next" in c.fieldModes.Keys) && (c.fieldModes["next"] == Evil);
-    assume c.Valid();
+    expect ("next" in c.fieldModes.Keys) && (c.fieldModes["next"] == Evil);
+    expect c.Valid();
     c.setf("next",d);
 
     os := {t, a, b, c, d, e, k, l, m};
