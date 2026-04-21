@@ -296,11 +296,12 @@ method {:isolate_assertions}  opposeBounds(os : set<Object>) returns (b : Bound)
  }
 
 
-lemma {:isolate_assertions} froposeGetsBoundsOK(os : set<Object>, fp  : set<Object>)
+lemma {:isolate_assertions} FroposeGetsBoundsOK(os : set<Object>, fp  : set<Object>)
     requires froposeBounds(os) == fp
     requires AllReady(os)
      ensures froposeBounds(os) == fp
      ensures proposeBounds(os) == fp
+     ensures aroposeBounds(os) == fp
 
      ensures myBoundsOK(os, fp)
 {}
@@ -447,3 +448,78 @@ predicate {:isolate_assertions} SingleOwnership(o : Object)
     {
       LemmaIsSingleton(o.owner);
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+lemma {:isolate_assertions} {:verify false} BOUNDS_SHOULD_BE_OK(oo : Owner, mb : Owner, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires oo <= m.m.Keys
+  requires mb <= m.m.Keys
+  requires nuBoundsOK(oo, mb)
+  requires flatten(oo) > m.o.AMFO
+  requires flatten(mb) > m.o.AMFO
+//   ensures nuBoundsOK(mapThruKlon(oo,m), mapThruKlon(mb,m))
+ {
+  assert (flatten(oo) >= flatten(mb));
+  assert (forall o <- oo :: flatten(o.ownerBound()) >= flatten(mb));
+
+  var ro := mapThruKlon(oo, m);
+  var rb := mapThruKlon(mb, m);
+
+var fro := flatten(ro);
+
+var orf :=  mapThruKlon((flatten(oo) - m.o.AMFO), m) + m.c.AMFO;
+
+// assert fro == orf;
+
+  // assert (flatten(ro) >= flatten(rb));
+  // assert (forall o <- ro :: flatten(o.ownerBound()) >= flatten(rb));
+ }
