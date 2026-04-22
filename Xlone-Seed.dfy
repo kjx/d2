@@ -1,34 +1,62 @@
-  include "Klon.dfy"
+include "Klon.dfy"
 include "Context.dfy"
 include "Xlone.dfy"
 include "Bound.dfy"
 
-method {:isolate_assertions} {:timeLimit 10} clone(a : Object, context : set<Object>,  into : Owner := a.owner)
+//KJX_WARD_REFAC
+
+method {:isolate_assertions} {:timeLimit 5} clone(a : Object, context : set<Object>,  into : Owner := a.owner)
      returns (b : Object, subtext : set<Object>)
    decreases *
     requires COK(a, context)
+    requires AllReady(into)
     requires flatten(into) >= a.AMFB
+    requires flatten(proposeBounds(into)) >= a.AMFB
     requires CallOK(context)
-    requires context >= flatten(into) >= flatten(into)   //GRR
-    requires flatten(into) >= flatten(into)
+    requires context >= flatten(into)   //GRR
+    requires flatten(into) >= a.AMFB
+    requires flatten(into) >= a.AMFB
     requires forall o <- flatten(into) :: o.Ready()
     requires myBoundsOK(into, into)
     requires forall x <- context :: x.Ready() && x.AllOutgoingReferencesWithinThisHeap(context)
 
+    requires myBoundsOK(into, into)
+    requires COK(a, context)
+    requires CallOK(context)
+    requires forall x <- context :: x.Ready() && x.AllOutgoingReferencesWithinThisHeap(context)
+
+     requires context >= a.AMFB
+     requires context >= flatten(into)
+     requires flatten(into) >= flatten(into)
+     requires flatten(into) >= a.AMFB
+
+    requires context >= flatten(into) >= flatten(into) >= a.AMFB
+    requires forall o <- flatten(into) :: o.Ready()
+
+//NOCONTEX
+    requires context >= a.AMFO
+    requires a.Ready()
+
+
+
+
      ensures b.Valid()
 {
   reveal COK();
-  assert flatten(proposeBounds(into)) >= into;
+  var fp := proposeBounds(into);
+  FroposeGetsBoundsOK(into,fp);
+  assert flatten(into) >= flatten(proposeBounds(into));
   var  rm := sheepKlon(a, into, context, proposeBounds(into));
 
-  assert rm.SuperCalidFragilistic();
+  assert klonReady(rm);
+  assert klonCalid(rm);
 
   subtext := rm.hns();
-  b := rm.o;
+  b := rm.c;
 }
 
 
-method {:isolate_assertions} {:timeLimit 30 } sheepKlon(o : Object, clowner : Owner, oHeap : set<Object>, clbound : Owner := froposeBounds(clowner)) returns  (m : Klon)
+method {:isolate_assertions} {:timeLimit 20 } sheepKlon(o : Object, clowner : Owner, oHeap : set<Object>, clbound : Owner := froposeBounds(clowner)) returns  (m : Klon)
 //seed Klon for cloning object o,  owner of clone being clowner, within heap oHeap...
    decreases *
     requires AllReady(clowner)
@@ -57,9 +85,10 @@ method {:isolate_assertions} {:timeLimit 30 } sheepKlon(o : Object, clowner : Ow
     // ensures forall x <- oHeap :: (x.Ready() && x.Valid() && x.Context(oHeap))
 
    ensures COK(o, m.oHeap)
-   ensures m.SuperCalidFragilistic()
-
-//    reads oHeap`fields, oHeap`fieldModes
+//KJX_WARD_REFAC    ensures m.SuperCalidFragilistic()
+   ensures klonReady(m)
+   ensures klonCalid(m)
+   ensures m.c.Ready()
     {
      assert CallOK(oHeap); reveal CallOK(); reveal COK();
      assert forall x <- oHeap :: (reveal COK(); COK(x,oHeap));
@@ -71,10 +100,12 @@ method {:isolate_assertions} {:timeLimit 30 } sheepKlon(o : Object, clowner : Ow
     reveal UniqueMapEntry();
     assert forall i <- mep0.Keys :: UniqueMapEntry(mep0, i);
     assert AllMapEntriesAreUnique(mep0);
+    assert forall x <- mep0.Keys ::   x == mep0[x];
 
     var mep : vmap<Object,Object> := mep0;
 //    assert mep.Keys == mep.Values == o.AMFX <= oHeap by  { reveal COK(); }
     assert mep.Keys == mep.Values == o.AMFX;
+    assert forall x <- mep.Keys ::   x == mep[x];
 
     forall x <- mep.Keys ensures true //by
       {
@@ -87,21 +118,13 @@ method {:isolate_assertions} {:timeLimit 30 } sheepKlon(o : Object, clowner : Ow
         assert mep[x].Ready();
         assert x.Context(oHeap);
         assert x.Context(oHeap+mep.Values);
-
-        //assert mep0.Keys >= o.AMFX >= o.AMFB;
-        //assert mep0.Keys >= mep0[o].AMFX >= mep0[o].AMFB;
+        assert x.AMFO <= mep.Keys;
       }
-    // var mTKoA := mapThruVMap(o.AMFX, mep);
-    // var oxtra := mTKoA - clamfx;
-    // var cxtra := clamfx - mTKoA;
 
+reveal COK();
+assert COK(o, oHeap);
 
-  reveal COK();
-
-  assert COK(o, oHeap);
-
-
- var c := new Object.make(o.fieldModes, clowner, oHeap, "clone_of_" + o.nick, clbound);
+var c := new Object.make(o.fieldModes, clowner, oHeap, "clone_of_" + o.nick, clbound);
 
 assert c.Ready();
 assert c.Valid();
@@ -119,36 +142,51 @@ forall x <- oHeap ensures (x.Context(oHeap+{c}))
    assert x.Context(oHeap+{c});
  }
 
-assert AllReady(mep.Keys);
-assert AllReady(mep.Values);
-
-//put o := into the map
+assert forall x <- mep.Keys ::  x == mep[x];  assert forall x <- mep.Keys ::  (x.fieldModes == mep[x].fieldModes);
 var me := map2vmap(mep[o:=c]);
 assert AllMapEntriesAreUnique(me);
+assert forall x <- mep.Keys ::   x == me[x];  assert forall x <- mep.Keys ::  (x.fieldModes == me[x].fieldModes);
+assert me[o] == c;                        assert forall x : Object <- {o} ::  (x.fieldModes == me[x].fieldModes);
+assert me.Keys == mep.Keys + {o};   assert forall x : Object <- me.Keys ::  (x.fieldModes == me[x].fieldModes);
+
+//
+// assert forall x : Object <- me.Keys ::
+//   (if (x == o)  then ((me[x] == c) && (x.fieldModes == me[x].fieldModes))
+//                 else ((me[x] == x) && (x.fieldModes == me[x].fieldModes)))
+//   && (x.fieldModes == me[x].fieldModes);
+
+assert me.Keys == o.AMFO;
+assert me.Values == o.AMFX+{c};
+assert AllReady(me.Keys);
+assert AllReady(me.Values);
 
 
-
-assert forall x <- me.Keys ::
-(if (x == o)  then ((me[x] == c) && (c.Ready()))
-              else ((me[x] == x) && (x.Ready()))
-) && me[x].Ready();
-
-
-assert forall x <- me.Keys ::
-(if (x == o)  then ((me[x] == c) && (c.Context(oHeap+{c})))
-              else ((me[x] == x) && (x.Context(oHeap+{c})))
-) && me[x].Context(oHeap+{c});
+// assert forall x <- me.Keys ::
+//   (if (x == o)  then ((me[x] == c) && (c.Ready()))
+//                 else ((me[x] == x) && (x.Ready())))
+//    && me[x].Ready();
+//
+//
+// assert forall x <- me.Keys ::
+//   (if (x == o)  then ((me[x] == c) && (c.Context(oHeap+{c})))
+//               else ((me[x] == x) && (x.Context(oHeap+{c})))
+// ) && me[x].Context(oHeap+{c});
 
 //NO_FIELDMODES
-// assert forall x <- me.Keys ::
-// (if (x == o)  then ((me[x] == c) && (c.fieldModes == o.fieldModes))
-//               else ((me[x] == x) && (me[x].fieldModes == x.fieldModes))
-// ) && (me[x].fieldModes == x.fieldModes);
+assert forall x <- me.Keys ::
+(if (x == o)  then ((me[x] == c) && (c.fieldModes == o.fieldModes))
+              else ((me[x] == x) && (me[x].fieldModes == x.fieldModes))
+) && (me[x].fieldModes == x.fieldModes);
 
 assert inside(o,o);
 assert forall k <- me.Keys :: (not(inside(k,o)) ==> (me[k] == k));
+forall x <- me.Values ensures (x.Context(me.Values+oHeap)) //by
+  {
+     assert x.Context(oHeap+{c});
+     x.WiderContext(oHeap+{c},me.Values+oHeap);
+     assert x.Context(oHeap+{c});
+  }
 assert forall x <- me.Values :: x.Context(me.Values+oHeap); ///Err
-
 
 //
 // assert forall k : Object <- me.Keys :: ( && (k.Ready()) && (objectInKlown(k)) && (me[k].Ready()) && (me[k] in hns()) );
@@ -164,7 +202,7 @@ var clamfx := flatten(clowner);
 assert AllReady(me.Keys);
 assert AllReady(me.Values);
 
-var m0 : Klon := Klon(me,
+m := Klon(me,
                             o,
                             c,
                             clowner,
@@ -174,34 +212,110 @@ var m0 : Klon := Klon(me,
                             clamfx,
                             flatten(clbound));
 
-assert o == m0.o;
-assert c == m0.c == m0.m[m0.o];
-// assert inside(o, o);
-// assert inside(c, c);
-// assert inside(m0.o, m0.o);
-// assert inside(m0.m[m0.o], m0.m[m0.o]);
-// assert outside(m0.o, m0.o) <==> (m0.o == m0.m[m0.o]);
-// assert inside(m0.o, m0.o) <==> inside(m0.m[m0.o], m0.m[m0.o]);
-// assert inside(m0.m[m0.o], m0.m[m0.o]);
+assert forall x <- m.m.Values :: x.Context(me.Values+oHeap);
+assert m.hns() ==   me.Values+oHeap;
+assert m.hns() ==  m.m.Values+m.oHeap;
+assert forall x <- m.m.Values :: x.Context(m.hns());
 
-//assert HighLineKV(o, c, m0);
+assert o == m.o;
+assert c == m.c == m.m[m.o];
 
-// assert m0.m.Values == me.Values;
+    assert (m.o in m.oHeap);
+    assert (m.o.Ready());
+    assert (m.objectInKlown(m.o));
+    assert (m.m[m.o] == m.c);
+    assert (m.o.AMFX == m.o_amfx);
+    assert (m.o.AMFO == m.o_amfx+{m.o});
+    assert (m.clowner == m.c.owner);
+    assert (m.clbound == m.c.bound);
+    assert ((m.c.AMFX  == m.c_amfx));
+    assert ((m.c.AMFB  == m.c_amfb));
+    assert myBoundsOK(m.o.owner, m.o.bound);
+    assert (m.oHeap >= m.c_amfx >= flatten(m.clbound) >= flatten(m.o.bound));
+    assert (m.m.Keys <= m.oHeap);
+    assert (m.m.Values <= m.hns());
+    assert (forall x <- m.hns() :: x.Ready());
+    assert (forall x <- m.m.Keys :: m.objectInKlown(x));
+    assert (m.c_amfx <= m.oHeap);
+    assert klonReady(m);
+
+  assert m.o.Valid() && m.o.Context(m.oHeap);
+  assert m.c.Valid() && m.c.Context(m.hns({m.c}));
+  assert klonPivot(m);
+
+  assert (forall x <- m.oHeap :: x.Context(m.oHeap));
+  assert (forall x <- m.m.Values :: x.Context(m.hns()));
+  assert klonHeap(m);
+
+forall k <- m.m.Keys ensures klonLine(k, m.m[k], m) //by
+ {
+        var v := m.m[k];
+        assert (k.Ready() && k in m.oHeap    && k.Valid());
+        assert (v.Ready() && v in m.hns({v}) && v.Valid());
+        assert (m.m.Keys >= k.AMFX);
+        assert (k.AMFO >  k.AMFB);
+        assert (v.AMFO >= v.AMFB);
+        assert (v.AMFB >= k.AMFB);
+    assert klonBound(k,v,m);
+
+    assert klonModes(k,v,m);
+
+        assert (m.o.Ready());
+        assert (m.objectInKlown(m.o));
+        assert ( (k == m.o)       <==>  (v == m.c)  );
+        assert ((inside(k, m.o))   ==> (k.AMFB  <= m.o.AMFB));
+        assert (outside(k, m.o)   <==>  (v == k));
+        assert ( inside(k, m.o)   <==>  inside(v, m.c) );
+        assert (outside(k, m.c));
+        assert ((inside(k,m.o)) ==> (v !in m.oHeap));
+    assert klonGeometry(k,v,m);
+
+    assert klonIdentity(k,v,m);
+ }
+
+   assert klonAllLines(m);
+
+//assert HighLineKV(o, c, m);
+
+// assert m.m.Values == me.Values;
 // assert forall x <-  me.Values :: x.Context(me.Values+oHeap);
-// assert forall x <-  m0.m.Values :: x.Context(m0.hns());
-
-forall k <- m0.m.Keys ensures (m0.gettingThere()) {
-   if (k == c) {
-      assert (k.Ready()) && (m0.objectInKlown(k)) && (m0.m[k].Ready()) && (m0.m[k] in m0.hns());
-   } else {
-      assert (k.Ready()) && (m0.objectInKlown(k)) && (m0.m[k].Ready()) && (m0.m[k] in m0.hns());
-   }
- assert (k.Ready()) && (m0.objectInKlown(k)) && (m0.m[k].Ready()) && (m0.m[k] in m0.hns());
-}
+// assert forall x <-  m.m.Values :: x.Context(m.hns());
 
 
 
-forall k <- m0.m.Keys ensures (m0.CalidLineKV(k, m0.m[k])) {
+// forall k <- m.m.Keys ensures (m.gettingThere()) {
+//    if (k == c) {
+//       assert (k.Ready()) && (m.objectInKlown(k)) && (m.m[k].Ready()) && (m.m[k] in m.hns());
+//    } else {
+//       assert (k.Ready()) && (m.objectInKlown(k)) && (m.m[k].Ready()) && (m.m[k] in m.hns());
+//    }
+//  assert (k.Ready()) && (m.objectInKlown(k)) && (m.m[k].Ready()) && (m.m[k] in m.hns());
+// }
+
+
+
+// Error: function precondition could not be proved
+// Inside klonLine(k, m.m[k], m)
+// Inside klonReady(m)
+// Could not prove: m.m.Values <= m.hns()
+// This is the only assertion in batch #775 of 1290 in method sheepKlon
+// Batch #775 resource usage: 31.2M RU
+//
+// Error: possible violation of postcondition of forall statement
+// Inside klonLine(k, m.m[k], m)
+// Inside klonModes(k,v,m)
+// Could not prove: k.fieldModes == v.fieldModes
+// This is the only assertion in batch #644 of 1290 in method sheepKlon
+// Batch #644 resource usage: 27.0M RU
+//
+// Error: function precondition could not be proved
+// Inside klonLine(k, m.m[k], m)
+// Inside klonReady(m)
+// Could not prove: forall x <- m.m.Keys :: m.objectInKlown(x)
+// This is the only assertion in batch #777 of 1290 in method sheepKlon
+// Batch #777 resource usage: 25.8M RU
+
+forall k <- m.m.Keys ensures (klonLine(k, m.m[k], m)) {
   if (k == c) {
 
    } else {
@@ -210,12 +324,25 @@ forall k <- m0.m.Keys ensures (m0.CalidLineKV(k, m0.m[k])) {
   }
 
 //
-// assert m0.AllLinesCalid();
-// assert m0.gettingThere();
-// assert m0.SuperCalidFragilistic();
-m := m0;
-// m := Xlone_All_Fields(o,c,m0);
+// assert m.AllLinesCalid();
+// assert m.gettingThere();
+// assert m.SuperCalidFragilistic();
+// m := Xlone_All_Fields(o,c,m);
+assert klonReady(m);
+assert klonCalid(m);
+assert m.c.Ready();
 }
+
+
+
+
+
+
+
+
+
+
+
 
 // //  forall x <- m.m.Keys ensures (true)  {
 // // //    assert (outside(x,m.o)); //where the FUCK did this come from?
@@ -237,28 +364,28 @@ m := m0;
 // //  }
 //
 //
-// forall k <- m0.m.Keys ensures (true) {
+// forall k <- m.m.Keys ensures (true) {
 //      assert (k.Ready());
-//      assert (m0.objectInKlown(k));
-//      assert (m0.m[k].Ready());
-//      assert (m0.m[k] in m0.hns());
+//      assert (m.objectInKlown(k));
+//      assert (m.m[k].Ready());
+//      assert (m.m[k] in m.hns());
 // }
 //
-// forall k <- m0.m.Keys ensures (HighLineKV(k, m0.m[k], m0)) {
+// forall k <- m.m.Keys ensures (HighLineKV(k, m.m[k], m)) {
 //   if (k == o) {
-//     assert m0.m[k] == c;
-//     assert HighLineKV(o, c, m0);
+//     assert m.m[k] == c;
+//     assert HighLineKV(o, c, m);
 //   } else {
-//     assert m0.m[k] == k;
-//     assert HighLineKV(k, m0.m[k], m0);
+//     assert m.m[k] == k;
+//     assert HighLineKV(k, m.m[k], m);
 //   }
 // }
 //
-//   assert m0.AllLinesCalid();
-//   assert m0.gettingThere();
-//   assert m0.SuperCalidFragilistic();
+//   assert m.AllLinesCalid();
+//   assert m.gettingThere();
+//   assert m.SuperCalidFragilistic();
 //
-//  m := Xlone_All_Fields(o,c,m0);
+//  m := Xlone_All_Fields(o,c,m);
 //
 //
 // // assert forall x <- m.m.Keys :: (
