@@ -1,7 +1,7 @@
 include "Klon-HighLine.dfy"
 
 include "Example.dfy"
-include "Xlone-Main.dfy"
+include "Main-Xlone.dfy"
 
 include "Ownership-Recursive.dfy"
 include "Printing.dfy"
