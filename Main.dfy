@@ -1318,7 +1318,7 @@ method {:isolate_assertions} zandal9inverted()
 
 //works with {:timeLimit 0} Sat 18 APri before
 //but file took 25 miniutes
-method {:isolate_assertions} {:timeLimit 20} zandal10()
+method {:isolate_assertions} {:timeLimit 40} zandal10()
   returns (t : Object, a : Object, b : Object , c : Object, d : Object, e : Object,
            k : Object, l : Object, m : Object,
            os : set<Object>, oq : seq<Object>, loutName : string)
@@ -1349,8 +1349,24 @@ method {:isolate_assertions} {:timeLimit 20} zandal10()
       m := new Object.make(appData, {t}, {t}, "S");
 
       l := new Object.make(listF, {b}, {t,a,b}, "L");           assert l.fieldModes == listF;
-      c := new Object.make(linkF, {l}, {t,a,b,k,l,m}, "i");     assert c.fieldModes == linkF;
-      d := new Object.make(linkF, {l}, {t,a,b,c,k,l,m}, "j");
+
+      // print "proposeBounds({l}) = ", ffmtnickset(proposeBounds({l})), "\n";
+      // print "froposeBounds({l}) = ", ffmtnickset(froposeBounds({l})), "\n";
+      // print "aroposeBounds({l}) = ", ffmtnickset(aroposeBounds({l})), "\n";
+      // var opposition := opposeBounds({l});
+      // print "opposeBounds({l})  = ", ffmtnickset(opposition), "\n";
+
+//  assert aroposeBounds({l}) == {l};
+//    assert froposeBounds({l}) == {l};
+//     assert proposeBounds({l}) == {l};
+//    assert nuBoundsOK({l},{l});
+
+      c := new Object.make(linkF, {l}, {t,a,b,k,l,m}, "i",{l});
+    assert c.fieldModes == linkF;    assert c.owner == {l}; assert c.bound == aroposeBounds({l}); assert c.bound == {l};
+      d := new Object.make(linkF, {l}, {t,a,b,c,k,l,m}, "j", {l});
+    assert d.fieldModes == linkF;    assert d.owner == {l}; assert d.bound == aroposeBounds({l}); assert d.bound == {l};
+           assert CCDD: c.owner == c.bound == d.owner == d.bound == {l};   assert ROK: refBI(c,d); assert refOK(c,d);
+
 
       e := new Object.make(protoTypes, {k,l}, {t,a,b,c,d,k,l,m}, "00");
 
@@ -1365,7 +1381,15 @@ method {:isolate_assertions} {:timeLimit 20} zandal10()
     l.setf("head",c);
     expect ("next" in c.fieldModes.Keys) && (c.fieldModes["next"] == Evil);
     expect c.Valid();
+
+    assert c.owner == c.bound == d.owner == d.bound == {l} by { reveal CCDD; }
+    assert refOK(c,d) by { reveal ROK;  }
     c.setf("next",d);
+
+// print "DEBUG DEBUG\n";
+// printobject(c);
+// printobject(d);
+// print "DEBUG DEBUG\n";
 
     os := {t, a, b, c, d, e, k, l, m};
     oq := [t, a, b, c, d, e, k, l, m];

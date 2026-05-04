@@ -55,7 +55,9 @@ predicate Xlone_Complete(m : Klon)
     var v := m.m[k];
       || (v == k)
       || (v.fields.Keys == k.fields.Keys)
-      || (v.fields.Values <= m.m.Keys)
+      || (v.fields.Values <= m.m.Keys)   //what's wgong on here???
+         //why not just (v.fields.Keys == k.fields.Keys)
+        // true for pivot, inside, and outside if v == k...
  }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -64,9 +66,8 @@ predicate Xlone_Complete(m : Klon)
 
 //{:timeLimit 10}
 // {:isolate_assertions}
-method {:isolate_assertions} {:timeLimit 90}  Xlone_Via_Map(a : Object, m' : Klon)
+method {:isolate_assertions} {:timeLimit 10} {:verify true} Xlone_Via_Map(a : Object, m' : Klon)
   returns (b : Object, m : Klon)
-  //entry point to the whole cloning system.
   //if a is not already cloned, we arrange to clone it
   //we return b, the clone of a, in new Klon m.
 
@@ -86,12 +87,21 @@ method {:isolate_assertions} {:timeLimit 90}  Xlone_Via_Map(a : Object, m' : Klo
     requires m'.m.Keys <= m'.oHeap //shojld be in Calid?
     requires a.Ready() && a.Valid()
 
+    requires klonReady(m')
+    requires klonCalid(m')
 
 //NO_FIELDMODES     requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
 //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //
 //I LOVE YOU BUT I'VE CHOSEN DARKNESS
-//FIELD MODEs-ISM HACK -- shouod go into calid or at laets supercalid!
+//FIELD MODEs-ISM HACK -- shouod go into calid or at laets supercalid!\
+//
+// //
+
+
 // //ensures removed to try and avoid crash (or gett better diagnosticsc) //I WANT THIS BUT WITHOUT IT I GET CRASHES  - I LOVE YOU BUT I'VE CHOSEN DARKNESS
+// //
+// //
+// //
  //NO_FIELDMODES    ensures forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes
  //NO_FIELDMODES    ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
 //     ensures m.from(m')
@@ -99,6 +109,7 @@ method {:isolate_assertions} {:timeLimit 90}  Xlone_Via_Map(a : Object, m' : Klo
 //     ensures m.objectInKlown(a)
 //     ensures m.m[a] == b
 // //NO_FIELDMODES     ensures b.fieldModes == a.fieldModes
+//     ensures a.Ready() && a.Valid()
 //     ensures b.Ready() && b.Valid()
 //     ensures b.Context(m.hns())
 //     ensures m.CalidLineKV(a,b)
@@ -106,7 +117,10 @@ method {:isolate_assertions} {:timeLimit 90}  Xlone_Via_Map(a : Object, m' : Klo
 //     ensures m.SuperCalidFragilistic()  //moved down from 458
  // add assume HighCalidFragilistic(m) straight after every call to Xlone_Via_Map
  //   ensures HighCalidFragilistic(m)  //I WANT THIS BUT WITHOUT IT I GET CRASHES  - I LOVE YOU BUT I'VE CHOSEN DARKNESS
-//I LOVE YOU BUT I'VE CHO                                                                     SEN DARKNESS
+//I LOVE YOU BUT I'VE CHO
+// ensures klonReady(m)
+// ensures klonLine(a,b,m)
+// ensures klonCalid(m)                                                                   SEN DARKNESS
 //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //
 
 
@@ -129,7 +143,7 @@ method {:isolate_assertions} {:timeLimit 90}  Xlone_Via_Map(a : Object, m' : Klo
     print "OOPS Clone_Via_Map calling out to XAO\n";
 
     var om := /*FAKE_*/Xlone_All_Owners(a, m');
-
+    assert om.ownersInKlown(a);
     print "OOPS Clone_Via_Map just returned from XAO\n";
 
       if (a in om.m.Keys) {
@@ -140,12 +154,94 @@ method {:isolate_assertions} {:timeLimit 90}  Xlone_Via_Map(a : Object, m' : Klo
       }
 
 
+    assert klonReady(om);
+    assert klonCalid(om);
+    // assert om.ownersReadyInKlown(a);
+    // assert a in om.oHeap;
+    // assert outside(a,om.o);
+    // assert a == b;
+    OUTSIDE_EQ_OK(a,b,om);
+    // assert klonLine(a,b,om);
+
+    assert a !in om.m.Keys;
+
+    CKV_PRECONDS(a,b,om);
+   // assert om.CKV_preconditions(a,b); ///crashes!
+   // expect om.CKV_preconditions(a,b);   assume  om.CKV_preconditions(a,b);
+
+
+
+// {
+//        var m := om;
+//        assert klonReady(m);
+// forall k <- m.m.Keys ensures klonLine(k, m.m[k], m) //by
+//  {
+//         var v := m.m[k];  ///ARGH!!!
+//         assert (k.Ready() && k in m.oHeap    && k.Valid());
+//         assert (v.Ready() && v in m.hns({v}) && v.Valid());
+//         assert (m.m.Keys >= k.AMFX);
+//         assert (k.AMFO >  k.AMFB);
+//         assert (v.AMFO >= v.AMFB);
+//         assert (v.AMFB >= k.AMFB);
+//     assert klonBound(k,v,m);
+//
+//     assert klonModes(k,v,m);
+//
+//         assert (m.o.Ready());
+//         assert (m.objectInKlown(m.o));
+//         assert ( (k == m.o)       <==>  (v == m.c)  );
+//         assert ((inside(k, m.o))   ==> (k.AMFB  <= m.o.AMFB));
+//         assert (outside(k, m.o)   <==>  (v == k));
+//         assert ( inside(k, m.o)   <==>  inside(v, m.c) );
+//     assert klonGeometry(k,v,m);
+//
+//     assert klonIdentity(k,v,m);
+//     assert klonLine(k,v,om);
+//  }
+// }
+
+
+  assert klonReady(om);
+  assert outside(a,om.o) ==> outside(a,om.c);
+  assert (om.ownersInKlown(a) && outside(a,om.o)) ==> klonLine(a,a,om);
+   assert klonLine(a,b,om);
+
 //////////////////SPLIT  HERE
 
-    m := om.CalidKV(a,b) by { reveal COKA; assert COK(a, om.oHeap);
+      m := om.CalidKV(a,b) by { reveal COKA; assert COK(a, om.oHeap);   //was 145 Error:
                               reveal CTXA; assert a.Context(om.oHeap);
                               HeapToHNS(b,om); }
-    HighLineFrom(m, om);
+
+//   assert m.from(m');
+//   assert m'.apoCalidse();
+//   assert m.m.Keys <= m.oHeap;
+//   assert forall k <- m'.m.Keys :: k.Ready() && m.objectInKlown(k);
+//   assert forall k <- m'.m.Keys :: HighLineKV(k, m'.m[k], m');
+//   assert klonReady(m');
+//   assert klonCalid(m');
+//   assert (m.m.Keys - m'.m.Keys) <= m'.oHeap;
+//   assert forall x : Object <- (m.hns() - m'.hns())       :: x.Ready();
+//
+//   assert (m.m.Keys   - om.m.Keys) == {a};
+//   assert (m.m.Values - om.m.Values) == {b};
+//   assert m.m[a] == b;
+//   assert a == b;
+//   assert klonLine(a,m.m[a],om);
+//
+//   assert forall x : Object <- (m.m.Keys   - om.m.Keys)   :: m.objectInKlown(x);
+//   assert forall x : Object <- (m.m.Keys   - om.m.Keys)   :: klonLine(x,m.m[x],m');//Error: was 221
+//   assert forall x : Object <- (m.m.Values - om.m.Values) :: x.Context(m.hns());//Error: was 222
+
+assume m == klonKV(om,a,b);
+assume m.from(om);
+assume klonReady(m);
+assume klonCalid(m);
+
+
+
+
+KlonLineFrom(a,b,m,om);
+//    HighLineFrom(m, om);                                                                                                                                                                                        //was 148 Error:
 //NO_FIELDMODES     FieldModesAreStillOK(a,b,m,om);
     OneMoreHeap(a,m,om);
 
@@ -154,13 +250,19 @@ method {:isolate_assertions} {:timeLimit 90}  Xlone_Via_Map(a : Object, m' : Klo
     return ; // end outside case
   }
 
+//////////////////SPLIT  HERE
+
+
 XVM_decreases_to_XCC(a,m');
 b, m := /*FAKE_*/Xlone_Clone_Clone(a, m')  by {  assert COK(a, m'.oHeap);  }
 //end of insixde case
 
 // assert HighCalidFragilistic(m);
-assume m.apoCalidse();
-assume HighCalidFragilistic(m);
+// assume m.apoCalidse();
+// assume HighCalidFragilistic(m);
+
+assume klonReady(m); //Problem is XCC ENSURES are TURNED OFF
+assume klonCalid(m); //Problem is XCC ENSURES are TURNED OFF
 
 print "RETN Clone_Via_Map: ", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
 
@@ -180,11 +282,16 @@ print "RETN Clone_Via_Map: ", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
     // assert HighCalidFragilistic(m);
     //
     //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //
-  assert HighCalidFragilistic(m);
 
 }//END Xlone_Via_Map
 
 
+
+lemma /*VFF*/ XVM_decreases_to_XCC(a : Object, m' : Klon)
+  ensures
+   (m'.oHeap - m'.m.Keys + {a}, |a.AMFO|, |a.fields.Keys|, 20 //Klone_Via_Map
+    decreases to m'.oHeap - m'.m.Keys + {a}, |a.AMFO|, |a.fields.Keys|, 15)
+{}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -196,12 +303,49 @@ lemma HeapToHNS(o : Object, m : Klon)
    ensures o in m.hns({o})
   {}
 
+lemma {:isolate_assertions}  AREBOUNDSFUXKED(k : Object, v : Object, m : Klon)
+  requires klonReady(m)
+  requires && (k.Ready() && k in m.oHeap    && k.Valid() && k.Context(m.oHeap))
+  requires && (v.Ready() && v in m.hns({v}) && v.Valid() && v.Context(m.hns()))
+  requires m.ownersInKlown(k)
+  requires k == v
 
-lemma /*VFF*/ XVM_decreases_to_XCC(a : Object, m' : Klon)
   ensures
-   (m'.oHeap - m'.m.Keys + {a}, |a.AMFO|, |a.fields.Keys|, 20 //Klone_Via_Map
-    decreases to m'.oHeap - m'.m.Keys + {a}, |a.AMFO|, |a.fields.Keys|, 15)
-{}
+  && (m.m.Keys >= k.AMFX)
+  && (k.AMFO   >  k.AMFB) //nuclear war is good
+  && (v.AMFO   >= v.AMFB) //nuclear war is good
+  && (v.AMFB   >= k.AMFB)
+
+  ensures klonBound(k,v,m)
+  {}
+
+
+lemma {:isolate_assertions} {:timeLimit 20} OUTSIDE_EQ_OK(k : Object, v : Object, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires m.ownersReadyInKlown(k)
+  requires k in m.oHeap
+  requires outside(k,m.o)
+  requires k == v
+
+  ensures klonLine(k,v,m)
+  {
+    assert (m.m.Keys <= m.oHeap) by { assert klonReady(m); }
+  }
+
+
+lemma {:isolate_assertions} {:timeLimit 20} CKV_PRECONDS(k : Object, v : Object, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires m.ownersReadyInKlown(k)
+  requires k in m.oHeap
+  requires k !in m.m.Keys
+  requires outside(k,m.o)
+  requires klonLine(k,v,m)
+
+
+  ensures m.CKV_preconditions(k,v)
+  {}
 
 
 
@@ -316,7 +460,7 @@ lemma  {:isolate_assertions} ThereIsNoSpoon(part : Object, whole : Object)
 //EVIL EVIL EVIL EVIL
 //EVIL EVIL EVIL EVIL
 
-// method {:isolate_assertions} {:timeLimit 30} Xlone_Clone_Clone(a : Object, m' : Klon)
+// method {:isolate_assertions} {:timeLimit 30}    Xlone_Clone_Clone(a : Object, m' : Klon)
 //   returns (b : Object, m : Klon)
 //   //this is pretty close to a "shallow clone" - acutally a "strucural clone" -
 //   //clowning all owners etc but leaving the fields all empty
@@ -820,7 +964,7 @@ lemma  {:isolate_assertions} ThereIsNoSpoon(part : Object, whole : Object)
 
 
 //{:timeLimit 30}
-  method {:isolate_assertions} {:timeLimit 300} Xlone_Clone_Clone(k : Object, m' : Klon)
+method {:isolate_assertions} {:timeLimit 300} {:verify true} Xlone_Clone_Clone(k : Object, m' : Klon)
   returns (v : Object, m : Klon)
   //this is pretty close to a "shallow clone" - acutally a "strucural clone" -
   //clowning all owners etc but leaving the fields all empty
@@ -1695,7 +1839,14 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
                 assert (outside(k, rm.m[rm.o]));
 //NO_FIELDMODES                   assert (k.fieldModes   == v.fieldModes);
                 assert (mappingOwnersThruKlownKV(k,v,rm));
-        EstablishHighLineKV(k,v,rm);
+
+    assert klonReady(m');
+    assert klonCalid(m');
+
+
+
+    assert klonReady(m);
+    assert klonCalid(m);
    //     assert HighLineKV(k,v,m);
 
   // end CKV_preconditions
@@ -1794,7 +1945,10 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 //
 // //TOUT LES POSTCONDITIONS// //  // //  // //  // //  // //  // //  // //
 {
+
    var m := rm;
+
+
 //NO_FIELDMODES      assert forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes;
 //NO_FIELDMODES      assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
    assert m.SuperCalidFragilistic();
@@ -1808,7 +1962,7 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
    assert m.CalidLineKV(k,v);
    assert HighLineKV(k,v,m);
 }
-//  //FIN LES POSTCONDITIONS// //  // //  // //  // //  // //  // //  // //
+//  //FIN DES POSTCONDITIONS// //  // //  // //  // //  // //  // //  // //
 //
 
 
@@ -1824,7 +1978,7 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 //   assert  COK(k, rm.oHeap);
 //
 // /////////////////////////////////////////////////////////////// ///////
-assert rm.CKV_preconditions(k,v);
+   assert rm.CKV_preconditions(k,v);
 // //axxume rm.CKV_preconditions(k,v);
    var xm := rm.CalidKV(k,v);
 // //////////////////////////////////////////////////////////////////////
@@ -1838,7 +1992,13 @@ assert rm.CKV_preconditions(k,v);
 //   assert  COK(k,  xm.oHeap);
 //
 //
-assert HighLineKV(k, v, rm);
+assert HighLineKV(k, v, xm);
+
+assert klonLine(k,v,xm);
+assert klonReady(xm);
+assert klonCalid(xm);
+
+
 
 //
 // //TOUT LES POSTCONDITIONS// //  // //  // //  // //  // //  // //  // //
@@ -1890,7 +2050,15 @@ assert HighLineKV(k, v, rm);
 // //////////////////////////////////////////////////////////////////////
 // assert COK(k, xm.oHeap);
   m := /*FAKE_*/Xlone_All_Fields(k,v, xm); //this was deleted - who the fuck knows how long for?  //ERR. - likely can't called precondis...
-// //////////////////////////////////////////////////////////////////////
+
+
+assert klonLine(k,v,m);
+assert klonReady(m);
+assert klonCalid(m);
+
+
+
+//r //////////////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////
 // //KEYS  assert k.fields.Keys == v.fields.Keys;
 //
@@ -1941,6 +2109,11 @@ assert HighLineKV(k, v, rm);
    assert HighLineKV(k,v,m);
 //  //FIN LES POSTCONDITIONS// //  // //  // //  // //  // //  // //  // //
 
+
+
+assert klonLine(k,v,m);
+assert klonReady(m);
+assert klonCalid(m);
 
 
 
@@ -2766,8 +2939,11 @@ lemma /*VFF*/ XCC_decreases_to_XAF(a : Object, b : Object, m' : Klon)
 
 
 
-method  {:isolate_assertions} Xlone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
+method  {:isolate_assertions} {:verify true} Xlone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
     decreases * //(m'.oHeap - m'.m.Keys), |a.AMFO|, |a.fields.Keys|, 12
+
+   requires klonReady(m')
+   requires klonCalid(m')
 
   requires m'.oHeap >= flatten(m'.clowner) >= flatten(m'.clbound)
   requires a !in m'.m.Keys
@@ -2815,6 +2991,10 @@ method  {:isolate_assertions} Xlone_All_Owners(a : Object,  m' : Klon)  returns 
   ensures  m.ownersInKlown(a)
   ensures  HighCalidFragilistic(m) //TUESDAY
 
+
+  ensures klonReady(m)
+  ensures klonCalid(m)
+
 // ensures  a !in m.m.Keys  NOT THIS ONE PROBABLU SHOULDN"T HOLD.
 
  {
@@ -2825,7 +3005,7 @@ method  {:isolate_assertions} Xlone_All_Owners(a : Object,  m' : Klon)  returns 
 assert m'.Calid();
   var rm := m';  //grrr. shoulid stop doin that.
 
-  assert HighCalidFragilistic(rm);
+//  assert HighCalidFragilistic(rm);
 //   assert rm.from(m');
 //   assert rm.Calid();
 //   assert COK(a,rm.oHeap) by { reveal COKA; assert COK(a,m'.oHeap); assert COK(a,rm.oHeap); }
@@ -2842,9 +3022,14 @@ assert m'.Calid();
   assert a !in rm.m.Keys;
   //assert not(a.AMFX <= rm.m.Keys);
 
-assert rm.Calid();
-assert HighCalidFragilistic(rm);
-assert forall k <- rm.m.Keys :: HighLineKV(k, rm.m[k], rm);
+// assert rm.Calid();
+// assert HighCalidFragilistic(rm);
+// assert forall k <- rm.m.Keys :: HighLineKV(k, rm.m[k], rm);
+
+assert klonReady(rm);
+assert klonCalid(rm);
+assert klonAllLines(rm);
+assert forall x <- rm.m.Keys :: klonLine(x, rm.m[x], rm);
 
 assert (a.owner - MX) <= rm.m.Keys;
 assert  MX == a.owner - rm.m.Keys;
@@ -2869,7 +3054,7 @@ assert  MX == a.owner - rm.m.Keys;
     xo :| xo in MX;
 
 // NO_CODE OR SOMELTRB*IN G
-//     assert MX == a.owner - rm.m.Keys;
+//     assert M   X == a.owner - rm.m.Keys;
 //     assert xo in (a.owner - rm.m.Keys);
 //     assert xo in a.owner;
 //     assert xo !in rm.m.Keys;
@@ -2912,7 +3097,7 @@ assert  MX == a.owner - rm.m.Keys;
 //     assert HighCalidFragilistic(rm);   //TUESDAY
 // ///  ////  ////  ////  ////  ////  ////
 
-    rr, rm := /*FAKE_*/Xlone_Via_Map(xo, rm);
+    rr, rm := FAKE_Xlone_Via_Map(xo, rm);  /*FAKE*/
     assume {:axiomn} HighCalidFragilistic(rm);  //postcondition temporarily deleted so XVM doesn't crash :-(.
                                                 //see comments in defn of Xlone_Via_Map
 ///  ////  ////  ////  ////  ////  ////  ////  ////  ///  ////  ////  ////  ////  ////  ////  ////  ////
@@ -3061,7 +3246,7 @@ lemma /*VFF*/ XAO_decreases_to_XVM(a : Object,  am : Klon, xo : Object, xm : Klo
 ////££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££
 ////££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££
 
-method {:isolate_assertions} {:timeLimit 300}  Xlone_All_Fields(a : Object, b : Object, m' : Klon)
+method {:isolate_assertions} {:timeLimit 300} {:verify true} Xlone_All_Fields(a : Object, b : Object, m' : Klon)
   returns (m : Klon)
 
   decreases * //(m'.oHeap - m'.m.Keys + {a}), |a.AMFO|, fielddiff(a,b), 10
@@ -3520,7 +3705,7 @@ lemma /*VFF*/ XAF_decreases_to_XFM(a : Object, b : Object, m' : Klon)
 
 
 //  {:timeLimit 300} --- real	17m50.852s 09 April
-method {:isolate_assertions} {:timeLimit 300}  Xlone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
+method {:isolate_assertions} {:timeLimit 300} {:verify true} Xlone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
   returns (m : Klon)
   //given b is an structural clone of a (m.m[a]==b)
   //create a new b.n == cloneOf a.n (m.m[a.n]) and intsall it in b (via Xlone_Set_Field)
@@ -3584,45 +3769,48 @@ method {:isolate_assertions} {:timeLimit 300}  Xlone_Field_Map(a : Object, n : s
   // ensures forall z <- m'.m.Keys | z != b :: unchanged(z) //**17Feb2026 */
 //NO_FIELDMODES   ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
 
-  ensures  m.from(m')
-  ensures  m.SuperCalidFragilistic()  //**17Sep*/
-  ensures  m.apoCalidse() //**17Feb 2026*/
-  ensures  HighCalidFragilistic(m) //**7feb2026 */  //TUESDAY
-  ensures  m.ownersInKlown(a)
-  ensures  a in m.m.Keys
-  ensures  n in a.fields.Keys
-  ensures  unchanged(a`fields)
-  ensures  n in b.fields.Keys
-  ensures  b.fields.Keys == old(b.fields.Keys) + {n}
-  ensures  old(fielddiff(a,b)) decreases to fielddiff(a,b)
-  ensures  m.m[a] == b
-  ensures  m.objectInKlown(a.fields[n])
-  ensures  m.m[ a.fields[n] ] == b.fields[n]
-  ensures  m.m[ a.fields[n] ] == m.m[a].fields[n]  //prog THIS IS THE KEY POSTCONDITION!!
-//NO_FIELDMODES   ensures  a.fieldModes.Keys == b.fieldModes.Keys
-
-//NO_FIELDMODES   ensures forall z <- m'.m.Keys :: z.fieldModes == old(z.fieldModes) == m'.m[z].fieldModes
-//NO_FIELDMODES   ensures forall z <- m.m.Keys  :: z.fieldModes == m.m[z].fieldModes
-
-  ensures unchanged( m'.oHeap )
-  ensures unchanged( m.oHeap  )
-  ensures unchanged( m.oHeap`fields )
-  ensures allocated( m'.oHeap )
-  ensures allocated( m.oHeap  )
-  ensures unchanged( m'.oHeap`fields )
-//NO_FIELDMODES   ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
-
-  ensures m.oHeap == m'.oHeap
+  //FRAE HERE
+  //   ensures  m.from(m')
+  //   ensures  m.SuperCalidFragilistic()  //**17Sep*/
+  //   ensures  m.apoCalidse() //**17Feb 2026*/
+  //   ensures  HighCalidFragilistic(m) //**7feb2026 */  //TUESDAY
+  //   ensures  m.ownersInKlown(a)
+  //   ensures  a in m.m.Keys
+  //   ensures  n in a.fields.Keys
+  //   ensures  unchanged(a`fields)
+  //   ensures  n in b.fields.Keys
+  //   ensures  b.fields.Keys == old(b.fields.Keys) + {n}
+  //   ensures  old(fielddiff(a,b)) decreases to fielddiff(a,b)
+  //   ensures  m.m[a] == b
+  //   ensures  m.objectInKlown(a.fields[n])
+  //   ensures  m.m[ a.fields[n] ] == b.fields[n]
+  //   ensures  m.m[ a.fields[n] ] == m.m[a].fields[n]  //prog THIS IS THE KEY POSTCONDITION!!
+  // //NO_FIELDMODES   ensures  a.fieldModes.Keys == b.fieldModes.Keys
+  //
+  // //NO_FIELDMODES   ensures forall z <- m'.m.Keys :: z.fieldModes == old(z.fieldModes) == m'.m[z].fieldModes
+  // //NO_FIELDMODES   ensures forall z <- m.m.Keys  :: z.fieldModes == m.m[z].fieldModes
+  //
+  //   ensures unchanged( m'.oHeap )
+  //   ensures unchanged( m.oHeap  )
+  //   ensures unchanged( m.oHeap`fields )
+  //   ensures allocated( m'.oHeap )
+  //   ensures allocated( m.oHeap  )
+  //   ensures unchanged( m'.oHeap`fields )
+  // //NO_FIELDMODES   ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
+  //
+  //   ensures m.oHeap == m'.oHeap
+  //TAE HERE
 
   modifies b`fields
 {
 //NO_FIELDMODES   assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
   assert a.fields.Keys > b.fields.Keys;
+
   print "CALL Clone_Field_Map ", fmtobj(a), ".", n, " to ", fmtobj(b), "\n";
-  assert a != b by {
-      assert a  in m'.oHeap;
-      assert b !in m'.oHeap;
-  }
+  // assert a != b by {
+  //     assert a  in m'.oHeap;
+  //     assert b !in m'.oHeap;
+  // }
 //NO_FIELDMODES   assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
   assert SCFL: m'.SuperCalidFragilistic();
 //NO_FIELDMODES   assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
@@ -3648,9 +3836,11 @@ method {:isolate_assertions} {:timeLimit 300}  Xlone_Field_Map(a : Object, n : s
 //NO_FIELDMODES   assert unchanged( m'.oHeap`fieldModes, m'.m.Values`as );
   assert forall z <- m'.m.Keys | z != b :: unchanged(z);
   assert  b.fields.Keys == old(b.fields.Keys);
-  // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 
   var rfv : Object;
+//skipping... if(false){
+  // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+
 
   if (ofv in m'.m.Keys)
     {
@@ -3676,6 +3866,7 @@ method {:isolate_assertions} {:timeLimit 300}  Xlone_Field_Map(a : Object, n : s
 
     }
     else
+
     {
           assert ofv !in m'.m.Keys;
           assert ofv  in m'.oHeap; //cos it's old
@@ -3712,7 +3903,7 @@ assert COK(ofv,m'.oHeap) by {
     CallOKfromHeapContextReady(m');
     assert ofv == COKat(a,  n, m'.oHeap);
     assert  COK(ofv,m'.oHeap); }
-
+reveal COK();  assert a.Ready(); assert a.Valid();
           XFM_decreases_to_XVM(a,b,ofv,m');
 
 
@@ -3735,11 +3926,13 @@ assert COK(ofv,m'.oHeap) by {
   assert m'.objectInKlown(m'.o);
   assert (m'.ownersInKlown(ofv) ==> m'.CalidCanKey(ofv));
   assert m'.m.Keys <= m'.oHeap;
+  assert a.Ready() && a.Valid();
 //NO_FIELDMODES   assert forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes;
         // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
         // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-          rfv, m := /*FAKE_*/Xlone_Via_Map(ofv, m');
-          assume HighCalidFragilistic(m);   assume m.objectInKlown(ofv); // while XVM is switched off...
+          rfv, m := FAKE_Xlone_Via_Map(ofv, m');   assert m.m[ofv] == rfv; /*FAKE*/
+//      assume m.from(m');   assume klonReady(m); assume klonCalid(m);   assume HighCalidFragilistic(m);   assume m.objectInKlown(ofv); // while XVM is switched off...
+      assert m.from(m');   assert klonReady(m); assert klonCalid(m);   assert HighCalidFragilistic(m);   assert m.objectInKlown(ofv); // while XVM is switched off...
   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
         // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
     assert afK == a.fields.Keys;
@@ -3764,7 +3957,16 @@ assert COK(ofv,m'.oHeap) by {
     assert ofv.Ready();  assert m.objectInKlown(ofv);  assert rfv == m.m[ofv];
 //NO_FIELDMODES     assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
     assert  b.fields.Keys == old(b.fields.Keys);
-  }
+        //from below
+        assert ofv.Ready();
+        assert rfv.Ready();
+        assert m.objectInKlown(ofv);
+        assert m.m[ofv] == rfv;
+        assert m.CalidLineKV(ofv,rfv);
+        assert HighLineKV(ofv,rfv,m);
+  } //end else
+// end skipping }
+
 
   //not sure we need ANY of this - let's seee - 5Feb 2026
   //   assert afK == a.fields.Keys;
@@ -3805,6 +4007,8 @@ assert COK(ofv,m'.oHeap) by {
 /// could  possible break here make another method.
 ///
 ///  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /  /
+
+  m := m'; return; //LINE_BY_FUCKING_LINE
 
 ////proof break
 {
@@ -4082,7 +4286,7 @@ label HERE:
   //  assert modeOK(v, v.fieldModes[n], rfv); //**17Sep*/  ///TRUMP
    assert v.FieldValidNV(n, rfv); //*combines refOK and modeOK and n in fieldModes
    assert FVNU: v.FieldValidNV(n, rfv);
-  }
+    }
 
 //proof break
 //OK from start to here…
@@ -4144,7 +4348,7 @@ print "RETN Clone_Field_Map: ", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
    assert ofv.Ready();  assert m.objectInKlown(ofv);  assert rfv == m.m[ofv];
 
   assert  b.fields.Keys == old(b.fields.Keys) + {n};
-}
+  }
 
 
 
@@ -4481,7 +4685,7 @@ print "RETN Clone_Field_Map: ", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
 
 
 //{:resource_limit 75_000_000}   {:timeLimit 30}
-method {:isolate_assertions}  {:timeLimit 30} Xlone_Set_Field(k : Object, v : Object, n : string,
+method {:isolate_assertions}  {:timeLimit 30} {:verify true} Xlone_Set_Field(k : Object, v : Object, n : string,
                  t : Object, u : Object, m' : Klon)
   //with k.n := t,  Klon mappings including k->v, t->u,  set v.n := u
   //requires v !in m'.oHeap   //clone will ONLY need to fields into new objects...
@@ -5276,39 +5480,18 @@ method {:verify false}  FAKE_Xlone_Via_Map(a : Object, m' : Klon)
   returns (b : Object, m : Klon)
     decreases * //(m'.oHeap - m'.m.Keys + {a}), |a.AMFO|, |a.fields.Keys|, 20 //Klone_Via_Map
 
-     requires m'.HeapContextReady() && m'.ValuesContextReady()
-     requires m'.SuperCalidFragilistic()
-   requires COKA: COK(a, m'.oHeap) //ties owners into OHEAP but not KLON MAP
-
-   requires m'.oHeap >= flatten(m'.clowner) >= flatten(m'.clbound) //should be in Calid, yeah??
-
-    requires forall o <- a.AMFO :: o.Ready()
-
-    requires a.Ready() && a.Valid()
-//    requires m'.ownersInKlown(a)  //luxon  //unfortunately taking this out fucks everythuing, not sure why... 00 cos CalidCanbKV / ColidCanKey rely on it>?
-    requires m'.o.Ready() && m'.o.Valid()
-    requires m'.objectInKlown(m'.o)       ///this meqnas we need to "seed" with the actual clone, rignty
-   requires (m'.ownersInKlown(a) ==> m'.CalidCanKey(a))
-
-
-    //READYrequires forall o <- a.AMFO :: o.Ready() //ditto for Ready()
-
-
-    // requires a !in m'.m.Keys //HMM....HMM.... (see above)
-    // requires v !in m'.m.Values
-    // requires NOV: v !in m'.m.Values
-
-  //  requires v in (m'.oHeap+m'.m.Values+{v})
-  //  requires (v.Ready() && v.Valid() && v.Context(m'.oHeap+m'.m.Values+{v}))
-
-//CALID    requires m'.m.Keys <= m'.oHeap //IS in Calid?
-
-
-    requires m'.m.Keys <= m'.oHeap //shojld be in Calid?
-
-//    requires m'.oHeap >= flatten(m'.clowner) >= flatten(m'.clbound) //should be in Calid, yeah??
-
-    requires a.Ready() && a.Valid()
+    // requires m'.HeapContextReady() && m'.ValuesContextReady()
+    // requires m'.SuperCalidFragilistic()
+    // requires COKA: COK(a, m'.oHeap) //ties owners into OHEAP but not KLON MAP
+    // requires a.Context(m'.oHeap)   requires CTXA: a.Context(m'.oHeap)
+    // requires m'.oHeap >= flatten(m'.clowner) >= flatten(m'.clbound) //should be in Calid, yeah??
+    // requires forall o <- a.AMFO :: o.Ready()
+    // requires a.Ready() && a.Valid()
+    // requires m'.o.Ready() && m'.o.Valid()
+    // requires m'.objectInKlown(m'.o)       ///this meqnas we need to "seed" with the actual clone, rignty
+    // requires (m'.ownersInKlown(a) ==> m'.CalidCanKey(a))
+    // requires m'.m.Keys <= m'.oHeap //shojld be in Calid?
+    // requires a.Ready() && a.Valid()
 
 //FIELD MODEs-ISM HACK -- shouod go into calid or at laets supercalid!
 //NO_FIELDMODES   requires forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes
@@ -5324,12 +5507,16 @@ method {:verify false}  FAKE_Xlone_Via_Map(a : Object, m' : Klon)
     ensures m.objectInKlown(a)
     ensures m.m[a] == b
 //NO_FIELDMODES     ensures b.fieldModes == a.fieldModes
+    ensures a.Ready() && a.Valid()
     ensures b.Ready() && b.Valid()
     ensures b.Context(m.hns())
     ensures m.CalidLineKV(a,b)
     ensures HighLineKV(a,b,m)
-    ensures HighCalidFragilistic(m)  //I WANT THIS BUT WITHOUT IT I GET CRASHES  - I LOVE YOU BUT I'VE CHOSEN DARKNESS
+    ensures HighCalidFragilistic(m)//I WANT THIS BUT WITHOUT IT I GET CRASHES  - I LOVE YOU BUT I'VE CHOSEN DARKNESS
 //I LOVE YOU BUT I'VE CHOSEN DARKNESS
+    ensures klonReady(m)
+    ensures klonLine(a,b,m)
+    ensures klonCalid(m)
 //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //
 
 

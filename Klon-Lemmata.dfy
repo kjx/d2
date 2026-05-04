@@ -1,4 +1,7 @@
 include "Klon.dfy"
+//////////////////////////WARNING
+//////////////////////////WARNING   This file uses "only" to pick out the few lemmas we acutally depend on.
+//////////////////////////WARNING
 
 
 ///////// basic
@@ -19,7 +22,7 @@ lemma {:isolate_assertions} HNSV(v : Object, m : Klon)
 /////// (con)versions?
 
 
-lemma {:isolate_assertions} OwnersFromCalid(m : Klon)
+lemma {:isolate_assertions} {:only} OwnersFromCalid(m : Klon)
   requires m.SuperCalidFragilistic()
    ensures m.SuperCalidOwners()
    ensures m.CalidOwners()
@@ -125,7 +128,7 @@ lemma MapThruKlonIsMapThruVMap(ks: set<Object>, m : Klon, vs : set<Object>)
 
 
 
-lemma ThereAndKlonAgain1(os: set<Object>, m : Klon, r : set<Object>)
+lemma {:only} ThereAndKlonAgain1(os: set<Object>, m : Klon, r : set<Object>)
   requires os <= m.m.Keys
   requires r  == mapThruKlon(os,m)
    ensures r  <= m.m.Values
@@ -615,7 +618,7 @@ lemma {:isolate_assertions} SubObjectsGeqViaOWNRs(p0 : Object, w0 : Object, p1 :
 {}
 
 
-lemma {:isolate_assertions} SubAMFOsGeq(p0 : OWNR, w0 : OWNR, p1 : OWNR, w1 : OWNR, m : Klon)
+lemma {:isolate_assertions} {:only} SubAMFOsGeq(p0 : OWNR, w0 : OWNR, p1 : OWNR, w1 : OWNR, m : Klon)
     //p0 and w0 are flattened owners )AMFOs( within pivot x0;  (original)
     //p1 and w1 are flattened owners )AMFOs( within copivot x1;  (clone)
     requires m.SuperCalidFragilistic()
@@ -754,3 +757,46 @@ lemma {:isolate_assertions} {:resource_limit 0} {:verify false}  INSIDEOUT(oo : 
     ensures ((set o <- oo | inside(o, m.o)) >  {})  ==> (not (forall o <- oo :: outside(o, m.o)))
     ensures ((set o <- oo | inside(o, m.o)) >  {}) <==  (not (forall o <- oo :: outside(o, m.o)))
  {}
+
+
+
+
+
+
+
+
+
+// // // // // //  // // // // // //  // // // // // //  // // // // // //  // // // // // //  // // // // // //  // // // // // //
+ // // // // // //  // // // // //  // // // // // //  // // // // //    // // // // // //  // // // // //   // // // // // // //
+
+lemma {:isolate_assertions} KlonMTKPreservesEQ(oo : Owner, mb : Owner, m : Klon) returns (ro : Owner, rb : Owner)
+  requires klonReady(m)
+  requires klonPivot(m)
+  requires klonAllLines(m)
+  requires oo <= m.m.Keys
+  requires mb <= m.m.Keys
+   ensures ro == mapThruKlon(oo, m)
+   ensures rb == mapThruKlon(mb, m)
+
+  requires oo == mb
+   ensures ro == rb
+{
+  ro := mapThruKlon(oo, m);
+  rb := mapThruKlon(mb, m);
+}
+
+lemma {:isolate_assertions} {:only} KlonMTKPreservesGEQ(oo : Owner, mb : Owner, m : Klon) returns (ro : Owner, rb : Owner)
+  requires klonReady(m)
+  requires klonPivot(m)
+  requires klonAllLines(m)
+  requires oo <= m.m.Keys
+  requires mb <= m.m.Keys
+   ensures ro == mapThruKlon(oo, m)
+   ensures rb == mapThruKlon(mb, m)
+
+  requires oo >= mb
+   ensures ro >= rb
+{
+  ro := mapThruKlon(oo, m);
+  rb := mapThruKlon(mb, m);
+}

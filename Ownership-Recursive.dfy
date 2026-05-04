@@ -475,12 +475,13 @@ predicate goodCloneOwnershipWithin(left : Object, right : Object, pivot : Object
 lemma {:isolate_assertions}  prog_is_paranoid(left : Object, right : Object, pivot : Object,  m : Klon)
 ///checks left' ownership matches right, based on the Klojn
   decreases left.AMFO, right.AMFO
+   requires klonReady(m)
+   requires klonCalid(m)
    requires left.Ready()
    requires right.Ready()
    requires m.objectInKlown(left)
    requires right.AMFO <= m.m.Values
    requires right in invert(m.m).Keys
-   requires m.SuperCalidFragilistic()
    requires goodCloneOwnership(left, right, m)
     ensures (left == m.o) ==> (right == m.m[m.o])
     ensures not(inside(left, m.o)) ==> (m.m[left] == left)

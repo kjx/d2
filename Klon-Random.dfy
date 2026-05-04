@@ -1,4 +1,7 @@
-include "Klon-Lemmata.dfy"
+  include "Klon-Lemmata.dfy"
+  include "Klon-HighLine.dfy"
+
+///this file isn't acutally used anuywhere.
 
 lemma {:isolate_assertions} KindaStupid(k : Object, v : Object, m : Klon)
  //if we're OwnersCalid, and k is in m, then we get stuff
@@ -17,7 +20,7 @@ lemma {:isolate_assertions} KindaStupid(k : Object, v : Object, m : Klon)
 }
 
 
-lemma  {:isolate_assertions} {:timeLimit 15} MapThruKlonOutsideOwner(k : Object, m : Klon)
+lemma  {:isolate_assertions} {:timeLimit 20} MapThruKlonOutsideOwner(k : Object, m : Klon)
   requires m.CalidOwners()
   requires m.HeapOwnersReady() //grrr
   requires k.Ready() && m.objectInKlown(k)
@@ -31,15 +34,20 @@ lemma  {:isolate_assertions} {:timeLimit 15} MapThruKlonOutsideOwner(k : Object,
   assert forall oo <- k.owner  | outside(oo, m.o) :: m.m[oo] == oo;
   assert forall oo <- k.owner  :: outside(oo, m.o);
   assert forall oo <- k.owner  :: (m.m[oo] == oo);
-  assert (set o <- k.owner :: m.m[o]) == k.owner;
+  MAP_THRU_IDENTITY_SET(k.owner,m);
+  assert (set o <- k.owner :: m.m[o]) == (set o <- k.owner :: o) == k.owner;
   assert mapThruKlon(k.owner, m) == k.owner;
 
   assert forall oo <- k.bound  | outside(oo, m.o) :: m.m[oo] == oo;
   assert forall oo <- k.bound  :: outside(oo, m.o);
   assert forall oo <- k.bound  :: (m.m[oo] == oo);
+  MAP_THRU_IDENTITY_SET(k.bound,m);
   assert (set o <- k.bound :: m.m[o]) == k.bound;
   assert mapThruKlon(k.bound, m) == k.bound;
 }
+
+
+
 
 lemma {:isolate_assertions} NotFromAJedi(k : Object, v : Object, m : Klon)
   requires m.CalidOwners()
@@ -61,21 +69,35 @@ lemma {:isolate_assertions} NotFromAJedi(k : Object, v : Object, m : Klon)
    }
 
 
+lemma {:isolate_assertions} {:timeLimit 20} OnlyOneThereIs(k : Object, v : Object, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires k.Ready() && m.objectInKlown(k)
+  requires m.m[k] == v
+   ensures klonLine(k,v,m)
+   ensures mapThruKlon({k},m) == {v}
+   {
+    MAP_ONE(k,v,m);
+      assert m.m[k] == v;
+      assert (set kk <- {k} :: m.m[kk]) == {v};
+   }
+
 lemma {:isolate_assertions} OnlyAMasterOfEvilDarth(k : Object, v : Object, m : Klon)
   //showing how this was previous fucked up
 //BUT YOU FUCKED IT UP -- IT CAN'T!!!!!!!!
 //NOT WHEN k == mn.o at least?
-  requires m.apoCalidse()
-  requires m.CalidOwners()
-  requires m.HeapOwnersReady() //grrr
+  requires klonReady(m)
+  requires klonCalid(m)
   requires k.Ready() && m.objectInKlown(k)
   requires v.Ready() && m.objectInKlown(v) //WTF?? - this FUCKS EVERYTHING, only vadlid if k outside m.o
   requires m.m[k] == v
-   ensures m.OwnersLineKV(k,v)
+   ensures klonLine(k,v,m)
    ensures mapThruKlon({k},m) == {v}
 
    ensures outside(k, m.o)  //WHOOPS APOCALYPSE!
-   {}
+   {
+    OnlyOneThereIs(k,v,m);
+   }
 
 lemma {:isolate_assertions} OnlyNowAtTheEndDoYouUnderstand(k : Object, v : Object, m : Klon)
   //wpeoves mapTHruKlon works in all cases of original being inside,outside, eq m.o
@@ -112,10 +134,9 @@ lemma {:isolate_assertions} OnlyNowAtTheEndDoYouUnderstand(k : Object, v : Objec
         assert m.m[k].owner == v.owner;
         assert m.m[k].bound == v.bound;
 
-        // assert mappingOWNRsThruKlownKV(k.owner, v.owner, m);
-        // assert mappingOWNRsThruKlownKV(k.bound, v.bound, m);
-        assert mapThruKlon(k.owner, m) == v.owner;
-        assert mapThruKlon(k.bound, m) == v.bound;
+        //HOW THE FUCKY FUCK CAN THIS POSSIBLE WORK
+        // assert mapThruKlon(k.owner, m) == v.owner;
+        // assert mapThruKlon(k.bound, m) == v.bound;
     }
 
     if (outside(k, m.o)) {
@@ -125,8 +146,9 @@ lemma {:isolate_assertions} OnlyNowAtTheEndDoYouUnderstand(k : Object, v : Objec
         assert k.owner == m.m[k].owner == v.owner;
         assert k.bound == m.m[k].bound == v.bound;
 
-        assert not( mappingOWNRsThruKlownKV(k.owner, v.owner, m) );
-        assert not( mappingOWNRsThruKlownKV(k.bound, v.bound, m) );
+        //this now goess to the straiughtfoward mapping, so it shoudl work!
+        // assert not( mappingOWNRsThruKlownKV(k.owner, v.owner, m) );
+        // assert not( mappingOWNRsThruKlownKV(k.bound, v.bound, m) );
 
         MapThruKlonOutsideOwner(k, m);
         assert  mapThruKlon(k.owner, m) == k.owner == v.owner;

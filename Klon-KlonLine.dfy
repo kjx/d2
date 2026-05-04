@@ -1,4 +1,4 @@
-    ////
+////
 ////  KlonLine aka "clone line"
 ////
 
@@ -10,37 +10,90 @@ include "Bound.dfy"  //shouild this be Ownerhsip=Bound?
 ////////////////////////////////////////////
 //core definitions of klonLine
 
+predicate {:isolate_assertions} klonReady(m : Klon)  ///like Ready, should be built in to the type
+  //constant true facts about all Klons!
+  reads {}
+  {
+    && (m.o in m.oHeap)    //need so we don't need a reads clause about m.o
+    && (m.o.Ready())
+    && (m.objectInKlown(m.o))
+    && (m.m[m.o] == m.c)
+    && (m.o.AMFX == m.o_amfx)
+    && (m.o.AMFO == m.o_amfx+{m.o})
+    && (m.clowner == m.c.owner)
+    && (m.clbound == m.c.bound)
+    && ((m.c.AMFX  == m.c_amfx))
+    && ((m.c.AMFB  == m.c_amfb))
+    && myBoundsOK(m.o.owner, m.o.bound) ///note - direct implementation is lurking below!?!
+    // && (flatten(m.clbound) >= m.o.AMFB)  //WHAT THE FUCK?              ///      |
+    && (m.oHeap >= m.c_amfx >= flatten(m.clbound) >= flatten(m.o.bound))  /// <----+
+
+//following added in from the old apoCalidse()...
+    && (m.m.Keys <= m.oHeap)
+    && (m.m.Values <= m.hns())
+    // && (m.objectReadyInKlown(o))   //this was originally two predicates
+    && (forall x <- m.hns() :: x.Ready()) //whatt bno value owners ready??
+    && (forall x <- m.m.Keys :: m.objectInKlown(x))
+    && (m.c_amfx <= m.oHeap)
+  }
+
 predicate {:isolate_assertions} klonCalid(m : Klon)
-  reads m.oHeap, m.hns({m.o}), m.o`fields, m.o`fieldModes
+//  requires klonReady(m)  //?
+  reads m.hns()
 {
+  && klonReady(m)
   && klonPivot(m)
   && klonAllLines(m)
+  && klonHeap(m)
 }
 
+predicate {:isolate_assertions} klonHeap(m : Klon)
+  requires klonReady(m)
+  reads m.hns()
+{
+  && (forall x <- m.oHeap    :: x.Context(m.oHeap))
+  && (forall x <- m.m.Values :: x.Context(m.hns()))
+}
+
+
+lemma WidenTheHeap(m : Klon)
+  requires klonReady(m)
+  requires forall x <- m.oHeap :: x.Context(m.oHeap)
+   ensures forall x <- m.oHeap :: x.Context(m.hns())
+{}
 
 predicate {:isolate_assertions} klonAllLines(m : Klon) : (r : bool)
-    //all lines, but NOT the Pivot
-  reads m.oHeap, m.hns({m.o}), m.o`fields, m.o`fieldModes
-{
-  && (forall k <- m.m.Keys :: klonLine(k, m.m[k], m))
-}
+  requires klonReady(m)
+  reads m.hns()
+  {forall k <- m.m.Keys :: klonLine(k, m.m[k], m)}
 
 predicate {:isolate_assertions} klonLine(k : Object, v : Object, m : Klon)
   //Ward Cunningham - the simplest thing that could possibly work...
   //now chopped up into bits
   //this should answer this qustion **is k,v OK in this klon**
   //should work whether or not it's in there or not
-  reads m.oHeap, m.hns({m.o,v}), m.o`fields, m.o`fieldModes
+  requires klonReady(m)
+  reads m.hns(), k, v
 {
-  && klonBound(k,v,m)
-  && klonModes(k,v,m)
-  && klonGeometry(k,v,m)
-  && klonIdentity(k,v,m)
+      && klonBound(k,v,m)
+      && klonModes(k,v,m)
+      && klonGeometry(k,v,m)
+      && klonIdentity(k,v,m)
 }
 
 
 predicate {:isolate_assertions} klonPivot(m : Klon)
-  reads m.oHeap, m.hns({m.o}), m.o`fields, m.o`fieldModes
+  requires klonReady(m)
+ reads m.hns()
+{
+  && m.o.Valid() && m.o.Context(m.oHeap)
+  && m.c.Valid() && m.c.Context(m.hns({m.c}))
+}
+
+
+predicate {:isolate_assertions} OLD_klonPivot(m : Klon)
+  requires klonReady(m)
+  reads m.hns()
 {
   && (m.o.Ready() && m.o.Valid() && m.o.Context(m.oHeap) && m.objectInKlown(m.o))
   && (m.m[m.o] == m.c) && m.c.Valid() && m.c.Context(m.hns({m.c}))
@@ -56,19 +109,26 @@ predicate {:isolate_assertions} klonPivot(m : Klon)
   && (m.oHeap >= m.c_amfx >= flatten(m.clbound) >= flatten(m.o.bound))  /// <----+
 }
 
+
+
+
+
 predicate {:isolate_assertions} klonBound(k : Object, v : Object, m : Klon)
-  reads m.oHeap, m.hns({v})
+  requires klonReady(m)
+  reads m.hns(), k, v
 {
-  && (k.Ready() && k in m.oHeap    && k.Valid())
-  && (v.Ready() && v in m.hns({v}) && v.Valid())
+  && (k.Ready() && k in m.oHeap    && k.Valid() && k.Context(m.oHeap))
+  && (v.Ready() && v in m.hns({v}) && v.Valid() && v.Context(m.hns()))
 
   && (m.m.Keys >= k.AMFX)
-  && (k.AMFO >  k.AMFB) //nuclear war is good
-  && (v.AMFO >= v.AMFB) //nuclear war is good
-  && (v.AMFB >= k.AMFB)
+  && (k.AMFO   >  k.AMFB) //nuclear war is good
+  && (v.AMFO   >= v.AMFB) //nuclear war is good
+  && (v.AMFB   >= k.AMFB)
 }
 
 predicate {:isolate_assertions} klonModes(k : Object, v : Object, m : Klon)
+  requires klonReady(m)
+  reads m.hns(), k, v
   //field modes
   reads k, v
 {
@@ -78,33 +138,33 @@ predicate {:isolate_assertions} klonModes(k : Object, v : Object, m : Klon)
 
 
 predicate {:isolate_assertions} klonGeometry(k : Object, v : Object, m : Klon)
-  //the geometric constraints from Ward -- all compatible iwth "old" version
+  //the geometric constraints -- all compatible iwth "old" version
+  requires klonReady(m)
+  reads m.hns(), k, v
 {
   && (m.o.Ready())           //precond?
   && (m.objectInKlown(m.o))  //precond?
 
-  && ( (k == m.o)       <==>  (v == m.m[m.o])  )
+  && ( (k == m.o)       <==>  (v == m.c)  )
   && ((inside(k, m.o))   ==> (k.AMFB  <= m.o.AMFB)) //hmmmm //GREENLAND
   && (outside(k, m.o)   <==>  (v == k))
-  && ( inside(k, m.o)   <==>  inside(v, m.m[m.o]) )
-  && (outside(k, m.m[m.o]))
+  && ( inside(k, m.o)   <==>  inside(v, m.c) )
+  && (outside(k, m.c))
   && ((inside(k,m.o)) ==> (v !in m.oHeap))
 }
 
 
 
 predicate {:isolate_assertions} klonIdentity(k : Object, v : Object, m : Klon) : (r : bool)
-  decreases k.AMFO
-  reads m.oHeap, m.m.Values
-  // ensures r ==> WardLine(k,v,m)
-  //extra stuff flown in from HighLineKV???
-{
+  requires klonReady(m)
+  reads m.hns(), k, v
+  {
   && (m.ownersReadyInKlown(k))
   && (m.objectReadyInKlown(m.o))
 
   && (if (k == m.o) then (
                            && (k != v)
-                           && (v == m.m[m.o])
+                           && (v == m.c)
                            && (v.owner == m.clowner)
                            && (v.bound == m.clbound)
 
@@ -123,56 +183,198 @@ predicate {:isolate_assertions} klonIdentity(k : Object, v : Object, m : Klon) :
 
 
 
+// // // // // //  // // // // // //  // // // // // //  // // // // // //  // // // // // //  // // // // // //  // // // // // /
 
-// // // // // //  // // // // // //  // // // // // //  // // // // // //  // // // // // //  // // // // // //  // // // // // //
- // // // // // //  // // // // //  // // // // // //  // // // // //    // // // // // //  // // // // //   // // // // // // //
 
-lemma {:isolate_assertions} KlonMTKPreservesEQ(oo : Owner, mb : Owner, m : Klon) returns (ro : Owner, rb : Owner)
-  requires klonPivot(m)
-  requires klonAllLines(m)
-  requires oo <= m.m.Keys
-  requires mb <= m.m.Keys
-   ensures ro == mapThruKlon(oo, m)
-   ensures rb == mapThruKlon(mb, m)
+lemma {:isolate_assertions} KlonReadyFromKV(m : Klon, m' : Klon, k : Object, v : Object)
+  requires m.from(m')
+  requires klonReady(m')
 
-  requires oo == mb
-   ensures ro == rb
+  requires k !in m'.m.Keys
+  requires v !in m'.m.Values
+  requires klonVMapOK(m'.m)
+  requires klonCanKV(m', k, v)
+  requires m == m'.(m:=vmapKV(m'.m,k,v))
+
+   ensures (m.m.Keys - m'.m.Keys) == {k}
+   ensures k in m'.oHeap
+   ensures m.objectInKlown(k)
+
+   ensures m.m.Values == m'.m.Values + {v}
+   ensures m.hns() >= m'.hns() + {k, v}
+//   ensures (m.hns() - m'.hns()) == {k, v}
+
+   ensures klonReady(m)
+   {
+    KlonReadyFrom(m,m');
+   }
+
+lemma {:isolate_assertions} KlonReadyFrom(m : Klon, m' : Klon)
+  requires klonReady(m')
+  requires m.from(m')
+
+  requires (m.m.Keys - m'.m.Keys) <= m'.oHeap
+  requires forall x : Object <- (m.hns() - m'.hns())   :: x.Ready()
+  requires forall x : Object <- (m.m.Keys - m'.m.Keys) :: m.objectInKlown(x)
+
+   ensures klonReady(m)
+  {
+    assert
+    && (m.o in m.oHeap)
+    && (m.o.Ready())
+    && (m.objectInKlown(m.o))
+    && (m.m[m.o] == m.c)
+    && (m.o.AMFX == m.o_amfx)
+    && (m.o.AMFO == m.o_amfx+{m.o})
+    && (m.clowner == m.c.owner)
+    && (m.clbound == m.c.bound)
+    && ((m.c.AMFX  == m.c_amfx))
+    && ((m.c.AMFB  == m.c_amfb))
+    && myBoundsOK(m.o.owner, m.o.bound) ///note - direct implementation is lurking below!?!
+    // && (flatten(m.clbound) >= m.o.AMFB)  //WHAT THE FUCK?              ///      |
+    && (m.oHeap >= m.c_amfx >= flatten(m.clbound) >= flatten(m.o.bound))  /// <----+
+    && (m.c_amfx <= m.oHeap)
+    ;
+
+    assert m.oHeap == m'.oHeap; //from from
+    assert (m.m.Keys - m'.m.Keys) <= m'.oHeap;
+    assert forall x : Object <- (m.hns() - m'.hns())   :: x.Ready();
+    assert forall x : Object <- (m.m.Keys - m'.m.Keys) :: m.objectInKlown(x);
+
+    assert
+    && (m.m.Keys <= m.oHeap)
+    && (m.m.Values <= m.hns())
+    && (forall x <- m.hns() :: x.Ready())
+    && (forall x <- m.m.Keys :: m.objectInKlown(x))
+     ;
+  }
+
+
+lemma {:isolate_assertions} KlonLineFrom(k : Object, v : Object, m : Klon, m' : Klon)
+  //given klonLine(k,v,m') move to klonLine(k,v,m)
+  requires klonReady(m')
+  requires klonLine(k,v,m')
+
+  requires klonReady(m)  //requires or ensures???
+  requires m.from(m')
+   ensures klonLine(k,v,m)
 {
-  ro := mapThruKlon(oo, m);
-  rb := mapThruKlon(mb, m);
+  assert klonBound(k,v,m')  ==> klonBound(k,v,m);
+  assert klonModes(k,v,m')  ==> klonModes(k,v,m);
+  assert klonGeometry(k,v,m')  ==> klonGeometry(k,v,m);
+
+  KlonIdentityFrom(k,v,m,m');
+  assert klonIdentity(k,v,m')  ==> klonIdentity(k,v,m);
 }
 
-lemma {:isolate_assertions} KlonMTKPreservesGEQ(oo : Owner, mb : Owner, m : Klon) returns (ro : Owner, rb : Owner)
-  requires klonPivot(m)
-  requires klonAllLines(m)
-  requires oo <= m.m.Keys
-  requires mb <= m.m.Keys
-   ensures ro == mapThruKlon(oo, m)
-   ensures rb == mapThruKlon(mb, m)
 
-  requires oo >= mb
-   ensures ro >= rb
-{
-  ro := mapThruKlon(oo, m);
-  rb := mapThruKlon(mb, m);
-}
+lemma {:isolate_assertions} KlonIdentityFrom(k : Object, v : Object, m : Klon, m' : Klon)
+  requires klonReady(m')
+  requires klonIdentity(k,v,m')
+  requires m.from(m')
+  requires klonReady(m)
+   ensures klonIdentity(k,v,m)
+{ }
 
-lemma {:isolate_assertions} {:timeLimit 300} BOUNDS_SHOULD_BE_OK(oo : Owner, mb : Owner, m : Klon)
-  requires klonPivot(m)
-  requires klonAllLines(m)
-  requires oo <= m.m.Keys
-  requires mb <= m.m.Keys
-  requires nuBoundsOK(oo, mb)
-  requires flatten(oo) > m.o.AMFO
-  requires flatten(mb) > m.o.AMFO
-   ensures nuBoundsOK(mapThruKlon(oo,m), mapThruKlon(mb,m))
- {
-  assert (flatten(oo) >= flatten(mb));
-  assert (forall o <- oo ::( (o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(mb))));
 
-var ro := mapThruKlon(oo, m);
-var rb := mapThruKlon(mb, m);
 
-  assert (flatten(ro) >= flatten(rb));
-  assert (forall o <- ro ::( (o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(rb))));
- }
+//
+// lemma {:isolate_assertions} KLF_Line(m : Klon, m' : Klon)
+//     requires klonReady(m')
+//     requires klonCalid(m')
+//      ensures klonAllLines(m')
+//    requires m.from(m')
+//
+//
+//   requires (m.m.Keys - m'.m.Keys) <= m'.oHeap
+//   requires forall x : Object <- (m.hns() - m'.hns())       :: x.Ready()
+//   requires forall x : Object <- (m.m.Keys   - m'.m.Keys)   :: m.objectInKlown(x)
+//   requires forall x : Object <- (m.m.Keys   - m'.m.Keys)   :: klonLine(x,m.m[x],m')
+//   requires forall x : Object <- (m.m.Values - m'.m.Values) :: x.Context(m.hns())
+//
+//      ensures klonReady(m)
+//      ensures klonCalid(m)
+//      ensures klonAllLines(m)
+// {
+//
+//   forall x <- m.m.Keys ensures m.objectInKlown(x) //by
+//   {
+//     if (x in m'.m.Keys) {
+//         assert m'.objectInKlown(x);
+//         assert m'.bjectInKlown(x);
+//         assert klonLine(x,m'.m[x],m');
+//
+//     } else {
+//        assert x !in m'.m.Keys;
+//        assert x  in  m.m.Keys;
+//        assert x  in (m.m.Keys - m'.m.Keys);
+//        assert m.objectInKlown(x);
+//     }
+//   }
+// }
+
+
+lemma {:isolate_assertions} KlonCalidFrom(m : Klon, m' : Klon)
+  requires klonReady(m')
+  requires klonCalid(m')
+
+  requires m.from(m')
+
+  requires (m.m.Keys - m'.m.Keys) <= m'.oHeap
+  requires forall x : Object <- (m.hns() - m'.hns())       :: x.Ready()
+  requires forall x : Object <- (m.m.Keys   - m'.m.Keys)   :: m.objectInKlown(x)
+  requires forall x : Object <- (m.m.Keys   - m'.m.Keys)   :: klonLine(x,m.m[x],m')
+  requires forall x : Object <- (m.m.Values - m'.m.Values) :: x.Context(m.hns())
+
+   ensures klonReady(m)
+   ensures klonCalid(m)
+  {
+    KlonReadyFrom(m, m');
+    assert m.oHeap == m'.oHeap;
+
+    assert
+      && klonReady(m')
+      && klonPivot(m')
+      && klonAllLines(m')
+      && klonHeap(m')
+      ;
+
+    assert (forall x : Object <- m'.m.Values :: x.Context(m.hns()));
+    assert (forall x : Object <- (m.m.Values - m'.m.Values) :: x.Context(m.hns()));
+    assert (m.m.Values - m'.m.Values + m'.m.Values) == m.m.Values;
+    assert (forall x : Object  <- m.m.Values :: x.Context(m.hns()));
+
+
+    assert
+      && (forall x <- m.oHeap    :: x.Context(m.oHeap))
+      && (forall x <- m.m.Values :: x.Context(m.hns()))
+      ;
+
+    assert (forall x : Object <- m'.m.Keys :: klonLine(x,m'.m[x],m'));
+    assert (forall x : Object <- m'.m.Keys :: m.m[x] == m'.m[x]);
+    assert (forall x : Object <- m'.m.Keys :: klonLine(x,m.m[x],m'));
+    forall x : Object <- m'.m.Keys ensures (klonLine(x,m.m[x],m))  //by
+      {
+         assert klonLine(x,m.m[x],m');
+            KlonLineFrom(x,m.m[x],m,m');
+         assert klonLine(x,m.m[x],m);
+      }
+
+    assert (forall x : Object <- (m.m.Keys - m'.m.Keys) :: klonLine(x,m.m[x],m'));
+    forall x : Object <- (m.m.Keys - m'.m.Keys) ensures (klonLine(x,m.m[x],m))  //by
+      {
+         assert klonLine(x,m.m[x],m');
+            KlonLineFrom(x,m.m[x],m,m');
+         assert klonLine(x,m.m[x],m);
+      }
+
+    assert (m.m.Keys - m'.m.Keys + m'.m.Keys) == m.m.Keys;
+    assert (forall x : Object  <- m.m.Keys :: klonLine(x,m.m[x],m));
+
+    assert
+      && klonReady(m)
+      && klonPivot(m)
+      && klonAllLines(m)
+      && klonHeap(m)
+      ;
+  }

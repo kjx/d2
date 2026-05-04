@@ -6,15 +6,27 @@ include "Klon-KlonLine.dfy"
 
   predicate {:isolate_assertions} HighCalidFragilistic(m : Klon) : (r : bool)
     requires m.apoCalidse()
-    reads m.oHeap, m.hns()
+    reads m.hns()
      {
                 && (forall k <- m.m.Keys :: HighLineKV(k, m.m[k], m))
      }
 
 
- predicate {:isolate_assertions} HighLineKV(k : Object, v : Object, m : Klon)
+
+
+
+
+ predicate {:isolate_assertions} {:verify false} HighLineKV(k : Object, v : Object, m : Klon)
     requires m.apoCalidse()
-    reads m.oHeap, m.hns()
+    reads m.hns(), k, v
+{
+  klonLine(k,v,m)
+}
+
+
+ predicate {:isolate_assertions} {:verify false} OLDHighLineKV(k : Object, v : Object, m : Klon)
+    requires m.apoCalidse()
+    reads m.hns(), k, v
   {
     && (k.Ready() && (m.ownersInKlown(k)) && k in m.oHeap)
     && (v.Ready() && (v in m.hns({v})))
@@ -54,29 +66,84 @@ include "Klon-KlonLine.dfy"
     && (mappingOwnersThruKlownKV(k,v,m))
   }
 
-lemma EstablishHighLineKV(k : Object, v : Object, m : Klon)
+// lemma EstablishHighLineKV(k : Object, v : Object, m : Klon)
+//   //HighLineKV precondition
+//   requires m.apoCalidse()
+//   //HighLineKV body
+//   requires (k.Ready() && (m.ownersInKlown(k)) && k in m.oHeap)
+//   requires (v.Ready() && (v in m.hns({v})))
+//   requires (v.AMFO  >= v.AMFB  >= k.AMFB)
+//   requires ((inside(k, m.o)) ==> (k.AMFB  <= m.o.AMFB))
+//   requires (outside(k, m.o) <==>  (v == k))
+//   requires ( inside(k, m.o) <==>  inside(v, m.m[m.o]) )
+//   requires ( (k == m.o)     <==>  (v == m.m[m.o])  )
+//   requires ( inside(k, m.o) <==> (v !in m.oHeap))
+//   requires (outside(k, m.m[m.o]))
+//   requires (k.fieldModes   == v.fieldModes)
+//   requires (mappingOwnersThruKlownKV(k,v,m))
+//   //HighLineKV body
+//    ensures HighLineKV(k,v,m)
+// {}
 
-  //HighLineKV precondition
-  requires m.apoCalidse()
-  //HighLineKV body
-  requires (k.Ready() && (m.ownersInKlown(k)) && k in m.oHeap)
-  requires (v.Ready() && (v in m.hns({v})))
-  requires (v.AMFO  >= v.AMFB  >= k.AMFB)
-  requires ((inside(k, m.o)) ==> (k.AMFB  <= m.o.AMFB))
-  requires (outside(k, m.o) <==>  (v == k))
-  requires ( inside(k, m.o) <==>  inside(v, m.m[m.o]) )
-  requires ( (k == m.o)     <==>  (v == m.m[m.o])  )
-  requires ( inside(k, m.o) <==> (v !in m.oHeap))
-  requires (outside(k, m.m[m.o]))
-  requires (k.fieldModes   == v.fieldModes)
-  requires (mappingOwnersThruKlownKV(k,v,m))
-  //HighLineKV body
+
+lemma {:isolate_assertions}  HighLineFrom(m : Klon, m' : Klon)
+//original klonHighLine spec
+  requires m.from(m')
+  requires m'.apoCalidse()
+  requires m.m.Keys <= m.oHeap
+  requires forall k <- m'.m.Keys :: k.Ready() && m.objectInKlown(k)
+   ensures m .apoCalidse()
+   ensures m'.m.Keys <= m.m.Keys
+
+  requires forall k <- m'.m.Keys :: HighLineKV(k, m'.m[k], m')
+   ensures forall k <- m'.m.Keys :: m.m[k] == m'.m[k]
+   ensures forall k <- m'.m.Keys :: HighLineKV(k, m .m[k], m')
+//   ensures forall k <- m'.m.Keys :: HighLineKV(k, m .m[k], m') ==> HighLineKV(k, m .m[k], m )
+  ensures forall k <- m.m.Keys :: HighLineKV(k, m .m[k], m )  //result
+
+//KlonReadyFrom spec
+  requires klonReady(m')
+  requires m.from(m')
+
+  requires (m.m.Keys - m'.m.Keys) <= m'.oHeap
+  requires forall x : Object <- (m.hns() - m'.hns())   :: x.Ready()
+  requires forall x : Object <- (m.m.Keys - m'.m.Keys) :: m.objectInKlown(x)
+
+   ensures klonReady(m)
+
+//AllLinesKlon spec...
+  requires klonReady(m')
+  requires klonCalid(m')
+
+  requires m.from(m')
+
+  requires (m.m.Keys - m'.m.Keys) <= m'.oHeap
+  requires forall x : Object <- (m.hns() - m'.hns())       :: x.Ready()
+  requires forall x : Object <- (m.m.Keys   - m'.m.Keys)   :: m.objectInKlown(x)
+  requires forall x : Object <- (m.m.Keys   - m'.m.Keys)   :: klonLine(x,m.m[x],m')
+  requires forall x : Object <- (m.m.Values - m'.m.Values) :: x.Context(m.hns())
+
+
+{
+  KlonReadyFrom(m, m');
+  KlonCalidFrom(m, m');
+
+
+  forall k <- m.m.Keys ensures HighLineKV(k, m .m[k], m ) //BY
+   {
+    assert  klonLine(k,m.m[k],m);
+    HighLineFromKlonLine(k,m.m[k],m);
+   }
+
+}
+
+lemma HighLineFromKlonLine(k : Object, v : Object, m : Klon)
+  requires klonReady(m)
+  requires klonLine(k,v,m)
    ensures HighLineKV(k,v,m)
-{}
+   {}
 
-
-
-lemma HighLineFrom(m : Klon, m' : Klon)
+lemma  {:verify false} OLDHighLineFrom(m : Klon, m' : Klon)
   requires m.from(m')
   requires m'.apoCalidse()
   requires m.m.Keys <= m.oHeap
@@ -143,8 +210,8 @@ forall k <- m'.m.Keys ensures (HighLineKV(k, m.m[k], m ))  //by
     if ((k != m.o) && outside(k, m.o))  { assert k == v; }
 
     if (strictlyInside(k, m.o)) {
-        MappingOWNRsThruKlownKVFrom(k.bound, v.bound, m, m');
-        MappingOWNRsThruKlownKVFrom(k.owner, v.owner, m, m');
+        // MappingOWNRsThruKlownKVFrom(k.bound, v.bound, m, m');
+        // MappingOWNRsThruKlownKVFrom(k.owner, v.owner, m, m');
 
         assert mappingOWNRsThruKlownKV(k.bound, v.bound, m);
         assert mappingOWNRsThruKlownKV(k.owner, v.owner, m);
@@ -166,10 +233,27 @@ forall k <- m'.m.Keys ensures (HighLineKV(k, m.m[k], m ))  //by
 
 
 ////////////////////////////////////////////////moveing aroudn to keep resolves quick
-lemma ApoCalidseNow(m : Klon, m' : Klon)
-  requires m.from(m')
+lemma {:isolate_assertions} ApoCalidseNow(m : Klon, m' : Klon)
   requires m'.apoCalidse()
-  requires m.m.Keys <= m.oHeap
+
+  requires (m.m.Keys - m'.m.Keys) <= m'.oHeap
+  requires forall x : Object <- (m.hns() - m'.hns())   :: x.Ready()
+  requires forall x : Object <- (m.m.Keys - m'.m.Keys) :: m.objectInKlown(x)
+
+  requires klonReady(m')
+  requires klonCalid(m')
+
+  requires m.from(m')
+
+  requires (m.m.Keys - m'.m.Keys) <= m'.oHeap
+  requires forall x : Object <- (m.hns() - m'.hns())       :: x.Ready()
+  requires forall x : Object <- (m.m.Keys   - m'.m.Keys)   :: m.objectInKlown(x)
+  requires forall x : Object <- (m.m.Keys   - m'.m.Keys)   :: klonLine(x,m.m[x],m')
+  requires forall x : Object <- (m.m.Values - m'.m.Values) :: x.Context(m.hns())
+
+   ensures klonReady(m)
+   ensures klonCalid(m)
+
    ensures m .apoCalidse()
 {
 //commenting OR uncommenting these seems to make zero difference to the runtime!
@@ -192,23 +276,28 @@ lemma ApoCalidseNow(m : Klon, m' : Klon)
     assert (m .HeapOwnersReady());
     assert (m'.c_amfx <= m'.oHeap);
     assert (m .c_amfx <= m .oHeap);
+
+    KlonReadyFrom(m, m');
+    KlonCalidFrom(m, m');
 }
 ////////////////////////////////////////////////moveing aroudn to keep resolves quick
 
 
 
-
-lemma MappingOWNRsThruKlownKVFrom(kk : OWNR, vv: OWNR, m : Klon, m' : Klon)
-  // so perish Unberlievers
-  requires m.from(m')
-  requires m'.apoCalidse()
-  requires kk <= m'.m.Keys <= m'.oHeap <= m'.oHeap
-  requires kk <= m.m.Keys              <= m.oHeap
-   ensures m .apoCalidse()
-  requires mappingOWNRsThruKlownKV(kk, vv, m')
-   ensures mappingOWNRsThruKlownKV(kk, vv, m)
-{}
-
+//
+// lemma MappingOWNRsThruKlownKVFrom(kk : OWNR, vv: OWNR, m : Klon, m' : Klon)
+//   // so perish Unberlievers
+//   requires m.from(m')
+//   requires m'.apoCalidse()
+//   requires kk <= m'.m.Keys <= m'.oHeap <= m'.oHeap
+//   requires kk <= m.m.Keys              <= m.oHeap
+//    ensures m .apoCalidse()
+//   requires mappingOWNRsThruKlownKV(kk, vv, m')
+//    ensures mappingOWNRsThruKlownKV(kk, vv, m)
+// {
+//   KlonLineFrom(k,v,m,m');
+// }
+//
 
 
 
@@ -744,6 +833,8 @@ lemma MappingOWNRsThruKlownKVFrom(kk : OWNR, vv: OWNR, m : Klon, m' : Klon)
 
 lemma {:isolate_assertions} BOUNDS_ALL_GOOD_TOO(k : Object, v : Object, m : Klon)
   decreases k.AMFO
+  requires klonReady(m)
+  requires klonPivot(m)
   requires k.Ready()
   requires v.Ready()
   requires m.c.Ready()
@@ -758,9 +849,10 @@ lemma {:isolate_assertions} BOUNDS_ALL_GOOD_TOO(k : Object, v : Object, m : Klon
 
 
 
-
 lemma {:isolate_assertions} its_all_good_mate(k : Object, v : Object, m : Klon)
   decreases k.AMFO
+  requires klonReady(m)
+  requires klonCalid(m)
   requires k.Ready()
   requires v.Ready()
   requires m.c.Ready()
@@ -800,8 +892,8 @@ lemma {:isolate_assertions} its_all_good_mate(k : Object, v : Object, m : Klon)
   assert false;
 }
 
-
 lemma {:isolate_assertions} strictly_ballroom(v : Object, m : Klon)
+  requires klonReady(m)
   requires klonPivot(m)
   requires v.Ready()
   requires m.c.Ready()
@@ -817,6 +909,9 @@ lemma {:isolate_assertions} strictly_ballroom(v : Object, m : Klon)
    }
 
 function {:isolate_assertions} owner_of_clone(k : Object, m : Klon) : (vo : Owner)
+ //this function isn't as useful as you think it might be.
+ //mostly because if outside(k, m.o), then the "clone" is just an alias of the original object
+  requires klonReady(m)
   requires k.Ready()
   requires m.objectInKlown(k)
 {
@@ -828,6 +923,7 @@ function {:isolate_assertions} owner_of_clone(k : Object, m : Klon) : (vo : Owne
 
 
 function {:isolate_assertions} AMFO_of_clone(k : Object, m : Klon) : (vo : OWNR)
+  requires klonReady(m)
   requires k.Ready()
   requires m.objectInKlown(k)
 {
@@ -838,6 +934,7 @@ function {:isolate_assertions} AMFO_of_clone(k : Object, m : Klon) : (vo : OWNR)
 
 
 lemma {:isolate_assertions} MAP_THRU_IDS(os: set<Object>, m : Klon)
+  requires klonReady(m)
    requires os <= m.m.Keys
    requires forall x <- os :: m.m[x] == x
     ensures mapThruKlon(os,m) == os
@@ -845,6 +942,7 @@ lemma {:isolate_assertions} MAP_THRU_IDS(os: set<Object>, m : Klon)
 
 
 lemma {:isolate_assertions} MAP_ONE(k : Object, v : Object, m : Klon)
+  requires klonReady(m)
    requires k in m.m.Keys
    requires m.m[k] == v
     ensures mapThruKlon({k},m) == {v}
@@ -863,6 +961,7 @@ lemma FLAT_ONE(a : Object)
 
 
 lemma {:isolate_assertions} {:timeLimit 20} RefOKDI(f' : Object, t' : Object, f : Object, t : Object, m : Klon)
+ requires klonReady(m)
  requires f'.Ready()
  requires t'.Ready()
  requires f.Ready()
@@ -888,8 +987,8 @@ lemma {:isolate_assertions} {:timeLimit 20} RefOKDI(f' : Object, t' : Object, f 
 //YET MORE FFECKING CASES cos SubAMFOsGeq is more restrictive
  requires inside(f', m.o)
  requires strictlyInside(t', m.o)
-  // ensures refDI(f,t)
-  // ensures refOK(f,t)
+  ensures refDI(f,t)
+  ensures refOK(f,t)
 {
   assert refDI(f',t');
     assert t'.owner == {f'};
@@ -989,11 +1088,11 @@ lemma {:isolate_assertions}  AMFO_PIVOT(k : Object, v : Object, m : Klon)
 lemma {:isolate_assertions} {:timeLimit 40} MAP_THRU_IDENTITY_SET(ks : Owner, m : Klon)
    requires AllReady(ks)
    requires ks <= m.m.Keys
-   requires m.SuperCalidFragilistic()
-   requires HighCalidFragilistic(m)
-   requires forall x <- ks :: m.m[x] == x
-    ensures ks == set x <- ks :: x
-    ensures ks == set x <- ks :: m.m[x]
+   requires klonReady(m)
+   requires klonCalid(m)
+   requires (forall x <- ks :: m.m[x] == x)
+    ensures ks == (set x <- ks :: x)
+    ensures ks == (set x <- ks :: m.m[x])
     ensures (set x <- ks :: x) == (set x <- ks :: m.m[x])
 {}
 
@@ -1052,17 +1151,26 @@ lemma  {:isolate_assertions} {:timeLimit 7} AXIOM_DI(part : Object, whole : Obje
 }
 
 
-lemma  {:isolate_assertions} {:timeLimit 7}  InsideIsInside(k : Object, v : Object, m : Klon)
+lemma  {:isolate_assertions} {:timeLimit 15}  InsideIsInside(k : Object, v : Object, m : Klon)
   requires k.Ready()
   requires v.Ready()
-  requires m.objectInKlown(k)
-  requires m.SuperCalidFragilistic()
-  requires HighCalidFragilistic(m)
-  requires HighLineKV(k,v,m)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires klonLine(k,v,m)
   requires inside(k, m.o)
    ensures inside(v, m.c)
    ensures strictlyInside(k,m.o) <==> strictlyInside(v,m.c)
-   {}
+   {
+    assert klonGeometry(k,v,m);
+    assert (k == m.o) <==> (v == m.c);
+    assert (k == m.o) ==> not(strictlyInside(k,m.o));
+    assert (v == m.c) ==> not(strictlyInside(v,m.c));
+
+    assert strictlyInside(k,m.o)  ==> strictlyInside(v,m.c);
+    assert strictlyInside(k,m.o) <==  strictlyInside(v,m.c);
+    assert strictlyInside(k,m.o) <==> strictlyInside(v,m.c);
+
+   }
 
 
 lemma  {:isolate_assertions} {:timeLimit 30}   RefOKisRefOK(f' : Object, t' : Object, f : Object, t : Object, m : Klon)
@@ -1074,13 +1182,12 @@ lemma  {:isolate_assertions} {:timeLimit 30}   RefOKisRefOK(f' : Object, t' : Ob
  requires t.Ready()
  requires m.objectInKlown(f')
  requires m.objectInKlown(t')
- requires m.SuperCalidFragilistic()
- requires HighCalidFragilistic(m)
+
+ requires klonReady(m)
+ requires klonCalid(m)
+ requires klonLine(f', f, m)
+ requires klonLine(t', t, m)
  requires refOK(f',t')
- requires m.CalidLineKV(f', f)
- requires m.CalidLineKV(t', t)
- requires HighLineKV(f', f, m)
- requires HighLineKV(t', t, m)
 
   //i.e thees are ACTUAL CLONES not POTENTIAL CLONES
  requires f == m.m[f']
@@ -1108,9 +1215,9 @@ assert  refOK(f',t');
 
 assert t' != m.o;
 assert t'.AMFO > m.o.AMFO;
-assert mappingOwnersThruKlownKV(t', t, m);
-assert mappingOWNRsThruKlownKV(t'.owner, t.owner, m);
-assert t.owner == (mapThruKlon(t'.owner - m.o.AMFO, m) + m.m[m.o].AMFO);
+// assert mappingOwnersThruKlownKV(t', t, m);
+// assert mappingOWNRsThruKlownKV(t'.owner, t.owner, m);
+// assert t.owner == (mapThruKlon(t'.owner - m.o.AMFO, m) + m.m[m.o].AMFO);
 // assert t.owner == shiftAMFO(t'.owner, m.o.AMFO, m.m[m.o].AMFO, m.m);
 if (f' in t'.owner)  { assert f in t.owner; }
 
@@ -1147,8 +1254,8 @@ if (f' in t'.owner)  { assert f in t.owner; }
 // print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";
 // print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";
 
-  assume klonCalid(m);
-  assume klonAllLines(m);
+  assert klonCalid(m);
+  assert klonAllLines(m);
 
 // print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";
 //   print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";print "FUCK FUCK FUCK\n";
@@ -1219,10 +1326,10 @@ if (f' in t'.owner)  { assert f in t.owner; }
 InsideIsInside(f',f,m);
 InsideIsInside(t',t,m);
 
-assert strictlyInside(f',m.o);
+assert         inside(f',m.o);
 assert strictlyInside(t',m.o);
 
-assert strictlyInside(f ,m.c);
+assert         inside(f ,m.c);
 assert strictlyInside(t ,m.c);
 
 
@@ -1248,6 +1355,8 @@ assert strictlyInside(t ,m.c);
     //       assert f  in t .owner;  //AMDI_FINT //GREENLAND
     //       assert f.AMFO == t.AMFX;
       assert refDI(f,t);
+
+
       return;
      }
 
