@@ -566,10 +566,10 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
        reads `fields, `fieldModes
        {&& (n in fields.Keys)
         && (fields[n].owner == oo)
-        && (fields[n].bound == oo)  //OWNERBOUND
+       // && (fields[n].bound == oo)  //OWNERBOUND
         && (refOK(this,fields[n]))
         //NO_FIELDMODES      shioujdl be a mode check here too I guess??
-        && ((fields[n].owner == oo) == (fields[n].owner == oo)) }  //OWNERBOUND
+       }
 
 
   method {:isolate_assertions} usetn(n : string, v : nat)
