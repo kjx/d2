@@ -7,6 +7,6 @@ for i in Xlone_Set_Field Xlone_Via_Map Xlone_All_Owners  Xlone_Clone_Clone Xlone
 do
    echo "=========================="
    echo $i
-   grep fini $(ls -1t logs/*$i.dfy.txt)
+   grep fini $(ls -1t logs/*$i.dfy.txt | head -3)
 done
 date
