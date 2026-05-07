@@ -7,65 +7,54 @@ method {:isolate_assertions} {:timeLimit 300} {:verify true} Xlone_All_Fields(a 
 
   decreases * //(m'.oHeap - m'.m.Keys + {a}), |a.AMFO|, fielddiff(a,b), 10
 
-  requires a.Ready() && a.Valid()
+  requires klonReady(m')
+  requires klonCalid(m')
 
-  //we're just ever called from Xlone_Via_Map  (and could be reintergrated, who knows?)
-  //and  - apparently - from Xlone_Clone_Clone…
-  requires m'.oHeap >= flatten(m'.clowner) >= flatten(m'.clbound)
   requires m'.objectInKlown(a)
+  requires COK(a,m'.oHeap)      requires COKA: COK(a, m'.oHeap)
+  requires b.Context(m'.hns({b}))
+
 //prog inside
 //  requires strictlyInside(a, m'.o)
   requires inside(a, m'.o)
 //prog inside
-  requires a in m'.m.Keys
   requires m'.m[a] == b
-
-//START FROM XVM
-  requires m'.HeapContextReady() && m'.ValuesContextReady()
-  requires m'.Calid()
-  requires m'.SuperCalidFragilistic()
-  requires HighCalidFragilistic(m')
-  requires COKA: COK(a, m'.oHeap)
-  requires COK(a, m'.oHeap)
+//
+// //START FROM XVM
+//   requires m'.HeapContextReady() && m'.ValuesContextReady()
+//   requires m'.Calid()
+//   requires m'.SuperCalidFragilistic()
+//   requires HighCalidFragilistic(m')
+//
+//   requires COK(a, m'.oHeap)
 
 //////////////////////////////////////////////////////////////////////
   //prog WORNG  requires (klonCanKV(m',a,a))
-
-  requires klonVMapOK(m'.m)
-//  requires canVMapKV(m'.m, a, b)
-  requires (a in m'.oHeap)
-  requires (if (b==a) then (b in m'.oHeap) else (b !in m'.oHeap))
-  requires a.Ready() && a.Valid() && a.Context(m'.oHeap)
-  requires b.Ready() && b.Valid() && b.Context(m'.hns({b}))
-  requires m'.ownersInKlown(a)
-//NO_FIELDMODES   requires (a.fieldModes == b.fieldModes)
-  requires (b.AMFX >= b.AMFB >= a.AMFB)
-  requires (a.fields.Keys >= b.fields.Keys)
-
+//
 //////////////////////////////////////////////////////////////////////
-
-
-  requires (m'.c_amfx >= flatten(m'.clbound) >= flatten(m'.o.bound))
-  requires m'.oHeap >= flatten(m'.clowner) >= flatten(m'.clbound)
-
-  requires forall oo <- a.AMFO :: oo.Ready()
-
-  requires a.Ready() && a.Valid()
-  requires m'.ownersInKlown(a)  //prog??
-  requires m'.o.Ready() && m'.o.Valid()
-  requires m'.objectInKlown(m'.o)
-  //requires m'.CalidCanKey(a)  //prog
-
-  requires m'.HeapContextReady()
-  requires m'.ValuesContextReady()
-  requires m'.Calid()
-  requires HighCalidFragilistic(m') //TUESDAY
-
-  requires a in m'.oHeap
-  requires b !in m'.oHeap
-  requires b in m'.hns()
-  requires m'.m.Keys <= m'.oHeap
-  requires allocated(m'.oHeap)
+//
+//
+//   requires (m'.c_amfx >= flatten(m'.clbound) >= flatten(m'.o.bound))
+//   requires m'.oHeap >= flatten(m'.clowner) >= flatten(m'.clbound)
+//
+//   requires forall oo <- a.AMFO :: oo.Ready()
+//
+//   requires a.Ready() && a.Valid()
+//   requires m'.ownersInKlown(a)  //prog??
+//   requires m'.o.Ready() && m'.o.Valid()
+//   requires m'.objectInKlown(m'.o)
+//   //requires m'.CalidCanKey(a)  //prog
+//
+//   requires m'.HeapContextReady()
+//   requires m'.ValuesContextReady()
+//   requires m'.Calid()
+//   requires HighCalidFragilistic(m') //TUESDAY
+//
+//   requires a in m'.oHeap
+//   requires b !in m'.oHeap
+//   requires b in m'.hns()
+//   requires m'.m.Keys <= m'.oHeap
+//   requires allocated(m'.oHeap)
 //END FROM XVM
 
 //FIELD MODEs-ISM HACK -- shouod go into calid or at laets supercalid!
@@ -76,13 +65,14 @@ method {:isolate_assertions} {:timeLimit 300} {:verify true} Xlone_All_Fields(a 
 
 //progTODOFUCK  ensures  m.from(m')
 //KEYS  ensures  a.fields.Keys == b.fields.Keys //
-   ensures m.SuperCalidFragilistic()
-   ensures HighCalidFragilistic(m)
-   ensures HighLineKV(a,b,m) //10Feb 2026
-   ensures m.CalidLineKV(a,b)//10Feb 2026
+
+   ensures klonReady(m)
+   ensures klonCalid(m)
+
+   ensures m.objectInKlown(a)
+   ensures COK(a,m.oHeap)
+   ensures b.Context(m.hns({b}))
    ensures m.from(m')
-   ensures m.ownersInKlown(a)
-   ensures a in m.m.Keys
 //NO_FIELDMODES    ensures a.fieldModes  == b.fieldModes
    ensures m.m[a] == b
    ensures a.Ready() && a.Valid() //NOCONTEXT && a.Context(m.hns())
@@ -90,7 +80,8 @@ method {:isolate_assertions} {:timeLimit 300} {:verify true} Xlone_All_Fields(a 
 //NOCONTEXT   ensures b.Context(m.hns())
    ensures m.oHeap == m'.oHeap
 
-  //ensures  m.m.Values >= m'.m.Values + {b} //
+  //ensures  m.m.Values >= m'.m.Values + {b} //WRONGO cos we require  m.m[a] == b
+
 
 
   modifies b`fields

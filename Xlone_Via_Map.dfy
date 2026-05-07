@@ -265,15 +265,14 @@ lemma {:isolate_assertions} {:timeLimit 20} OUTSIDE_EQ_OK(k : Object, v : Object
   }
 
 
-lemma {:isolate_assertions} {:timeLimit 20} CKV_PRECONDS(k : Object, v : Object, m : Klon)
+lemma {:isolate_assertions} {:timeLimit 10} CKV_PRECONDS(k : Object, v : Object, m : Klon)
   requires klonReady(m)
   requires klonCalid(m)
   requires m.ownersReadyInKlown(k)
-  requires k in m.oHeap
+  requires k  in m.oHeap
   requires k !in m.m.Keys
-  requires outside(k,m.o)
+  requires v !in m.m.Values
   requires klonLine(k,v,m)
-
 
   ensures m.CKV_preconditions(k,v)
   {}
