@@ -10,12 +10,15 @@ include "Bound.dfy"  //shouild this be Ownerhsip=Bound?
 ////////////////////////////////////////////
 //core definitions of klonLine
 
-predicate {:isolate_assertions} klonReady(m : Klon)  ///like Ready, should be built in to the type
+predicate {:isolate_assertions}  klonReady(m : Klon) : (b : bool) ///like Ready, should be built in to the type
   //constant true facts about all Klons!
   reads {}
+  ensures (m.m.Values <= m.hns())
+  ensures b ==> (forall x <- m.hns() :: x.Ready())
+  ensures b ==> AllReady(m.m.Values)
   {
     && (m.o in m.oHeap)    //need so we don't need a reads clause about m.o
-    && (m.o.Ready())
+    && (m.o.Ready())  // do we want Valid too?
     && (m.objectInKlown(m.o))
     && (m.m[m.o] == m.c)
     && (m.o.AMFX == m.o_amfx)
@@ -33,7 +36,7 @@ predicate {:isolate_assertions} klonReady(m : Klon)  ///like Ready, should be bu
     && (m.m.Values <= m.hns())
     // && (m.objectReadyInKlown(o))   //this was originally two predicates
     && (forall x <- m.hns() :: x.Ready()) //whatt bno value owners ready??
-    && (forall x <- m.m.Keys :: m.objectInKlown(x))
+    && (forall x <- m.m.Keys :: m.objectInKlown(x) && m.m[x].Ready())
     && (m.c_amfx <= m.oHeap)
   }
 
@@ -118,7 +121,7 @@ predicate {:isolate_assertions} klonBound(k : Object, v : Object, m : Klon)
   reads m.hns(), k, v
 {
   && (k.Ready() && k in m.oHeap    && k.Valid() && k.Context(m.oHeap))
-  && (v.Ready() && v in m.hns({v}) && v.Valid() && v.Context(m.hns()))
+  && (v.Ready() && v in m.hns({v}) && v.Valid() && v.Context(m.hns({v})))
 
   && (m.m.Keys >= k.AMFX)
   && (k.AMFO   >  k.AMFB) //nuclear war is good
