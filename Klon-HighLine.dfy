@@ -1093,7 +1093,8 @@ lemma {:isolate_assertions} {:timeLimit 40} MAP_THRU_IDENTITY_SET(ks : Owner, m 
    requires (forall x <- ks :: m.m[x] == x)
     ensures ks == (set x <- ks :: x)
     ensures ks == (set x <- ks :: m.m[x])
-    ensures (set x <- ks :: x) == (set x <- ks :: m.m[x])
+    ensures (set x <- ks :: x) == (set x <- ks :: m.m[x]) == ks
+    ensures mapThruKlon(ks,m) == ks
 {}
 
 //{:timeLimit 60}
