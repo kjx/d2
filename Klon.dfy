@@ -1089,10 +1089,11 @@ function {:isolate_assertions} computeOwnerForClone(oo : Owner, m : Klon) : (nuo
 ///seemss to survive without oo being ready!
 ///seemss to survive without ANYUTHING being Ready
 ///progA Naa will need Values...
-  requires m.apoCalidse()  //note that this requires m.o already in m.m.Keys
+  requires klonReady(m)
+//  requires m.apoCalidse()  //note that this requires m.o already in m.m.Keys
   requires oo <= m.m.Keys
 //  requires flatten(oo) >= m.o.AMFO //hmmmA
-  requires m.SuperCalidFragilistic()
+//  requires m.SuperCalidFragilistic()
    ensures nuowner <= m.hns()
    ensures flatten(oo) <= m.oHeap //so this MUST be preexisting.
    ensures flatten(nuowner) <= m.hns()
