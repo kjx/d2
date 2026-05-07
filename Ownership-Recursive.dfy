@@ -39,10 +39,12 @@ function collectAllOwners(o : Object) : (rv : Owner)
   {o} + o.owner + (set xo <- o.owner, co <- collectAllOwners(xo) :: co)
 }
 
-function collectAllXOwners(o : Object) : (rv : Owner)
+function {:isolate_assertions} collectAllXOwners(o : Object) : (rv : Owner)
   // decreases o.AMFO
    requires o.Ready()
-  //  ensures rv <= o.AMFO
+    ensures rv < o.AMFO
+    ensures rv <= o.AMFX
+//  ensures rv == o.AMFX
 {
   o.owner + (set oo <- o.owner, ooo <- collectAllOwners(oo) :: ooo)
 }
