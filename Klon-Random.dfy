@@ -42,11 +42,36 @@ lemma  {:isolate_assertions} {:timeLimit 20} MapThruKlonOutsideOwner(k : Object,
   assert forall oo <- k.bound  :: outside(oo, m.o);
   assert forall oo <- k.bound  :: (m.m[oo] == oo);
   MAP_THRU_IDENTITY_SET(k.bound,m);
-  assert (set o <- k.bound :: m.m[o]) == k.bound;
+  // assert (set o <- k.bound :: m.m[o]) == k.bound;
   assert mapThruKlon(k.bound, m) == k.bound;
 }
 
 
+lemma  {:isolate_assertions} {:timeLimit 20} MapFlatOutside(k : Object, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires k.Ready() && m.objectInKlown(k)
+  requires outside(k, m.o)
+   ensures mapThruKlon(k.owner, m) == k.owner
+   ensures mapThruKlon(k.bound, m) == k.bound
+{
+//  assert forall oo <- k.owner ::  inside(m.o, oo);
+  assert forall oo <- m.m.Keys | outside(oo, m.o) :: m.m[oo] == oo;
+  assert forall oo <- k.owner  | outside(oo, m.o) :: m.m[oo] == oo;
+  assert forall oo <- k.owner  :: outside(oo, m.o);
+  assert forall oo <- k.owner  :: (m.m[oo] == oo);
+  MAP_THRU_IDENTITY_SET(k.owner,m);
+  // assert (set o <- k.owner :: m.m[o]) == (set o <- k.owner :: o) == k.owner;
+  assert mapThruKlon(k.owner, m) == k.owner;
+
+  assert forall oo <- k.bound  | outside(oo, m.o) :: m.m[oo] == oo;
+  assert forall oo <- k.bound  :: outside(oo, m.o);
+  assert forall oo <- k.bound  :: (m.m[oo] == oo);
+  MAP_THRU_IDENTITY_SET(k.bound,m);
+  assert (set o <- k.bound :: m.m[o]) == k.bound;
+  assert mapThruKlon(k.bound, m) == k.bound;
+
+}
 
 
 lemma {:isolate_assertions} NotFromAJedi(k : Object, v : Object, m : Klon)
@@ -99,10 +124,13 @@ lemma {:isolate_assertions} OnlyAMasterOfEvilDarth(k : Object, v : Object, m : K
     OnlyOneThereIs(k,v,m);
    }
 
-lemma {:isolate_assertions} OnlyNowAtTheEndDoYouUnderstand(k : Object, v : Object, m : Klon)
+lemma {:isolate_assertions} IS_BROKEN_OnlyNowAtTheEndDoYouUnderstand(k : Object, v : Object, m : Klon)
   //wpeoves mapTHruKlon works in all cases of original being inside,outside, eq m.o
 //BUT YOU FUCKED IT UP -- IT CAN'T!!!!!!!!
 //NOT WHEN k == mn.o at least? --
+//
+//seems like a lot of work for little effect
+//
   requires outside(k, m.o)
   requires m.apoCalidse()
   requires m.CalidOwners()
