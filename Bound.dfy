@@ -3,6 +3,266 @@ include "Ownership-Recursive.dfy"
 
 type Bound = Owner
 
+
+lemma {:isolate_assertions} AllWholeInsidePart(partO : Owner, wholeO : Owner)
+   //HOW THE FUCK DOES THIS HELP AT ALL???
+  requires AllReady(partO)
+  requires AllReady(wholeO)
+  requires flatten(partO) >= flatten(wholeO)
+   ensures forall o <- flatten(wholeO) :: o in flatten(partO)
+  {}
+
+
+lemma {:isolate_assertions} MappedAllWholeInsidePart(partO : Owner, wholeO : Owner, m : Klon)
+  requires AllReady(partO)
+  requires AllReady(wholeO)
+  requires flatten(partO) >= flatten(wholeO)
+  requires partO  <= m.m.Keys
+  requires wholeO <= m.m.Keys
+   ensures forall o <- flatten(wholeO) :: o in flatten(partO)
+//   ensures forall o <- mapThruKlon(wholeO,m) :: o in mapThruKlon(partO,m)
+   ensures forall o <- flatten(mapThruKlon(wholeO,m)) :: o in flatten(mapThruKlon(partO,m))
+  {}
+
+
+lemma {:isolate_assertions} DivotInsidePivot(oo : Owner, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires AllReady(oo)
+
+  requires oo <= m.m.Keys
+  requires exists o <- oo :: o.AMFO > m.o.AMFO
+
+   ensures flatten(oo) >= m.o.AMFO
+  {}
+
+
+
+lemma {:isolate_assertions} DOESN_TWORK_RivetInsideBlivet(oo : Owner, co : Owner, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires AllReady(oo)
+
+  requires oo <= m.m.Keys
+ // requires oo > {}
+  // requires exists o <- oo :: o.AMFO > m.o.AMFO
+  requires mflat(oo) >= m.o.AMFO
+   ensures forall o <- m.o.AMFO :: o in  mflat(oo)
+   ensures m.o in mflat(oo)
+
+ // requires flatten(oo) >= m.o.AMFO             /// more flexible but let's walk before we run - doesn't verify with this
+
+  requires oo <= m.m.Keys
+  requires co == mapThruKlon(oo, m)
+//
+//   ensures forall o <- oo :: klonLine(o, m.m[o], m)
+//
+//
+//    ensures forall o <- oo :: (o == m.o)     <==> (m.m[o] == m.c)
+//    ensures forall o <- oo :: inside(o, m.o) <==> inside(m.m[o], m.c)
+//    ensures forall o <- oo :: inside(o, m.o) <==> inside(m.m[o], m.c)
+
+   ensures mflat(oo) >= m.o.AMFO
+   ensures mflat(co) >= m.c.AMFO
+  {}
+
+
+
+
+lemma {:isolate_assertions} FlattenMapsTheSame(oo : Owner, bb : Bound, co : Owner, cb : Bound, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires AllReady(oo)
+  requires AllReady(bb)
+  requires AllReady(co)
+  requires AllReady(cb)
+
+  requires oo <= m.m.Keys
+  requires bb <= m.m.Keys
+  requires co == mapThruKlon(oo, m)
+  requires cb == mapThruKlon(bb, m)
+
+  requires forall o <- oo :: o.AMFO > m.o.AMFO
+  requires forall o <- bb :: o.AMFO > m.o.AMFO
+
+  requires oo != bb
+  requires flatten(oo) == flatten(bb)
+   ensures flatten(co) == flatten(cb)
+{
+  assert flatten(bb) >= bb;
+  assert flatten(oo) >= flatten(bb);
+
+  assert flatten(co) >= co;
+  assert flatten(cb) >= cb;
+
+
+
+
+
+
+
+//
+//   forall  o <- oo  ensures (m.m[o] in co) //
+//     {
+//       assert o.Ready() && (o in o.AMFO) && (o in oo);
+//       assert flatten({o}) == o.AMFO;
+//       assert o.AMFO <= flatten(oo);
+//       assert o.AMFO <= flatten(bb);
+//       assert flatten({o}) <= flatten(bb);
+//
+//       assert m.m[o] in mapThruKlon(oo, m);
+//
+//       var c := m.m[o];
+//       assert c in co;
+//       assert o in flatten(bb);
+//       assert c in flatten(co);
+//       assert c in flatten(cb);
+//       assert o.AMFO <= flatten(bb);
+//       assert c.AMFO <= flatten(co);
+//     }
+
+
+
+
+//  assert forall o <- flatten(oo) :: flatten({o}) == o.AMFO;
+
+  // assert forall o <- flatten(oo) :: o            in flatten(bb);
+  // assert forall o <-        (oo) :: flatten({o}) <= flatten(oo);
+
+//  assert forall o <-        (oo) :: flatten(mapThruKlon({o},m)) <= flatten(cb);
+
+
+}
+
+
+lemma {:isolate_assertions} TOO_EASY_TO_WORK(oo : Owner, bb : Bound, co : Owner, cb : Bound, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires AllReady(oo)
+  requires AllReady(bb)
+  requires AllReady(co)
+  requires AllReady(cb)
+
+  requires {} < oo <= m.m.Keys
+  requires bb <= m.m.Keys
+  requires co == mapThruKlon(oo, m)
+  requires cb == mapThruKlon(bb, m)
+
+  requires oo != bb
+  requires flatten(oo) >= flatten(bb)
+//   ensures flatten(co) >= flatten(cb)
+{
+ // assert oo >= bb;  //shouldb't work
+
+  forall o <- oo ensures (true)
+  {
+
+
+  }
+}
+
+
+
+
+lemma {:isolate_assertions} DOESNT_WORK_EITHER(oo : Owner, bb : Bound, co : Owner, cb : Bound, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires AllReady(oo)
+  requires AllReady(bb)
+  requires AllReady(co)
+  requires AllReady(cb)
+
+  requires {} < oo <= m.m.Keys
+  requires bb <= m.m.Keys
+  requires co == mapThruKlon(oo, m)
+  requires cb == mapThruKlon(bb, m)
+
+  requires oo != bb
+  requires mflat(oo) >= mflat(bb)
+   ensures mflat(co) >= mflat(cb)
+{
+ // assert oo >= bb;  //shouldb't work
+
+  forall o <- oo ensures (true)
+  {
+
+
+  }
+}
+
+
+//
+//   assert forall o <- flatten(bb) :: o            in flatten(oo);
+//   assert forall o <-        (bb) :: flatten({o}) <= flatten(oo);
+//
+//   assert forall o <-        (bb) :: mapThruKlon({o},m) <= mapThruKlon(bb,m);
+//   assert forall o <-        (bb) :: flatten(mapThruKlon({o},m)) <= flatten(cb);
+//
+//   assert forall o <-        (bb) :: mapThruKlon({o},m) <= mapThruKlon(oo,m);
+//   assert forall o <-        (bb) :: flatten(mapThruKlon({o},m)) <= flatten(co);
+//
+//   assert forall o <- mapThruKlon(bb,m) :: flatten(            {o}   ) <= flatten(cb);
+//
+//
+//   assert forall o <-        (cb) :: flatten(            {o}   ) <= flatten(cb);
+//
+//   assert forall o <- bb :: flatten({o}) <= flatten(oo);
+//   assert forall o <- bb :: flatten(mapThruKlon({o},m)) <= flatten(mapThruKlon(oo,m));
+
+
+
+  //assert forall o <-        (cb) :: flatten({o}) <= flatten(co);
+
+
+  // assert forall o <-        (cb) :: flatten(            {o}   ) <= flatten(co);
+
+//  assert forall o <-        (bb) :: flatten(mapThruKlon({o},m)) <= flatten(co);
+//  assert forall o <-        (bb) :: flatten(mapThruKlon({o},m)) <= flatten(co);
+
+
+
+lemma {:isolate_assertions} FlattenInsideGEQ(oo : Owner, bb : Bound, co : Owner, cb : Bound, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires AllReady(oo)
+  requires AllReady(bb)
+  requires AllReady(co)
+  requires AllReady(cb)
+
+  requires flatten(oo) >= m.o.AMFO
+
+  requires oo <= m.m.Keys
+  requires bb <= m.m.Keys
+  requires co == mapThruKlon(oo, m)
+  requires cb == mapThruKlon(bb, m)
+
+  requires myBoundsOK(oo,bb)
+  // ensures myBoundsOK(co,cb)
+ {
+  assert (flatten(oo) >= flatten(bb));
+
+   if (m.o.AMFO > flatten(bb))
+     {
+      assert forall x <- flatten(bb) :: outside(x, m.o);
+      assert forall x <- flatten(bb) :: m.m[x] == x;
+      assert mapThruKlon(bb,m) == cb == bb;
+      assert flatten(cb) == flatten(bb);
+
+      assert flatten(oo) >= flatten(bb);
+      assert flatten(oo) >= m.o.AMFO;
+      assert flatten(m.clbound) >= m.c.AMFB;
+      assert flatten(co) >= flatten(cb);
+
+      assert (m.c.AMFO) >= flatten(m.o.bound);
+
+//      assert (flatten(co) >= flatten(cb));
+     }
+
+ }
+
+
+
+
 predicate  myBoundsOK(oo : Owner, mb : Bound)
  {
   && (flatten(oo) >= flatten(mb))
@@ -271,7 +531,7 @@ method {:isolate_assertions}  opposeBounds(os : set<Object>) returns (b : Bound)
  //os - prooposed owners for an object
  //propose boubnsf but it;'s a function withtout READY as a precondition.
  //which mean it can be used to set default argument values (ege in make())
- //but can't guarantee anything
+ //but it's got an *assume* in it...
    ensures myBoundsOK(os, b)
    ensures flatten(os) >= flatten(b)
  {

@@ -148,7 +148,7 @@ function {:isolate_assertions} {:timeLimit 15} flatten(os : Owner) : (fs : Owner
    ensures os <= fs
     {(set o <- os, oo <- o.AMFO :: oo) + os}
 
-predicate isFlat(os : Owner)              {forall o <- os, oo <- o.AMFO :: oo in os}    //seems to work...
+predicate isFlat(os : Owner) {forall o <- os, oo <- o.AMFO :: oo in os}    //seems to work...
 
 
 
@@ -212,29 +212,29 @@ predicate nuBoundsOK(oo : Owner, mb : Owner) {
 //  && (flatten(mb) <= (set ooo <- oo, omb <- ooo.AMFB :: omb) + oo)
         //AKA (I think) effectivebound is subseteq/surroundingeq the union of owners' bounds.
   }
-
-lemma {:verify false}  OldPolonium(oo : Owner, mb : Owner, m : Klon)
-  requires m.apoCalidse()
-  requires m.SuperCalidFragilistic()
-  requires oo <= m.m.Keys
-  requires mb <= m.m.Keys
-  requires nuBoundsOK(oo, mb)
-  requires flatten(oo) > m.o.AMFO
-  requires flatten(mb) > m.o.AMFO
-//   ensures nuBoundsOK(computeOwnerForClone(oo,m), computeOwnerForClone(mb,m))
- {
-  assert (flatten(oo) >= flatten(mb));
-  assert (forall o <- oo ::( (o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(mb))));
-
-  // var ro := computeOwnerForClone(oo,m);
-  // var rb := computeOwnerForClone(mb,m);
-
-var ro := mapThruKlon(oo, m);
-var rb := mapThruKlon(mb, m);
-
-  assert (flatten(ro) >= flatten(rb));
-//  assert (forall o <- ro ::( (o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(rb))));
- }
+//
+// lemma {:verify false}  OldPolonium(oo : Owner, mb : Owner, m : Klon)
+//   requires m.apoCalidse()
+//   requires m.SuperCalidFragilistic()
+//   requires oo <= m.m.Keys
+//   requires mb <= m.m.Keys
+//   requires nuBoundsOK(oo, mb)
+//   requires flatten(oo) > m.o.AMFO
+//   requires flatten(mb) > m.o.AMFO
+// //   ensures nuBoundsOK(computeOwnerForClone(oo,m), computeOwnerForClone(mb,m))
+//  {
+//   assert (flatten(oo) >= flatten(mb));
+//   assert (forall o <- oo ::( (o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(mb))));
+//
+//   // var ro := computeOwnerForClone(oo,m);
+//   // var rb := computeOwnerForClone(mb,m);
+//
+// var ro := mapThruKlon(oo, m);
+// var rb := mapThruKlon(mb, m);
+//
+//   assert (flatten(ro) >= flatten(rb));
+// //  assert (forall o <- ro ::( (o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(rb))));
+//  }
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -278,3 +278,183 @@ function allAMFXs(oo : OWNR)  : (r : Owner)  { set o <- oo, ooo <- o.AMFX :: ooo
 function allReadyAMFOs(oo : Owner) : (r : OWNR)
     requires AllReady(oo)     { set o <- oo, ooo <- o.AMFO :: ooo }
 function allObjectsAndAMFOs(oo : Owner) : (r : OWNR)   { set o <- oo, ooo <- o.AMFO :: ooo }
+
+
+
+//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==
+//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==
+//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==
+
+// recFlatOwn - recursive verison of AMFO..
+
+function {:isolate_assertions} recFlatOwn0(o : Object) : (rv : Owner)
+  decreases o.AMFO
+   requires o.Ready()
+    {  {o} + (set xo <- o.owner, co <- recFlatOwn0(xo) :: co)  }
+
+
+lemma RecFlatOwnIsAMFO(o : Object)
+  decreases o.AMFO
+   requires o.Ready()
+    ensures recFlatOwn0(o) == o.AMFO
+  {}
+
+
+function {:isolate_assertions} recFlatOwn(o : Object) : (rv : Owner)
+  decreases o.AMFO
+   requires o.Ready()
+    ensures rv == o.AMFO
+    { RecFlatOwnIsAMFO(o); recFlatOwn0(o) }
+
+//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==
+//
+// deals with flatten in terms of RFO recuesive version of AMFO
+
+// function {:isolate_assertions} {:timeLimit 15} flatten(os : Owner) : (fs : Owner)
+//      reads {}
+//    ensures os <= fs
+//     {(set o <- os, oo <- o.AMFO :: oo) + os}
+
+
+
+function {:isolate_assertions} {:timeLimit 15} flattenRFO(os : Owner) : (fs : Owner)
+//version of flatten defined in terms of refFlatOwn instead of AMFO
+    requires AllReady(os)
+    requires forall o <- os :: o.Ready()
+     reads {}
+ //   ensures os <= fs
+    {os + (set o <- os, oo <- recFlatOwn(o) :: oo)}
+
+
+lemma {:isolate_assertions} {:timeLimit 30} FlatRFOIsFlatten(os : Owner)
+  //wrapper over the horrible defintion below - SetRFOIsSetAMFO
+  decreases allAMFOs(os)
+   requires AllReady(os)
+   requires forall o <- os :: o.Ready()
+    ensures flattenRFO(os) == flatten(os)
+  {
+    SetRFOIsSetAMFO(os);
+  }
+
+
+lemma {:isolate_assertions} {:timeLimit 10} SetRFOIsSetAMFO(os : Owner)
+  //aux defintion that flatten == flattenRFO
+  decreases allAMFOs(os)
+   requires AllReady(os)
+   requires forall o <- os :: o.Ready()
+   ensures ((set o <- os, oo <- recFlatOwn(o) :: oo) == (set o <- os, oo <- o.AMFO :: oo))
+   ensures ((os+(set o <- os, oo <- recFlatOwn(o) :: oo))== (os+(set o <- os, oo <- o.AMFO :: oo)))
+   ensures flattenRFO(os) == flatten(os)
+{
+  forall o <- os ensures (recFlatOwn(o) == o.AMFO)
+    {
+      RecFlatOwnIsAMFO(o);
+    }
+}
+
+
+//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==
+//
+//native recursive flatten
+//
+
+function {:isolate_assertions} {:timeLimit 15} recFlatten(os : Owner) : (fs : Owner)
+  //flatten defined recursively...
+   requires AllReady(os)
+  decreases allAMFOs(os)
+ {os + (set o <- os, co <- recFlatten(o.owner) :: co)}
+
+
+function {:isolate_assertions} rfo(o : Object) : (rv : Owner)
+  decreases o.AMFO
+   requires o.Ready()
+    {  {o} + (set xo <- o.owner, co <- rfo(xo) :: co)  }
+
+
+lemma {:isolate_assertions} {:timeLimit 30} FUCKED_RecFlattenIsFlatten(os : Owner)
+  decreases allAMFOs(os)
+   requires AllReady(os)
+   ensures recFlatten(os) == flatten(os)
+  { }
+
+
+lemma {:isolate_assertions} {:timeLimit 30} FUCKED_OneObjectReCFLATTEN(o : Object)
+  decreases o.AMFO
+   requires o.Ready()
+   ensures recFlatten({o}) == recFlatOwn(o)
+  {}
+
+
+function mamfo(o : Object) : Owner  decreases o.AMFO, 1       requires o.Ready() {{o} + mflat(o.owner)}
+
+function {:isolate_assertions} {:timeLimit 30} mflat(oo : Owner) : Owner  decreases allAMFOs(oo), 2 requires forall o <- oo :: o.Ready()  {set o : Object <- oo, ooo <- mamfo(o) :: ooo}
+
+//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==
+//
+// aux relationsbi opbeetwen AMFO & FLATTEN
+
+lemma AMFOtoFLATTEN(o : Object)
+ requires o.Ready()
+ ensures o.AMFO == {o} + flatten(o.owner)
+ {}
+
+lemma FLATTENtoAMFO(o : Object)
+ requires o.Ready()
+ ensures flatten({o}) == o.AMFO
+ {}
+
+
+
+ lemma {:isolate_assertions} {:timeLimit 15} FRFOFLAT(os : Owner)
+  decreases allAMFOs(os)
+   requires AllReady(os)
+   requires forall o <- os :: o.Ready()
+    ensures flattenRFO(os) == flatten(os)
+    {
+       if (os == {})
+        {
+          assert flattenRFO({}) == flatten({});
+          return;
+        } else {
+           forall o <- os ensures (recFlatOwn(o) == o.AMFO) //by
+              { RecFlatOwnIsAMFO(o); }
+
+           assert ((set o <- os, oo <- recFlatOwn(o) :: oo) == (set o <- os, oo <- o.AMFO :: oo))
+                     by { forall o <- os ensures (recFlatOwn(o) == o.AMFO) { RecFlatOwnIsAMFO(o); } }
+
+
+//            forall o <- os ensures (recFlatten(o.owner) == flatten(o.owner)) {
+//               if (o.owner == {}) {assert {} == recFlatten(o.owner) == flatten(o.owner); }
+//               if (|o.owner| == 1)
+//                     {
+//                       assert recFlatten(o.owner) == flatten(o.owner);
+//                     }
+//
+//
+//            }
+        }
+    }
+
+
+//
+//
+//  lemma {:isolate_assertions} {:timeLimit 15} RecFlattenIsFlatten(os : Owner)
+//   decreases allAMFOs(os)
+//    requires AllReady(os)
+//     ensures recFlatten(os) == flatten(os)
+//     {
+//        if (os == {})
+//         {
+//           return;
+//         } else {
+//            forall o <- os ensures (recFlatten(o.owner) == flatten(o.owner)) {
+//               if (o.owner == {}) {assert {} == recFlatten(o.owner) == flatten(o.owner); }
+//               if (|o.owner| == 1)
+//                     {
+//                       assert recFlatten(o.owner) == flatten(o.owner);
+//                     }
+//
+//
+//            }
+//         }
+//     }

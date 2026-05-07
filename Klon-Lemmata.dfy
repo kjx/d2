@@ -241,14 +241,46 @@ lemma {:isolate_assertions}  {:verify false} {:obsolete}  MappingInsideOwnersThr
 
 
 
+lemma {:isolate_assertions} {:only} {:timeLiimit 7} MapOwnerAndBound(kowner : Owner, kbound : Bound,
+                                             rowner : Owner, rbound : Bound,
+                                             m : Klon)
+
+    requires AllReady(kowner)
+    requires AllReady(kbound)
+    requires klonReady(m)
+
+    requires kowner <= m.m.Keys
+    requires kbound <= m.m.Keys
+
+    requires (rowner == (mapThruKlon(kowner, m)))
+    requires (rbound == (mapThruKlon(kbound, m)))
+
+
+     requires flatten(kowner) > m.o.AMFO   //strictly inside
+      ensures flatten(rowner) > m.c.AMFO   //strictly inside
+
+     requires nuBoundsOK(kowner, kbound)
+   // ensures nuBoundsOK(rowner, rbound)
+  {
+
+  //liukely needs e.g/ YouCantGetThereFromHere...
+    // assert flatten(kowner) > m.o.AMFO;
+    // assert m.o in flatten(kowner);
+    // assert m.m[m.o] == m.c;
+    // assert m.c in flatten( mapThruKlon(kowner,m) );
+    // assert flatten(kowner) >= m.c.AMFO;
+
+  }
 
 
 
-lemma {:isolate_assertions} MappedBounds(k : Object, v : Object, m : Klon)
+
+lemma {:isolate_assertions} {:only} MappedBounds(k : Object, v : Object, m : Klon)
     requires k.Ready()
-    requires v.Ready()
+//    requires v.Ready()
     requires m.ownersInKlown(k)
-    requires m.SuperCalidFragilistic()
+//    requires m.SuperCalidFragilistic()
+    requires klonReady(m)
 
     requires strictlyInside(k, m.o)
      ensures k.AMFO > m.o.AMFO
@@ -256,16 +288,19 @@ lemma {:isolate_assertions} MappedBounds(k : Object, v : Object, m : Klon)
     // ensures (forall oo <- k.AMFX :: k.AMFB <= oo.AMFB)  //GREENLAND //Beady2()
     ensures nuBoundsOK(k.owner, k.bound)
 
-    requires mappingOWNRsThruKlownKV(k.owner, v.owner, m)
+    requires (v.owner == (mapThruKlon(k.owner, m)))
+    requires (v.bound == (mapThruKlon(k.bound, m)))
+
+//    requires mappingOWNRsThruKlownKV(k.owner, v.owner, m)  //howcome onlt rheou OWNW
    //  ensures (forall oo <- v.AMFX :: v.AMFB <= oo.AMFB)  //GREENLAND //Beady2()
        ensures nuBoundsOK(v.owner, v.bound)
   {
     k.ExtraReady();  //GREENLAND //Beady2()
-    v.ExtraReady();  //GREENLAND //Beady2()
+//    v.ExtraReady();  //GREENLAND //Beady2()
     assert nuBoundsOK(k.owner, k.bound);
     assert nuBoundsOK(v.owner, v.bound);
 //    assert (forall oo <- k.AMFX :: k.AMFB <= oo.AMFB + k.owner);   //GREENLAND //Beady2()
-//    assert (forall oo <- v.AMFX :: v.AMFB <= oo.AMFB + v.owner);  //GREENLAND //Beady2()
+//    assert (forall oo <-cc v.AMFX :: v.AMFB <= oo.AMFB + v.owner);  //GREENLAND //Beady2()
 
     assert  k.AMFX >= k.AMFB;
     assert  (forall oo <- k.AMFX :: oo in m.m.Keys);
@@ -273,11 +308,12 @@ lemma {:isolate_assertions} MappedBounds(k : Object, v : Object, m : Klon)
     assert  m.ValuesContextReady();
     assert  AllReady(m.hns());
 
-    var nuowner := computeOwnerForClone(k.owner,m);
+    var nuowner := v.owner; //computeOwnerForClone(k.owner,m);
     assert nuowner <= m.hns();
     assert  AllReady(nuowner);
     assert  AllReady(flatten(nuowner));
-    var nubound := computeOwnerForClone(k.bound,m);
+
+    var nubound := v.bound; //computeOwnerForClone(k.bound,m);
     assert nubound <= m.hns();
     assert  AllReady(nubound);
     assert  AllReady(flatten(nubound));
