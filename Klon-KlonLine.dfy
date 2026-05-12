@@ -381,3 +381,120 @@ lemma {:isolate_assertions} KlonCalidFrom(m : Klon, m' : Klon)
       && klonHeap(m)
       ;
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//
+//=//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//=//
+//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//
+
+//
+// lemma {:isolate_assertions} InternalOwnersWithinPivot(oo : Owner, bb : Bound, co : Owner, cb : Bound, m : Klon)
+//   requires klonReady(m)
+//   requires klonCalid(m)
+//   requires AllReady(oo)
+//   requires AllReady(bb)
+//   requires AllReady(co)
+//   requires AllReady(cb)
+//
+//   requires {} < oo <= m.m.Keys
+//   requires bb <= m.m.Keys
+//   requires co == mapThruKlon(oo, m)
+//   requires cb == mapThruKlon(bb, m)
+//
+//   requires oo != bb
+//   requires flatten(oo) >= flatten(bb)
+//    ensures flatten(co) >= flatten(cb)
+//    {
+//    }
+
+
+
+
+function {:isolate_assertions} InternalOwnersWithinPivot(o : Object, m : Klon) : Owner
+  //recursivelylooks at all of o's owners that are inside m.o, classifying them as either
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires o.Ready()
+  requires o in m.m.Keys
+{
+  {}
+  //  if (inside(o,m.o))
+  //    then (
+  //     if (o == m.o) then ({},{},{o}) else
+  //        o
+  //    )
+  //    else ({},{},{})
+}
+
+
+
+
+
+function {:isolate_assertions} {:timeLimit 10} internalOwners(o : Object, m : Klon) : Owner
+  decreases allAMFOs({o}), 1
+//      reads m.hns()
+   requires klonReady(m)
+   //requires klonCalid(m)
+   requires o.Ready()
+   requires o in m.m.Keys
+   {
+    if (strictlyInside(o,m.o))
+      then ({o} +  internalFlatten(o.owner, m))
+      else {}
+   }
+
+function {:isolate_assertions} {:timeLimit 10} internalFlatten(oo : Owner, m : Klon) : Owner
+  //decreases allAMFOs(oo), 2
+//      reads m.hns()
+   requires klonReady(m)
+  // requires klonCalid(m)
+   requires forall o <- oo :: o.Ready()
+   requires oo <= m.m.Keys
+    {
+     assert forall o <- oo :: o.Ready();
+     assert forall o <- oo :: ( allAMFOs(oo) >= o.AMFO );
+
+     assert forall o <- oo :: ( allAMFOs(oo) decreases to o.AMFO );
+ //    assert forall o <- oo :: ( allAMFOs(oo), 2  decreases to  o.AMFO, 1 );
+
+//  assert  allAMFOs(oo) decreases to allAMFOs(o.owner);
+//  assert  allAMFOs({}) ,lts
+
+     ( set o : Object <- oo, ooo <- internalOwners(o,m) :: ooo )
+    }
+
+//
+
+
+
+function {:isolate_assertions} UNFINISHED_classifyOwnersWithin(o : Object, m : Klon) : (Owner, Owner, Owner)
+  //looks at all of o's owners that are inside m.o, classifying them as either
+   //- internal ---
+   //- external --- outsife
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires o.Ready()
+  requires o in m.m.Keys
+{
+   ( {}, {}, {} )
+  //  if (inside(o,m.o))
+  //    then (
+  //     if (o == m.o) then ({},{},{o}) else
+  //        o
+  //    )
+  //    else ({},{},{})
+}

@@ -176,7 +176,7 @@ lemma ALLFEWERFIELDS(os : set<Object>)
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-
+//
 // threads
 
 predicate isThread(o : Object) reads o`nick { (o.nick != "" ) && (o.nick[0] == 't') }
@@ -192,7 +192,7 @@ predicate allCompatible(os: set<Object>)
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-
+//
 // bounds
 
 function collectBounds(os : Owner) : Owner    //TODO old should delete  //THULE
@@ -285,6 +285,56 @@ function allObjectsAndAMFOs(oo : Owner) : (r : OWNR)   { set o <- oo, ooo <- o.A
 //==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==
 //==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==
 
+
+lemma {:isolate_assertions} abcd(a : Object, b : Object, c : Object, d : Object, m : Klon)
+  requires a.Ready()
+  requires b.Ready()
+  requires c.Ready()
+  requires d.Ready()
+
+  requires klonReady(m)
+  requires klonCalid(m)
+
+  requires m.objectInKlown(a)
+  requires m.objectInKlown(b)
+  requires m.m[a] == c
+  requires m.m[b] == d
+
+   requires strictlyInside(a, m.o)
+
+   ensures c.owner == mapThruKlon(a.owner, m)
+   ensures d.owner == mapThruKlon(b.owner, m)
+//
+//
+//   requires strictlyInside(b,a)
+//    ensures strictlyInside(d,c)
+
+  requires inside(b,a)
+   ensures inside(d,c)
+  {}
+
+
+
+
+
+lemma {:isolate_assertions} ac(a : Object, c : Object, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+
+  requires a.Ready()
+  requires c.Ready()
+  // requires m.objectInKlown(a)
+  // requires m.m[a] == c
+
+  requires strictlyInside(a, m.o)
+
+  requires m.ownersInKlown(a)
+  requires c.owner == mapThruKlon(a.owner, m)
+   ensures strictlyInside(c, m.c)
+  {}
+
+
+
 // recFlatOwn - recursive verison of AMFO..
 
 function {:isolate_assertions} recFlatOwn0(o : Object) : (rv : Owner)
@@ -309,7 +359,7 @@ function {:isolate_assertions} recFlatOwn(o : Object) : (rv : Owner)
 //==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==//==
 //
 // deals with flatten in terms of RFO recuesive version of AMFO
-
+//
 // function {:isolate_assertions} {:timeLimit 15} flatten(os : Owner) : (fs : Owner)
 //      reads {}
 //    ensures os <= fs
@@ -357,32 +407,32 @@ lemma {:isolate_assertions} {:timeLimit 10} SetRFOIsSetAMFO(os : Owner)
 //
 //native recursive flatten
 //
-
-function {:isolate_assertions} {:timeLimit 15} recFlatten(os : Owner) : (fs : Owner)
-  //flatten defined recursively...
-   requires AllReady(os)
-  decreases allAMFOs(os)
- {os + (set o <- os, co <- recFlatten(o.owner) :: co)}
-
-
-function {:isolate_assertions} rfo(o : Object) : (rv : Owner)
-  decreases o.AMFO
-   requires o.Ready()
-    {  {o} + (set xo <- o.owner, co <- rfo(xo) :: co)  }
-
-
-lemma {:isolate_assertions} {:timeLimit 30} FUCKED_RecFlattenIsFlatten(os : Owner)
-  decreases allAMFOs(os)
-   requires AllReady(os)
-   ensures recFlatten(os) == flatten(os)
-  { }
-
-
-lemma {:isolate_assertions} {:timeLimit 30} FUCKED_OneObjectReCFLATTEN(o : Object)
-  decreases o.AMFO
-   requires o.Ready()
-   ensures recFlatten({o}) == recFlatOwn(o)
-  {}
+//
+// function {:isolate_assertions} {:timeLimit 15} recFlatten(os : Owner) : (fs : Owner)
+//   //flatten defined recursively...
+//    requires AllReady(os)
+//   decreases allAMFOs(os)
+//  {os + (set o <- os, co <- recFlatten(o.owner) :: co)}
+//
+//
+// function {:isolate_assertions} rfo(o : Object) : (rv : Owner)
+//   decreases o.AMFO
+//    requires o.Ready()
+//     {  {o} + (set xo <- o.owner, co <- rfo(xo) :: co)  }
+//
+//
+// lemma {:isolate_assertions} {:timeLimit 30} FUCKED_RecFlattenIsFlatten(os : Owner)
+//   decreases allAMFOs(os)
+//    requires AllReady(os)
+//    ensures recFlatten(os) == flatten(os)
+//   { }
+//
+//
+// lemma {:isolate_assertions} {:timeLimit 30} FUCKED_OneObjectReCFLATTEN(o : Object)
+//   decreases o.AMFO
+//    requires o.Ready()
+//    ensures recFlatten({o}) == recFlatOwn(o)
+//   {}
 
 
 function mamfo(o : Object) : Owner  decreases o.AMFO, 1       requires o.Ready() {{o} + mflat(o.owner)}

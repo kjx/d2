@@ -46,7 +46,7 @@ function {:isolate_assertions} collectAllXOwners(o : Object) : (rv : Owner)
     ensures rv <= o.AMFX
 //  ensures rv == o.AMFX
 {
-  o.owner + (set oo <- o.owner, ooo <- collectAllOwners(oo) :: ooo)
+  o.owner + (set oo <- o.owner, ooo <- collectAllXOwners(oo) :: ooo)
 }
 
 lemma CXO(o : Object)
@@ -470,8 +470,33 @@ predicate goodCloneOwnershipWithin(left : Object, right : Object, pivot : Object
     && (|left.owner| == |right.owner|)
     && (forall x <- left.owner  :: m.m[x]         in right.owner)
     && (forall x <- right.owner :: invert(m.m)[x] in left.owner)
-    && (forall x <- left.owner  :: goodCloneOwnership(x, m.m[x], m))
+    && (forall x <- left.owner  :: goodCloneOwnershipWithin(x, m.m[x],pivot,m))
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 lemma {:isolate_assertions}  prog_is_paranoid(left : Object, right : Object, pivot : Object,  m : Klon)
@@ -485,9 +510,9 @@ lemma {:isolate_assertions}  prog_is_paranoid(left : Object, right : Object, piv
    requires right.AMFO <= m.m.Values
    requires right in invert(m.m).Keys
    requires goodCloneOwnership(left, right, m)
-    ensures (left == m.o) ==> (right == m.m[m.o])
-    ensures not(inside(left, m.o)) ==> (m.m[left] == left)
-    //ensures (strictlyInside(left, m.o)) ==> strictlyInside(m.m[left], m.m[m.o]) // HHMMMMM
+    ensures (left == m.o) <==> (right == m.m[m.o])
+    ensures not(inside(left, m.o)) <==> (m.m[left] == left)
+  //  ensures (strictlyInside(left, m.o)) <==> strictlyInside(right, m.m[m.o]) // HHMMMMM
   {}
 
 predicate {:isolate_assertions} noExternalOwners(k : Object, m : Klon)
@@ -932,7 +957,7 @@ FlattenFlownFrown({o});
 //     assert flatten({o}) == {o} + flatten(o.owner);
 //     assert flown({o}) == {o} + flown(o.owner);
 //
-// assert  flatten({o}) == flown({o});
+// assert  flatten({o }) == flown({o});
 
 lemma {:isolate_assertions}  FlownIsFlatten3(oo : Owner)
  decreases allAMFOs(oo)
