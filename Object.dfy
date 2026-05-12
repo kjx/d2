@@ -114,7 +114,7 @@ predicate {:isolate_assertions} Ready()
     reads {}
     decreases AMFO, 20
   {
-    && (self  == owner +  {this})
+    && (self == owner + {this})
     && (AMFB == flatten(bound))
     && (AMFX == flatten(owner))
     && (AMFO == flatten(self ))
