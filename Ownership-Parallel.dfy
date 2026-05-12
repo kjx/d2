@@ -143,9 +143,8 @@ lemma RecOwnersIsCAOWEO9(o : Object, ro : Owner, rv : Owner)
     requires o.Ready()
     requires ro == recOwners(o)
     requires rv == CAOWEO(o)
-     ensures rv == ro //ERR
+     ensures rv == ro
 {
-//  { {o} + (set xo <- o.owner, co <- CAOWEO(xo) :: co) }
  forall oo <- o.owner ensures (recOwners(oo) == CAOWEO(oo)) //by
   {
     if (oo.owner == {}) {assert recOwners(oo) == CAOWEO(oo) == {oo}; }
@@ -166,7 +165,6 @@ lemma RecOwnersIsFlat(o : Object, ro : Owner, rv : Owner)
     requires rv == CAOWEO(o)
      ensures rv == ro //ERR
 {
-//  { {o} + (set xo <- o.owner, co <- CAOWEO(xo) :: co) }
  forall oo <- o.owner ensures (recOwners(oo) == CAOWEO(oo)) //by
   {
     if (oo.owner == {}) {assert recOwners(oo) == CAOWEO(oo) == {oo}; }
@@ -233,7 +231,9 @@ function recOwnersInside(k : Object, pivot : Object) : (rv : Owner)
 
 
 
+datatype running = running(inside : bool, fringe : bool, pivot : bool)
 
+function newrunning() : running { running(true, true, true) }
 
 datatype RV = RV(owners : Owner, inside : Owner, outside : Owner, fringe : Owner, pivot : Owner, fringeStop : bool, pivotStart : bool)
  {
@@ -244,46 +244,57 @@ datatype RV = RV(owners : Owner, inside : Owner, outside : Owner, fringe : Owner
         .(outside:= outside+r.owners)
         .(fringe := fringe+r.fringe)
         .(pivot  := pivot +r.owners)
-        .(fringeStop := fringeStop || r.fringeStop)
-        .(pivotStart := pivotStart ||
-         r.pivotStart)
       ;
       rv }
  }
 
 function newRV() : RV {RV({}, {}, {}, {}, {}, false, false)}
 
-lemma {:isolate_assertions} {:timeLimit 20} ClassifyOwners(k : Object, pivot : Object) returns (rv : RV)
+lemma {:isolate_assertions} {:timeLimit 20} ClassifyOwners(k : Object, pivot : Object, running' : running := newrunning()) returns (rv : RV)
    requires k.Ready()
    requires pivot.Ready()
   decreases k.AMFO
     ensures rv.owners == recOwners(k)
+    ensures running'.inside ==> (rv.inside == recOwnersInside(k, pivot))
 {
   rv := newRV();
-  rv := rv.(owners:= {k});    //  { {k} + (set xo <- k.owner, co <- ClassifyOwners(xo,pivot) :: co) }
+  var running := running'; //NMMM
 
+//the base cases
+  rv := rv.(owners := {k});
+
+  if (running.inside) {
+    if (not(strictlyInside(k, pivot))) { rv := rv.(inside :=  {});  assert rv.inside == recOwnersInside(k, pivot);  running := running.(inside := false); }
+    else { rv := rv.(inside :=  {k}); }
+  }
+
+//the recursive cases
   var todo : Owner  := k.owner;
 
   while (todo > {})
     decreases todo
     invariant rv.owners == {k} + (set xo <- (k.owner - todo), co <- recOwners(xo) :: co)
+    invariant running.inside ==> (rv.inside == {k} + (set oo <- (k.owner - todo), ooo <- recOwnersInside(oo,pivot) :: ooo))
+    invariant (running'.inside && not(running.inside)) ==> (rv.inside == recOwnersInside(k, pivot))
     {
       var each: Object;
       each :| each in todo;
       todo := todo - {each};
 
-//      assert k.AMFO decreases to each.AMFO;
       var r := ClassifyOwners(each, pivot);
       assert r.owners == recOwners(each);
+      assert running.inside ==> (r.inside == recOwnersInside(each, pivot));
+
       rv := rv.merge(r);
     }
-    // assert todo == {};
+
     assert (k.owner - todo) == k.owner;
-    // assert rv.owners == {k} + (set xo <- (k.owner - todo), co <- recOwners(xo) :: co);
-    assert rv.owners == {k} + (set xo <- (k.owner), co <- recOwners(xo) :: co);
-  //   assert rv.owners == recOwners(k);
+    assert                     rv.owners == {k} + (set xo <- (k.owner),  co <- recOwners(xo) :: co);
+   // assert  running'.inside ==> (rv.inside == {k} + (set oo <- (k.owner), ooo <- recOwnersInside(oo,pivot) :: ooo));
+   assert running.inside ==> (rv.inside == {k} + (set oo <- (k.owner), ooo <- recOwnersInside(oo,pivot) :: ooo));
+   assert (running'.inside && not(running.inside)) ==> (rv.inside == recOwnersInside(k, pivot));
+
 }
-// { {o} + (set xo <- o.owner, co <- recOwners(xo) :: co) }
 
 
 
