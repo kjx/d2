@@ -567,7 +567,7 @@ lemma  {:timeLimit 10} RecOwnerSanity4(k : Object, pivot : Object)
     requires k.Ready()
     requires pivot.Ready()
    decreases k.AMFO
-       ensures recOwners(k) == (recOwnersInside(k,pivot) +  recFlatten(recOwnersFringe(k,pivot)) + recOwnersPivot(k,pivot))
+//       ensures recOwners(k) == (recOwnersInside(k,pivot) +  recFlatten(recOwnersFringe(k,pivot)) + recOwnersPivot(k,pivot))
      {
       if (k == pivot) {assert recOwners(k) == recOwners(pivot) == recOwnersPivot(k,pivot);
                        assert recOwnersInside(k,pivot) == {};
@@ -584,10 +584,11 @@ lemma  {:timeLimit 10} RecOwnerSanity4(k : Object, pivot : Object)
 
       assert strictlyInside(k, pivot);
 
+      // assert recOwnersFringe(k,pivot) == {k};
+      // assert recOwnersInside(k,pivot) == {};
+      // assert recOwners(k) == recFlatten({k}) == recFlatten(recOwnersFringe(k,pivot)) + recOwnersPivot(k,pivot);
+//      assert recOwners(k) == (recOwnersInside(k,pivot) +  recFlatten(recOwnersFringe(k,pivot)) + recOwnersPivot(k,pivot));
 
-       var inside : Owner := recOwnersInside(k,pivot);
-       var insid2 : Owner :=  (set x : Object <- recOwners(k) | strictlyInside(x,pivot));
-       assert inside == insid2;
 
       // assert recOwnersFringe(k,pivot) == (set x : Object <- recOwners(k) :: outside(x,pivot) && exists y : Object <- recOwners(k) :: inside(y,pivot) && (x in y.owner));
       // assert recOwnersInside(k,pivot) == (set x : Object <- recOwners(k) :: strictlyInside(x,pivot));
