@@ -257,7 +257,7 @@ lemma {:isolate_assertions} ClassifyOwners(k : Object, pivot : Object, running' 
   decreases k.AMFO
     ensures rv.owners == recOwners(k)
     ensures running'.inside ==> (rv.inside == recOwnersInside(k, pivot))
-//    ensures running'.fringe ==> (rv.fringe == recOwnersFringe(k, pivot))
+    ensures running'.fringe ==> (rv.fringe == recOwnersFringe(k, pivot))
 {
   rv := newRV();
   var running := running';
@@ -267,8 +267,7 @@ lemma {:isolate_assertions} ClassifyOwners(k : Object, pivot : Object, running' 
 //inside base case
   if (running.inside) {
     if (not(strictlyInside(k, pivot))) { rv := rv.(inside :=  {});  assert rv.inside == recOwnersInside(k, pivot);  running := running.(inside := false); }
-    else { rv := rv.(inside :=  {k}); }
-  }
+    else { rv := rv.(inside :=  {k}); }  }
   assert  (running'.inside && not(running.inside)) ==> (rv.inside == recOwnersInside(k, pivot));
 //fringe base case
   var fringeLocal := {};
@@ -288,14 +287,17 @@ lemma {:isolate_assertions} ClassifyOwners(k : Object, pivot : Object, running' 
 
   while (todo > {})
     decreases todo
+//invariant while running (owners is always running)
     invariant rv.owners == {k} + (set xo <- (k.owner - todo), co <- recOwners(xo) :: co)
     invariant running.inside ==> (rv.inside == {k} + (set oo <- (k.owner - todo), ooo <- recOwnersInside(oo,pivot) :: ooo))
-    invariant (running'.inside && not(running.inside)) ==> (rv.inside == recOwnersInside(k, pivot))
+    invariant running.fringe ==> (rv.fringe == fringeLocal + (set oo <- (k.owner - todo), ooo <- recOwnersFringe(oo,pivot) :: ooo))
 
-//    invariant running.fringe ==> (rv.fringe == fringeLocal + (set oo <- (k.owner - todo), ooo <- recOwnersFringe(oo,pivot) :: ooo))
-//    invariant (running'.fringe && not(running.fringe)) ==> (rv.fringe == recOwnersFringe(k, pivot))
+//invariants where we were called running but are now not running - i.e. no recursive call for that aspect.
+    invariant (running'.inside && not(running.inside)) ==> (rv.inside == recOwnersInside(k, pivot))
+    invariant (running'.fringe && not(running.fringe)) ==> (rv.fringe == recOwnersFringe(k, pivot))
     {
-// assert (running'.fringe && not(running.fringe)) ==> (rv.fringe == recOwnersFringe(k, pivot));
+       assert (running'.inside && not(running.inside)) ==> (rv.inside == recOwnersInside(k, pivot));
+       assert (running'.fringe && not(running.fringe)) ==> (rv.fringe == recOwnersFringe(k, pivot));
 
       var each: Object;
       each :| each in todo;
@@ -304,18 +306,16 @@ lemma {:isolate_assertions} ClassifyOwners(k : Object, pivot : Object, running' 
       var r := ClassifyOwners(each, pivot, running);
          assert r.owners == recOwners(each);
          assert running.inside ==> (r.inside == recOwnersInside(each, pivot));
-//         assert running.fringe ==> (r.fringe == recOwnersFringe(each, pivot));
+         assert running.fringe ==> (r.fringe == recOwnersFringe(each, pivot));
 
       var prv := rv;
       rv := prv.merge(r,running);
 
-         assert running.inside ==> (rv.inside == {k} + (set oo <- (k.owner - todo), ooo <- recOwnersInside(oo,pivot) :: ooo));
-         assert (running'.inside && not(running.inside)) ==> (rv.inside == recOwnersInside(k, pivot));
+       assert running.inside ==> (rv.inside == {k}         + (set oo <- (k.owner - todo), ooo <- recOwnersInside(oo,pivot) :: ooo));
+       assert running.fringe ==> (rv.fringe == fringeLocal + (set oo <- (k.owner - todo), ooo <- recOwnersFringe(oo,pivot) :: ooo));
 
-  //fginre nedds versions of first line of the inside assert above
-//         assert (running'.fringe && not(running.fringe)) ==> (rv.fringe == recOwnersFringe(k, pivot));
-
-
+       assert (running'.inside && not(running.inside)) ==> (rv.inside == recOwnersInside(k, pivot));
+       assert (running'.fringe && not(running.fringe)) ==> (rv.fringe == recOwnersFringe(k, pivot));
     }
       // assert (running.inside) ==> (running'.inside);
       // assert (running.fringe) ==> (running'.fringe);
@@ -324,8 +324,16 @@ lemma {:isolate_assertions} ClassifyOwners(k : Object, pivot : Object, running' 
     assert (k.owner - todo) == k.owner;
     assert                    rv.owners == {k} + (set xo <- (k.owner),  co <- recOwners(xo) :: co);
 //summary inside
-    assert running.inside ==> (rv.inside == {k} + (set oo <- (k.owner), ooo <- recOwnersInside(oo,pivot) :: ooo));
+    assert running.inside ==> (rv.inside == {k}         + (set oo <- (k.owner), ooo <- recOwnersInside(oo,pivot) :: ooo));
     assert (running'.inside) ==> (rv.inside == recOwnersInside(k, pivot));
+
+    assert running.inside ==> (rv.inside == {k}         + (set oo <- k.owner, ooo <- recOwnersInside(oo,pivot) :: ooo));
+    assert running.fringe ==> (rv.fringe == fringeLocal + (set oo <- k.owner, ooo <- recOwnersFringe(oo,pivot) :: ooo));
+
+    assert running'.inside ==> (rv.inside == recOwnersInside(k, pivot));
+    assert running'.fringe ==> (rv.fringe == recOwnersFringe(k, pivot));
+
+
 //summary fringe
     // assert running.fringe ==> (rv.fringe == fringeLocal + (set oo <- (k.owner), ooo <- recOwnersFringe(oo,pivot) :: ooo));
     // assert (running'.fringe) ==> (rv.fringe == recOwnersFringe(k, pivot));
