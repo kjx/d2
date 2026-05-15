@@ -388,7 +388,7 @@ lemma WhereOwnersGoBoundsHaveGone(os : set<Object>)
   {}
 
   function ValidReadSet() : set<Object>  //LILLE perhaps
-    reads this`fields, AMFO`fields
+    reads this`fields, this.AMFO`fields
   {
   {this} + fields.Values + AMFO +
       (set o1 <- AMFO, o2 <- o1.fields.Values :: o2) //JESUS MARY AND JOSEPH AND THE WEE DONKEY
