@@ -16,6 +16,140 @@ function recOwners(o : Object) : (rv : Owner)
     ensures forall r <- rv :: r.Ready()
     { {o} + (set xo <- o.owner, co <- recOwners(xo) :: co) }
 
+lemma I_AM_THE_FUCKER(o : Object, rv : Owner)
+  decreases o.AMFO
+   requires o.Ready()
+  requires rv == {o} + (set xo <- o.owner, co <- recOwners(xo) :: co)
+   ensures rv == recOwners(o)
+
+// function recOwners2(o : Object) : (rv : Owner)
+//   decreases o.AMFO
+//    requires o.Ready()
+//     ensures rv <= o.AMFO
+//     ensures forall r <- rv :: r.Ready()
+//     ensures rv == recOwners(o)
+//     { (set xo <- o.owner, co <- recOwners(xo)+{o} :: co) }
+
+
+function prefixedPaths(o : Object, paths : set<seq<Object>>) : (rv : set<seq<Object>>)
+  { set p <- paths :: [o] + p }
+
+predicate pathFromTo(p : seq<Object>,f : Object, t : Object)
+  decreases p
+  requires |p| > 0
+ {
+  || (p == [f] == [t])    //too cute?
+  || (&& (|p| > 1)
+      && (p[0] == f)
+      && (p[|p|-1] == t)
+      && (p[1] in f.owner)
+      && (pathFromTo(p[1..], p[1], t))
+  )
+ }
+
+
+
+predicate pathFrom(p : seq<Object>,f : Object)
+  decreases p
+  requires |p| > 0
+ {
+  || (p == [f])    //too cute?
+  || (&& (|p| > 1)
+      && (p[0] == f)
+      && (p[1] in f.owner)
+      && (pathFrom(p[1..], p[1]))
+  )
+ }
+
+function allObjectsInPaths(paths : set<seq<Object>>) : Owner
+  {set p <- paths, o <- p :: o }
+
+lemma allPathsGetAllOwners(k : Object)
+  requires k.Ready()
+  {
+    var allPaths := recOwnerPaths(k);
+    var allObjects := allObjectsInPaths(allPaths);
+    assert allObjects == recOwners(k);
+  }
+
+lemma recOwnersAndPathsTogether(o : Object) returns (rp : set<seq<Object>>, rv : Owner)
+  decreases o.AMFO
+   requires o.Ready()
+    // ensures forall ps <- rp, r <- ps :: r in o.AMFO
+    // ensures forall ps <- rp, r : Object <- ps :: r.Ready()
+    // ensures forall p <- rp :: (|p| > 0) && (p[0] == o) && (p[|p|-1].owner == {})
+    // ensures forall p <- rp :: (|p| > 0) && pathFrom(p,o)
+    // ensures allObjectsInPaths(rp) == recOwners(o)
+//    ensures rp == recOwnerPaths(o)
+    ensures rv == recOwners(o)
+    {
+     var todo : Owner  := o.owner;
+
+     rp := {};
+     rv := {o};
+
+     while (todo > {})
+       decreases todo
+       invariant rv == {o} + set x : Object <- (o.owner - todo), xx : Object <- recOwners(x) :: xx
+        {
+          var each: Object;
+          each :| each in todo;
+          todo := todo - {each};
+
+          var ep, ev := recOwnersAndPathsTogether(each);
+                                    //  assert ep == recOwnerPaths(each);
+                                      assert ev == recOwners(each);
+          var eep := (set p <- ep :: [each]+p);
+          var eev := {each} + ev;   var eev0 := ev;
+
+          rp := rp + eep;
+          rv := rv + eev;   var rv0 := rv + {each} + eev0;
+                                              //  assert rp == recOwnerPaths(each);
+                                      assert rv0 == rv;
+                                      assert rv == {o} + set x : Object <- (o.owner - todo), xx : Object <- recOwners(x) :: xx;
+        }
+
+                                //  assert rp == recOwnerPaths(o);
+
+    assert  rv == {o} + set x : Object <- (o.owner - todo), xx : Object <- recOwners(x) :: xx;
+    assert todo == {};
+    assert  rv == {o} + set x : Object <- o.owner, xx : Object <- recOwners(x) :: xx;
+    assert  rv == {o} + (set xo <- o.owner, co <- recOwners(xo) :: co);
+I_AM_THE_FUCKER(o,rv);
+    var roo :=  recOwners(o);
+    assert rv >= roo;
+    assert rv <= roo;
+
+    assert rv == recOwners(o);
+    }
+
+
+
+function recOwnerPaths(o : Object) : (rv : set<seq<Object>>)
+  decreases o.AMFO
+   requires o.Ready()
+    ensures forall ps <- rv, r <- ps :: r in o.AMFO
+    ensures forall ps <- rv, r : Object <- ps :: r.Ready()
+    ensures forall p <- rv :: (|p| > 0) && (p[0] == o) && (p[|p|-1].owner == {})
+    ensures forall p <- rv :: (|p| > 0) && pathFrom(p,o)
+    ensures allObjectsInPaths(rv) <= o.AMFO
+    // ensures allObjectsInPaths(rv) >= o.AMFO
+    { (set xo <- o.owner, co <- recOwnerPaths(xo) :: [o]+co) }
+
+
+
+
+function findallPathsFromTo1(f : Object, t : Object) : (rp : set<seq<Object>>)
+    decreases f.AMFO
+     requires f.Ready()
+     requires t.Ready()
+     requires f != t
+     requires inside(f,t)
+     requires t.owner == {}
+      ensures forall p <- rp:: (|p| > 0) && pathFromTo(p,f,t)
+  { set p <- recOwnerPaths(f) | (|p| > 0) && pathFromTo(p,f,t) }
+
+
 lemma RecOwnersIsRecFlat(k : Object, rv : Owner)
     requires k.Ready()
     requires rv == recOwners(k)
@@ -35,12 +169,7 @@ lemma RecOwnersIsRecFlat(k : Object, rv : Owner)
 
     }
 
-lemma RecOwnersToAMFO0(o : Object, rv : Owner)
-  decreases o.AMFO
-   requires o.Ready()
-   requires rv == recOwners(o)
-  //   ensures rv >= collectAllOwnersWithoutExtraOwners(o)
-{}
+
 
 
 // lemma {:timeLimit 10} RecOwnerCAOWEO(o : Object) returns (rv : Owner)
@@ -216,15 +345,27 @@ function recOwnersInside(k : Object, pivot : Object) : (rv : Owner)
       else ({k} + (set oo <- k.owner, ooo <- recOwnersInside(oo, pivot) :: ooo))
   }
 
-// lemma RecOwnersInsideClosedForm(k : Object, pivot : Object, rv : Owner)
-//     requires k.Ready()
-//     requires pivot.Ready()
-//     requires rv == recOwnersInside(k,pivot)
-//    decreases k.AMFO
-//      ensures rv <= k.AMFO
-//      ensures forall r <- rv :: strictlyInside(r, pivot)
-//      ensures rv == set r <- recOwners(k) | strictlyInside(r, pivot)
-//   {}
+
+function rocOwnersInside(k : Object, pivot : Object) : (rv : Owner)
+    requires k.Ready()
+    requires pivot.Ready()
+   decreases k.AMFO
+     ensures rv <= k.AMFO
+     ensures forall r <- rv :: strictlyInside(r, pivot)
+   //  ensures forall r <- k.AMFO :: strictlyInside(r, pivot) ==> (r in rv)
+     ensures rv == recOwnersInside(k, pivot)
+  { set r <- recOwners(k) | strictlyInside(r, pivot) }
+
+lemma RecOwnersInsideClosedForm(k : Object, pivot : Object, rv : Owner)
+    requires k.Ready()
+    requires pivot.Ready()
+    requires rv == recOwnersInside(k,pivot)
+   decreases k.AMFO
+     ensures rv <= k.AMFO
+     ensures forall r <- rv :: strictlyInside(r, pivot)
+//   ensures rv == set r <- recOwners(k) | strictlyInside(r, pivot)
+     ensures rv == rocOwnersInside(k,pivot)
+  {}
 
 
 
@@ -344,9 +485,14 @@ lemma {:isolate_assertions} ClassifyOwners(k : Object, pivot : Object, running' 
     assert running.fringe ==> (rv.fringe == fringeLocal + (set oo <- k.owner, ooo <- recOwnersFringe(oo,pivot) :: ooo));
     assert not(running.pivot);
 
+    assert                     (rv.owners == recOwners(k));
     assert running'.inside ==> (rv.inside == recOwnersInside(k, pivot));
     assert running'.fringe ==> (rv.fringe == recOwnersFringe(k, pivot));
     assert running'.pivot  ==> (rv.pivot  == recOwnersPivot(k, pivot));
+
+    // if (running'.inside && running'.fringe && running'.pivot) {
+    //    assert rv.owners == rv.inside +  recFlatten(rv.fringe) + rv.pivot;
+    // }
 }
 
 
@@ -376,7 +522,7 @@ lemma {:isolate_assertions} ClassifyOwners(k : Object, pivot : Object, running' 
 //   while todo >= {}
 //     decreases todo
 //     invariant todo + {each} + rv.owners == k.owner+{k}
-//     invariant k.AMFO decreases to each.AMFO
+  //     invariant k.AMFO decreases to each.AMFO
 //     invariant todo   decreases to each.AMFO
 //    {
 //      assert k.AMFO decreases to each.AMFO;
@@ -434,10 +580,33 @@ function recOwnersPivot(k : Object, pivot : Object) : (rv : Owner)
       else ({})
   }
 
+lemma RecOwnersIsAMFO(k : Object)
+  decreases k.AMFO
+   requires k.Ready()
+    ensures recOwners(k) == k.AMFO
+    { RecOwnersIsAMFO1(k); RecOwnersIsAMFO2(k); }
+
+lemma RecOwnersIsAMFO1(k : Object)
+  decreases k.AMFO
+   requires k.Ready()
+    ensures recOwners(k) >= k.AMFO
+    {}
+
+lemma RecOwnersIsAMFO2(k : Object)
+  decreases k.AMFO
+   requires k.Ready()
+    ensures recOwners(k) <= k.AMFO
+    {
+      assert k in recOwners(k);
+      assert k in k.AMFO;
+    }
+
+
 function recOwnersFringe(k : Object, pivot : Object) : (rv : Owner)
     requires k.Ready()
    decreases k.AMFO
      ensures forall r <- rv :: outside(r,pivot)
+//     ensures forall i <- recOwners(k), j <- i.owner | strictlyInside(i, pivot) && outside(j,pivot) :: j in rv
      ensures rv <= k.AMFO
      ensures rv <= recOwners(k)
   {
@@ -452,7 +621,8 @@ lemma RecOwnersFringeAreOutside(k : Object, pivot : Object)
     requires k.Ready()
     requires pivot.Ready()
      ensures forall r <- recOwnersFringe(k, pivot) :: outside(r,pivot)
-    //  ensures forall r <- recOwnersFringe(k, pivot) :: exists x <- recOwnersPivot(k, pivot) :: r in x.owner
+     ensures recOwnersFringe(k, pivot) == set i <- recOwners(k), j <- i.owner | strictlyInside(i, pivot) && outside(j,pivot) :: j
+    //  ensures forall r <- recOwnersFringe(k, pivot) :: exists x <- recOwnersInside(k, pivot) :: r in x.owner
    decreases k.AMFO
   {}
 
@@ -567,7 +737,7 @@ lemma  {:timeLimit 10} RecOwnerSanity4(k : Object, pivot : Object)
     requires k.Ready()
     requires pivot.Ready()
    decreases k.AMFO
-//       ensures recOwners(k) == (recOwnersInside(k,pivot) +  recFlatten(recOwnersFringe(k,pivot)) + recOwnersPivot(k,pivot))
+     ensures recOwners(k) == (recOwnersInside(k,pivot) +  recFlatten(recOwnersFringe(k,pivot)) + recOwnersPivot(k,pivot))
      {
       if (k == pivot) {assert recOwners(k) == recOwners(pivot) == recOwnersPivot(k,pivot);
                        assert recOwnersInside(k,pivot) == {};
@@ -584,26 +754,241 @@ lemma  {:timeLimit 10} RecOwnerSanity4(k : Object, pivot : Object)
 
       assert strictlyInside(k, pivot);
 
-      // assert recOwnersFringe(k,pivot) == {k};
-      // assert recOwnersInside(k,pivot) == {};
-      // assert recOwners(k) == recFlatten({k}) == recFlatten(recOwnersFringe(k,pivot)) + recOwnersPivot(k,pivot);
-//      assert recOwners(k) == (recOwnersInside(k,pivot) +  recFlatten(recOwnersFringe(k,pivot)) + recOwnersPivot(k,pivot));
+      assert recOwnersInside(k,pivot) == set o <- recOwners(k) | strictlyInside(o,pivot);
+      assert recOwnersPivot(k,pivot)  == recOwners(pivot);
+
+      assert recOwners(k) == (recOwnersInside(k,pivot) +  recFlatten(recOwnersFringe(k,pivot)) + recOwnersPivot(k,pivot));
+     }
 
 
-      // assert recOwnersFringe(k,pivot) == (set x : Object <- recOwners(k) :: outside(x,pivot) && exists y : Object <- recOwners(k) :: inside(y,pivot) && (x in y.owner));
-      // assert recOwnersInside(k,pivot) == (set x : Object <- recOwners(k) :: strictlyInside(x,pivot));
+lemma  {:timeLimit 10} {:isolate_assertions} RecOutsideOutside(k : Object, pivot : Object)
+     requires k.Ready()
+     requires pivot.Ready()
+    decreases k.AMFO
+     requires outside(k,pivot)
+      ensures forall o <- recOwners(k) ::  outside(o, pivot)
+    {}
 
-//ERER    assert recOwners(k) == (recOwnersInside(k,pivot) +  recFlatten(recOwnersFringe(k,pivot)) + recOwnersPivot(k,pivot));
+lemma  {:timeLimit 10} {:isolate_assertions} RecInsideInside(k : Object, pivot : Object)
+     requires k.Ready()
+     requires pivot.Ready()
+    decreases k.AMFO
+     requires outside(k,pivot)
+      ensures forall o <- recOwners(k) ::  outside(o, pivot)
+    {}
+
+lemma  {:timeLimit 10} {:isolate_assertions} RecOwnerInside(k : Object, pivot : Object)
+     requires k.Ready()
+     requires pivot.Ready()
+    decreases k.AMFO
+    // requires inside(k,pivot)
+     requires pivot in k.owner
+      ensures pivot in k.AMFO
+      ensures pivot in recOwners(k)
+    { RecOwnersIsAMFO(k); }
+
+
+function amfoOwners(k : Object) : Owner {k.AMFO}
+
+lemma  {:timeLimit 10} {:isolate_assertions} RecOwnerClassify4(k : Object, pivot : Object)
+     requires k.Ready()
+     requires pivot.Ready()
+    decreases k.AMFO
+ //    ensures recOwners(k) == (recOwnersInside(k,pivot) +  recFlatten(recOwnersFringe(k,pivot)) + recOwnersPivot(k,pivot))
+     {
+        var owners := recOwners(k);
+        assert forall f <- owners :: inside(k,f);
+
+        forall o <- owners ensures (strictlyInside(o,pivot)) //by
+         {
+            assert strictlyInside(o,pivot) != pivotlyOutside(o, pivot);
+
+            if (pivotlyOutside(o, pivot)) {
 
 
 
-          // then ({k})
-          // else (set oo <- k.owner, ooo <- recOwnersFringe(oo, pivot) :: ooo)
 
 
-//      asasssume recOwners(k) == (recOwnersInside(k,pivot) +  recFlatten(recOwnersFringe(k,pivot)) + recOwnersPivot(k,pivot));
+
+            }
+
+         }
+
+        var pivown := set o <- owners | strictlyInside(o,pivot);
+        assert pivot !in pivown;
+        assert recOwners(pivot) !! pivown;
+        assert forall f <- pivown :: inside(k,f);
+        assert pivown <= owners;
+
+           var sea_outside := owners - pivown;
+        assert pivown !! sea_outside;
+        assert owners == pivown + sea_outside;
+
+        assert forall o : Object <- recOwners(k), io <- o.owner :: io in recOwners(k);
+        assert forall o : Object <- owners, io <- o.owner :: io in owners;
+
+
+           var fringe := set i : Object <- pivown, io <- i.owner | outside(io, pivot) :: io;
+        assert fringe == set i : Object <- owners, io <- i.owner | strictlyInside(i,pivot) && outside(io, pivot) :: io;
+        assert pivot !in fringe;
+        assert forall f <- fringe :: outside(f,pivot);
+        assert forall f <- fringe ::  inside(k,f);
+        assert fringe <= owners;
+        assert pivown + fringe <= owners;
+        assert fringe <= sea_outside;
+
+
+           var flatFringe := set i : Object <- pivown, io <- (recOwners(i) - {i}) | outside(io, pivot) :: io;
+        assert flatFringe == set i : Object <- owners, io <- recOwners(i) | strictlyInside(i,pivot) && outside(io, pivot) :: io;
+        assert pivot !in flatFringe;
+        assert forall f <- flatFringe :: outside(f,pivot);
+        assert forall f <- flatFringe ::  inside(k,f);
+        assert flatFringe <= owners;
+        assert pivown + flatFringe <= owners;
+        assert flatFringe <= sea_outside;
+
+           var flatPivot := recOwners(pivot);
+        assert forall f <- flatPivot :: pivotlyOutside(f,pivot);
+        assert forall f <- flatPivot ::  inside(k,f);
+        assert flatPivot <= owners;
+        assert (pivown + flatFringe + flatPivot) <= owners;
+        assert flatPivot <= sea_outside;
+        assert flatFringe + flatPivot <= sea_outside;
+
+
+        assert pivown !! flatFringe;
+        assert pivown !! flatPivot;
+        assert pivown !! (flatFringe + flatPivot);
+
+        assert flatFringe !! {pivot};
+
+        assert flatPivot  * fringe >= {};  //may or may not be Vroomfondel
+         //may or may not be Vroomfondel
+
+
+        assert forall o <- sea_outside :: not(strictlyInside(o,pivot));
+
+        assert flatPivot  <= sea_outside;
+        assert flatFringe <= sea_outside;
+
+
+
+        assert sea_outside == flatPivot + flatFringe;
+
+
+
+
+//         assert forall o <- owners ::
+//            && (strictlyInside(o,pivot) <==> (o in pivown))
+//            && (pivotlyOutside(o,pivot) <==> ((o in flatPivot) || (o in flatFringe)))
+//            ;
+//
+//         assert owners <= pivown + flatFringe + flatPivot;
+
+
+//         assert owners >= pivown + flatFringe + flatPivot;
+
+ //       assert owners == pivown + flatFringe + flatPivot;
 
      }
+
+
+
+lemma  {:timeLimit 10} {:isolate_assertions} RecOwnerClassifyAMFO(k : Object, pivot : Object)
+     requires k.Ready()
+     requires pivot.Ready()
+     requires inside(k,pivot) //is this wha we want???????
+    decreases k.AMFO
+ //    ensures amfoOwners(k) == (amfoOwnersInside(k,pivot) +  recFlatten(amfoOwnersFringe(k,pivot)) + amfoOwnersPivot(k,pivot))
+     {
+           var owners := amfoOwners(k);
+        assert forall f <- owners :: inside(k,f);
+
+           var pivown := set o <- owners | strictlyInside(o,pivot);
+        assert pivot !in pivown;
+        assert amfoOwners(pivot) !! pivown;
+        assert forall f <- pivown :: inside(k,f);
+        assert pivown <= owners;
+
+           var sea_outside := owners - pivown;
+        assert pivown !! sea_outside;
+        assert owners == pivown + sea_outside;
+
+        assert forall o : Object <- amfoOwners(k), io <- o.owner :: io in amfoOwners(k);
+        assert forall o : Object <- owners, io <- o.owner :: io in owners;
+
+
+           var fringe := set i : Object <- pivown, io <- i.owner | outside(io, pivot) :: io;
+        assert fringe == set i : Object <- owners, io <- i.owner | strictlyInside(i,pivot) && outside(io, pivot) :: io;
+        assert pivot !in fringe;
+        assert forall f <- fringe :: outside(f,pivot);
+        assert forall f <- fringe ::  inside(k,f);
+        assert fringe <= owners;
+        assert pivown + fringe <= owners;
+        assert fringe <= sea_outside;
+
+
+           var flatFringe := set i : Object <- pivown, io <- (amfoOwners(i) - {i}) | outside(io, pivot) :: io;   //dont need to -i cos i inside pivot
+        assert flatFringe == set i : Object <- owners, io <- (amfoOwners(i) - {i}) | strictlyInside(i,pivot) && outside(io, pivot) :: io;
+        assert pivot !in flatFringe;
+        assert forall f <- flatFringe :: outside(f,pivot);
+        assert forall f <- flatFringe ::  inside(k,f);
+        assert flatFringe <= owners;
+        assert pivown + flatFringe <= owners;
+        assert flatFringe <= sea_outside;
+
+           var flatPivot := amfoOwners(pivot);
+        assert forall f <- flatPivot :: pivotlyOutside(f,pivot);
+        assert flatPivot <= owners;
+        assert forall f <- flatPivot :: inside(k,f);
+        assert (pivown + flatFringe + flatPivot) <= owners;
+        assert flatPivot <= sea_outside;
+        assert flatFringe + flatPivot <= sea_outside;
+
+
+        assert pivown !! flatFringe;
+        assert pivown !! flatPivot;
+        assert pivown !! (flatFringe + flatPivot);
+
+        assert flatFringe !! {pivot};
+
+        assert flatPivot  * fringe >= {};  //may or may not be Vroomfondel
+         //may or may not be Vroomfondel
+
+
+        assert forall o <- sea_outside :: not(strictlyInside(o,pivot));
+
+        assert flatPivot  <= sea_outside;
+        assert flatFringe <= sea_outside;
+        assert flatPivot + flatFringe <= sea_outside;
+
+//         assert (flatPivot + flatFringe >= sea_outside)
+//          by {
+//           forall o <- sea_outside ensures (o in (flatPivot + flatFringe)) //by
+//            {
+//             assert inside(k,o);   assert o in owners;
+//             assert not(strictlyInside(o,pivot));
+//
+//             assert exists x : Object <- pivown :: o in x.owner;
+//
+//            }
+//         }
+
+
+//         assert forall o <- owners ::
+//            && (strictlyInside(o,pivot) <==> (o in pivown))
+//            && (pivotlyOutside(o,pivot) <==> ((o in flatPivot) || (o in flatFringe)))
+//            ;
+//
+//         assert owners <= pivown + flatFringe + flatPivot;
+
+
+//         assert owners >= pivown + flatFringe + flatPivot;
+
+ //       assert owners == pivown + flatFringe + flatPivot;
+
+     }
+
 
 lemma  {:timeLimit 10} RecOwnerSanity5(k : Object, pivot : Object)
   //no ougoing owners (except beyond the pivot)
@@ -628,3 +1013,65 @@ lemma  {:timeLimit 10} RecOwnerSanity6(k : Object, pivot : Object)
      ensures recOwnersInside(k,pivot) !! recFlatten({pivot})
      ensures (recFlatten(recOwnersFringe(k,pivot)) * recFlatten({pivot})) >= {}
      {}
+
+
+
+
+
+
+
+
+
+// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // ////
+/// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // ///
+
+
+//
+lemma {:timeLimit 30} ThereIsALightThatNeverGoesOut(part : Object, whole : Object)
+  //at leaet one of part's direct owners is on the way to whole.
+  requires part.Ready()
+  requires whole.Ready()
+  requires inside(part,whole)
+  ensures (part == whole) || (exists x <- part.owner :: inside(x, whole))
+ {
+    InsideRecInside2(part, whole);
+
+    if (part == whole) {
+      assert ((part == whole) || (exists x <- part.owner :: inside(x, whole)));
+      return; }
+
+    assert part != whole;
+    assert (exists x <- part.owner :: recInside(x,whole));
+ }
+
+
+ghost function {:isolate_assertions} YouCan'tGetThereFromHereBut(part : Object, whole : Object) : (next : Object)
+  //return next - a "direct owner" of part that is on the way up to "whole"
+ decreases part.AMFO
+
+  requires part.Ready()
+  requires whole.Ready()
+  requires part != whole
+  requires inside(part,whole)
+
+   ensures next in part.owner
+   ensures strictlyInside(part, next)
+   ensures inside(next,whole)
+   ensures (part.AMFO decreases to next.AMFO)
+  {
+    InsideRecInside2(part, whole);
+    assert recInside(part, whole);
+    ThereIsALightThatNeverGoesOut(part, whole);
+
+    assert exists x <- part.owner :: inside(x, whole);
+
+    var next : Object :| next in part.owner && inside(next, whole);
+
+    assert part !in part.owner;
+    assert next  in part.owner;
+    assert part.AMFO > next.AMFO;
+    assert (part.AMFO decreases to next.AMFO);
+    assert inside(next,whole);
+
+    next
+  }
