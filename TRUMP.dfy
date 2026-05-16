@@ -1,10 +1,60 @@
 include "Ownership-Recursive.dfy"
 
 
-lemma organiseOwnersAcrossPivot(part : Object, pivot : Object) returns (allInside : Owner, allOutside : Owner, fringe : Owner)
-  //subdivides part.AMFO into the bits inside pivot,
-  //the bits outside pivot, the fringe of the outside,
-  //etc etc
+
+lemma fromTheManyOne(less : seq<nat>, more : seq<nat>)
+   requires |less| == |more|
+   requires forall x | 0 <= x < |less| :: less[x] <= more[x]
+    ensures sum(less) <= sum(more)
+    {}
+
+function sum(s : seq<int>) : int
+  { if (|s| == 0) then 0 else s[0] + sum(s[1..]) }
+
+
+lemma smooveKlonerator(divot : Object, pivot : Object, rivet : Object, blivet : Object, m : Klon)
+ //given that pivot is cloned to blivet
+ //lets see if partitioning owners across the pivot works
+   requires divot.Ready()
+   requires pivot.Ready()
+   requires rivet.Ready()
+   requires blivet.Ready()
+
+   requires klonReady(m)
+   requires klonCalid(m)
+
+   requires pivot  == m.o
+   requires blivet == m.c
+
+
+
+   requires strictlyInside(divot, pivot)
+   requires m.objectInKlown(divot)
+   requires m.m[pivot] == blivet   //is this too much already?
+   requires m.m[divot] == rivet    //is this too much already already?
+
+    ensures klonLine(divot,rivet,m)
+    ensures strictlyInside(rivet, blivet)
+
+{
+      assert klonCalid(m);
+      assert klonAllLines(m);
+      assert klonLine(divot,rivet,m);
+      assert strictlyInside(divot, pivot);
+      assert divot != pivot;
+      assert klonIdentity(divot,rivet,m);
+
+      assert mapThruKlon(divot.owner, m) == rivet.owner;
+}
+
+
+
+
+
+lemma splitOwnersAroundPivot(part : Object, pivot : Object) returns (allInside : Owner, allOutside : Owner, fringe : Owner)
+  //splits part.AMFO into the bits inside pivot,
+  //the bits outside pivot,
+  //and the fringe (bits outside that are direct owners of an owner inside...)
   requires part.Ready()
   requires pivot.Ready()
   requires strictlyInside(part, pivot)
