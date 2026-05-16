@@ -14,13 +14,73 @@ function recOwners(o : Object) : (rv : Owner)
    requires o.Ready()
     ensures rv <= o.AMFO
     ensures forall r <- rv :: r.Ready()
+    ensures rv ==  {o} + (set xo <- o.owner, co <- recOwners(xo) :: co)
+    ensures rv >=  {o} + (set xo <- o.owner, co <- recOwners(xo) :: co)
     { {o} + (set xo <- o.owner, co <- recOwners(xo) :: co) }
+
+function recTRUMP(o : Object) : (rv : Owner)
+  decreases o.AMFO
+   requires o.Ready()
+    ensures rv <= o.AMFO
+    ensures forall r <- rv :: r.Ready()
+    ensures rv ==  {o} + (set xo <- o.owner, co <- recTRUMP(xo) :: co)
+    ensures rv >=  {o} + (set xo <- o.owner, co <- recTRUMP(xo) :: co)
+    { {o} + (set xo <- o.owner, co <- recTRUMP(xo) :: co) }
 
 lemma I_AM_THE_FUCKER(o : Object, rv : Owner)
   decreases o.AMFO
    requires o.Ready()
+   requires forall r <- rv :: r.Ready()
   requires rv == {o} + (set xo <- o.owner, co <- recOwners(xo) :: co)
+   ensures (o.owner == {}) ==> (rv == recOwners(o))
    ensures rv == recOwners(o)
+{
+  if (o.owner == {}) {
+      assert recOwners(o) == {o};
+      assert recOwners(o) == {o} + (set xo <- o.owner, co <- recOwners(xo) :: co);
+      return;
+   }
+   assert o.Ready();
+   assert forall oo <- o.owner :: oo.Ready();
+   assert AllReady( allAMFOs(o.owner) );
+   assert AllReady( o.AMFO );
+   assert o.owner > {};
+   var todo := o.owner;
+   assert AllReady(todo);
+   var fuckrv := {o};
+   assert fuckrv == {o} + set x : Object <- (o.owner - todo), yy : Object <- recOwners(x) :: yy;
+   while (todo > {})
+       decreases todo
+ //      invariant fuckrv == {o} + set x : Object <- (o.owner - todo), yy : Object <- recOwners(x) :: yy
+ //      invariant o.Ready()
+//      invariant AllReady( allAMFOs(o.owner) )
+ //      invariant AllReady( todo )
+    {
+      var next : Object;
+      next :| next in todo;
+OF_COURSE_I_FJUCKING_DECREASE(todo, next);
+      assert next in todo;
+      assert todo > (todo - {next});
+      assert todo decreases to todo - {next};
+      todo := todo - {next};
+
+      //var nextrv := {next} + (set xo : Object <- next.owner, co <- recOwners(xo) :: co);
+      var nextrv := recOwners(next);
+      assert nextrv == {next} + (set xo : Object <- next.owner, co <- recOwners(xo) :: co);
+      I_AM_THE_FUCKER(next,nextrv);
+      assert nextrv == recOwners(next);
+      fuckrv := fuckrv + nextrv;
+      assert  fuckrv == {o} + set x : Object <- (o.owner - todo), yy : Object <- recOwners(x) :: yy;
+    }
+   assert fuckrv == {o} + set x : Object <- (o.owner - todo), yy : Object <- recOwners(x) :: yy;
+   assert todo == {};
+   assert fuckrv == {o} + set x : Object <- (o.owner), yy : Object <- recOwners(x) :: yy;
+}
+
+  //  forall xx : Object <- o.owner ensures (true) {
+  //                    rv == {o} + (set xo <-           o.owner, co <- recOwners(xo) :: co)
+  //    I_AM_THE_FUCKER(xx,  {xx} + (set xo : Object <- xx.owner, co <- recOwners(xo) :: co));
+  //    assert recOwners(xx) == {xx} + (set xo <- xx.owner, co <- recOwners(xo) :: co);=
 
 // function recOwners2(o : Object) : (rv : Owner)
 //   decreases o.AMFO
@@ -80,7 +140,7 @@ lemma recOwnersAndPathsTogether(o : Object) returns (rp : set<seq<Object>>, rv :
     // ensures forall p <- rp :: (|p| > 0) && (p[0] == o) && (p[|p|-1].owner == {})
     // ensures forall p <- rp :: (|p| > 0) && pathFrom(p,o)
     // ensures allObjectsInPaths(rp) == recOwners(o)
-//    ensures rp == recOwnerPaths(o)
+    ensures rp == recOwnerPaths(o)
     ensures rv == recOwners(o)
     {
      var todo : Owner  := o.owner;
@@ -90,6 +150,7 @@ lemma recOwnersAndPathsTogether(o : Object) returns (rp : set<seq<Object>>, rv :
 
      while (todo > {})
        decreases todo
+       invariant rp == set x : Object <- (o.owner - todo), xx <- recOwnerPaths(x) :: [x]+xx
        invariant rv == {o} + set x : Object <- (o.owner - todo), xx : Object <- recOwners(x) :: xx
         {
           var each: Object;
@@ -97,19 +158,28 @@ lemma recOwnersAndPathsTogether(o : Object) returns (rp : set<seq<Object>>, rv :
           todo := todo - {each};
 
           var ep, ev := recOwnersAndPathsTogether(each);
-                                    //  assert ep == recOwnerPaths(each);
+                                      assert ep == recOwnerPaths(each);
                                       assert ev == recOwners(each);
           var eep := (set p <- ep :: [each]+p);
           var eev := {each} + ev;   var eev0 := ev;
 
           rp := rp + eep;
+                                      assert rp == set x : Object <- (o.owner - todo), xx <- recOwnerPaths(x) :: [x]+xx;
+
           rv := rv + eev;   var rv0 := rv + {each} + eev0;
-                                              //  assert rp == recOwnerPaths(each);
                                       assert rv0 == rv;
                                       assert rv == {o} + set x : Object <- (o.owner - todo), xx : Object <- recOwners(x) :: xx;
         }
+    assert rp == set x : Object <- (o.owner - todo), xx <- recOwnerPaths(x) :: [x]+xx;
+    assert todo == {};
+    assert rp == set x : Object <- (o.owner), xx <- recOwnerPaths(x) :: [x]+xx;
 
-                                //  assert rp == recOwnerPaths(o);
+   // assert rp == set x   : Object <- o.owner, xx <- recOwnerPaths(x)  :: [x]+xx;
+    //assert rp == (set xo          <- o.owner, co <- recOwnerPaths(xo) :: [o]+co);
+    assert rp == recOwnerPaths(o);
+
+
+// assume rp == recOwnerPaths(o);
 
     assert  rv == {o} + set x : Object <- (o.owner - todo), xx : Object <- recOwners(x) :: xx;
     assert todo == {};
@@ -123,6 +193,11 @@ I_AM_THE_FUCKER(o,rv);
     assert rv == recOwners(o);
     }
 
+lemma OF_COURSE_I_FJUCKING_DECREASE( todo : Owner, next : Object )
+  requires next in todo
+   ensures todo > (todo-{next})
+   ensures todo decreases to (todo-{next})
+   {}
 
 
 function recOwnerPaths(o : Object) : (rv : set<seq<Object>>)
@@ -338,6 +413,8 @@ function recOwnersInside(k : Object, pivot : Object) : (rv : Owner)
    decreases k.AMFO
      ensures rv <= k.AMFO
      ensures forall r <- rv :: strictlyInside(r, pivot)
+    // ensures forall r <- recOwners(k) :: strictlyInside(r, pivot) ==> (r in rv)
+//     ensures rv == set r <- recOwners(k) | strictlyInside(r, pivot)
    //  ensures forall r <- k.AMFO :: strictlyInside(r, pivot) ==> (r in rv)
   {
     if (not(strictlyInside(k, pivot)))
@@ -1013,65 +1090,3 @@ lemma  {:timeLimit 10} RecOwnerSanity6(k : Object, pivot : Object)
      ensures recOwnersInside(k,pivot) !! recFlatten({pivot})
      ensures (recFlatten(recOwnersFringe(k,pivot)) * recFlatten({pivot})) >= {}
      {}
-
-
-
-
-
-
-
-
-
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // ////
-/// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // ///
-
-
-//
-lemma {:timeLimit 30} ThereIsALightThatNeverGoesOut(part : Object, whole : Object)
-  //at leaet one of part's direct owners is on the way to whole.
-  requires part.Ready()
-  requires whole.Ready()
-  requires inside(part,whole)
-  ensures (part == whole) || (exists x <- part.owner :: inside(x, whole))
- {
-    InsideRecInside2(part, whole);
-
-    if (part == whole) {
-      assert ((part == whole) || (exists x <- part.owner :: inside(x, whole)));
-      return; }
-
-    assert part != whole;
-    assert (exists x <- part.owner :: recInside(x,whole));
- }
-
-
-ghost function {:isolate_assertions} YouCan'tGetThereFromHereBut(part : Object, whole : Object) : (next : Object)
-  //return next - a "direct owner" of part that is on the way up to "whole"
- decreases part.AMFO
-
-  requires part.Ready()
-  requires whole.Ready()
-  requires part != whole
-  requires inside(part,whole)
-
-   ensures next in part.owner
-   ensures strictlyInside(part, next)
-   ensures inside(next,whole)
-   ensures (part.AMFO decreases to next.AMFO)
-  {
-    InsideRecInside2(part, whole);
-    assert recInside(part, whole);
-    ThereIsALightThatNeverGoesOut(part, whole);
-
-    assert exists x <- part.owner :: inside(x, whole);
-
-    var next : Object :| next in part.owner && inside(next, whole);
-
-    assert part !in part.owner;
-    assert next  in part.owner;
-    assert part.AMFO > next.AMFO;
-    assert (part.AMFO decreases to next.AMFO);
-    assert inside(next,whole);
-
-    next
-  }

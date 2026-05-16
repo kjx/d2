@@ -1,77 +1,86 @@
-include "Ownership-Parallel.dfy"
+include "Ownership-Recursive.dfy"
 
 
-
-lemma allTRUMP(part : Object, whole : Object)
-  //subdivides part.AMFO into the bits inside whole,
-  //the bits outside whole, the fringe of the outside,
+lemma organiseOwnersAcrossPivot(part : Object, pivot : Object) returns (allInside : Owner, allOutside : Owner, fringe : Owner)
+  //subdivides part.AMFO into the bits inside pivot,
+  //the bits outside pivot, the fringe of the outside,
   //etc etc
   requires part.Ready()
-  requires whole.Ready()
-  requires strictlyInside(part, whole)
+  requires pivot.Ready()
+  requires strictlyInside(part, pivot)
+
+   ensures AllReady(allInside)
+   ensures AllReady(allOutside)
+   ensures AllReady(fringe)
+
+   ensures allInside  == set x <- part.AMFO | strictlyInside(x, pivot)
+   ensures allOutside == set x <- part.AMFO | not(strictlyInside(x, pivot))
+   ensures allInside !! allOutside
+   ensures part.AMFO == (allInside + allOutside)
+   ensures fringe == set x <- allInside, xo <- x.owner | (xo in allOutside)  :: xo
+   ensures forall x <- fringe :: x in allOutside
+   ensures flatten(fringe) == allOutside
   {
    var all := part.AMFO;
 
-   var allInside  := set x <- part.AMFO | strictlyInside(x, whole);
+   allInside  := set x <- part.AMFO | strictlyInside(x, pivot);
    assert part in allInside;
 
-   // var allOutside := set x <- part.AMFO :: not(strictlyInside(x, whole));
-   var allOutside := part.AMFO - allInside;
-   assert forall x <- allOutside :: not(strictlyInside(x, whole));
-   assert whole in allOutside;
+   allOutside := part.AMFO - allInside;
+   assert forall x <- allOutside :: not(strictlyInside(x, pivot));
+   assert pivot in allOutside;
 
-
-   assert forall x <- part.AMFO :: strictlyInside(x, whole) != not(strictlyInside(x, whole));
+   assert forall x <- part.AMFO :: strictlyInside(x, pivot) != not(strictlyInside(x, pivot));
 
    assert allInside !! allOutside;
    assert all == (allInside + allOutside);
 
-   var toAndFro := set x <- part.AMFO, xo <- x.owner | (x in allInside) && (xo in allOutside)  :: xo;
-   assert toAndFro <= allOutside;
-   assert toAndFro == set x <- allInside, xo <- x.owner | (xo in allOutside)  :: xo;
+   fringe := set x <- part.AMFO, xo <- x.owner | (x in allInside) && (xo in allOutside)  :: xo;
+   assert fringe <= allOutside;
+   assert fringe == set x <- allInside, xo <- x.owner | (xo in allOutside)  :: xo;
 
-   assert part !in toAndFro;
-//   assert exists x <- allInside, xo <- x.owner ::  xo == whole;
+   assert part !in fringe;
+//   assert exists x <- allInside, xo <- x.owner ::  xo == pivot;
 
-  var prev := YouGetThereEventually(part, whole);
-  assert whole in prev.owner;
-  assert strictlyInside(prev,whole);
+  var prev := YouGetThereEventually(part, pivot);
+  assert pivot in prev.owner;
+  assert strictlyInside(prev,pivot);
   assert prev in part.AMFO;
   assert inside(part,prev);
   assert prev in allInside;
-  assert whole in allOutside;
-  assert whole in toAndFro;
+  assert pivot in allOutside;
+  assert pivot in fringe;
 
-  assert flatten(toAndFro) <= allOutside;
+  assert flatten(fringe) <= allOutside;
 
 
   assert forall t <- allOutside :: inside(part, t);
 
-  forall t <- allOutside ensures (t in flatten(toAndFro)) //(t in flatten(toAndFro))  //by
+  forall t <- allOutside ensures (t in flatten(fringe)) //(t in flatten(fringe))  //by
   {
-      var prev, next := AcrossTheBorder(part, whole, t);
+      var prev, next := AcrossTheBorder(part, pivot, t);
       assert strictlyInside(prev,t);
-      assert not(strictlyInside(next,whole));
+      assert not(strictlyInside(next,pivot));
       assert prev in part.AMFO;
       assert next in prev.owner;
       assert prev in allInside;
       assert next in allOutside;
-      assert next in toAndFro;
+      assert next in fringe;
       assert t in part.AMFO;
       assert t in next.AMFO;
       assert t in flatten({next});
   }
 
-  assert flatten(toAndFro) >= allOutside;
+  assert flatten(fringe) >= allOutside;
+  assert flatten(fringe) == allOutside;
 
-  var fringe := toAndFro - {whole};
-  assert whole !in fringe;
+  var fringeNoPivot:= fringe - {pivot};
+  assert pivot !in fringeNoPivot;
 
-  var flatFringe := flatten(fringe);
-  assert whole !in flatFringe;
+  var flatFringeNoPivot := flatten(fringeNoPivot);
+  assert pivot !in flatFringeNoPivot;
 
-
-
+  assert flatten(fringe - {pivot}) + flatten({pivot}) == flatten(fringe);
 }
 
 
@@ -180,6 +189,70 @@ lemma YouGetThereEventually(part : Object, whole : Object) returns (prev : Objec
     }
     prev := YouGetThereEventually(prev, whole);
    }
+
+
+// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // ////
+/// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // ///
+
+
+//
+lemma {:timeLimit 30} ThereIsALightThatNeverGoesOut(part : Object, whole : Object)
+  //at least one of part's direct owners is on the way to whole.
+  requires part.Ready()
+  requires whole.Ready()
+  requires inside(part,whole)
+  ensures (part == whole) || (exists x <- part.owner :: inside(x, whole))
+ {
+    InsideRecInside2(part, whole);
+
+    if (part == whole) {
+      assert ((part == whole) || (exists x <- part.owner :: inside(x, whole)));
+      return; }
+
+    assert part != whole;
+    assert (exists x <- part.owner :: recInside(x,whole));
+ }
+
+
+ghost function {:isolate_assertions} YouCan'tGetThereFromHereBut(part : Object, whole : Object) : (next : Object)
+  //return next - a "direct owner" of part that is on the way up to "whole"
+ decreases part.AMFO
+
+  requires part.Ready()
+  requires whole.Ready()
+  requires part != whole
+  requires inside(part,whole)
+
+   ensures next in part.owner
+   ensures strictlyInside(part, next)
+   ensures inside(next,whole)
+   ensures (part.AMFO decreases to next.AMFO)
+  {
+    InsideRecInside2(part, whole);
+    assert recInside(part, whole);
+    ThereIsALightThatNeverGoesOut(part, whole);
+
+    assert exists x <- part.owner :: inside(x, whole);
+
+    var next : Object :| next in part.owner && inside(next, whole);
+
+    assert part !in part.owner;
+    assert next  in part.owner;
+    assert part.AMFO > next.AMFO;
+    assert (part.AMFO decreases to next.AMFO);
+    assert inside(next,whole);
+
+    next
+  }
+
+
+
+
+
+
+
+
+
 
  //  ensures pivotlyOutside(part, whole) == not(strictlyInside(part, whole))
 
