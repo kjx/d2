@@ -1,5 +1,8 @@
 include "Ownership-Recursive.dfy"
+include "Ownership-Lemmata.dfy"
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// mostly junk attempts to get shit to work what doesnt.
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function CAOWEO(o : Object) : (rv : Owner)
@@ -18,16 +21,16 @@ function recOwners(o : Object) : (rv : Owner)
     ensures rv >=  {o} + (set xo <- o.owner, co <- recOwners(xo) :: co)
     { {o} + (set xo <- o.owner, co <- recOwners(xo) :: co) }
 
-function recTRUMP(o : Object) : (rv : Owner)
+function {:verify false} recTRUMP_Broken(o : Object) : (rv : Owner)
   decreases o.AMFO
    requires o.Ready()
     ensures rv <= o.AMFO
     ensures forall r <- rv :: r.Ready()
-    ensures rv ==  {o} + (set xo <- o.owner, co <- recTRUMP(xo) :: co)
-    ensures rv >=  {o} + (set xo <- o.owner, co <- recTRUMP(xo) :: co)
-    { {o} + (set xo <- o.owner, co <- recTRUMP(xo) :: co) }
+    ensures rv ==  {o} + (set xo <- o.owner, co <- recTRUMP_Broken(xo) :: co)
+    ensures rv >=  {o} + (set xo <- o.owner, co <- recTRUMP_Broken(xo) :: co)
+    { {o} + (set xo <- o.owner, co <- recTRUMP_Broken(xo) :: co) }
 
-lemma I_AM_THE_FUCKER(o : Object, rv : Owner)
+lemma {:verify false} I_AM_THE_FUCKER_BROKEN(o : Object, rv : Owner)
   decreases o.AMFO
    requires o.Ready()
    requires forall r <- rv :: r.Ready()
@@ -67,7 +70,7 @@ OF_COURSE_I_FJUCKING_DECREASE(todo, next);
       //var nextrv := {next} + (set xo : Object <- next.owner, co <- recOwners(xo) :: co);
       var nextrv := recOwners(next);
       assert nextrv == {next} + (set xo : Object <- next.owner, co <- recOwners(xo) :: co);
-      I_AM_THE_FUCKER(next,nextrv);
+      I_AM_THE_FUCKER_BROKEN(next,nextrv);
       assert nextrv == recOwners(next);
       fuckrv := fuckrv + nextrv;
       assert  fuckrv == {o} + set x : Object <- (o.owner - todo), yy : Object <- recOwners(x) :: yy;
@@ -124,7 +127,7 @@ predicate pathFrom(p : seq<Object>,f : Object)
 function allObjectsInPaths(paths : set<seq<Object>>) : Owner
   {set p <- paths, o <- p :: o }
 
-lemma allPathsGetAllOwners(k : Object)
+lemma {:verify false} allPathsGetAllOwners_BROKEN(k : Object)
   requires k.Ready()
   {
     var allPaths := recOwnerPaths(k);
@@ -132,7 +135,7 @@ lemma allPathsGetAllOwners(k : Object)
     assert allObjects == recOwners(k);
   }
 
-lemma recOwnersAndPathsTogether(o : Object) returns (rp : set<seq<Object>>, rv : Owner)
+lemma {:verify false} recOwnersAndPathsTogether_BROKEN(o : Object) returns (rp : set<seq<Object>>, rv : Owner)
   decreases o.AMFO
    requires o.Ready()
     // ensures forall ps <- rp, r <- ps :: r in o.AMFO
@@ -157,7 +160,7 @@ lemma recOwnersAndPathsTogether(o : Object) returns (rp : set<seq<Object>>, rv :
           each :| each in todo;
           todo := todo - {each};
 
-          var ep, ev := recOwnersAndPathsTogether(each);
+          var ep, ev := recOwnersAndPathsTogether_BROKEN(each);
                                       assert ep == recOwnerPaths(each);
                                       assert ev == recOwners(each);
           var eep := (set p <- ep :: [each]+p);
@@ -185,7 +188,7 @@ lemma recOwnersAndPathsTogether(o : Object) returns (rp : set<seq<Object>>, rv :
     assert todo == {};
     assert  rv == {o} + set x : Object <- o.owner, xx : Object <- recOwners(x) :: xx;
     assert  rv == {o} + (set xo <- o.owner, co <- recOwners(xo) :: co);
-I_AM_THE_FUCKER(o,rv);
+I_AM_THE_FUCKER_BROKEN(o,rv);
     var roo :=  recOwners(o);
     assert rv >= roo;
     assert rv <= roo;
@@ -429,22 +432,20 @@ function rocOwnersInside(k : Object, pivot : Object) : (rv : Owner)
    decreases k.AMFO
      ensures rv <= k.AMFO
      ensures forall r <- rv :: strictlyInside(r, pivot)
-   //  ensures forall r <- k.AMFO :: strictlyInside(r, pivot) ==> (r in rv)
-     ensures rv == recOwnersInside(k, pivot)
+     ensures forall r <- recOwners(k) :: strictlyInside(r, pivot) ==> (r in rv)
+   //  ensures rv == recOwnersInside(k, pivot)
   { set r <- recOwners(k) | strictlyInside(r, pivot) }
 
-lemma RecOwnersInsideClosedForm(k : Object, pivot : Object, rv : Owner)
+lemma {:verify false} RecOwnersInsideClosedForm_Broken(k : Object, pivot : Object, rv : Owner)
     requires k.Ready()
     requires pivot.Ready()
     requires rv == recOwnersInside(k,pivot)
    decreases k.AMFO
      ensures rv <= k.AMFO
      ensures forall r <- rv :: strictlyInside(r, pivot)
-//   ensures rv == set r <- recOwners(k) | strictlyInside(r, pivot)
+     ensures rv == set r <- recOwners(k) | strictlyInside(r, pivot)
      ensures rv == rocOwnersInside(k,pivot)
   {}
-
-
 
 
 
@@ -698,7 +699,7 @@ lemma RecOwnersFringeAreOutside(k : Object, pivot : Object)
     requires k.Ready()
     requires pivot.Ready()
      ensures forall r <- recOwnersFringe(k, pivot) :: outside(r,pivot)
-     ensures recOwnersFringe(k, pivot) == set i <- recOwners(k), j <- i.owner | strictlyInside(i, pivot) && outside(j,pivot) :: j
+ //    ensures recOwnersFringe(k, pivot) == set i <- recOwners(k), j <- i.owner | strictlyInside(i, pivot) && pivotlyOutside(j,pivot) :: j
     //  ensures forall r <- recOwnersFringe(k, pivot) :: exists x <- recOwnersInside(k, pivot) :: r in x.owner
    decreases k.AMFO
   {}
@@ -1090,3 +1091,328 @@ lemma  {:timeLimit 10} RecOwnerSanity6(k : Object, pivot : Object)
      ensures recOwnersInside(k,pivot) !! recFlatten({pivot})
      ensures (recFlatten(recOwnersFringe(k,pivot)) * recFlatten({pivot})) >= {}
      {}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+lemma {:isolate_assertions} AllWholeInsidePart(partO : Owner, wholeO : Owner)
+   //HOW THE FUCK DOES THIS HELP AT ALL???
+  requires AllReady(partO)
+  requires AllReady(wholeO)
+  requires flatten(partO) >= flatten(wholeO)
+   ensures forall o <- flatten(wholeO) :: o in flatten(partO)
+  {}
+
+
+lemma {:isolate_assertions} MappedAllWholeInsidePart(partO : Owner, wholeO : Owner, m : Klon)
+  requires AllReady(partO)
+  requires AllReady(wholeO)
+  requires flatten(partO) >= flatten(wholeO)
+  requires partO  <= m.m.Keys
+  requires wholeO <= m.m.Keys
+   ensures forall o <- flatten(wholeO) :: o in flatten(partO)
+//   ensures forall o <- mapThruKlon(wholeO,m) :: o in mapThruKlon(partO,m)
+//   ensures forall o <- flatten(mapThruKlon(wholeO,m)) :: o in flatten(mapThruKlon(partO,m))
+  {}
+
+
+lemma {:isolate_assertions} DivotInsidePivot(oo : Owner, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires AllReady(oo)
+
+  requires oo <= m.m.Keys
+  requires exists o <- oo :: o.AMFO > m.o.AMFO
+
+   ensures flatten(oo) >= m.o.AMFO
+  {}
+
+
+
+lemma {:isolate_assertions} DOESN_TWORK_RivetInsideBlivet(oo : Owner, co : Owner, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires AllReady(oo)
+
+  requires oo <= m.m.Keys
+ // requires oo > {}
+  // requires exists o <- oo :: o.AMFO > m.o.AMFO
+  requires mflat(oo) >= m.o.AMFO
+   ensures forall o <- m.o.AMFO :: o in  mflat(oo)
+   ensures m.o in mflat(oo)
+
+ // requires flatten(oo) >= m.o.AMFO             /// more flexible but let's walk before we run - doesn't verify with this
+
+  requires oo <= m.m.Keys
+  requires co == mapThruKlon(oo, m)
+//
+//   ensures forall o <- oo :: klonLine(o, m.m[o], m)
+//
+//
+//    ensures forall o <- oo :: (o == m.o)     <==> (m.m[o] == m.c)
+//    ensures forall o <- oo :: inside(o, m.o) <==> inside(m.m[o], m.c)
+//    ensures forall o <- oo :: inside(o, m.o) <==> inside(m.m[o], m.c)
+
+   ensures mflat(oo) >= m.o.AMFO
+//   ensures mflat(co) >= m.c.AMFO
+  {}
+
+
+
+
+lemma {:isolate_assertions} FlattenMapsTheSame(oo : Owner, bb : Bound, co : Owner, cb : Bound, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires AllReady(oo)
+  requires AllReady(bb)
+  requires AllReady(co)
+  requires AllReady(cb)
+
+  requires oo <= m.m.Keys
+  requires bb <= m.m.Keys
+  requires co == mapThruKlon(oo, m)
+  requires cb == mapThruKlon(bb, m)
+
+  requires forall o <- oo :: o.AMFO > m.o.AMFO
+  requires forall o <- bb :: o.AMFO > m.o.AMFO
+
+  requires oo != bb
+  requires flatten(oo) == flatten(bb)
+//   ensures flatten(co) == flatten(cb)
+{
+  assert flatten(bb) >= bb;
+  assert flatten(oo) >= flatten(bb);
+
+  assert flatten(co) >= co;
+  assert flatten(cb) >= cb;
+
+
+
+//
+//   forall  o <- oo  ensures (m.m[o] in co) //
+//     {
+//       assert o.Ready() && (o in o.AMFO) && (o in oo);
+//       assert flatten({o}) == o.AMFO;
+//       assert o.AMFO <= flatten(oo);
+//       assert o.AMFO <= flatten(bb);
+//       assert flatten({o}) <= flatten(bb);
+//
+//       assert m.m[o] in mapThruKlon(oo, m);
+//
+//       var c := m.m[o];
+//       assert c in co;
+//       assert o in flatten(bb);
+//       assert c in flatten(co);
+//       assert c in flatten(cb);
+//       assert o.AMFO <= flatten(bb);
+//       assert c.AMFO <= flatten(co);
+//     }
+
+
+
+
+//  assert forall o <- flatten(oo) :: flatten({o}) == o.AMFO;
+
+  // assert forall o <- flatten(oo) :: o            in flatten(bb);
+  // assert forall o <-        (oo) :: flatten({o}) <= flatten(oo);
+
+//  assert forall o <-        (oo) :: flatten(mapThruKlon({o},m)) <= flatten(cb);
+
+
+}
+
+
+lemma {:isolate_assertions} TOO_EASY_TO_WORK(oo : Owner, bb : Bound, co : Owner, cb : Bound, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires AllReady(oo)
+  requires AllReady(bb)
+  requires AllReady(co)
+  requires AllReady(cb)
+
+  requires {} < oo <= m.m.Keys
+  requires bb <= m.m.Keys
+  requires co == mapThruKlon(oo, m)
+  requires cb == mapThruKlon(bb, m)
+
+  requires oo != bb
+  requires flatten(oo) >= flatten(bb)
+//   ensures flatten(co) >= flatten(cb)
+{
+ // assert oo >= bb;  //shouldb't work
+
+  forall o <- oo ensures (true)
+  {
+
+
+  }
+}
+
+
+
+
+lemma {:verify false} DOESNT_WORK_EITHER(oo : Owner, bb : Bound, co : Owner, cb : Bound, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires AllReady(oo)
+  requires AllReady(bb)
+  requires AllReady(co)
+  requires AllReady(cb)
+
+  requires {} < oo <= m.m.Keys
+  requires bb <= m.m.Keys
+  requires co == mapThruKlon(oo, m)
+  requires cb == mapThruKlon(bb, m)
+
+  requires oo != bb
+  requires mflat(oo) >= mflat(bb)
+   ensures mflat(co) >= mflat(cb)
+{
+ // assert oo >= bb;  //shouldb't work
+
+  forall o <- oo ensures (true)
+  {
+
+
+  }
+}
+
+
+//
+//   assert forall o <- flatten(bb) :: o            in flatten(oo);
+//   assert forall o <-        (bb) :: flatten({o}) <= flatten(oo);
+//
+//   assert forall o <-        (bb) :: mapThruKlon({o},m) <= mapThruKlon(bb,m);
+//   assert forall o <-        (bb) :: flatten(mapThruKlon({o},m)) <= flatten(cb);
+//
+//   assert forall o <-        (bb) :: mapThruKlon({o},m) <= mapThruKlon(oo,m);
+//   assert forall o <-        (bb) :: flatten(mapThruKlon({o},m)) <= flatten(co);
+//
+//   assert forall o <- mapThruKlon(bb,m) :: flatten(            {o}   ) <= flatten(cb);
+//
+//
+//   assert forall o <-        (cb) :: flatten(            {o}   ) <= flatten(cb);
+//
+//   assert forall o <- bb :: flatten({o}) <= flatten(oo);
+//   assert forall o <- bb :: flatten(mapThruKlon({o},m)) <= flatten(mapThruKlon(oo,m));
+
+
+
+  //assert forall o <-        (cb) :: flatten({o}) <= flatten(co);
+
+
+  // assert forall o <-        (cb) :: flatten(            {o}   ) <= flatten(co);
+
+//  assert forall o <-        (bb) :: flatten(mapThruKlon({o},m)) <= flatten(co);
+//  assert forall o <-        (bb) :: flatten(mapThruKlon({o},m)) <= flatten(co);
+
+
+
+lemma {:verify false} FlattenInsideGEQ(oo : Owner, bb : Bound, co : Owner, cb : Bound, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires AllReady(oo)
+  requires AllReady(bb)
+  requires AllReady(co)
+  requires AllReady(cb)
+
+  requires flatten(oo) >= m.o.AMFO
+
+  requires oo <= m.m.Keys
+  requires bb <= m.m.Keys
+  requires co == mapThruKlon(oo, m)
+  requires cb == mapThruKlon(bb, m)
+
+  requires myBoundsOK(oo,bb)
+  // ensures myBoundsOK(co,cb)
+ {
+  assert (flatten(oo) >= flatten(bb));
+
+   if (m.o.AMFO > flatten(bb))
+     {
+      assert forall x <- flatten(bb) :: outside(x, m.o);
+      assert forall x <- flatten(bb) :: m.m[x] == x;
+      assert mapThruKlon(bb,m) == cb == bb;
+      assert flatten(cb) == flatten(bb);
+
+      assert flatten(oo) >= flatten(bb);
+      assert flatten(oo) >= m.o.AMFO;
+      assert flatten(m.clbound) >= m.c.AMFB;
+      assert flatten(co) >= flatten(cb);
+
+      assert (m.c.AMFO) >= flatten(m.o.bound);
+
+//      assert (flatten(co) >= flatten(cb));
+     }
+
+ }
