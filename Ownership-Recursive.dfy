@@ -197,7 +197,6 @@ lemma recInsideCollectsAllOwners1(part : Object, whole : Object)
 lemma recInsideCollectsAllOwners2(part : Object, whole : Object)
   decreases part.AMFO
   requires part.Ready()
-
   requires whole in collectAllOwners(part)
   ensures recInside(part,whole)
 {}
@@ -206,7 +205,6 @@ lemma recInsideCollectsAllOwners2(part : Object, whole : Object)
 lemma recInsideCollectsAllOwners3(part : Object, whole : Object)
   decreases part.AMFO
   requires part.Ready()
-
   ensures recInside(part,whole) <==> (whole in collectAllOwners(part))
 {}
 
@@ -229,7 +227,6 @@ lemma recInsideAMFO1(part : Object, whole : Object)
   decreases part.AMFO
   requires part.Ready()
   requires whole.Ready() //why not?
-
   requires (whole in part.AMFO)
   ensures  recInside(part,whole)
 {}
