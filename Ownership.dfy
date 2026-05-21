@@ -149,8 +149,11 @@ function {:isolate_assertions} {:timeLimit 15} flatten(os : Owner) : (fs : Owner
     {(set o <- os, oo <- o.AMFO :: oo) + os}
 
 predicate isFlat(os : Owner) {forall o <- os, oo <- o.AMFO :: oo in os}    //seems to work...
+// or  forall o <- os :: o.AMFO <= os ?
 
-
+lemma FLAT_EITHER_WAY(os : Owner)
+  ensures (forall o <- os, oo <- o.AMFO :: oo in os) == (forall o <- os :: o.AMFO <= os)
+  {}
 
 
 
