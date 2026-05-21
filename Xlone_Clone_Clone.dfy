@@ -1,6 +1,7 @@
 include "Xlone.dfy"
 
 include "Klon-Lemmata.dfy"
+include "TRUMP.dfy"
 
 
 //{:timeLimit 300}
@@ -240,15 +241,29 @@ print "CCC 1001 HERE! WEESA HERE!\n";
 //   assert m.SuperCalidFragilistic();
 // }
 
-assert nuBoundsOK(k.owner,k.bound);
+  assert (flatten(k.owner) >= flatten(k.bound));
+  assert (forall o <- k.owner :: flatten(o.ownerBound()) >= flatten(k.bound));
+  assert myBoundsOK(k.owner,k.bound);
+
   var rowner := mapThruKlon(k.owner, rm); ///dunno when I wrote it but...
 //var rowner := computeOwnerForClone(k.owner, rm); ///dunno when I wrote it but...
 //var rbound := computeOwnerForClone(k.bound, rm);
-
 assert AllReady(rowner);
 //  var rbound := proposeBounds(rowner);
 var rbound := mapThruKlon(k.bound, rm);
-assert nuBoundsOK(rowner,rbound);
+
+ghost var XXX := insideThruKlon(k.owner, k.bound, rm);
+assert XXX;
+
+  assert (flatten(rowner) >= flatten(rbound));
+  assert (forall o <- rowner :: flatten(o.ownerBound()) >= flatten(rbound));
+  assert myBoundsOK(rowner,rbound);
+
+
+
+
+
+assert myBoundsOK(rowner,rbound);
   var context := rm.hns();
 
 
@@ -1180,7 +1195,8 @@ lemma {:isolate_assertions} BoundsOfCloneOK(k : Object, v : Object, m : Klon)
    requires klonReady(m)
    requires klonCalid(m)
    requires m.ownersReadyInKlown(k)
-   requires COK(k, m.oHeap);    requires COKA: COK(k, m.oHeap);
+   requires COK(k, m.oHeap)
+   requires COKA: COK(k, m.oHeap)
    requires k in m.oHeap
    requires strictlyInside(k, m.o)
    requires strictlyInside(v, m.c)
