@@ -270,13 +270,13 @@ function fOutside(ownrs : OWNR, pivot : Object) : (rv : Owner)
   requires AllReady(flatten(ownrs))
   requires pivot.Ready()
   ensures AllReady(rv)
-{ set x <- flatten(ownrs) | not(strictlyInside(x, pivot)) }
+{ set x <- flatten(ownrs) | outside(x,pivot) } // not(strictlyInside(x, pivot)) }
 
 function fInside(ownrs : OWNR, pivot : Object) : (rv : Owner)
   requires AllReady(flatten(ownrs))
   requires pivot.Ready()
   ensures AllReady(rv)
-{ set x <- flatten(ownrs) | (strictlyInside(x, pivot)) }
+{ set x <- flatten(ownrs) | inside(x,pivot) } //(strictlyInside(x, pivot)) }
 
 function fFringe(ownrs : OWNR, pivot : Object) : (rv : Owner)
   requires AllReady(flatten(ownrs))
@@ -325,7 +325,7 @@ lemma INSIDE_OUTSIDE(ownrs : OWNR, pivot : Object)
 
 
 //{:timeLimit 30}   {:timeLimit 60} {:timeLimit 120}
-lemma  shouldBeSleeping(ownrs : OWNR, pivot : Object) returns (onnsiders : Owner, offsiders : Owner, allInside : Owner, allOutside : Owner, fringe : Owner)
+lemma {:timeLimit 7} shouldBeSleeping(ownrs : OWNR, pivot : Object) returns (onnsiders : Owner, offsiders : Owner, allInside : Owner, allOutside : Owner, fringe : Owner)
   //splits all into the bits inside pivot,
   //the bits outside pivot,
   //and the fringe (bits outside that are direct owners of an owner inside...)
@@ -349,9 +349,6 @@ lemma  shouldBeSleeping(ownrs : OWNR, pivot : Object) returns (onnsiders : Owner
   //  ensures fringe == set x <- allInside, xo <- x.owner | (xo in allOutside)  :: xo
   //  ensures fringe <= allOutside
 
-
-
-
   //    ensures (allInside > {}) ==> (flatten(fringe) == allOutside)    //ERR
   //    ensures (allInside > {}) ==> (pivot in fringe)
   //
@@ -359,102 +356,50 @@ lemma  shouldBeSleeping(ownrs : OWNR, pivot : Object) returns (onnsiders : Owner
   //    ensures flatten(fringe - {pivot}) + flatten({pivot}) == flatten(fringe) == allOutside                        //ERR
 
 {
-  if (forall o <- ownrs :: not(strictlyInside(o, pivot)))
+  onnsiders, offsiders := SplitTheDeadOwners(ownrs, pivot);
+
+  if (onnsiders == {})
   {
     allInside := {};  allOutside := flatten(ownrs); fringe := {}; return;
     //a more dedicated model could do more here, but not needed for correctness
   }
 
+  assert onnsiders > {};
 
-  onnsiders, offsiders := SplitTheDeadOwners(ownrs, pivot);
-
-  assert sonn: onnsiders == set x <- ownrs |  inside(x, pivot);
-  assert soff: offsiders == set x <- ownrs | outside(x, pivot);
-  assert summ: ownrs == offsiders + onnsiders;
-
+  assert SONN: onnsiders == set x <- ownrs |  inside(x, pivot);
+  assert SOFF: offsiders == set x <- ownrs | outside(x, pivot);
+  assert SUMM: ownrs == offsiders + onnsiders;
 
 
-  var all := flatten(onnsiders);
+  var flatOnnsiders := flatten(onnsiders);
   allInside  := fInside(onnsiders,pivot);
   allOutside := fOutside(onnsiders,pivot);
   fringe := fFringe(onnsiders,pivot);
 
   INSIDE_OUTSIDE(onnsiders, pivot);
 
-  var probe :|  probe in  fInside(onnsiders,pivot);
-  // assert (probe.AMFO > pivot.AMFO);
-  // assert (probe in allInside);
+  // var probe :| probe in fInside(onnsiders,pivot);
+//   // PivotInFringe(ownrs, pivot, probe);
+//
+//   farage(onnsiders, {probe});
+//   assert probe.AMFO <= flatOnnsiders;
+//   farage(onnsiders, allOutside);
+//   assert flatten(allOutside) <= flatOnnsiders;
 
-  PivotInFringe(ownrs, pivot, probe);
-
-  farage(ownrs, {probe});
-  assert probe.AMFO <= all;
-
-
-  farage(ownrs, allOutside);
-  assert flatten(allOutside) <= all;
-
-
-  //
-  // // assert forall t <- allOutside :: t.AM551t                                           ot(strictlyInside(t, pivot));
-  //     ///THIS IS WRONG WERONG WONGO WRONG assert forall t <- allOutside, i <- allInside :: strictlyInside(i,t);
-  //
-  // assert  forall t <- allOutside, i <- allInside ::  strictlyInside(i,t) ==> t in i.AMFO;
-  // assert  forall t <- allOutside, i <- allInside ::  inside(i,t) ==> t in i.AMFO;
-  // assert  forall t <- allOutside, i <- allInside ::  inside(i,t) ==> t in flatten({i});
-  //
-  // // assert  forall t <- all        :: exists  o <- ownrs :: inside(t,o);
-  // // assert  forall t <- all        :: exists  o <- ownrs :: t in flatten({o});
-  // // assert forall t <- all  ::  flatten(ownrs)
-  //
-  // assert  forall t <- all        :: exists  o <- ownrs :: t in o.AMFO;
-  // assert  forall t <- allInside  :: exists  o <- ownrs :: t in o.AMFO;
-  // assert  forall t <- allOutside :: exists  o <- ownrs :: t in o.AMFO;
-  //
-  // //????assert  forall t <- allOutside, o <- ownrs :: strictlyInside(o,pivot) && t in flatten({o});
-  // //
-  // //
-  // //   forall t <- allOutside, i <- allInside
-  // //      |  strictlyInside(i,t) //&& strictlyInside(i,pivot) // && not(strictlyInside(t, pivot))
-  // //       ensures (t in flatten(fringe))
-  // //   {
-  // //       var prev, next := AcrossTheBorder(i, pivot, t); //TODO TODO TODO
-  // //       assert strictlyInside(prev,t);
-  // //       assert not(strictlyInside(next,pivot));
-  // //       assert prev in all;
-  // //       assert next in prev.owner;
-  // //       assert prev in allInside;
-  // //       assert next in allOutside;
-  // //       assert next in fringe;
-  // //       assert t in all;
-  // //       assert t in next.AMFO;
-  // //       assert t in flatten({next});
-  // //   }
-  // //
-
-  var fringeNoPivot:= fringe - {pivot};
-  assert pivot !in fringeNoPivot;
-
-  var flatFringeNoPivot := flatten(fringeNoPivot);
-
-  Notin(ownrs, pivot, allInside, allOutside, fringe);
-
-  //////////////////////////////////////////////////////////////////////////////
-
-  assert pivot !in flatten(fringe - {pivot});
-  assert pivot !in flatFringeNoPivot; //ERR
-
-
-
-
-
-  // assert fringe == set x <- allInside, xo <- x.owner | (xo in allOutside) :: xo  by { reveal AFX; }
-  //   assert fringeNoPivot == set x <- allInside, xo <- x.owner | (xo in allOutside) && (xo != pivot) :: xo;
-  //  //ERR
-  //   assert (fringe - {pivot}) == set x <- allInside, xo <- x.owner | (xo in allOutside) && (xo != pivot) :: xo;
-
-  FLATTEN_SUBS(fringe, {pivot});
-  assert flatten(fringe - {pivot}) + flatten({pivot}) == flatten(fringe); // == allOutside;
+assert pivot  in allInside;
+assert pivot !in fringe;
+assert pivot !in flatten(fringe);
+//
+//   var fringeNoPivot:= fringe - {pivot};
+//   assert pivot !in fringeNoPivot;
+//   var flatFringeNoPivot := flatten(fringeNoPivot);
+//
+//   Notin(onnsiders, pivot, allInside, allOutside, fringe);
+//   assert pivot !in flatten(fringe - {pivot});
+//   assert pivot !in flatFringeNoPivot;
+//   FLATTEN_SUBS(fringe, {pivot});
+//   assert flatten(fringe - {pivot}) + flatten({pivot}) == flatten(fringe);// == allOutside;
+  assert flatten(fringe) + pivot.AMFO == allOutside;
 
   // assert allOutside == set x <- flatten(ownrs) | not(strictlyInside(x, pivot)) by { reveal AOX; }
   // assert allInside  == set x <- flatten(ownrs) | strictlyInside(x, pivot) by { reveal AIX; }
@@ -485,15 +430,14 @@ lemma  shouldBeSleeping(ownrs : OWNR, pivot : Object) returns (onnsiders : Owner
 
 
 assert forall o <- offsiders :: o in allOutside;
-assert forall o : Object <- offsiders :: o.AMFO <= allOutside;
-assert flatten(offsiders) <= allOutside;
-assert allInside <= flatten(onnsiders) <= all;
+assert forall o : Object <- offsiders :: o.AMFO <= flatten(offsiders);
+assert allInside <= flatten(onnsiders) <= flatOnnsiders;
 
 assert forall f <- offsiders, x <- f.AMFO :: x in allOutside;
 assert fInside(offsiders, pivot) ==  {};
 assert fFringe(offsiders, pivot) ==  {};
 assert fInside(onnsiders+offsiders, pivot) ==  fInside(onnsiders,pivot);
-assert (onnsiders+offsiders) == ownrs by { reveal summ; }
+assert (onnsiders+offsiders) == ownrs by { reveal SUMM; }
 assert fInside(ownrs, pivot) == fInside(onnsiders, pivot);
 
 assert (set x <- fInside(ownrs,pivot), xo <- x.owner | (xo in fOutside(ownrs,pivot)) :: xo)
@@ -514,7 +458,7 @@ assert fFringe3(ownrs, ownrs, pivot)     == fFringe3(onnsiders, ownrs, pivot);
 
 
   assert flatten(ownrs) == flatten(onnsiders) + flatten(offsiders) by
-   {  reveal sonn, soff, summ;
+   {  reveal SONN, SOFF, SUMM;
       assert onnsiders + offsiders == ownrs;
     FLATTEN_SUM3(onnsiders,offsiders,ownrs); }    //but not necessarily disjoint
 
@@ -847,13 +791,13 @@ lemma FlattenFringeIsAllOutside(iwnrs : OWNR,  pivot : Object) returns (allInsid
   //all iwnrs must all be strictlyInside piot
   //pretty much the wrong thing cons iwnrs != owners != ownrs != onnsiders...
 
- requires forall i <- iwnrs :: strictlyInside(i, pivot)
+ requires forall i <- iwnrs :: inside(i, pivot)
 
  requires AllReady(flatten(iwnrs))
  requires pivot.Ready()
 
-  ensures allInside  == set x <- flatten(iwnrs) | strictlyInside(x, pivot)
-  ensures allOutside == set x <- flatten(iwnrs) | not(strictlyInside(x, pivot))
+  ensures allInside  == set x <- flatten(iwnrs) | inside(x, pivot)
+  ensures allOutside == set x <- flatten(iwnrs) | outside(x, pivot)
   ensures allInside !! allOutside
   ensures flatten(iwnrs) == (allInside + allOutside)
   ensures fringe == set x <- allInside, xo <- x.owner | (xo in allOutside)  :: xo
@@ -866,8 +810,8 @@ lemma FlattenFringeIsAllOutside(iwnrs : OWNR,  pivot : Object) returns (allInsid
   ensures flatten(fringe) == allOutside
 {
 
-  allInside  := set x <- flatten(iwnrs) | strictlyInside(x, pivot);
-  allOutside := set x <- flatten(iwnrs) | not(strictlyInside(x, pivot));
+  allInside  := set x <- flatten(iwnrs) | inside(x, pivot);
+  allOutside := set x <- flatten(iwnrs) | outside(x, pivot);
   fringe := set x <- allInside, xo <- x.owner | (xo in allOutside)  :: xo;
 
   assert fringe <= allOutside;
@@ -1181,7 +1125,7 @@ lemma YouGetThereEventually(part : Object, whole : Object) returns (prev : Objec
   assert inside(prev,whole);
 
   if (whole in prev.owner) {
-    assert prev in part.AMFO && whole in prev.owner;
+    assert prev in part.AMFO;
     return;
   }
   prev := YouGetThereEventually(prev, whole);
