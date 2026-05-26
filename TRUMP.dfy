@@ -408,12 +408,15 @@ lemma INSIDE_OUTSIDE(ownrs : OWNR, pivot : Object)
 //    }
 
 
-lemma justTiredAncientsOfMuMu()
+opaque predicate froglet(owner : Owner, pivot : Object, owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
+   //yep, ownerinside is ignored!
+   //call as froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe)
+  { flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + flatten({pivot}) }
 
 
 
-//{:timeLimit 7}
-lemma  tiredOfSleeping(owner : Owner, pivot : Object)
+
+lemma {:timeLimit 30} tiredOfSleeping(owner : Owner, pivot : Object)
   returns (owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
   //FUCK,. shoudl this be a function?  or indeed series of functions?
   //pivot or Klon??
@@ -428,7 +431,8 @@ lemma  tiredOfSleeping(owner : Owner, pivot : Object)
   ensures flat_below == set x <- flatten(owners_inside) | inside(x,pivot)   ///pivot will be inside
   ensures fringe == set x <- flatten(owners_inside), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo
 
-//  ensures flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + flatten({pivot})
+//  ensures reveal froglet(); froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe)
+  ensures flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + flatten({pivot})
 {
   owners_inside, owners_outside := SplitTheDeadOwners(owner, pivot);
 
@@ -524,6 +528,8 @@ forall x <- flatten(owners_inside), xo <- x.owner ensures (whole_f == pivot_f + 
 
   assert flatten(owner) == flatten(owners_outside) + flatten(owners_inside);
   assert flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + flatten({pivot});
+  assert froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe) by { reveal froglet(); }
+  assert froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe);
 }
 
 
