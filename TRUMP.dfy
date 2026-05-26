@@ -416,31 +416,50 @@ opaque predicate froglet(owner : Owner, pivot : Object, owners_inside : Owner, o
 
 
 
-lemma {:timeLimit 30} tiredOfSleeping(owner : Owner, pivot : Object)
+
+
+
+
+//{:timeLimit 30}
+lemma {:timeLimit 60} tiredOfSleeping(owner : Owner, pivot : Object)
   returns (owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
   //FUCK,. shoudl this be a function?  or indeed series of functions?
   //pivot or Klon??
+//likely needs at least 20s to verify on M2
   requires AllReady(flatten(owner))
   requires pivot.Ready()     requires piR: pivot.Ready()
+  requires flatten(owner) >= pivot.AMFO
+
+   ensures exists x <- owner :: inside(x, pivot)
 
   ensures owners_inside ==  set x <- owner |  inside(x, pivot)
   ensures owners_outside == set x <- owner | outside(x, pivot)
   ensures owner == owners_outside + owners_inside
   ensures flatten(owner) == flatten(owners_inside) + flatten(owners_outside)
 
-  ensures flat_below == set x <- flatten(owners_inside) | inside(x,pivot)   ///pivot will be inside
+  ensures flat_below == set x <- flatten(owners_inside) | inside(x,pivot)
   ensures fringe == set x <- flatten(owners_inside), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo
 
-//  ensures reveal froglet(); froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe)
+  ensures reveal froglet(); froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe)
   ensures flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + flatten({pivot})
 {
   owners_inside, owners_outside := SplitTheDeadOwners(owner, pivot);
 
-  if (owners_inside == {})
-  {
-    flat_below := {}; fringe := {}; return;
-    //a more dedicated model could do more here, but not needed for correctness
-  }
+//   if (owners_inside == {})
+//   {
+//     flat_below := {}; fringe := {};
+//     assert owners_outside == owner;
+//     assert flat_below == {};
+//     assert flatten(owner) == flatten(owners_outside);
+//     assert flatten(fringe) == {};
+// //    assert flatten({pivot}) ;
+//
+//       assert flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + flatten({pivot});
+//   assert reveal froglet(); froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe);
+//
+//     return;
+//     //a more dedicated model could do more here, but not needed for correctness
+//   }
 
   assert owners_inside > {};
 
@@ -454,59 +473,74 @@ assert flatten(fw) == flatO;
 assert flatI == flat_below;
 assert flatO == flat_above;
 
-        fringe := set x  <- flatten(owners_inside), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo;
-  var whole_f  := set x  <- flatten(owners_inside), xo <- x.owner |                  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo;
-  var pivot_f  := set x  <- flatten(owners_inside), xo <- x.owner | (x == pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo;
-  var pvtfrng  := set xo <- pivot.owner                           |                                        (outside(xo,pivot) ) :: xo;
+var whole_f;
+var pivot_f;
 
+whole_f,fringe,pivot_f := GordonRamseyThemFringes(owners_inside, pivot);
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////
+// assume flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + flatten({pivot});
+//   assert reveal froglet(); froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe);
+//       return;
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+assert   fringe   == set x  <- flatten(owners_inside), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo;
+assert   whole_f  == set x  <- flatten(owners_inside), xo <- x.owner |                  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo;
+assert   pivot_f  == set x  <- flatten(owners_inside), xo <- x.owner | (x == pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo;
 
 assert fw == whole_f;
 assert flatten(whole_f) == flat_above;
 
-assert (set x  <- flatten(owners_inside), xo <- x.owner | (x == pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo)
-          ==
-       (set x : Object <- {pivot}, xo <- x.owner | (x == pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo);
 
-assert (set x : Object <- {pivot}, xo <- x.owner | (x == pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo)
-          ==
-       (set xo <- pivot.owner | (inside(pivot,pivot) ) && (outside(xo,pivot) ) :: xo);
-
-assert forall xo <- pivot.owner :: (inside(pivot,pivot) ) && (outside(xo,pivot));
-
-assert (set xo <- pivot.owner | (inside(pivot,pivot) ) && (outside(xo,pivot) ) :: xo)
-          ==
-       (set xo <- pivot.owner :: xo)
-          ==
-       (pivot.owner);
-
-
- assert pivot_f == pvtfrng == pivot.owner;
-
-forall x <- flatten(owners_inside), xo <- x.owner ensures (whole_f == pivot_f + fringe) {
- if ( (inside(x,pivot) ) && (outside(xo,pivot) ) )
-   {
-    assert xo in whole_f;
-    if (x == pivot)
-      {
-         assert xo in pivot_f;
-         assert xo in pvtfrng;
-         assert xo in pivot.owner;
-         assert pivot_f == pvtfrng == pivot.owner;
-      } else {
-         assert xo in fringe;
-         //assert pivot_f == pvtfrng;
-      }
-      assert (xo in pivot_f) || (xo in fringe);
-      assert whole_f == pivot_f + fringe;
-    //  assert pivot_f == pvtfrng == pivot.owner;
-
-   } //end if
-
-
-}//end foreach
-
-  assert whole_f == fringe + pivot_f;
-  assert whole_f == fringe + pivot.owner;
+//
+// assert fw == whole_f;
+// assert flatten(whole_f) == flat_above;
+//
+// assert (set x  <- flatten(owners_inside), xo <- x.owner | (x == pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo)
+//           ==
+//        (set x : Object <- {pivot}, xo <- x.owner | (x == pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo);
+//
+// assert (set x : Object <- {pivot}, xo <- x.owner | (x == pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo)
+//           ==
+//        (set xo <- pivot.owner | (inside(pivot,pivot) ) && (outside(xo,pivot) ) :: xo);
+//
+// assert forall xo <- pivot.owner :: (inside(pivot,pivot) ) && (outside(xo,pivot));
+//
+// assert (set xo <- pivot.owner | (inside(pivot,pivot) ) && (outside(xo,pivot) ) :: xo)
+//           ==
+//        (set xo <- pivot.owner :: xo)
+//           ==
+//        (pivot.owner);
+//
+//
+//  assert pivot_f == pvtfrng == pivot.owner;
+//
+// forall x <- flatten(owners_inside), xo <- x.owner ensures (whole_f == pivot_f + fringe) {
+//  if ( (inside(x,pivot) ) && (outside(xo,pivot) ) )
+//    {
+//     assert xo in whole_f;
+//     if (x == pivot)
+//       {
+//          assert xo in pivot_f;
+//          assert xo in pvtfrng;
+//          assert xo in pivot.owner;
+//          assert pivot_f == pvtfrng == pivot.owner;
+//       } else {
+//          assert xo in fringe;
+//          //assert pivot_f == pvtfrng;
+//       }
+//       assert (xo in pivot_f) || (xo in fringe);
+//       assert whole_f == pivot_f + fringe;
+//     //  assert pivot_f == pvtfrng == pivot.owner;
+//
+//    } //end if
+//
+//
+// }//end foreach
+//
+//   assert whole_f == fringe + pivot_f;
+//   assert whole_f == fringe + pivot.owner;
 
   assert flatten(whole_f) == flat_above;
   assert flatten(fringe + pivot.owner) == flat_above;
@@ -1015,8 +1049,77 @@ lemma FlattenContainsFlatten(below : Owner, above : Owner)
   //  assert forall o <- flatten(below), oo <- o.AMFO :: oo in flatten(below);
   // assert forall o <- flatten(below) :: o.AMFO <= flatten(below);
   //  assert forall a <- above :: a in flatten(below);
-  //   assert forall a <- above :: a.AMFO <= flatten(below);
+  //   assert forall a <- above :: a.AMFO <= flatten(below);\
 }
+
+//is "inside_pivot" a better name than owners_inside
+lemma GordonRamseyThemFringes(owners_inside : Owner, pivot : Object) returns (whole_f : Owner, fringe : Owner, pivot_f : Owner)
+
+ requires forall i <- owners_inside :: inside(i, pivot)
+
+ requires owners_inside > {}
+ requires AllReady(owners_inside)
+ requires AllReady(flatten(owners_inside))
+ requires pivot.Ready()
+  ensures  fringe == set x  <- flatten(owners_inside), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo
+  ensures whole_f == set x  <- flatten(owners_inside), xo <- x.owner |                  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo
+  ensures pivot_f == set x  <- flatten(owners_inside), xo <- x.owner | (x == pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo
+  ensures pivot_f == (set xo <- pivot.owner) == pivot.owner
+  ensures whole_f == pivot_f + fringe
+  ensures whole_f == fringe + pivot.owner
+{
+       fringe  := set x  <- flatten(owners_inside), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo;
+      whole_f  := set x  <- flatten(owners_inside), xo <- x.owner |                  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo;
+      pivot_f  := set x  <- flatten(owners_inside), xo <- x.owner | (x == pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo;
+  var pvtfrng  := set xo <- pivot.owner                           |                                        (outside(xo,pivot) ) :: xo;
+
+
+
+assert (set x  <- flatten(owners_inside), xo <- x.owner | (x == pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo)
+          ==
+       (set x : Object <- {pivot}, xo <- x.owner | (x == pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo);
+
+assert (set x : Object <- {pivot}, xo <- x.owner | (x == pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo)
+          ==
+       (set xo <- pivot.owner | (inside(pivot,pivot) ) && (outside(xo,pivot) ) :: xo);
+
+assert forall xo <- pivot.owner :: (inside(pivot,pivot) ) && (outside(xo,pivot));
+
+assert (set xo <- pivot.owner | (inside(pivot,pivot) ) && (outside(xo,pivot) ) :: xo)
+          ==
+       (set xo <- pivot.owner :: xo)
+          ==
+       (pivot.owner);
+
+
+ assert pivot_f == pvtfrng == pivot.owner;
+
+forall x <- flatten(owners_inside), xo <- x.owner ensures (whole_f == pivot_f + fringe) {
+ if ( (inside(x,pivot) ) && (outside(xo,pivot) ) )
+   {
+    assert xo in whole_f;
+    if (x == pivot)
+      {
+         assert xo in pivot_f;
+         assert xo in pvtfrng;
+         assert xo in pivot.owner;
+         assert pivot_f == pvtfrng == pivot.owner;
+      } else {
+         assert xo in fringe;
+         //assert pivot_f == pvtfrng;
+      }
+      assert (xo in pivot_f) || (xo in fringe);
+      assert whole_f == pivot_f + fringe;
+    //  assert pivot_f == pvtfrng == pivot.owner;
+
+   } //end if
+
+
+}//end foreach
+
+  assert whole_f == fringe + pivot_f;
+  assert whole_f == fringe + pivot.owner;
+}//end GordonRamsey
 
 
 lemma FlattenFringeIsAllOutside(iwnrs : OWNR,  pivot : Object) returns (allInside : Owner, allOutside : Owner, fringe : Owner)
