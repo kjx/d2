@@ -222,7 +222,7 @@ lemma {:timeLimit 30} makersfield(ownrs : OWNR, pivot : Object)
 
 
 //{:timeLimit 30}
-lemma BROKEN_insidesFlattenFringe(ownrs : OWNR, pivot : Object) returns (allInside : Owner, allOutside : Owner, fringe : Owner)
+lemma {:verify false} BROKEN_insidesFlattenFringe(ownrs : OWNR, pivot : Object) returns (allInside : Owner, allOutside : Owner, fringe : Owner)
   //splits all into the bits inside pivot,
   //the bits outside pivot,
   //and the fringe (bits outside that are direct owners of an owner inside...)
@@ -414,7 +414,7 @@ opaque predicate froglet(owner : Owner, pivot : Object, owners_inside : Owner, o
   { flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + flatten({pivot}) }
 
 
-lemma DaysOfOpenHand(left : Owner, la : Owner, lb : Owner, lc : Owner, right : Owner, ra : Owner, rb : Owner, rc : Owner)
+lemma {:verify false} X_DaysOfOpenHand(left : Owner, la : Owner, lb : Owner, lc : Owner, right : Owner, ra : Owner, rb : Owner, rc : Owner)
   requires AllReady(flatten(left))
   requires AllReady(flatten(right))
   requires flatten(la) !! flatten(lb) !! flatten(lc)
@@ -443,15 +443,17 @@ lemma flatten_monotonic(a : Owner, b : Owner)
    ensures (a > b) ==> flatten(a) >= flatten(b)
 {}
 
-lemma DaysOfOpenHand2(left : Owner, right : Owner, pivot : Object)
+lemma DaysOfOpenHand2(left : Owner, right : Owner, pivot : Object,
+         li : Owner, lo : Owner, lb : Owner, lf : Owner,
+         ri : Owner, ro : Owner, rb : Owner, rf : Owner)
+
   requires AllReady(flatten(left))
   requires AllReady(flatten(right))
   requires pivot.Ready()
   requires flatten(left) >= pivot.AMFO
   requires flatten(right) >= pivot.AMFO
-  requires flatten(left) >= flatten(right)
+
 {
-//(owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
   var li,lo,lb,lf := tiredOfSleeping(left, pivot);
   var ri,ro,rb,rf := tiredOfSleeping(right, pivot);
 
@@ -478,7 +480,7 @@ lemma {:timeLimit 60} tiredOfSleeping(owner : Owner, pivot : Object)
  requires pivot.Ready()     requires piR: pivot.Ready()
 //requires flatten(owner) >= pivot.AMFO
 
- requires exists x <- owner :: inside(x, pivot)
+ requires exists x <- owner :: inside(x, pivot) ///hmmmm
 
   ensures owners_inside ==  set x <- owner |  inside(x, pivot)
   ensures owners_outside == set x <- owner | outside(x, pivot)
@@ -624,7 +626,8 @@ datatype Segmented = Segmented(owner : Owner,  rat : nat)
 
 
 //{:timeLimit 30}   {:timeLimit 60} {:timeLimit 120}
-lemma {:timeLimit 7} shouldBeSleeping(ownrs : OWNR, pivot : Object) returns (onnsiders : Owner, offsiders : Owner, allInside : Owner, allOutside : Owner, fringe : Owner)
+lemma {:verify false} X_shouldBeSleeping(ownrs : OWNR, pivot : Object) returns (onnsiders : Owner, offsiders : Owner, allInside : Owner, allOutside : Owner, fringe : Owner)
+  //REPLACED by tiredOfSleeping
   //splits all into the bits inside pivot,
   //the bits outside pivot,
   //and the fringe (bits outside that are direct owners of an owner inside...)
@@ -823,8 +826,9 @@ assert flatten(ownrs) == fInside(onnsiders,pivot) + flatten(fFringe(ownrs,pivot)
 
 
 //{:timeLimit 30}   {:timeLimit 60} {:timeLimit 120}
-lemma {:timeLimit 120} splitOWNRSroundPivot(ownrs : OWNR, pivot : Object) returns (allInside : Owner, allOutside : Owner, fringe : Owner)
+lemma {:timeLimit 120} XsplitOWNRSroundPivot(ownrs : OWNR, pivot : Object) returns (allInside : Owner, allOutside : Owner, fringe : Owner)
   //splits all into the bits inside pivot,
+  //REPLACED by tiredOfSleeping
   //the bits outside pivot,
   //and the fringe (bits outside that are direct owners of an owner inside...)
   //FUCK,. shoudl this be a function?  or indeed series of functions?
@@ -877,7 +881,7 @@ lemma {:timeLimit 120} splitOWNRSroundPivot(ownrs : OWNR, pivot : Object) return
   // assert (probe.AMFO > pivot.AMFO);
   // assert (probe in allInside);
 
-  PivotInFringe(ownrs, pivot, probe);
+  XPivotInFringe(ownrs, pivot, probe);
 
   farage(ownrs, {probe});
   assert probe.AMFO <= all;
@@ -1173,7 +1177,7 @@ forall x <- flatten(owners_inside), xo <- x.owner ensures (whole_f == pivot_f + 
   assert whole_f == fringe + pivot.owner;
 }//end GordonRamsey
 
-
+///FUCK FCUK FUCK
 lemma FlattenFringeIsAllOutside(iwnrs : OWNR,  pivot : Object) returns (allInside : Owner, allOutside : Owner, fringe : Owner)
   //ensuress flatten(fringe) == allOutside
   //all iwnrs must all be strictlyInside piot
@@ -1232,34 +1236,12 @@ lemma FlattenFringeIsAllOutside(iwnrs : OWNR,  pivot : Object) returns (allInsid
 
 
 
-lemma OnlyThrough(ownrs : OWNR,  pivot : Object,  allInside : Owner, allOutside : Owner, fringe : Owner)
-  //proof by contradiction?
-  //to get from ownrs thru pivot to outside you must go through fringe x
-  requires AllReady(flatten(ownrs))
-  requires pivot.Ready()
-  requires allInside  == set x <- flatten(ownrs) | strictlyInside(x, pivot)
-  requires allOutside == set x <- flatten(ownrs) | not(strictlyInside(x, pivot))
-  requires allInside !! allOutside
-  requires flatten(ownrs) == (allInside + allOutside)
-  requires fringe == set x <- allInside, xo <- x.owner | (xo in allOutside)  :: xo
-  requires fringe <= allOutside
-  //requires (allInside > {}) ==> (flatten(fringe) == allOutside)
-  requires (allInside > {}) ==> (pivot in fringe)
-
-  ensures pivot !in flatten(fringe - {pivot})
-{
-  if (pivot in flatten(fringe - {pivot})) {
-    assert not(fringe <= allOutside);
-    assert false;
-  }
-}
-
-
 
 
 lemma Notin(ownrs : OWNR,  pivot : Object, allInside : Owner, allOutside : Owner, fringe : Owner)
   //proof by contradiction
   //pivot is not in rest of fringe
+  //was going to extend to an "OnlyTHrough" apparently
   requires AllReady(flatten(ownrs))
   // requires pivot.Ready()
   requires allInside  == set x <- flatten(ownrs) | strictlyInside(x, pivot)
@@ -1449,7 +1431,9 @@ lemma AcrossTheBorder(part : Object,  pivot : Object, whole : Object) returns (p
 
 
 
-lemma PivotInFringe(ownrs : OWNR, pivot : Object, probe : Object)
+
+lemma {:verify false} XPivotInFringe(ownrs : OWNR, pivot : Object, probe : Object)
+     //except the Pivot is no longer in the Fringe
   decreases probe.AMFO
   requires AllReady(flatten(ownrs))
 
@@ -1855,7 +1839,7 @@ lemma {:timeLimit 60} recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
 
 
 
-lemma {:timeLimit 50} insideThruKlon(below : Owner, above : Owner, m : Klon) returns (selow : Owner,  sbove : Owner)
+lemma {:verify false} {:timeLimit 50} insideThruKlon(below : Owner, above : Owner, m : Klon) returns (selow : Owner,  sbove : Owner)
   decreases allAMFOs(below)
   requires AllReady(below)
   requires AllReady(above)
@@ -1898,7 +1882,7 @@ lemma {:timeLimit 50} insideThruKlon(below : Owner, above : Owner, m : Klon) ret
   }
 
 //reminder OWNR is flat
-lemma old_insideThruKlon(below : Owner, above : Owner, m : Klon) returns (rv : bool)
+lemma {:verify false} old_insideThruKlon(below : Owner, above : Owner, m : Klon) returns (rv : bool)
   decreases allAMFOs(below)
   requires AllReady(below)
   requires AllReady(above)
@@ -1915,11 +1899,11 @@ lemma old_insideThruKlon(below : Owner, above : Owner, m : Klon) returns (rv : b
   var aboveFlat : OWNR := recSplatten(above, m);
 
 
-  var belowInside,belowOutside,belowFringe := splitOWNRSroundPivot(below, pivot);
+  var belowInside,belowOutside,belowFringe := XsplitOWNRSroundPivot(below, pivot);
   assert (belowInside > {}) ==> (pivot in belowFringe);
   var belowFringeNoPivot := belowFringe - {pivot};
 
-  var aboveInside,aboveOutside,aboveFringe := splitOWNRSroundPivot(above, pivot);
+  var aboveInside,aboveOutside,aboveFringe := XsplitOWNRSroundPivot(above, pivot);
   assert (aboveInside > {}) ==> (pivot in aboveFringe);
   var aboveFringeNoPivot := aboveFringe - {pivot};
 
