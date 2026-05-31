@@ -414,23 +414,71 @@ opaque predicate froglet(owner : Owner, pivot : Object, owners_inside : Owner, o
   { flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + flatten({pivot}) }
 
 
+lemma DaysOfOpenHand(left : Owner, la : Owner, lb : Owner, lc : Owner, right : Owner, ra : Owner, rb : Owner, rc : Owner)
+  requires AllReady(flatten(left))
+  requires AllReady(flatten(right))
+  requires flatten(la) !! flatten(lb) !! flatten(lc)
+  requires flatten(ra) !! flatten(rb) !! flatten(rc)
+  requires left  == la + lb + lc
+  requires right == ra + rb + rc
+  {
+    // assert left  == la + lb + lc;
+    // assert right == ra + rb + rc;
+
+    // assert (left >= right)  ==> ((la >= ra) && (lb >= rb) && (lc >= rc));
+    // assert (left >= right) <==  ((la >= ra) && (lb >= rb) && (lc >= rc));
 
 
 
+    assert (flatten(left) >= flatten(right))  ==> ((flatten(la) >= flatten(ra)) && (flatten(lb) >= flatten(rb)) && (flatten(lc) >= flatten(rc)));
+    assert (flatten(left) >= flatten(right)) <==  ((flatten(la) >= flatten(ra)) && (flatten(lb) >= flatten(rb)) && (flatten(lc) >= flatten(rc)));
+
+  }
+
+lemma flatten_monotonic(a : Owner, b : Owner)
+  requires AllReady(a)
+  requires AllReady(b)
+   ensures (a == b) ==> flatten(a) == flatten(b)
+   ensures (a < b) ==> flatten(a) <= flatten(b)
+   ensures (a > b) ==> flatten(a) >= flatten(b)
+{}
+
+lemma DaysOfOpenHand2(left : Owner, right : Owner, pivot : Object)
+  requires AllReady(flatten(left))
+  requires AllReady(flatten(right))
+  requires pivot.Ready()
+  requires flatten(left) >= pivot.AMFO
+  requires flatten(right) >= pivot.AMFO
+  requires flatten(left) >= flatten(right)
+{
+//(owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
+  var li,lo,lb,lf := tiredOfSleeping(left, pivot);
+  var ri,ro,rb,rf := tiredOfSleeping(right, pivot);
+
+  assert flatten(left)  == flatten(lo) + lb + flatten(lf) + flatten({pivot});
+  assert flatten(right) == flatten(ro) + rb + flatten(rf) + flatten({pivot});
+
+  assert li !! lo;
+  assert flatten(li) >= lb;
+  assert flatten(left) == flatten(li) + flatten(lo);    //flatten is monotinic
 
 
+  assert (flatten(left) >= flatten(right)) <== ((flatten(lo) >= flatten(ro)) && (lb >= rb) && (flatten(lf) >= flatten(rf)));
+
+  //assert (flatten(left) >= flatten(right)) ==> ((flatten(lo) >= flatten(ro)) && (lb >= rb) && (flatten(lf) >= flatten(rf)));
+}
 
 //{:timeLimit 30}
 lemma {:timeLimit 60} tiredOfSleeping(owner : Owner, pivot : Object)
   returns (owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
-  //FUCK,. shoudl this be a function?  or indeed series of functions?
+  //FUCK,. shoudl xGG indeed series of functions?
   //pivot or Klon??
 //likely needs at least 20s to verify on M2
-  requires AllReady(flatten(owner))
-  requires pivot.Ready()     requires piR: pivot.Ready()
-  requires flatten(owner) >= pivot.AMFO
+ requires AllReady(flatten(owner))
+ requires pivot.Ready()     requires piR: pivot.Ready()
+//requires flatten(owner) >= pivot.AMFO
 
-   ensures exists x <- owner :: inside(x, pivot)
+ requires exists x <- owner :: inside(x, pivot)
 
   ensures owners_inside ==  set x <- owner |  inside(x, pivot)
   ensures owners_outside == set x <- owner | outside(x, pivot)
@@ -442,6 +490,10 @@ lemma {:timeLimit 60} tiredOfSleeping(owner : Owner, pivot : Object)
 
   ensures reveal froglet(); froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe)
   ensures flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + flatten({pivot})
+
+  ensures owners_inside <= flat_below
+  ensures flat_below <= flatten(owners_inside)
+
 {
   owners_inside, owners_outside := SplitTheDeadOwners(owner, pivot);
 
@@ -1650,19 +1702,21 @@ lemma OH_FUCK_WHAT_HAVE_I_DONE(oo : Owner, m : Klon) returns (sp : Owner)
 
 
 
-lemma recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
+lemma {:timeLimit 60} recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
+   ///predicts flatten(mapThruKlon(oo, m))
+
   decreases allAMFOs(oo)
   requires AllReady(oo)
   requires klonReady(m)
   requires klonCalid(m)
   requires oo <= m.m.Keys
-  //
-  //    requires |oo| == 1
-  //    requires forall o <- oo :: o.owner == {}
-  //     ensures flatten(oo) == oo
+//requires exists x <- oo :: inside(x, m.o)
 
   ensures flatten(oo) <= m.m.Keys
   ensures sp == flatten(mapThruKlon(oo, m))
+  ensures AllReady(sp)
+//ensures (exists x <- oo | inside(x, m.o) :: (m.m[x] in sp) && inside(m.m[x],m.c))
+
 {
   //     var x :=  {set o : Object <- oo, ooo <- recOwners(o) :: ooo};
 
@@ -1672,13 +1726,14 @@ lemma recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
   var done : Owner := {};
   assert AllReady(todo);
   assert oo - todo == {};
+  assert oo == done + todo;
   assert mapThruKlon({}, m) == {};
   assert mapThruKlon((oo - todo), m) == {};
   assert flatten({}) == {};
   assert flatten(mapThruKlon((oo - todo), m)) == {};
 
   assert sp == flatten(mapThruKlon((oo - todo), m));
-  assert done == oo - todo == {};
+  assert done == oo - todo == {}; assert done !! todo;
   assert sp == flatten(mapThruKlon((done), m));
 
   while (todo > {})
@@ -1686,13 +1741,49 @@ lemma recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
     invariant sp == flatten(mapThruKlon((oo - todo), m))
     invariant done == oo - todo
     invariant sp == flatten(mapThruKlon((done), m))
+//invariant exists x <- oo :: inside(x, m.o)
+    invariant oo == done + todo
+    invariant done !! todo
+//invariant exists x <- (done + todo) :: inside(x, m.o)
+    invariant forall x <- done | inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in sp)
   {
     assert sp == flatten(mapThruKlon((oo - todo), m));
+
     var next :| next in todo;
     assert done == oo - todo;
-    assert done + {next} == oo - (todo - {next});
+
+    var todoHERE := todo;
+    assert ttt: next in todo;
+    assert nit: next in todoHERE;
+    assert done !! todo;
+    assert next !in done;
+    assert todo == todoHERE;
+    assert done == oo - todoHERE;
+    assert oo == done + todo == done + todoHERE;
+
+    assert todo decreases to todo - {next} by { reveal ttt; }
+
     todo := todo - {next};
-    assert done + {next} == oo - todo;
+    assert next !in todo;
+    assert next !in done;
+    assert done !! {next} !! todo;
+
+    assert next in todoHERE by { reveal nit; }
+    assert todo == todoHERE - {next};
+    MINUS3(todo,todoHERE,{next});
+    assert todoHERE == todo + {next};
+
+    assert oo == done + todoHERE;
+    assert done !! {next} !! todo;
+    assert oo == done + (todo + {next});
+
+    assert done == oo - todoHERE;
+    assert todoHERE == todo + {next};
+    assert done == oo - (todo + {next});
+    PLUS_MINUS(done,oo,todo,{next});
+    assert done == oo - todo - {next};
+
+
 
     var sext := m.m[next];
     assert klonLine(next, sext, m);
@@ -1734,25 +1825,80 @@ lemma recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
     assert (mapThruKlon((done+{next}), m)) == (mapThruKlon((done), m)) + (mapThruKlon(({next}), m));
     assert flatten(mapThruKlon((done+{next}), m)) == flatten(mapThruKlon((done), m)) + flatten(mapThruKlon(({next}), m)) == sp + ({sext} + fowner);
     sp := sp + ({sext} + fowner);
+
+    assert oo == done + (todo + {next});
+    assert done !! {next} !! todo;
+    PLUS4(oo, done, todo, {next});
+    assert oo == (done + {next}) + todo;
+
     done := done + {next};
+    assert oo == done + todo;
     assert done == oo - todo;
     assert sp == flatten(mapThruKlon((done), m));
     assert sp == flatten(mapThruKlon((oo - todo), m));
   }//end while
+
+
   assert sp == flatten(mapThruKlon((oo - todo), m));
+  assert oo == done + todo;
+  assert done == oo - todo;
   assert todo == {}; assert done == oo;
   assert sp == flatten(mapThruKlon(oo, m));
-}
+
+
+//  assert exists x <- oo   | inside(x, m.o) :: inside(m.m[x], m.c);
+  assert forall x <- done | inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in sp);
+//  assert exists y <- sp  :: inside(y,m.c) && (y in sp);
+  }//end recSplatteno
 
 
 
 
+
+lemma {:timeLimit 50} insideThruKlon(below : Owner, above : Owner, m : Klon) returns (selow : Owner,  sbove : Owner)
+  decreases allAMFOs(below)
+  requires AllReady(below)
+  requires AllReady(above)
+
+  requires AllReady(flatten(below))
+  requires m.o.Ready()
+  requires flatten(below) >= m.o.AMFO
+
+  requires AllReady(flatten(above))
+  requires m.o.Ready()
+  requires flatten(above) >= m.o.AMFO
+
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires below <= m.m.Keys
+  requires above <= m.m.Keys
+  requires flatten(below) >= flatten(above)
+   ensures flatten(selow) >= flatten(sbove)
+   {
+  var pivot := m.o;
+
+  var left := recSplatten(below, m);
+  var rift := recSplatten(above, m);
+
+  var li,lo,lb,lf := tiredOfSleeping(left, pivot);
+  var ri,ro,rb,rf := tiredOfSleeping(rift, pivot);
+
+  assert flatten(left) == flatten(lo) + lb + flatten(lf) + flatten({pivot});
+  assert flatten(rift) == flatten(ro) + rb + flatten(rf) + flatten({pivot});
+
+  assert flatten(lo) >= flatten(ro);
+  assert lb == rb;
+  assert flatten(lf) >=  flatten(rf);
+  assert flatten(left) >= flatten(rift);
+  // assert selow  ==
+  //  ((flatten(lo) >= flatten(ro)) && (lb >= rb) && (flatten(lf) >= flatten(rf)));
+
+   selow := left;
+   sbove := rift;
+  }
 
 //reminder OWNR is flat
-
-
-
-lemma insideThruKlon(below : Owner, above : Owner, m : Klon) returns (rv : bool)
+lemma old_insideThruKlon(below : Owner, above : Owner, m : Klon) returns (rv : bool)
   decreases allAMFOs(below)
   requires AllReady(below)
   requires AllReady(above)
@@ -1762,7 +1908,6 @@ lemma insideThruKlon(below : Owner, above : Owner, m : Klon) returns (rv : bool)
   requires above <= m.m.Keys
 
   requires flatten(below) >= flatten(above)
-  //    ensures rv
 {
   var pivot := m.o;
 
@@ -1783,3 +1928,21 @@ lemma insideThruKlon(below : Owner, above : Owner, m : Klon) returns (rv : bool)
   rv := (belowFlat >= aboveFlat);
   assert rv;
 }
+
+
+lemma PLUS_MINUS(a : Owner, b : Owner, c : Owner, d : Owner)
+  requires a == b - (c + d)
+   ensures a == b - c - d
+{}
+
+lemma MINUS3(a : Owner, b : Owner, c : Owner)
+  requires c <= b
+  requires a == b - c
+   ensures b == a + c
+{}
+
+lemma PLUS4(a : Owner, b : Owner, c : Owner, d : Owner)
+  requires a == b + (c + d)
+  requires b !! c !! d
+   ensures a == (b + d) + c
+{}
