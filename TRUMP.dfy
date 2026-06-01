@@ -317,6 +317,7 @@ lemma PIVOT_OWNERS_OUTSIDE(ownrs : OWNR, pivot : Object)
    {}
 
 lemma {:timeLimit 60} FLATTEN_SYRINGE(ownrs : OWNR, pivot : Object)
+//anoither one that diesnt work 0- currentky not ysed
   requires ownrs > {}  //OF_COURSE_I_FJUCKING_DECREASEFUCK FUCK!!!!Q
   requires AllReady(flatten(ownrs))
   requires pivot.Ready()
@@ -411,7 +412,17 @@ lemma INSIDE_OUTSIDE(ownrs : OWNR, pivot : Object)
 opaque predicate froglet(owner : Owner, pivot : Object, owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
    //yep, ownerinside is ignored!
    //call as froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe)
-  { flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + flatten({pivot}) }
+  { flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflivot(owner, pivot) }
+//  { flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + flatten({pivot}) }
+
+function pflivot(owner : Owner, pivot : Object) : (fp : OWNR)
+  { if (exists x <- owner :: inside(x, pivot))
+      then flatten({pivot}) else {} }
+
+lemma PFLIVOT_IS_FLATTEN_PIVOT_0(owner : Owner, pivot : Object)
+  requires exists x <- owner :: inside(x, pivot)
+   ensures pflivot(owner,pivot) ==  flatten({pivot})
+   {}
 
 
 lemma {:verify false} X_DaysOfOpenHand(left : Owner, la : Owner, lb : Owner, lc : Owner, right : Owner, ra : Owner, rb : Owner, rc : Owner)
@@ -436,12 +447,60 @@ lemma {:verify false} X_DaysOfOpenHand(left : Owner, la : Owner, lb : Owner, lc 
   }
 
 lemma flatten_monotonic(a : Owner, b : Owner)
-  requires AllReady(a)
-  requires AllReady(b)
+  // requires AllReady(a)
+  // requires AllReady(b)
    ensures (a == b) ==> flatten(a) == flatten(b)
    ensures (a < b) ==> flatten(a) <= flatten(b)
    ensures (a > b) ==> flatten(a) >= flatten(b)
 {}
+
+lemma  NAKED_LIBERATION(li : Owner, lo : Owner, lb : Owner, lf : Owner,
+                 ri : Owner, ro : Owner, rb : Owner, rf : Owner,
+                 left : Owner, right : Owner, pivot : Object)
+                    requires left  == (li + lo + lb + lf + pflivot(left, pivot) )
+                    requires right == (ri + ro + rb + rf + pflivot(right,pivot) )
+  requires ((li) >= (ri))
+  requires ((lo) >= (ro))
+  requires (lb >= rb)
+  requires ((lf) >= (rf))
+  requires (pflivot(left, pivot) >= pflivot(right,pivot))
+   ensures ((left) >= (right))
+{}
+
+
+lemma  FLAT_LIVERATUIB(li : Owner, lo : Owner, lb : Owner, lf : Owner,
+                 ri : Owner, ro : Owner, rb : Owner, rf : Owner,
+                 left : Owner, right : Owner, pivot : Object)
+                    requires froglet(left, pivot,li,lo,lb,lf)
+                    requires froglet(right,pivot,ri,ro,rb,rf)
+
+  requires ((li) >= (ri))
+  requires ((lo) >= (ro))
+  requires (lb >= rb)
+  requires ((lf) >= (rf))
+  requires (pflivot(left, pivot) >= pflivot(right,pivot))
+   ensures ((left) >= (right))
+{
+  reveal froglet();
+  flatten_monotonic(li,ri);
+  flatten_monotonic(lo,ro);
+  flatten_monotonic(lb,rb);
+  flatten_monotonic(lf,rf);
+  flatten_monotonic(pflivot(left, pivot),pflivot(right, pivot));
+
+
+  assert flatten(li) >= flatten(ri);
+  assert flatten(lo) >= flatten(ro);
+  assert flatten(lb) >= flatten(rb);
+  assert flatten(lf) >= flatten(rf);
+  assert (pflivot(left, pivot) >= pflivot(right,pivot));
+
+  assert left  == flatten(lo) + lb + flatten(lf) + pflivot(left,  pivot);
+  assert right == flatten(ro) + rb + flatten(rf) + pflivot(right, pivot);
+
+   assert ((flatten(lo) >= flatten(ro)) && (lb >= rb) && (flatten(lf) >= flatten(rf)) && (pflivot(left, pivot) >= pflivot(right,pivot)) );
+}
+
 
 lemma DaysOfOpenHand2(left : Owner, right : Owner, pivot : Object,
          li : Owner, lo : Owner, lb : Owner, lf : Owner,
@@ -450,28 +509,46 @@ lemma DaysOfOpenHand2(left : Owner, right : Owner, pivot : Object,
   requires AllReady(flatten(left))
   requires AllReady(flatten(right))
   requires pivot.Ready()
-  requires flatten(left) >= pivot.AMFO
-  requires flatten(right) >= pivot.AMFO
+  // requires flatten(left) >= pivot.AMFO
+  // requires flatten(right) >= pivot.AMFO
+  requires exists x <- left :: inside(x, pivot) ///hmmmm
+  requires exists x <- right :: inside(x, pivot) ///hmmmm
+
+  // ensures (flatten(left) >= flatten(right)) <== ((flatten(lo) >= flatten(ro)) && (lb >= rb) && (flatten(lf) >= flatten(rf)))
+
+  requires (flatten(lo) >= flatten(ro))
+  requires (lb >= rb)
+  requires (flatten(lf) >= flatten(rf))
+  requires (pflivot(left, pivot) >= pflivot(right,pivot))
+   ensures (flatten(left) >= flatten(right))
+
 
 {
   var li,lo,lb,lf := tiredOfSleeping(left, pivot);
   var ri,ro,rb,rf := tiredOfSleeping(right, pivot);
 
-  assert flatten(left)  == flatten(lo) + lb + flatten(lf) + flatten({pivot});
-  assert flatten(right) == flatten(ro) + rb + flatten(rf) + flatten({pivot});
+  assert flatten(left)  == flatten(lo) + lb + flatten(lf) + pflivot(left,  pivot);
+  assert flatten(right) == flatten(ro) + rb + flatten(rf) + pflivot(right, pivot);
 
   assert li !! lo;
   assert flatten(li) >= lb;
   assert flatten(left) == flatten(li) + flatten(lo);    //flatten is monotinic
 
+  assert (flatten(left) >= flatten(right)) <== ((flatten(lo) >= flatten(ro)) && (lb >= rb) && (flatten(lf) >= flatten(rf)) && (pflivot(left, pivot) >= pflivot(right,pivot)) );
+  assert (flatten(left) >= flatten(right)) ==> ((flatten(lo) >= flatten(ro)) || (lb >= rb) || (flatten(lf) >= flatten(rf)) || (pflivot(left, pivot) >= pflivot(right,pivot)) );
 
-  assert (flatten(left) >= flatten(right)) <== ((flatten(lo) >= flatten(ro)) && (lb >= rb) && (flatten(lf) >= flatten(rf)));
 
-  //assert (flatten(left) >= flatten(right)) ==> ((flatten(lo) >= flatten(ro)) && (lb >= rb) && (flatten(lf) >= flatten(rf)));
+  assert (flatten(lo) >= flatten(ro));
+  assert (lb >= rb);
+  assert (flatten(lf) >= flatten(rf));
+  assert (pflivot(left, pivot) >= pflivot(right,pivot));
+
+  assert (flatten(left) >= flatten(right));
 }
 
 //{:timeLimit 30}
-lemma {:timeLimit 60} tiredOfSleeping(owner : Owner, pivot : Object)
+lemma {:timeLimit 20}
+tiredOfSleeping(owner : Owner, pivot : Object)
   returns (owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
   //FUCK,. shoudl xGG indeed series of functions?
   //pivot or Klon??
@@ -480,7 +557,7 @@ lemma {:timeLimit 60} tiredOfSleeping(owner : Owner, pivot : Object)
  requires pivot.Ready()     requires piR: pivot.Ready()
 //requires flatten(owner) >= pivot.AMFO
 
- requires exists x <- owner :: inside(x, pivot) ///hmmmm
+// requires exists x <- owner :: inside(x, pivot) ///hmmmm
 
   ensures owners_inside ==  set x <- owner |  inside(x, pivot)
   ensures owners_outside == set x <- owner | outside(x, pivot)
@@ -491,7 +568,7 @@ lemma {:timeLimit 60} tiredOfSleeping(owner : Owner, pivot : Object)
   ensures fringe == set x <- flatten(owners_inside), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo
 
   ensures reveal froglet(); froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe)
-  ensures flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + flatten({pivot})
+  ensures flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflivot(owner, pivot)
 
   ensures owners_inside <= flat_below
   ensures flat_below <= flatten(owners_inside)
@@ -499,23 +576,24 @@ lemma {:timeLimit 60} tiredOfSleeping(owner : Owner, pivot : Object)
 {
   owners_inside, owners_outside := SplitTheDeadOwners(owner, pivot);
 
-//   if (owners_inside == {})
-//   {
-//     flat_below := {}; fringe := {};
-//     assert owners_outside == owner;
-//     assert flat_below == {};
-//     assert flatten(owner) == flatten(owners_outside);
-//     assert flatten(fringe) == {};
-// //    assert flatten({pivot}) ;
-//
-//       assert flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + flatten({pivot});
-//   assert reveal froglet(); froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe);
-//
-//     return;
-//     //a more dedicated model could do more here, but not needed for correctness
-//   }
+  if (owners_inside == {})
+  {
+    flat_below := {}; fringe := {};
+    assert owners_outside == owner;
+    assert flat_below == {};
+    assert flatten(owner) == flatten(owners_outside);
+    assert flatten(fringe) == {};
+
+    assert flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflivot(owner, pivot);
+    assert reveal froglet(); froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe);
+
+    return;
+    //a more dedicated model could do more here, but not needed for correctness
+  }
 
   assert owners_inside > {};
+
+  assert pflivot(owner, pivot) == flatten({pivot});
 
   flat_below := set x <- flatten(owners_inside) | inside(x,pivot);   ///pivot will be inside
   var flat_above := set x <- flatten(owners_inside) | outside(x,pivot);
@@ -533,7 +611,7 @@ var pivot_f;
 whole_f,fringe,pivot_f := GordonRamseyThemFringes(owners_inside, pivot);
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////
-// assume flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + flatten({pivot});
+// assume flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflivot(owner, pivot);
 //   assert reveal froglet(); froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe);
 //       return;
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1270,7 +1348,7 @@ lemma {:resource_limit 70000000}  {:timeLimit 20} splitOwnersAroundPivot(part : 
   //FUCK,. shoudl this be a function?  or indeed series of functions?
   requires part.Ready()
   requires pivot.Ready()
-  requires strictlyInside(part, pivot)
+  requires strictlyInside(part, pivot) //hmnmm
 
   ensures AllReady(allInside)
   ensures AllReady(allOutside)
@@ -1699,7 +1777,8 @@ lemma {:timeLimit 60} recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
   ensures flatten(oo) <= m.m.Keys
   ensures sp == flatten(mapThruKlon(oo, m))
   ensures AllReady(sp)
-//ensures (exists x <- oo | inside(x, m.o) :: (m.m[x] in sp) && inside(m.m[x],m.c))
+  ensures (exists x <- oo :: inside(x, m.o)) ==>
+     (exists x <- oo :: inside(x, m.o) && (x in m.m.Keys) && (m.m[x] in sp) && inside(m.m[x],m.c))
 
 {
   //     var x :=  {set o : Object <- oo, ooo <- recOwners(o) :: ooo};
@@ -1839,18 +1918,22 @@ lemma {:timeLimit 60} recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
 
 
 
-lemma {:verify false} {:timeLimit 50} insideThruKlon(below : Owner, above : Owner, m : Klon) returns (selow : Owner,  sbove : Owner)
+lemma {:timeLimit 50} insideThruKlon(below : Owner, above : Owner, m : Klon) returns (selow : Owner,  sbove : Owner)
   decreases allAMFOs(below)
   requires AllReady(below)
   requires AllReady(above)
 
   requires AllReady(flatten(below))
   requires m.o.Ready()
-  requires flatten(below) >= m.o.AMFO
+  requires flatten(below) >= m.o.AMFO           //hmm
+  requires exists x <- below :: inside(x, m.o)  //hmm
+  requires xbi: exists x <- below :: inside(x, m.o)  //hmm
+
 
   requires AllReady(flatten(above))
   requires m.o.Ready()
-  requires flatten(above) >= m.o.AMFO
+  requires flatten(above) >= m.o.AMFO           //hmm
+  requires exists x <- above :: inside(x, m.o)  //hmm
 
   requires klonReady(m)
   requires klonCalid(m)
@@ -1864,11 +1947,11 @@ lemma {:verify false} {:timeLimit 50} insideThruKlon(below : Owner, above : Owne
   var left := recSplatten(below, m);
   var rift := recSplatten(above, m);
 
-  var li,lo,lb,lf := tiredOfSleeping(left, pivot);
+  var li,lo,lb,lf := tiredOfSleeping(left, pivot) by { reveal xbi; assert exists x <- below :: inside(x, m.o); } //hmm
   var ri,ro,rb,rf := tiredOfSleeping(rift, pivot);
 
-  assert flatten(left) == flatten(lo) + lb + flatten(lf) + flatten({pivot});
-  assert flatten(rift) == flatten(ro) + rb + flatten(rf) + flatten({pivot});
+  assert flatten(left) == flatten(lo) + lb + flatten(lf) + pflivot(left, pivot);
+  assert flatten(rift) == flatten(ro) + rb + flatten(rf) + pflivot(rift, pivot);
 
   assert flatten(lo) >= flatten(ro);
   assert lb == rb;
