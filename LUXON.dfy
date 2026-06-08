@@ -752,10 +752,11 @@ lemma  FLAT_LIVERATUIB(li : Owner, lo : Owner, lb : Owner, lf : Owner,
   assert flatten(lf) >= flatten(rf);
   assert (pflivot(left, pivot) >= pflivot(right,pivot));
 
-  assert flatten(left)  == flatten(lo) + lb + flatten(lf) + pflivot(left,  pivot);
-  assert flatten(right) == flatten(ro) + rb + flatten(rf) + pflivot(right, pivot);
+  assert flatten(left)  == flatten(lo) + lb + flatten(lf) + pflinge(li, pivot) + pflivot(left,  pivot);
+  assert flatten(right) == flatten(ro) + rb + flatten(rf) + pflinge(ri, pivot) + pflivot(right, pivot);
 
-   assert ((flatten(lo) >= flatten(ro)) && (lb >= rb) && (flatten(lf) >= flatten(rf)) && (pflivot(left, pivot) >= pflivot(right,pivot)) );
+   assert (&& (flatten(lo) >= flatten(ro)) && (lb >= rb) && (flatten(lf) >= flatten(rf))
+          && (pflinge(li, pivot) >= pflinge(ri, pivot)) && (pflivot(left, pivot) >= pflivot(right,pivot)) );
 }
 
 
