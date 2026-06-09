@@ -1,6 +1,6 @@
 //include "Ownership-Recursive.dfy"
 include "Ownership-Parallel.dfy"
-
+include "Context.dfy"
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////
 //   assert flatten(owner) == flatten(owners_outside) + flatten(owners_inside);
@@ -17,6 +17,149 @@ include "Ownership-Parallel.dfy"
 //   return;
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+lemma VMapEQNEQ<K,V>(a : K, b : K, m : vmap<K,V>)
+ requires a in m.Keys
+ requires b in m.Keys
+  ensures (a == b) <==> (m[a] == m[b])
+{}
+
+lemma MTKEQNEQ(a : Owner, b : Owner, m : Klon)
+  requires a <= m.m.Keys
+  requires b <= m.m.Keys
+   ensures (a == b)  ==> (mapThruKlon(a,m) == mapThruKlon(b,m))
+   ensures (a == b) <==  (mapThruKlon(a,m) == mapThruKlon(b,m))
+   ensures (a == b) <==> (mapThruKlon(a,m) == mapThruKlon(b,m))
+{ assert AllMapEntriesAreUnique(m.m);
+  if (mapThruKlon(a,m) == mapThruKlon(b,m))
+   {
+      var mTKa := mapThruKlon(a,m);
+      var mBKa := mapBackKlon(mTKa,m);
+      var mTKb := mapThruKlon(b,m);
+      var mBKb := mapBackKlon(mTKb,m);
+      assert mTKa == mTKb;
+      assert mBKa == mBKb == a == b;
+   }
+ }
+
+
+method {:isolate_assertions} {:verify true} ownerAndBoundViaFringe(k : Object, m' : Klon) returns (rowner : Owner, rbound : Owner)
+  requires k !in m'.m.Keys
+  requires strictlyInside(k, m'.o)
+  requires klonReady(m')
+  requires klonCalid(m')
+  requires COK(k, m'.oHeap)   requires COKA: COK(k, m'.oHeap)
+  requires m'.ownersInKlown(k)
+//NOENSURES   ensures myBoundsOK(rowner, rbound)
+{
+  var owner := k.owner;
+  var bound := k.bound;
+
+  assert myBoundsOK(owner, bound);
+
+  var oin, oout, oflatb, ofringe := Zowner(owner, m'.o);
+  var bin, bout, bflatb, bfringe := Zowner(bound, m'.c);
+
+  rowner := owner;
+  rbound := bound;
+}
+
+
+
+method {:isolate_assertions} {:verify true} ownerAndBoundForClone(k : Object, m' : Klon) returns (rowner : Owner, rbound : Owner)
+  requires k !in m'.m.Keys
+  requires strictlyInside(k, m'.o)
+  requires klonReady(m')
+  requires klonCalid(m')
+  requires COK(k, m'.oHeap)   requires COKA: COK(k, m'.oHeap)
+  requires m'.ownersInKlown(k)
+
+//NOENSURES   ensures myBoundsOK(rowner, rbound)
+{
+  assert myBoundsOK(k.owner, k.bound);
+
+  assert forall o <- k.owner :: klonLine(o, m'.m[o], m');
+
+  forall o <- k.owner ensures (true) {
+      assert klonLine(o, m'.m[o], m');
+      assert klonIdentity(o, m'.m[o], m');
+      assert myBoundsOK(o.owner, o.bound);
+
+      if (o == m'.o)
+         {
+           assert o != m'.m[o];
+           assert m'.m[o] == m'.c;
+           assert m'.m[o].owner == m'.clowner;
+           assert m'.m[o].bound == m'.clbound;
+
+           assert (flatten(m'.m[o].owner) >= flatten(m'.m[o].bound));
+           assert ( forall o <- m'.m[o].owner :: flatten(o.ownerBound()) >= flatten(m'.m[o].bound) );
+           assert myBoundsOK(m'.m[o].owner, m'.m[o].bound);
+
+          assert mapThruKlon(o.ownerBound(), m') == m'.m[o].ownerBound();
+         }
+      else if (outside(o, m'.o))
+         {
+           assert o == m'.m[o];
+
+           assert (flatten(m'.m[o].owner) >= flatten(m'.m[o].bound));
+           assert (forall o <- m'.m[o].owner :: flatten(o.ownerBound()) >= flatten(m'.m[o].bound));
+           assert myBoundsOK(m'.m[o].owner, m'.m[o].bound);
+
+           assert mapThruKlon(o.ownerBound(), m') == m'.m[o].ownerBound();
+         }
+      else
+        {
+          assert strictlyInside(o, m'.o);
+          assert o != m'.o;
+          assert o != m'.m[o];
+          assert mapThruKlon(o.owner,m') == m'.m[o].owner;
+          assert mapThruKlon(o.bound,m') == m'.m[o].bound;
+
+          MTKEQNEQ(o.owner, o.bound, m');
+          assert (o.owner == o.bound) <==> (mapThruKlon(o.owner,m') == mapThruKlon(o.bound,m'));
+
+          if (o.owner == o.bound) {
+              assert (mapThruKlon(o.owner,m') == mapThruKlon(o.bound,m'));
+              assert o.ownerBound() == {o};
+              assert m'.m[o].ownerBound() == {m'.m[o]};
+          } else {
+              assert (o.owner != o.bound);
+              assert (mapThruKlon(o.owner,m') != mapThruKlon(o.bound,m'));//???
+              assert o.ownerBound() == o.bound; //???
+              assert m'.m[o].ownerBound() == m'.m[o].ownerBound();
+          }
+
+           assert (flatten(m'.m[o].owner) >= flatten(m'.m[o].bound)); //???
+           assert (forall o <- m'.m[o].owner :: flatten(o.ownerBound()) >= flatten(m'.m[o].bound));
+           assert myBoundsOK(m'.m[o].owner, m'.m[o].bound);
+
+          assert mapThruKlon(o.ownerBound(), m') == m'.m[o].ownerBound();
+
+        } //end if/elseif/else
+
+  } //end forall
+
+
+return;
+
+
+  rowner := mapThruKlon(k.owner, m');
+  rbound := mapThruKlon(k.bound, m');
+
+  var RSowner := recSplatten(k.owner, m');
+  var RSbound := recSplatten(k.bound, m');
+
+  assert RSowner == flatten(rowner);
+  assert RSbound == flatten(rbound);
+
+  assert RSowner >= RSbound;
+
+  assert (flatten(rowner) >= flatten(rbound));
+  assert (forall o <- rowner :: flatten(o.ownerBound()) >= flatten(rbound));
+  assert myBoundsOK(rowner, rbound);
+
+
+}
 
 
 //{:timeLimit 30} {:timeLimit 60}
@@ -590,7 +733,7 @@ assert forall w <- whole_f :: outside(w,pivot);
   }
 
 
-opaque predicate froglet(owner : Owner, pivot : Object, owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
+opaque predicate  froglet(owner : Owner, pivot : Object, owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
   { flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot) }
   //flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot) //sat 7 Jun
 
@@ -711,6 +854,26 @@ lemma flatten_monotonic(a : Owner, b : Owner)
    ensures (a > b) ==> flatten(a) >= flatten(b)
 {}
 
+
+
+lemma  FROG_DISJOINT(li : Owner, lo : Owner, lb : Owner, lf : Owner,
+                 left : Owner, pivot : Object)
+                    requires left  == (li + lo + lb + lf + pflivot(left, pivot) )
+  requires froglet(left, pivot,li,lo,lb,lf)
+  requires frogbelow(lb, li, pivot)
+{
+  reveal froglet(), frogbelow();
+
+assert lb == set x <- flatten(li - {pivot}) | inside(x,pivot);
+assert lf == set x <- flatten(li - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo;
+
+assert forall b <- lb :: inside(b,pivot);
+assert forall f <- lf :: outside(f,pivot);
+
+  assert lb !! lf;
+}
+
+
 lemma  NAKED_LIBERATION(li : Owner, lo : Owner, lb : Owner, lf : Owner,
                  ri : Owner, ro : Owner, rb : Owner, rf : Owner,
                  left : Owner, right : Owner, pivot : Object)
@@ -728,14 +891,17 @@ lemma  NAKED_LIBERATION(li : Owner, lo : Owner, lb : Owner, lf : Owner,
 lemma  FLAT_LIVERATUIB(li : Owner, lo : Owner, lb : Owner, lf : Owner,
                  ri : Owner, ro : Owner, rb : Owner, rf : Owner,
                  left : Owner, right : Owner, pivot : Object)
-                    requires froglet(left, pivot,li,lo,lb,lf)
-                    requires froglet(right,pivot,ri,ro,rb,rf)
+  requires froglet(left, pivot,li,lo,lb,lf)
+  requires froglet(right,pivot,ri,ro,rb,rf)
+  requires frogbelow(lb, li, pivot)
+  requires frogbelow(rb, ri, pivot)
 
   requires ((li) >= (ri))
   requires ((lo) >= (ro))
   requires (lb >= rb)
   requires ((lf) >= (rf))
   requires (pflivot(left, pivot) >= pflivot(right,pivot))
+  requires (pflinge(li, pivot) >= pflinge(ri, pivot))
    ensures (flatten(left) >= (right))
 {
   reveal froglet();
@@ -743,6 +909,7 @@ lemma  FLAT_LIVERATUIB(li : Owner, lo : Owner, lb : Owner, lf : Owner,
   flatten_monotonic(lo,ro);
   flatten_monotonic(lb,rb);
   flatten_monotonic(lf,rf);
+  flatten_monotonic(pflinge(li, pivot),pflinge(ri, pivot));
   flatten_monotonic(pflivot(left, pivot),pflivot(right, pivot));
 
 
@@ -750,6 +917,7 @@ lemma  FLAT_LIVERATUIB(li : Owner, lo : Owner, lb : Owner, lf : Owner,
   assert flatten(lo) >= flatten(ro);
   assert flatten(lb) >= flatten(rb);
   assert flatten(lf) >= flatten(rf);
+  assert (pflinge(li, pivot) >= pflinge(ri, pivot));
   assert (pflivot(left, pivot) >= pflivot(right,pivot));
 
   assert flatten(left)  == flatten(lo) + lb + flatten(lf) + pflinge(li, pivot) + pflivot(left,  pivot);
@@ -760,7 +928,80 @@ lemma  FLAT_LIVERATUIB(li : Owner, lo : Owner, lb : Owner, lf : Owner,
 }
 
 
-lemma DaysOfOpenHand2(left : Owner, right : Owner, pivot : Object)
+
+
+lemma LIVE_FLATRATUIB(li : Owner, lo : Owner, lb : Owner, lf : Owner,
+                 ri : Owner, ro : Owner, rb : Owner, rf : Owner,
+                 left : Owner, right : Owner, pivot : Object)
+  requires froglet(left, pivot,li,lo,lb,lf)
+  requires froglet(right,pivot,ri,ro,rb,rf)
+  requires frogbelow(lb, li, pivot)
+  requires frogbelow(rb, ri, pivot)
+
+  requires (flatten(left) >= flatten(right))
+  //  ensures ((li) >= (ri))
+  //  ensures ((lo) >= (ro))
+  //  ensures (lb >= rb)
+  //  ensures ((lf) >= (rf))
+  //  ensures (pflivot(left, pivot) >= pflivot(right,pivot))
+  //  ensures (pflinge(li, pivot) >= pflinge(ri, pivot))
+{
+  reveal froglet(), frogbelow();
+  // flatten_monotonic(li,ri);
+  // flatten_monotonic(lo,ro);
+  // flatten_monotonic(lb,rb);
+  // flatten_monotonic(lf,rf);
+  // flatten_monotonic(pflinge(li, pivot),pflinge(ri, pivot));
+  // flatten_monotonic(pflivot(left, pivot),pflivot(right, pivot));
+
+     assert (flatten(left) >= flatten(right));
+
+  //assert forall x <- flatten(right) :: x in flatten(left);
+
+  assert flatten(left)  == flatten(lo) + lb + flatten(lf) + pflinge(li, pivot) + pflivot(left,  pivot);
+  assert flatten(right) == flatten(ro) + rb + flatten(rf) + pflinge(ri, pivot) + pflivot(right, pivot);
+
+  assert flatten(lo) + lb + flatten(lf) + pflinge(li, pivot) + pflivot(left,  pivot) >= flatten(lo) + lb + flatten(lf) + pflinge(li, pivot) + pflivot(left,  pivot);
+
+  var FL := flatten(lo) + lb + flatten(lf) + pflinge(li, pivot) + pflivot(left,  pivot);
+  var FR := flatten(ro) + rb + flatten(rf) + pflinge(ri, pivot) + pflivot(right, pivot);
+
+  assert FL == flatten(left);
+  assert FR == flatten(right);
+  assert FL >= FR;
+
+  // assert forall x <- flatten(right) :: x in flatten(left);
+  // assert forall x <- FR :: x in flatten(left);
+  // assert forall x <- flatten(right) :: x in FL;
+  // assert forall x <- FR :: x in FL;
+
+//
+//   assert FL >= FR by
+//    {
+//      assert FL == flatten(left);
+//      assert FR == flatten(right);
+//      assert (flatten(left) >= (right));
+//      assert FL >= FR;
+//    }
+
+  //        (flatten(ro) + rb + flatten(rf) + pflinge(ri, pivot) + pflivot(right, pivot));
+
+  assert flatten(li) >= flatten(ri);
+  assert flatten(lo) >= flatten(ro);
+  assert flatten(lb) >= flatten(rb);
+  assert flatten(lf) >= flatten(rf);
+  assert (pflinge(li, pivot) >= pflinge(ri, pivot));
+  assert (pflivot(left, pivot) >= pflivot(right,pivot));
+
+
+
+  //  assert (|| (flatten(lo) >= flatten(ro)) || (lb >= rb) || (flatten(lf) >= flatten(rf))
+  //         || (pflinge(li, pivot) >= pflinge(ri, pivot)) || (pflivot(left, pivot) >= pflivot(right,pivot)) );
+}
+
+
+
+lemma {:verify false} DaysOfOpenHand2(left : Owner, right : Owner, pivot : Object)
 ///this is totally brokwn.
 ///BUT see "FLAT_LIVERATUIB" above. that shows things will all work, doesn't it?
 ///
