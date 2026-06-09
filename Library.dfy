@@ -751,7 +751,6 @@ predicate AllMapEntriesAreUnique2<K,V(==)>(m : map<K,V>)
 {
     reveal UniqueMapEntry();
     forall i <- m.Keys :: UniqueMapEntry(m, i)
-  //forall i <- m.Keys :: UniqueMapEntry(m, i, m[i])
 }
 
 lemma AMEAU1<K,V>(m : map<K,V>)
@@ -769,15 +768,15 @@ lemma AMEAU2<K,V>(m : map<K,V>)
 
 function invert<K(==),V(==)>(m : vmap<K,V>) : (n : vmap<V,K>)
     requires AllMapEntriesAreUnique(m)
-     ensures  AllMapEntriesAreUnique(n)
-     ensures  n.Keys   <= m.Values
-     ensures  n.Keys   >= m.Values
-     ensures  n.Keys   == m.Values
-     ensures  n.Values <= m.Keys
-     ensures  n.Values >= m.Keys
-     ensures  n.Values == m.Keys
-     ensures  forall k <- m.Keys :: n[ m[k] ] == k
-     ensures  forall k <- n.Keys :: m[ n[k] ] == k
+     ensures AllMapEntriesAreUnique(n)
+     ensures n.Keys   <= m.Values
+     ensures n.Keys   >= m.Values
+     ensures n.Keys   == m.Values
+     ensures n.Values <= m.Keys
+     ensures n.Values >= m.Keys
+     ensures n.Values == m.Keys
+     ensures forall k <- m.Keys :: n[ m[k] ] == k
+     ensures forall k <- n.Keys :: m[ n[k] ] == k
 {
       reveal UniqueMapEntry();
       assert forall i <- m.Keys :: UniqueMapEntry(m, i);
