@@ -1,7 +1,7 @@
 include "Xlone.dfy"
 
 include "Klon-Lemmata.dfy"
-include "TRUMP.dfy"
+include "LUXON.dfy"
 
 
 //{:timeLimit 300}
@@ -240,7 +240,7 @@ print "CCC 1001 HERE! WEESA HERE!\n";
 //
 //   assert m.SuperCalidFragilistic();
 // }
-
+  assert myBoundsOK(k.owner, k.bound);
   assert (flatten(k.owner) >= flatten(k.bound));
   assert (forall o <- k.owner :: flatten(o.ownerBound()) >= flatten(k.bound));
   assert myBoundsOK(k.owner,k.bound);
@@ -250,20 +250,19 @@ print "CCC 1001 HERE! WEESA HERE!\n";
 //var rbound := computeOwnerForClone(k.bound, rm);
 assert AllReady(rowner);
 //  var rbound := proposeBounds(rowner);
-var rbound := mapThruKlon(k.bound, rm);
+var rbound := mapThruKlon(k.bound, rm); //Err
 
-ghost var XXX := insideThruKlon(k.owner, k.bound, rm);
-assert XXX;
+// ghost var XXX := insideThruKlon(k.owner, k.bound, rm);
+// assert XXX;
 
-  assert (flatten(rowner) >= flatten(rbound));
-  assert (forall o <- rowner :: flatten(o.ownerBound()) >= flatten(rbound));
+  assert (flatten(rowner) >= flatten(rbound));  //!!!ERR
+  assert (forall o <- rowner :: flatten(o.ownerBound()) >= flatten(rbound)); //!!!ERR
   assert myBoundsOK(rowner,rbound);
 
 
 
 
 
-assert myBoundsOK(rowner,rbound);
   var context := rm.hns();
 
 
@@ -653,9 +652,9 @@ MappedBounds(k,v,rm);
 //
 //
 // }
-   assert klonBound(k,v,rm);
+   assert klonBound(k,v,rm);   //Err
    assert klonModes(k,v,rm);
-   assert klonGeometry(k,v,rm);
+   assert klonGeometry(k,v,rm); //Err
    assert klonIdentity(k,v,rm);
 
    assert klonLine(k,v,rm);
@@ -1075,7 +1074,7 @@ assert klonCalid(xm);
   assert klonReady(xm);
   assert klonCalid(xm);
   assert xm.objectInKlown(k);
-  assert COK(k,xm.oHeap);
+  assert COK(k,xm.oHeap);  //ERR?
   assert v.Context(xm.hns({v}));
   assert inside(k, xm.o);
   assert xm.m[k] == v;
