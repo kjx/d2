@@ -177,17 +177,14 @@ lemma Zowner(owner : Owner, pivot : Object)
 
   ensures fringe     == set x <- flatten(owners_inside - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo
 
-  // ensures flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot) //sat 7 Jun
-  // // ensures reveal froglet(); froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe)
-  // // ensures flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflivot(owner, pivot)
-
   ensures frogbelow(flat_below, owners_inside, pivot)
   ensures reveal frogbelow();  flat_below == set x <- flatten(owners_inside - {pivot}) | inside(x,pivot)
-  ensures fringe     == set x <- flatten(owners_inside - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo
   ensures flat_below <= flatten(owners_inside)
 
   ensures froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe)
   ensures reveal froglet(); flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot)
+
+  ensures frogdisj(owner, pivot, owners_inside, owners_outside, flat_below, fringe)
 {
   ReadyFlatten(owner);
 
@@ -202,9 +199,9 @@ lemma Zowner(owner : Owner, pivot : Object)
     flat_below := {}; fringe := {};
     assert owners_outside == owner;
     assert flatten(owner) == flatten(owners_outside); //8 jun 2026
-    assert flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + {} + pflivot(owner, pivot); //sat 8 June 2026
+    assert flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + {} + pflivot(owner, pivot); //mon 8 June 2026
     assert pflinge(owners_inside, pivot) == {};
-    assert flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot) + pflivot(owner, pivot); //sat 8 June 2026
+    assert flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot) + pflivot(owner, pivot); //mon 8 June 2026
     assert reveal froglet(); froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe);
 
     assert reveal frogbelow(); frogbelow(flat_below, owners_inside, pivot);
@@ -286,7 +283,9 @@ lemma Zowners_inside(owners_inside : Owner, owners_outside : Owner, owner : Owne
   ensures reveal frogbelow(); frogbelow(flat_below, owners_inside, pivot)
 
   ensures froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe)
-  ensures reveal froglet(); flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot)
+  ensures flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot)
+
+  ensures frogdisj(owner, pivot, owners_inside, owners_outside, flat_below, fringe)
 {
   ReadyFlatten(owner);
   var owners_inside_nopivot := owners_inside - {pivot};
@@ -439,7 +438,7 @@ assert forall w <- whole_f :: outside(w,pivot);
 
 
   assert flatten(owner) == flatten(owners_outside) + flatten(owners_inside) by { reveal FLOOI; }
-  assert flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot)
+  assert F_ALL: flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot)
     by {
          reveal FLOOI;
          assert flatten(owner) == flatten(owners_outside) + flatten(owners_inside);
@@ -449,12 +448,68 @@ assert forall w <- whole_f :: outside(w,pivot);
          assert flatten(owner) == flatten(owners_outside) + flat_below +  flatten(fringe) + pflinge(owners_inside, pivot)    + pflivot(owner, pivot);
         }
 
-//  assert flatten(owner) == flatten(owners_outside) + (flat_below + (flatten(fringe) + pflinge(owners_inside, pivot) )) + pflivot(owner, pivot);
-  assert flatten(owner) == flatten(owners_outside) +  flat_below +  flatten(fringe) + pflinge(owners_inside, pivot)    + pflivot(owner, pivot);
-  assert froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe) by { reveal froglet(); }
-  assert froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe);
+
+  assert        flatten(owner) == flatten(owners_outside) + (flat_below + (flatten(fringe) + pflinge(owners_inside, pivot) )) + pflivot(owner, pivot) by { reveal F_ALL; }
+  assert FRG1: (flatten(owner) == flatten(owners_outside) +  flat_below +  flatten(fringe) + pflinge(owners_inside, pivot)    + pflivot(owner, pivot));
+  assert FRG2: (fringe == (set x <- flatten(owners_inside - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo));
+  assert FRG3: (flat_below == set x <- flatten(owners_inside - {pivot}) | inside(x,pivot));
+
 
   assert frogbelow(flat_below, owners_inside, pivot) by { reveal FROG_BELOW; }
+
+  assert forall b <- flat_below :: inside(b,pivot);
+  assert forall b <- flat_below-{pivot} :: strictlyInside(b,pivot);
+
+  assert forall f <- fringe                                     :: outside(f,pivot);
+  assert forall f <-        owners_outside                      :: outside(f,pivot);
+  assert forall f <-                              (pivot.owner) :: outside(f,pivot);
+
+  assert (owner > {});
+  assert pflinge(owner,pivot) == flatten(pivot.owner);
+  assert forall f <-                       pflinge(owner,pivot) :: outside(f,pivot);
+  // var allOfEm := fringe+owners_outside+pflinge(owner,pivot);
+  forall f <- (fringe+owners_outside+pflinge(owner,pivot)) ensures ( outside(f,pivot)) {
+    if (f in fringe) { assert outside(f,pivot); }
+    else if (f in owners_outside) { assert outside(f,pivot); }
+    else { assert f in pflinge(owner,pivot); assert outside(f,pivot); }
+  }
+
+  FlattenOutsideFlatten(fringe,pivot);
+  assert forall f <- flatten(fringe)                            :: outside(f,pivot);
+  FlattenOutsideFlatten(owners_outside,pivot);
+  assert forall f <-        flatten(owners_outside)             :: outside(f,pivot);
+  FlattenOutsideFlatten(pivot.owner,pivot);
+  assert forall f <-                       flatten(pivot.owner) :: outside(f,pivot);
+  assert  pflinge(owner,pivot) <=  flatten(pivot.owner);
+  assert forall f <-                       pflinge(owner,pivot) :: outside(f,pivot);
+
+
+  assert (flat_below-{pivot}) !! (fringe+owners_outside+pflinge(owner,pivot));
+  assert (flat_below-{pivot}) !! flatten(fringe+owners_outside+pflinge(owner,pivot));
+
+  assert FRG4: (frogdisj(owner,pivot,owners_inside,owners_outside,flat_below,fringe));
+
+  assert froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe)
+     by { reveal froglet(), FRG1, FRG2, FRG3, FRG4;
+
+       assert (flatten(owner) == flatten(owners_outside) +  flat_below +  flatten(fringe) + pflinge(owners_inside, pivot)    + pflivot(owner, pivot));
+       assert (fringe == (set x <- flatten(owners_inside - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo));
+       assert (flat_below == set x <- flatten(owners_inside - {pivot}) | inside(x,pivot));
+       assert (frogdisj(owner,pivot,owners_inside,owners_outside,flat_below,fringe));
+
+       assert
+         && (flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot))
+         && (fringe == (set x <- flatten(owners_inside - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo))
+         && (flat_below == set x <- flatten(owners_inside - {pivot}) | inside(x,pivot))
+         && (frogdisj(owner,pivot,owners_inside,owners_outside,flat_below,fringe))
+         ;
+
+      reveal froglet();
+
+       assert  froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe);
+      }
+  assert (flatten(owner) == flatten(owners_outside) +  flat_below +  flatten(fringe) + pflinge(owners_inside, pivot)    + pflivot(owner, pivot));
+  assert froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe);
   }
 
 
@@ -504,11 +559,58 @@ lemma SETLREQ(left : Owner, right : Owner)
    ensures left == right
 {}
 
+lemma GET_FROGLET(owner : Owner, pivot : Object, owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
+  requires (flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot))
+  requires (fringe == (set x <- flatten(owners_inside - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo))
+  requires (flat_below == set x <- flatten(owners_inside - {pivot}) | inside(x,pivot))
+  requires (frogdisj(owner,pivot,owners_inside,owners_outside,flat_below,fringe))
+  ensures froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe)
+{
+       reveal froglet();
+       assert (flatten(owner) == flatten(owners_outside) +  flat_below +  flatten(fringe) + pflinge(owners_inside, pivot)    + pflivot(owner, pivot));
+       assert (fringe == (set x <- flatten(owners_inside - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo));
+       assert (flat_below == set x <- flatten(owners_inside - {pivot}) | inside(x,pivot));
+       assert (frogdisj(owner,pivot,owners_inside,owners_outside,flat_below,fringe));
+
+       assert
+         && (flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot))
+         && (fringe == (set x <- flatten(owners_inside - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo))
+         && (flat_below == set x <- flatten(owners_inside - {pivot}) | inside(x,pivot))
+         && (frogdisj(owner,pivot,owners_inside,owners_outside,flat_below,fringe))
+         ;
+
+      reveal froglet();
+
+      if (froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe))
+       {
+          assert froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe);
+       }
+       else {
+        assume froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe);
+        //assert false;
+        }
+}
+
+predicate
+froglet(owner : Owner, pivot : Object, owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
+  { && (flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot))
+    && (fringe == (set x <- flatten(owners_inside - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo))
+    && (flat_below == set x <- flatten(owners_inside - {pivot}) | inside(x,pivot))
+    && (frogdisj(owner,pivot,owners_inside,owners_outside,flat_below,fringe))
+  }
+
+lemma FROGLET_GETZ_FRINGE(li : Owner, lo : Owner, lb : Owner, lf : Owner, left : Owner, pivot : Object)
+  requires froglet(left, pivot,li,lo,lb,lf)
+  {
+    reveal froglet(left, pivot,li,lo,lb,lf);
+    assert froglet(left, pivot,li,lo,lb,lf);
+
+    assert lf == set x <- flatten(li - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo;
+  }
 
 
-opaque predicate  froglet(owner : Owner, pivot : Object, owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
+opaque predicate old_froglet(owner : Owner, pivot : Object, owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
   { flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot) }
-  //flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot) //sat 7 Jun
 
 
 lemma SATAN(owner : Owner, owners_outside : Owner, owners_inside : Owner, flat_below : Owner, fringe : Owner, pivot : Object)
@@ -628,21 +730,27 @@ lemma flatten_monotonic(a : Owner, b : Owner)
 {}
 
 
+predicate frogdisj(owner : Owner, pivot : Object, owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
+ {
+   (flat_below-{pivot}) !! ((flatten(owners_outside) + flatten(fringe) + pflinge(owners_inside, pivot)) - {pivot})
+ }
 
 lemma  FROG_DISJOINT(li : Owner, lo : Owner, lb : Owner, lf : Owner,
                  left : Owner, pivot : Object)
-                    requires left  == (li + lo + lb + lf + pflivot(left, pivot) )
   requires froglet(left, pivot,li,lo,lb,lf)
   requires frogbelow(lb, li, pivot)
+  requires frogdisj(left,pivot,li,lo,lb,lf)
 {
   reveal froglet(), frogbelow();
+  assert froglet(left, pivot,li,lo,lb,lf);
+  assert lb == set x <- flatten(li - {pivot}) | inside(x,pivot);
 
-assert lb == set x <- flatten(li - {pivot}) | inside(x,pivot);
-assert lf == set x <- flatten(li - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo;
+  assert lf == set x <- flatten(li - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo
+   by { reveal froglet(left, pivot,li,lo,lb,lf);
+        assert froglet(left, pivot,li,lo,lb,lf); }
 
-assert forall b <- lb :: inside(b,pivot);
-assert forall f <- lf :: outside(f,pivot);
-
+  assert forall b <- lb ::  inside(b,pivot);
+  assert forall f <- lf :: outside(f,pivot);
   assert lb !! lf;
 }
 
@@ -759,26 +867,34 @@ lemma LIVE_FLATRATUIB(li : Owner, lo : Owner, lb : Owner, lf : Owner,
 
   //        (flatten(ro) + rb + flatten(rf) + pflinge(ri, pivot) + pflivot(right, pivot));
 
-  assert flatten(li) >= flatten(ri);
-  assert flatten(lo) >= flatten(ro);
-  assert flatten(lb) >= flatten(rb);
-  assert flatten(lf) >= flatten(rf);
-  assert (pflinge(li, pivot) >= pflinge(ri, pivot));
-  assert (pflivot(left, pivot) >= pflivot(right,pivot));
-
-
+  // // assert flatten(li) >= flatten(ri);
+  // // assert flatten(lo) >= flatten(ro);
+  // // assert flatten(lb) >= flatten(rb);
+  // // assert flatten(lf) >= flatten(rf);
+  // // assert (pflinge(li, pivot) >= pflinge(ri, pivot));
+  // // assert (pflivot(left, pivot) >= pflivot(right,pivot));
 
   //  assert (|| (flatten(lo) >= flatten(ro)) || (lb >= rb) || (flatten(lf) >= flatten(rf))
   //         || (pflinge(li, pivot) >= pflinge(ri, pivot)) || (pflivot(left, pivot) >= pflivot(right,pivot)) );
 }
 
 
+lemma FlattenOutsideFlatten(sider : Owner, pivot : Object)
+  requires AllReady(sider)
+  requires pivot.Ready()
+  requires forall s <- sider :: outside(s,pivot)
+   ensures forall s <- sider, x <- s.AMFO :: outside(x,pivot)
+   ensures forall x <- flatten(sider) :: outside(x,pivot)
+{}
 
-lemma FlattenOutsideFlatten(sider : Object, pivot : Object)
+
+
+lemma FlattenObjectFlatten(sider : Object, pivot : Object)
   requires sider.Ready()
   requires pivot.Ready()
   requires outside(sider,pivot)
    ensures forall x <- sider.AMFO :: outside(x,pivot)
+   ensures forall x <- flatten({sider}) :: outside(x,pivot)
 {}
 
 
