@@ -2291,7 +2291,7 @@ lemma OH_FUCK_WHAT_HAVE_I_DONE(oo : Owner, m : Klon) returns (sp : Owner)
 
 
 
-lemma {:timeLimit 60} recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
+lemma {:timeLimit 30} recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
    ///predicts flatten(mapThruKlon(oo, m))
 
   decreases allAMFOs(oo)
@@ -2363,7 +2363,7 @@ lemma {:timeLimit 60} recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
     MINUS3(todo,todoHERE,{next});
     assert todoHERE == todo + {next};
 
-    assert oo == done + todoHERE;
+    assert oo == done + todo ;
     assert done !! {next} !! todo;
     assert oo == done + (todo + {next});
 
