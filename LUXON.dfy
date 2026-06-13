@@ -294,7 +294,7 @@ return;
 
 
 //{:timeLimit 30} {:timeLimit 60}
-lemma {:timeLimit 30}  Zowner(owner : Owner, pivot : Object)
+lemma {:timeLimit 60}  Zowner(owner : Owner, pivot : Object)
 //topology?  enfringement?  whatevs?
   returns (owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
 
@@ -1354,7 +1354,7 @@ forall x <- flatten(owners_inside_nopivot), xo <- x.owner ensures (whole_f == pi
 
 }//end GordonRamsey
 
-lemma {:timeLimit 15} FlattenFringeIsAllOutside(iwnrs : OWNR,  pivot : Object) returns (allInside : Owner, allOutside : Owner, fringe : Owner)
+lemma {:timeLimit 40} FlattenFringeIsAllOutside(iwnrs : OWNR,  pivot : Object) returns (allInside : Owner, allOutside : Owner, fringe : Owner)
    ///used in tiredOfSleeping... so need to worry
   //ensuress flatten(fringe) == allOutside
   //all iwnrs must all be strictlyInside pivot????
@@ -1856,10 +1856,10 @@ function fInside(ownrs : OWNR, pivot : Object) : (rv : Owner)
 { set x <- flatten(ownrs) | inside(x,pivot) }
 
 
-lemma {:timeLimit 60} recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
+lemma recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
    ///predicts flatten(mapThruKlon(oo, m))
 
-  decreases allAMFOs(oo)
+  decreases allAMFOs(oo), 10
   requires AllReady(oo)
   requires klonReady(m)
   requires klonCalid(m)
@@ -1876,9 +1876,37 @@ lemma {:timeLimit 60} recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
   ensures forall x <- flatten(oo) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in sp)
   ensures forall x <- flatten(oo) | outside(x,m.o) ::  (m.m[x] == x) //  (m.m[x] in sp)
 {
+  var csp, cbelow, cabove, cabpvt, osp, obelow, oabove, oabpvt := recSplatten8(oo, m);
+
+  sp := csp;
+}
+
+lemma {:timeLimit 60} recSplatten8(oo : Owner, m : Klon) returns (csp : Owner, cbelow : Owner, cabove : Owner, cabpvt : Owner,
+                                                                  osp : Owner, obelow : Owner, oabove : Owner, oabpvt : Owner)
+   ///predicts flatten(mapThruKlon(oo, m))
+   ///o* is *original;  c* is clone?
+
+  decreases allAMFOs(oo), 5
+  requires AllReady(oo)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires oo <= m.m.Keys
+//requires exists x <- oo :: inside(x, m.o)
+
+  ensures flatten(oo) <= m.m.Keys
+  ensures csp == flatten(mapThruKlon(oo, m))
+  ensures AllReady(csp)
+  ensures (exists x <- oo :: inside(x, m.o)) ==>
+     (exists x <- oo :: inside(x, m.o) && (x in m.m.Keys) && (m.m[x] in csp) && inside(m.m[x],m.c))
+
+
+  ensures forall x <- flatten(oo) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp)
+  ensures forall x <- flatten(oo) | outside(x,m.o) ::  (m.m[x] == x) //  (m.m[x] in csp)
+{
   //     var x :=  {set o : Object <- oo, ooo <- recOwners(o) :: ooo};
 
-  sp := {};
+ csp := {}; cbelow := {}; cabove := {}; cabpvt := {};
+ osp := {}; obelow := {}; oabove := {}; oabpvt := {};
 
   var todo := oo;
   var done : Owner := {};
@@ -1890,26 +1918,33 @@ lemma {:timeLimit 60} recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
   assert flatten({}) == {};
   assert flatten(mapThruKlon((oo - todo), m)) == {};
 
-  assert sp == flatten(mapThruKlon((oo - todo), m));
+  assert csp == flatten(mapThruKlon((oo - todo), m));
   assert done == oo - todo == {}; assert done !! todo;
-  assert sp == flatten(mapThruKlon((done), m));
+  assert csp == flatten(mapThruKlon((done), m));
+  assert osp == flatten(done);
 
   while (todo > {})
     decreases todo
-    invariant sp == flatten(mapThruKlon((oo - todo), m))
+    invariant csp == flatten(mapThruKlon((oo - todo), m))
     invariant done == oo - todo
-    invariant sp == flatten(mapThruKlon((done), m))
+    invariant csp == flatten(mapThruKlon((done), m))
 //invariant exists x <- oo :: inside(x,v
     invariant done !! todo
 //invariant exists x <- (done + todo)     d1q:: inside(x, m.o)
-    invariant forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in sp)
-    invariant forall x <- done | outside(x,m.o) :: (m.m[x] in sp) && (m.m[x] == x)
+    invariant forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp)
+    invariant forall x <- done | outside(x,m.o) :: (m.m[x] in csp) && (m.m[x] == x)
 
-    invariant forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in sp)
-    invariant forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in sp)
+    invariant forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp)
+    invariant forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
 
+//    invariant csp == cbelow + cabove + cabpvt
+//    invariant osp == obelow + oabove + oabpvt
+//    invariant cbelow !! (cabove + cabpvt)
+//    invariant obelow !! (oabove + oabpvt)
+    invariant osp == flatten(done)
+    invariant osp == flatten(done)
   {
-    assert sp == flatten(mapThruKlon((oo - todo), m));
+    assert csp == flatten(mapThruKlon((oo - todo), m));
 
     var next :| next in todo;
     assert done == oo - todo ;
@@ -1982,11 +2017,12 @@ lemma {:timeLimit 60} recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
     MAPPEN_ONE(next,m);
     assert mapThruKlon({next}, m) == {m.m[next]} == {sext};
     assert flatten(mapThruKlon({next}, m)) == flatten({sext}) == ({sext} + fowner);
-    assert sp == flatten(mapThruKlon((done), m));
+    assert csp == flatten(mapThruKlon((done), m));
     assert (done+{next}) == (done)+({next});    FLATTEN_SUMS(done,{next},done+{next},m);
     assert (mapThruKlon((done+{next}), m)) == (mapThruKlon((done), m)) + (mapThruKlon(({next}), m));
-    assert flatten(mapThruKlon((done+{next}), m)) == flatten(mapThruKlon((done), m)) + flatten(mapThruKlon(({next}), m)) == sp + ({sext} + fowner);
-    sp := sp + ({sext} + fowner);
+    assert flatten(mapThruKlon((done+{next}), m)) == flatten(mapThruKlon((done), m)) + flatten(mapThruKlon(({next}), m)) == csp + ({sext} + fowner);
+    csp := csp + ({sext} + fowner);
+    osp := osp + flatten({next});
 
     assert oo == done + (todo + {next});
     assert done !! {next} !! todo;
@@ -1996,24 +2032,28 @@ lemma {:timeLimit 60} recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
     done := done + {next};
     assert oo == done + todo;
     assert done == oo - todo;
-    assert sp == flatten(mapThruKlon((done), m));
-    assert sp == flatten(mapThruKlon((oo - todo), m));
+    assert csp == flatten(mapThruKlon((done), m));
+    assert csp == flatten(mapThruKlon((oo - todo), m));
+    assert osp == flatten(done);
   }//end while
 
 
-  assert sp == flatten(mapThruKlon((oo - todo), m));
+  assert csp == flatten(mapThruKlon((oo - todo), m));
   assert oo == done + todo;
   assert done == oo - todo;
   assert todo == {}; assert done == oo;
-  assert sp == flatten(mapThruKlon(oo, m));
+  assert csp == flatten(mapThruKlon(oo, m));
+  assert osp == flatten(oo);
+
 
 
 //  assert exists x <- oo   | inside(x, m.o) :: inside(m.m[x], m.c);
-  assert forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in sp);
-  assert forall x <- done | outside(x,m.o) :: outside(m.m[x],m.c) && (m.m[x] in sp) && (m.m[x] == x);
+  assert forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp);
+  assert forall x <- done | outside(x,m.o) :: outside(m.m[x],m.c) && (m.m[x] in csp) && (m.m[x] == x);
 
-  assert forall x <- flatten(oo) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in sp);
-  assert forall x <- flatten(oo) | outside(x,m.o) ::  (m.m[x] == x); //(x in sp) &&
+  assert forall x <- flatten(oo) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp);
+  assert forall x <- flatten(oo) | outside(x,m.o) ::  (m.m[x] == x); //(x in csp) &&
+
 
   }//end recSplatteno
 
