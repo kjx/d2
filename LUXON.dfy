@@ -392,8 +392,8 @@ lemma NO_FROG_BELOW(flat_below : Owner, owners_inside : Owner, pivot : Object)
   //////////////////////////////////////////////////////////////////////////////
 
 
-//{:timeLimit 30} {:timeLimit 60}
-lemma Zowners_inside(owners_inside : Owner, owners_outside : Owner, owner : Owner, pivot : Object)
+
+lemma {:timeLimit 30} Zowners_inside(owners_inside : Owner, owners_outside : Owner, owner : Owner, pivot : Object)
 //topology?  enfringement?  whatevs?
   returns (flat_below : Owner, fringe : Owner)
 
@@ -563,7 +563,7 @@ assert forall w <- whole_f :: outside(w,pivot);
  assert flatten(owners_inside) == (flat_below +   (flatten(fringe) + pflinge(owners_inside, pivot) )  ) + pflivot(owner, pivot);
 
  assert BFPL: flatten(owners_inside) == (flat_below +   (flatten(fringe) + pflinge(owners_inside, pivot) )  ) + pflivot(owner, pivot);
-//  assert flatten(owners_inside) == ((set x <- flat_inside_nopivot | inside(x,pivot))  + (flatten(fringe) + pflinge(owners_inside, pivot) )  ) + pflivot(owner, pivot);
+// assert flatten(owners_inside) == ((set x <- flat_inside_nopivot | inside(x,pivot))  + (flatten(fringe) + pflinge(owners_inside, pivot) )  ) + pflivot(owner, pivot);
 
 
 
@@ -579,11 +579,9 @@ assert forall w <- whole_f :: outside(w,pivot);
         }
 
 
-//  assert   flatten(owner) == flatten(owners_outside) + (flat_below + (flatten(fringe) + pflinge(owners_inside, pivot) )) + pflivot(owner, pivot) by { reveal F_ALL; }
-  assume  (flatten(owner) == flatten(owners_outside) +  flat_below +  flatten(fringe) + pflinge(owners_inside, pivot)    + pflivot(owner, pivot));
-  assume  (fringe == (set x <- flatten(owners_inside - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo));
-  assume  (flat_below == set x <- flatten(owners_inside - {pivot}) | inside(x,pivot));
-
+  assert flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot)  by { reveal F_ALL; }
+  assert  (fringe == (set x <- flatten(owners_inside - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo));
+  assert  (flat_below == set x <- flatten(owners_inside - {pivot}) | inside(x,pivot));
 
   assert FRG1: (flatten(owner) == flatten(owners_outside) +  flat_below +  flatten(fringe) + pflinge(owners_inside, pivot)    + pflivot(owner, pivot));
   assert FRG2: (fringe == (set x <- flatten(owners_inside - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo));
@@ -742,7 +740,7 @@ lemma GET_FROGLET(owner : Owner, pivot : Object, owners_inside : Owner, owners_o
           assert froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe);
        }
        else {
-        assume froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe);
+        assert froglet(owner, pivot, owners_inside, owners_outside, flat_below, fringe);
         //assert false;
         }
 }
@@ -1855,7 +1853,7 @@ function fInside(ownrs : OWNR, pivot : Object) : (rv : Owner)
   requires AllReady(flatten(ownrs))
   requires pivot.Ready()
   ensures AllReady(rv)
-{ set x <- flatten(ownrs) | inside(x,pivot) } //(strictlyInside(x, pivot)) }
+{ set x <- flatten(ownrs) | inside(x,pivot) }
 
 
 lemma {:timeLimit 60} recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
