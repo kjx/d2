@@ -42,7 +42,8 @@ lemma MTKEQNEQ(a : Owner, b : Owner, m : Klon)
  }
 
 
-method {:isolate_assertions} {:verify true} ownerAndBoundViaFringe(k : Object, m' : Klon) returns (rowner : Owner, rbound : Owner)
+method {:isolate_assertions}  ownerAndBoundViaMeppy(k : Object, m' : Klon) returns (rowner : Owner, rbound : Owner)
+ //doesnt work, no surprise :-)
   requires k !in m'.m.Keys
   requires strictlyInside(k, m'.o)
   requires klonReady(m')
@@ -51,16 +52,146 @@ method {:isolate_assertions} {:verify true} ownerAndBoundViaFringe(k : Object, m
   requires m'.ownersInKlown(k)
 //NOENSURES   ensures myBoundsOK(rowner, rbound)
 {
+  reveal COK();
+  assert k.Ready();
   var owner := k.owner;
   var bound := k.bound;
 
   assert myBoundsOK(owner, bound);
+  assert (flatten(owner) >= flatten(bound));
+  assert (forall o <- owner :: flatten(o.ownerBound()) >= flatten(bound));
 
-  var oin, oout, oflatb, ofringe := Zowner(owner, m'.o);
-  var bin, bout, bflatb, bfringe := Zowner(bound, m'.c);
+   rowner := mapThruKlon(owner, m');
+   rbound := mapThruKlon(bound, m');
 
-  rowner := owner;
-  rbound := bound;
+//  assert myBoundsOK(rowner, rbound);
+
+}
+
+
+
+
+lemma super_meppy(oo : Owner, mb : Bound, m : Klon, rowner : Owner, rbound : Owner)
+//too good to bee true!
+ decreases allAMFOs(oo)
+  requires AllReady(oo)
+  requires AllReady(mb)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires oo <= m.m.Keys
+  requires mb <= m.m.Keys
+  requires (flatten(oo) >= flatten(mb))
+
+  requires rowner == mapThruKlon(oo, m)
+  requires rbound == mapThruKlon(mb, m)
+
+//  ensures (flatten(rowner) >= flatten(rbound))
+{
+  var foo := flatten(oo);
+  var fmb := flatten(mb);
+
+//ERR assert forall f : Object <- foo :: colinear(f.AMFO, m.o.AMFO);
+
+
+assert m.m.Keys >= foo >= fmb;
+var i := invert(m.m);
+assert i.Keys == m.m.Values;
+assert forall x <- m.m.Keys :: m.m[x] in i.Keys;
+
+//rememebr that (in this version at leat)
+//clone cannot (or will not) make new things inside the clone m.c that do not correspond to things in isde the origianl m.o
+
+   assert rowner == mapThruKlon(oo, m);
+   assert rbound == mapThruKlon(mb, m);
+
+   var frowner := recSplatten(oo, m);
+   var frbound := recSplatten(mb, m);
+
+   assert frowner == flatten(rowner);
+   assert frbound == flatten(rbound);
+
+
+//chop up however FOR today
+//HERE HERE HERE HERE HERE
+//   chopp up fowner & fbounf
+//   comare
+
+
+
+
+assert forall x <- foo | inside(x,m.o) :: inside(m.m[x],m.c);
+
+assert forall x <- foo | inside(m.m[x],m.c) :: inside(x,m.o);
+
+//ERR assert forall y <- frowner | inside(y,m.c) ::  y in m.m.Values; // inside(i[x],m.o);
+//
+// var foofrowner := set y <- frowner | y in m.m.Values && i[y] in foo;
+// assert foofrowner == frowner * (set x <- foo ::  m.m[x]);
+
+assert forall x <- foo | strictlyInside(x,m.o) :: strictlyInside(m.m[x],m.c);
+
+assert forall x <- foo | strictlyInside(x,m.o) :: m.m[x] in frowner;
+
+//ERR assert forall x <- foo :: m.m[x] in frowner;
+
+
+assert forall x <- foo | outside(x,m.o) :: m.m[x] == x;
+assert forall x <- foo | outside(x,m.o) :: outside(x,m.c);
+assert forall x <- foo | outside(m.m[x],m.c) :: outside(x,m.o);
+
+// assert forall y <- frowner | outside(y,m.c) && y in i.Keys :: outside(i[y],m.o);
+// assert forall y <- frowner | outside(y,m.c) && y !in i.Keys :: y in m.c.AMFO;
+
+
+assert m.m[m.o] == m.c;
+assert m.c.owner == m.clowner;
+assert m.c.bound == m.clbound;
+
+//assert fOutside(foo,m.o) == fOutside(frowner,m.c);
+}
+
+
+
+lemma {:timeLimit 60} meppy_meppy(oo : Owner, mb : Bound, m : Klon) returns (rowner : Owner, rbound : Owner)
+//too good to bee true!
+ decreases allAMFOs(oo)
+  requires AllReady(oo)
+  requires AllReady(mb)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires oo <= m.m.Keys
+  requires mb <= m.m.Keys
+  requires oo >= mb
+
+   ensures rowner == mapThruKlon(oo, m)
+   ensures rbound == mapThruKlon(mb, m)
+
+   ensures rowner >= rbound
+{
+   rowner := mapThruKlon(oo, m);
+   rbound := mapThruKlon(mb, m);
+}
+
+
+
+lemma naive_ne_marche_pas(oo : Owner, mb : Bound, m : Klon) returns (rowner : Owner, rbound : Owner)
+//too good to bee true!
+ decreases allAMFOs(oo)
+  requires AllReady(oo)
+  requires AllReady(mb)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires oo <= m.m.Keys
+  requires mb <= m.m.Keys
+  requires (flatten(oo) >= flatten(mb))
+
+   ensures rowner == mapThruKlon(oo, m)
+   ensures rbound == mapThruKlon(mb, m)
+
+  // ensures (flatten(rowner) >= flatten(rbound))
+{
+   rowner := mapThruKlon(oo, m);
+   rbound := mapThruKlon(mb, m);
 }
 
 
@@ -163,7 +294,7 @@ return;
 
 
 //{:timeLimit 30} {:timeLimit 60}
-lemma Zowner(owner : Owner, pivot : Object)
+lemma {:timeLimit 30}  Zowner(owner : Owner, pivot : Object)
 //topology?  enfringement?  whatevs?
   returns (owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
 
@@ -247,7 +378,7 @@ lemma Zowner(owner : Owner, pivot : Object)
 
   //////////////////////////////////////////////////////////////////////////////
 
-opaque predicate frogbelow(flat_below : Owner, owners_inside : Owner, pivot : Object)
+predicate frogbelow(flat_below : Owner, owners_inside : Owner, pivot : Object)
   {  flat_below == set x <- flatten(owners_inside - {pivot}) | inside(x,pivot) }
 
 lemma NO_FROG_BELOW(flat_below : Owner, owners_inside : Owner, pivot : Object)
@@ -256,7 +387,7 @@ lemma NO_FROG_BELOW(flat_below : Owner, owners_inside : Owner, pivot : Object)
    ensures reveal frogbelow(); frogbelow(flat_below, owners_inside, pivot)
 {
   reveal frogbelow();
-  assert flat_below == set x <- flatten(owners_inside - {pivot}) | inside(x,pivot);
+  assert flat_below == set x : Object <- flatten(owners_inside - {pivot}) | inside(x,pivot);
 }
   //////////////////////////////////////////////////////////////////////////////
 
@@ -432,7 +563,6 @@ assert forall w <- whole_f :: outside(w,pivot);
  assert flatten(owners_inside) == (flat_below +   (flatten(fringe) + pflinge(owners_inside, pivot) )  ) + pflivot(owner, pivot);
 
  assert BFPL: flatten(owners_inside) == (flat_below +   (flatten(fringe) + pflinge(owners_inside, pivot) )  ) + pflivot(owner, pivot);
-
 //  assert flatten(owners_inside) == ((set x <- flat_inside_nopivot | inside(x,pivot))  + (flatten(fringe) + pflinge(owners_inside, pivot) )  ) + pflivot(owner, pivot);
 
 
@@ -449,10 +579,16 @@ assert forall w <- whole_f :: outside(w,pivot);
         }
 
 
-  assert        flatten(owner) == flatten(owners_outside) + (flat_below + (flatten(fringe) + pflinge(owners_inside, pivot) )) + pflivot(owner, pivot) by { reveal F_ALL; }
+//  assert   flatten(owner) == flatten(owners_outside) + (flat_below + (flatten(fringe) + pflinge(owners_inside, pivot) )) + pflivot(owner, pivot) by { reveal F_ALL; }
+  assume  (flatten(owner) == flatten(owners_outside) +  flat_below +  flatten(fringe) + pflinge(owners_inside, pivot)    + pflivot(owner, pivot));
+  assume  (fringe == (set x <- flatten(owners_inside - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo));
+  assume  (flat_below == set x <- flatten(owners_inside - {pivot}) | inside(x,pivot));
+
+
   assert FRG1: (flatten(owner) == flatten(owners_outside) +  flat_below +  flatten(fringe) + pflinge(owners_inside, pivot)    + pflivot(owner, pivot));
   assert FRG2: (fringe == (set x <- flatten(owners_inside - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo));
   assert FRG3: (flat_below == set x <- flatten(owners_inside - {pivot}) | inside(x,pivot));
+
 
 
   assert frogbelow(flat_below, owners_inside, pivot) by { reveal FROG_BELOW; }
@@ -464,28 +600,47 @@ assert forall w <- whole_f :: outside(w,pivot);
   assert forall f <-        owners_outside                      :: outside(f,pivot);
   assert forall f <-                              (pivot.owner) :: outside(f,pivot);
 
-  assert (owner > {});
-  assert pflinge(owner,pivot) == flatten(pivot.owner);
-  assert forall f <-                       pflinge(owner,pivot) :: outside(f,pivot);
-  // var allOfEm := fringe+owners_outside+pflinge(owner,pivot);
-  forall f <- (fringe+owners_outside+pflinge(owner,pivot)) ensures ( outside(f,pivot)) {
-    if (f in fringe) { assert outside(f,pivot); }
-    else if (f in owners_outside) { assert outside(f,pivot); }
-    else { assert f in pflinge(owner,pivot); assert outside(f,pivot); }
-  }
+assert pflinge(owner,pivot) <= flatten(pivot.owner);
+assert forall x <- pflinge(owner,pivot) :: outside(x,pivot);
 
-  FlattenOutsideFlatten(fringe,pivot);
-  assert forall f <- flatten(fringe)                            :: outside(f,pivot);
-  FlattenOutsideFlatten(owners_outside,pivot);
-  assert forall f <-        flatten(owners_outside)             :: outside(f,pivot);
-  FlattenOutsideFlatten(pivot.owner,pivot);
-  assert forall f <-                       flatten(pivot.owner) :: outside(f,pivot);
-  assert  pflinge(owner,pivot) <=  flatten(pivot.owner);
-  assert forall f <-                       pflinge(owner,pivot) :: outside(f,pivot);
+  var allOfEm := fringe+owners_outside+pivot.owner;
+  OUTSIDE_MY_FRIENDS(fringe, owners_outside,pivot.owner, allOfEm, pivot);
+
+
+
+//   assert (owner > {});
+//   assert pflinge(owner,pivot) == flatten(pivot.owner);
+//   assert forall f <-                       pflinge(owner,pivot) :: outside(f,pivot);
+//   // var allOfEm := fringe+owners_outside+pflinge(owner,pivot);
+//   forall f <- (fringe+owners_outside+pflinge(owner,pivot)) ensures ( outside(f,pivot)) {
+//     if (f in fringe) {
+//                      assert forall f <- fringe :: outside(f,pivot);
+//                      assert outside(f,pivot); }
+//     else if (f in owners_outside) {
+//                      assert forall f <- owners_outside :: outside(f,pivot);
+//                      assert outside(f,pivot); }
+//     else { assert f in pflinge(owner,pivot);
+//                       assert forall f <- (pivot.owner) :: outside(f,pivot);
+//                       assert outside(f,pivot); }
+//     assert outside(f,pivot);
+//   FlattenOutsideFlatten(fringe,pivot);
+//   assert forall f <- flatten(fringe)                            :: outside(f,pivot);
+//   FlattenOutsideFlatten(owners_outside,pivot);
+//   assert forall f <-        flatten(owners_outside)             :: outside(f,pivot);
+//   FlattenOutsideFlatten(pivot.owner,pivot);
+//   assert forall f <-                       flatten(pivot.owner) :: outside(f,pivot);
+//   assert  pflinge(owner,pivot) <=  flatten(pivot.owner);
+//   assert forall f <-                       pflinge(owner,pivot) :: outside(f,pivot);
 
 
   assert (flat_below-{pivot}) !! (fringe+owners_outside+pflinge(owner,pivot));
   assert (flat_below-{pivot}) !! flatten(fringe+owners_outside+pflinge(owner,pivot));
+
+  FLATTEN_SUM4(fringe, owners_outside, pflinge(owner,pivot), fringe+owners_outside+pflinge(owner,pivot));
+
+  // assert flatten(fringe+owners_outside+pflinge(owner,pivot)) ==
+  //   ((flatten(owners_outside) + flatten(fringe) + (pflinge(owners_inside, pivot))));
+  // assert (flat_below-{pivot}) !! ((flatten(owners_outside) + flatten(fringe) + (pflinge(owners_inside, pivot))) - {pivot});
 
   assert FRG4: (frogdisj(owner,pivot,owners_inside,owners_outside,flat_below,fringe));
 
@@ -560,6 +715,7 @@ lemma SETLREQ(left : Owner, right : Owner)
 {}
 
 lemma GET_FROGLET(owner : Owner, pivot : Object, owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
+  requires pivot.Ready()
   requires (flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot))
   requires (fringe == (set x <- flatten(owners_inside - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo))
   requires (flat_below == set x <- flatten(owners_inside - {pivot}) | inside(x,pivot))
@@ -591,8 +747,11 @@ lemma GET_FROGLET(owner : Owner, pivot : Object, owners_inside : Owner, owners_o
         }
 }
 
+
+
 predicate
 froglet(owner : Owner, pivot : Object, owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
+   requires pivot.Ready()
   { && (flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot))
     && (fringe == (set x <- flatten(owners_inside - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo))
     && (flat_below == set x <- flatten(owners_inside - {pivot}) | inside(x,pivot))
@@ -600,6 +759,7 @@ froglet(owner : Owner, pivot : Object, owners_inside : Owner, owners_outside : O
   }
 
 lemma FROGLET_GETZ_FRINGE(li : Owner, lo : Owner, lb : Owner, lf : Owner, left : Owner, pivot : Object)
+  requires pivot.Ready()
   requires froglet(left, pivot,li,lo,lb,lf)
   {
     reveal froglet(left, pivot,li,lo,lb,lf);
@@ -608,12 +768,13 @@ lemma FROGLET_GETZ_FRINGE(li : Owner, lo : Owner, lb : Owner, lf : Owner, left :
     assert lf == set x <- flatten(li - {pivot}), xo <- x.owner | (x != pivot) &&  (inside(x,pivot) ) && (outside(xo,pivot) ) :: xo;
   }
 
-
 opaque predicate old_froglet(owner : Owner, pivot : Object, owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
+  requires pivot.Ready()
   { flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot) }
 
 
 lemma SATAN(owner : Owner, owners_outside : Owner, owners_inside : Owner, flat_below : Owner, fringe : Owner, pivot : Object)
+ requires pivot.Ready()
  requires flatten(owner) == flatten(owners_outside) + flatten(owners_inside)
  requires flatten(owners_inside) == (flat_below + (flatten(fringe) + pflinge(owners_inside, pivot) )) + pflivot(owner, pivot)
   ensures flatten(owner) == flatten(owners_outside) + flat_below + flatten(fringe) + pflinge(owners_inside, pivot)  + pflivot(owner, pivot)
@@ -719,6 +880,9 @@ function pflivot(owner : Owner, pivot : Object) : (fp : OWNR)
   { if (pivot in owner) then flatten({pivot}) else {} }
 
 function pflinge(owner : Owner, pivot : Object) : (fp : OWNR)
+  requires pivot.Ready()
+   ensures AllReady(fp)
+   ensures fp <= flatten(pivot.owner)
   { if (owner > {}) then flatten(pivot.owner) else {} }
 
 lemma flatten_monotonic(a : Owner, b : Owner)
@@ -731,12 +895,14 @@ lemma flatten_monotonic(a : Owner, b : Owner)
 
 
 predicate frogdisj(owner : Owner, pivot : Object, owners_inside : Owner, owners_outside : Owner, flat_below : Owner, fringe : Owner)
+  requires pivot.Ready()
  {
    (flat_below-{pivot}) !! ((flatten(owners_outside) + flatten(fringe) + pflinge(owners_inside, pivot)) - {pivot})
  }
 
 lemma  FROG_DISJOINT(li : Owner, lo : Owner, lb : Owner, lf : Owner,
                  left : Owner, pivot : Object)
+  requires pivot.Ready()
   requires froglet(left, pivot,li,lo,lb,lf)
   requires frogbelow(lb, li, pivot)
   requires frogdisj(left,pivot,li,lo,lb,lf)
@@ -760,6 +926,8 @@ lemma  NAKED_LIBERATION(li : Owner, lo : Owner, lb : Owner, lf : Owner,
                  left : Owner, right : Owner, pivot : Object)
                     requires left  == (li + lo + lb + lf + pflivot(left, pivot) )
                     requires right == (ri + ro + rb + rf + pflivot(right,pivot) )
+  requires pivot.Ready()
+
   requires ((li) >= (ri))
   requires ((lo) >= (ro))
   requires (lb >= rb)
@@ -772,6 +940,8 @@ lemma  NAKED_LIBERATION(li : Owner, lo : Owner, lb : Owner, lf : Owner,
 lemma  FLAT_LIVERATUIB(li : Owner, lo : Owner, lb : Owner, lf : Owner,
                  ri : Owner, ro : Owner, rb : Owner, rf : Owner,
                  left : Owner, right : Owner, pivot : Object)
+  requires pivot.Ready()
+
   requires froglet(left, pivot,li,lo,lb,lf)
   requires froglet(right,pivot,ri,ro,rb,rf)
   requires frogbelow(lb, li, pivot)
@@ -809,11 +979,36 @@ lemma  FLAT_LIVERATUIB(li : Owner, lo : Owner, lb : Owner, lf : Owner,
 }
 
 
+lemma OUTSIDE_MY_FRIENDS(a : Owner, b : Owner, c : Owner, d : Owner, pivot : Object)
+  requires pivot.Ready()
+  requires AllReady(a)
+  requires AllReady(b)
+  requires AllReady(c)
+
+  requires d == a+b+c
+
+  requires forall x <- a :: outside(x,pivot)
+  requires forall x <- b :: outside(x,pivot)
+  requires forall x <- c :: outside(x,pivot)
+
+  ensures AllReady(d)
+  ensures forall x <- d :: outside(x,pivot)
+  ensures forall x <- flatten(d) :: outside(x,pivot)
+
+
+{
+    assert forall x <- d :: outside(x,pivot);
+    FlattenOutsideFlatten(d,pivot);
+    assert forall x <- flatten(d) :: outside(x,pivot);
+}
+
 
 
 lemma LIVE_FLATRATUIB(li : Owner, lo : Owner, lb : Owner, lf : Owner,
                  ri : Owner, ro : Owner, rb : Owner, rf : Owner,
                  left : Owner, right : Owner, pivot : Object)
+  requires pivot.Ready()
+
   requires froglet(left, pivot,li,lo,lb,lf)
   requires froglet(right,pivot,ri,ro,rb,rf)
   requires frogbelow(lb, li, pivot)
@@ -1161,8 +1356,7 @@ forall x <- flatten(owners_inside_nopivot), xo <- x.owner ensures (whole_f == pi
 
 }//end GordonRamsey
 
-///FUCK FCUK FUCK
-lemma FlattenFringeIsAllOutside(iwnrs : OWNR,  pivot : Object) returns (allInside : Owner, allOutside : Owner, fringe : Owner)
+lemma {:timeLimit 15} FlattenFringeIsAllOutside(iwnrs : OWNR,  pivot : Object) returns (allInside : Owner, allOutside : Owner, fringe : Owner)
    ///used in tiredOfSleeping... so need to worry
   //ensuress flatten(fringe) == allOutside
   //all iwnrs must all be strictlyInside pivot????
@@ -1592,6 +1786,12 @@ lemma FLATTEN_SUM3(a : Owner, b : Owner, c : Owner)
   ensures flatten(a) + flatten(b) == flatten(a+b)
 {}
 
+lemma FLATTEN_SUM4(a : Owner, b : Owner, c : Owner, d : Owner)
+  requires a+b+c == d
+  ensures flatten(a) + flatten(b) + flatten(c) == flatten(d)
+{}
+
+
 lemma FLATTEN_SUMS(a : Owner, b : Owner, c : Owner, m : Klon)
   requires a+b == c
   // requires forall o <- a :: o.Ready()  //I'm OH SO TORY
@@ -1625,7 +1825,7 @@ lemma {:timeLimit 20} MAPPEN_ONE(next : Object, m : Klon)
   //   ensures flatten(mapThruKlon(done+{next},m)) == flatten(mapThruKlon(done,m)) + flatten(mapThruKlon({next},m))
 {
   FLATTEN_ONE(next);
-  //  assert mapThruKlon({next},m) == (set o <- {next} :: m.m[o]) == {m.m[next]};
+  //  assert mapThruKlon({next},m) == (set o <- {next} :: m.m[o]) == {m.m[next]outside(m.m[x],m.c) &};
 }
 
 lemma {:timeLimit 20} FLATTEN_TWO(done : Owner, next : Object, m : Klon)
@@ -1644,6 +1844,20 @@ lemma {:timeLimit 20} FLATTEN_TWO(done : Owner, next : Object, m : Klon)
 
 
 
+
+function fOutside(ownrs : OWNR, pivot : Object) : (rv : Owner)
+  requires AllReady(flatten(ownrs))
+  requires pivot.Ready()
+  ensures AllReady(rv)
+{ set x <- flatten(ownrs) | outside(x,pivot) } // not(strictlyInside(x, pivot)) }
+
+function fInside(ownrs : OWNR, pivot : Object) : (rv : Owner)
+  requires AllReady(flatten(ownrs))
+  requires pivot.Ready()
+  ensures AllReady(rv)
+{ set x <- flatten(ownrs) | inside(x,pivot) } //(strictlyInside(x, pivot)) }
+
+
 lemma {:timeLimit 60} recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
    ///predicts flatten(mapThruKlon(oo, m))
 
@@ -1660,6 +1874,9 @@ lemma {:timeLimit 60} recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
   ensures (exists x <- oo :: inside(x, m.o)) ==>
      (exists x <- oo :: inside(x, m.o) && (x in m.m.Keys) && (m.m[x] in sp) && inside(m.m[x],m.c))
 
+
+  ensures forall x <- flatten(oo) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in sp)
+  ensures forall x <- flatten(oo) | outside(x,m.o) ::  (m.m[x] == x) //  (m.m[x] in sp)
 {
   //     var x :=  {set o : Object <- oo, ooo <- recOwners(o) :: ooo};
 
@@ -1684,16 +1901,20 @@ lemma {:timeLimit 60} recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
     invariant sp == flatten(mapThruKlon((oo - todo), m))
     invariant done == oo - todo
     invariant sp == flatten(mapThruKlon((done), m))
-//invariant exists x <- oo :: inside(x, m.o)
-    invariant oo == done + todo
+//invariant exists x <- oo :: inside(x,v
     invariant done !! todo
-//invariant exists x <- (done + todo) :: inside(x, m.o)
-    invariant forall x <- done | inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in sp)
+//invariant exists x <- (done + todo)     d1q:: inside(x, m.o)
+    invariant forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in sp)
+    invariant forall x <- done | outside(x,m.o) :: (m.m[x] in sp) && (m.m[x] == x)
+
+    invariant forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in sp)
+    invariant forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in sp)
+
   {
     assert sp == flatten(mapThruKlon((oo - todo), m));
 
     var next :| next in todo;
-    assert done == oo - todo;
+    assert done == oo - todo ;
 
     var todoHERE := todo;
     assert ttt: next in todo;
@@ -1758,7 +1979,7 @@ lemma {:timeLimit 60} recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
     } //end if elseif else
 
     assert fowner == flatten(sext.owner);
-    FLATTEN_ONE(sext);
+  FLATTEN_ONE(sext);
     assert flatten({sext}) == ({sext} + flatten(sext.owner)) == ({sext} + fowner);
     MAPPEN_ONE(next,m);
     assert mapThruKlon({next}, m) == {m.m[next]} == {sext};
@@ -1790,8 +2011,12 @@ lemma {:timeLimit 60} recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
 
 
 //  assert exists x <- oo   | inside(x, m.o) :: inside(m.m[x], m.c);
-  assert forall x <- done | inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in sp);
-//  assert exists y <- sp  :: inside(y,m.c) && (y in sp);
+  assert forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in sp);
+  assert forall x <- done | outside(x,m.o) :: outside(m.m[x],m.c) && (m.m[x] in sp) && (m.m[x] == x);
+
+  assert forall x <- flatten(oo) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in sp);
+  assert forall x <- flatten(oo) | outside(x,m.o) ::  (m.m[x] == x); //(x in sp) &&
+
   }//end recSplatteno
 
 
