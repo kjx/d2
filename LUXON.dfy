@@ -154,6 +154,7 @@ assert m.c.bound == m.clbound;
 
 lemma {:timeLimit 60} meppy_meppy(oo : Owner, mb : Bound, m : Klon) returns (rowner : Owner, rbound : Owner)
 //too good to bee true!
+//does the map but not the flatten
  decreases allAMFOs(oo)
   requires AllReady(oo)
   requires AllReady(mb)
@@ -1883,7 +1884,7 @@ lemma recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
 
 //
 lemma  recSplatten8(oo : Owner, m : Klon) returns (csp : Owner, cbelow : Owner, cabove : Owner, cabpvt : Owner,
-                                                                  osp : Owner, obelow : Owner, oabove : Owner, oabpvt : Owner)
+                                                   osp : Owner, obelow : Owner, oabove : Owner, oabpvt : Owner)
    ///predicts flatten(mapThruKlon(oo, m))
    ///o* is *original;  c* is clone?
 
@@ -2067,15 +2068,15 @@ label HERE2:
       assert strictlyInside(next, m.o);
       cowner := mapThruKlon(next.owner, m);
       assert cowner == cext.owner;
-//      var cspx, cbelowx, cabovex, cabpvtx, ospx, obelowx, oabovex, oabpvtx := recSplatten8(next.owner, m);
-//      assert cspx == flatten(mapThruKlon(next.owner, m));
-//      fcowner := cspx;
-      fcowner := flatten(cext.owner);
+     var cspx, cbelowx, cabovex, cabpvtx, ospx, obelowx, oabovex, oabpvtx := recSplatten8(next.owner, m);
+     assert cspx == flatten(mapThruKlon(next.owner, m));
+     fcowner := cspx;
+//      fcowner := flatten(cext.owner);
       var oInside := next.AMFO - m.o.AMFO;
       SLICE_N_DICE(next.AMFO, m.o, oInside);
          assert next.AMFO == oInside + m.o.AMFO;
       var cInside := cext.AMFO - m.c.AMFO;
-      SLICE_N_DICE(next.AMFO, m.c, cInside);
+      SLICE_N_DICE(cext.AMFO, m.c, cInside);
          assert cext.AMFO == cInside + m.c.AMFO;
 
 label HERE3:
@@ -2121,7 +2122,7 @@ label HERE3:
     assert done == oo - todo;
     assert csp == flatten(mapThruKlon((done), m));
     assert csp == flatten(mapThruKlon((oo - todo), m));
-    assert osp == flatten(done);
+     assert osp == flatten(done);
   }//end while
 
 
