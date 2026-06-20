@@ -243,8 +243,8 @@ assert forall w <- whole_f :: outside(w,pivot);
 
 lemma SATAN(owner : Owner, owners_outside : Owner, owners_inside : Owner, flat_below : Owner, fringe : Owner, pivot : Object)
  requires flatten(owner) == flatten(owners_outside) + flatten(owners_inside)
- requires flatten(owners_inside) == (flat_below + (flatten(fringe) + flatten(pivot.owner))) + pflivot(owner, pivot);
-  ensures flatten(owner) == flatten(owners_outside) + flat_below +  flatten(fringe) + flatten(pivot.owner)   + pflivot(owner, pivot);
+ requires flatten(owners_inside) == (flat_below + (flatten(fringe) + flatten(pivot.owner))) + pflivot(owner, pivot)
+  ensures flatten(owner) == flatten(owners_outside) + flat_below +  flatten(fringe) + flatten(pivot.owner)   + pflivot(owner, pivot)
 {}
 
 
@@ -2288,6 +2288,158 @@ lemma OH_FUCK_WHAT_HAVE_I_DONE(oo : Owner, m : Klon) returns (sp : Owner)
   assert rsp == fmk;
   sp := oo;
 }
+
+
+
+lemma {:timeLimit 60} rxsplutter(oo : Owner, m : Klon) returns (sp : Owner)
+   ///predicts flatten(mapThruKlon(oo, m))
+
+  decreases allAMFOs(oo)
+  requires AllReady(oo)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires oo <= m.m.Keys
+//requires exists x <- oo :: inside(x, m.o)
+
+  ensures flatten(oo) <= m.m.Keys
+  ensures sp == flatten(mapThruKlon(oo, m))
+  ensures AllReady(sp)
+  ensures (exists x <- oo :: inside(x, m.o)) ==>
+     (exists x <- oo :: inside(x, m.o) && (x in m.m.Keys) && (m.m[x] in sp) && inside(m.m[x],m.c))
+
+{
+  //     var x :=  {set o : Object <- oo, ooo <- recOwners(o) :: ooo};
+
+  sp := {};
+
+  var todo := oo;
+  var done : Owner := {};
+  assert AllReady(todo);
+  assert oo - todo == {};
+  assert oo == done + todo;
+  assert mapThruKlon({}, m) == {};
+  assert mapThruKlon((oo - todo), m) == {};
+  assert flatten({}) == {};
+  assert flatten(mapThruKlon((oo - todo), m)) == {};
+
+  assert sp == flatten(mapThruKlon((oo - todo), m));
+  assert done == oo - todo == {}; assert done !! todo;
+  assert sp == flatten(mapThruKlon((done), m));
+
+  while (todo > {})
+    decreases todo
+    invariant sp == flatten(mapThruKlon((oo - todo), m))
+    invariant done == oo - todo
+    invariant sp == flatten(mapThruKlon((done), m))
+//invariant exists x <- oo :: inside(x, m.o)
+    invariant oo == done + todo
+    invariant done !! todo
+//invariant exists x <- (done + todo) :: inside(x, m.o)
+    invariant forall x <- done | inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in sp)
+  {
+    assert sp == flatten(mapThruKlon((oo - todo), m));
+
+    var next :| next in todo;
+    assert done == oo - todo;
+
+    var todoHERE := todo;
+    assert ttt: next in todo;
+    assert nit: next in todoHERE;
+    assert done !! todo;
+    assert next !in done;
+    assert todo == todoHERE;
+    assert done == oo - todoHERE;
+    assert oo == done + todo == done + todoHERE;
+
+    assert todo decreases to todo - {next} by { reveal ttt; }
+
+    todo := todo - {next};
+    assert next !in todo;
+    assert next !in done;
+    assert done !! {next} !! todo;
+
+    assert next in todoHERE by { reveal nit; }
+    assert todo == todoHERE - {next};
+    MINUS3(todo,todoHERE,{next});
+    assert todoHERE == todo + {next};
+
+    assert oo == done + todo ;
+    assert done !! {next} !! todo;
+    assert oo == done + (todo + {next});
+
+    assert done == oo - todoHERE;
+    assert todoHERE == todo + {next};
+    assert done == oo - (todo + {next});
+    PLUS_MINUS(done,oo,todo,{next});
+    assert done == oo - todo - {next};
+
+
+
+    var sext := m.m[next];
+    assert klonLine(next, sext, m);
+    assert klonIdentity(next, sext, m);
+
+    var sowner;   var fowner;
+
+    if (next == m.o)
+    {
+      assert sext == m.c;
+      sowner := m.clowner;
+      fowner := flatten(m.clowner);
+      assert fowner == flatten(sext.owner);
+    }
+    else if (outside(next, m.o))
+    {
+      assert next == sext; assert next.owner == sext.owner;
+      sowner := next.owner;
+      fowner := flatten(next.owner);
+      assert fowner == flatten(sext.owner);
+    }
+    else
+    {
+      assert strictlyInside(next, m.o);
+      sowner := mapThruKlon(next.owner, m);
+      assert sowner == sext.owner;
+      fowner := rxsplutter(next.owner, m);
+      assert fowner == flatten(sext.owner);
+    } //end if elseif else
+
+    assert fowner == flatten(sext.owner);
+    FLATTEN_ONE(sext);
+    assert flatten({sext}) == ({sext} + flatten(sext.owner)) == ({sext} + fowner);
+    MAPPEN_ONE(next,m);
+    assert mapThruKlon({next}, m) == {m.m[next]} == {sext};
+    assert flatten(mapThruKlon({next}, m)) == flatten({sext}) == ({sext} + fowner);
+    assert sp == flatten(mapThruKlon((done), m));
+    assert (done+{next}) == (done)+({next});    FLATTEN_SUMS(done,{next},done+{next},m);
+    assert (mapThruKlon((done+{next}), m)) == (mapThruKlon((done), m)) + (mapThruKlon(({next}), m));
+    assert flatten(mapThruKlon((done+{next}), m)) == flatten(mapThruKlon((done), m)) + flatten(mapThruKlon(({next}), m)) == sp + ({sext} + fowner);
+    sp := sp + ({sext} + fowner);
+
+    assert oo == done + (todo + {next});
+    assert done !! {next} !! todo;
+    PLUS4(oo, done, todo, {next});
+    assert oo == (done + {next}) + todo;
+
+    done := done + {next};
+    assert oo == done + todo;
+    assert done == oo - todo;
+    assert sp == flatten(mapThruKlon((done), m));
+    assert sp == flatten(mapThruKlon((oo - todo), m));
+  }//end while
+
+
+  assert sp == flatten(mapThruKlon((oo - todo), m));
+  assert oo == done + todo;
+  assert done == oo - todo;
+  assert todo == {}; assert done == oo;
+  assert sp == flatten(mapThruKlon(oo, m));
+
+
+//  assert exists x <- oo   | inside(x, m.o) :: inside(m.m[x], m.c);
+  assert forall x <- done | inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in sp);
+//  assert exists y <- sp  :: inside(y,m.c) && (y in sp);
+  }//end rxsplutter
 
 
 

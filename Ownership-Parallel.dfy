@@ -1181,6 +1181,7 @@ lemma {:isolate_assertions} MappedAllWholeInsidePart(partO : Owner, wholeO : Own
   requires partO  <= m.m.Keys
   requires wholeO <= m.m.Keys
    ensures forall o <- flatten(wholeO) :: o in flatten(partO)
+ //  ensures mapThruKlon(partO,m) >= mapThruKlon(wholeO,m)
 //   ensures forall o <- mapThruKlon(wholeO,m) :: o in mapThruKlon(partO,m)
 //   ensures forall o <- flatten(mapThruKlon(wholeO,m)) :: o in flatten(mapThruKlon(partO,m))
   {}
