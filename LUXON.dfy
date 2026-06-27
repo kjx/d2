@@ -2101,6 +2101,7 @@ lemma FLATTINGTONS(done : Owner, xxx : Owner)
 }
 
 //
+
 lemma recSplatten8(oo : Owner, m : Klon) returns (csp : Owner, cbelow : Owner, cabove : Owner, cabpvt : Owner,
                                                   osp : Owner, obelow : Owner, oabove : Owner, oabpvt : Owner)
   //predicts flatten(mapThruKlon(oo, m)) - o* is *original;  c* is clone
