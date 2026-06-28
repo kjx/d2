@@ -2351,6 +2351,148 @@ var next;
     }
     else //  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
     {
+      assert done == oo - todo;
+osp, obelow, oabove, oabpvt,
+    csp, cbelow, cabove, cabpvt
+            :=
+          CASE_INSIDE(oo, m, done, todo, next, cext,
+                      osp, obelow, oabove, oabpvt,
+                      csp, cbelow, cabove, cabpvt);
+    } //end if elseif else
+//  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+
+        UNPK_OOOO(csp,cbelow,cabove,cabpvt);
+        UNPK_OOOO(osp,obelow,oabove,oabpvt);
+        assert osp == obelow + oabove + oabpvt;  //join
+        assert osp == flatten(done_at_top)+flatten({next});
+
+//     assert osp == obelow + oabove + oabpvt;
+//     assert csp == cbelow + cabove + cabpvt;
+//     assert cabpvt == (if (m.o in flatten(done+{next})) then (m.c.AMFO) else {});
+//
+//older     assert fcowner == flatten(cext.owner);
+  FLATTEN_ONE(cext);
+//    assert flatten({cext}) == ({cext} + flatten(cext.owner)) == ({cext} + fcowner);
+    MAPPEN_ONE(next,m);
+    assert mapThruKlon({next}, m) == {m.m[next]} == {cext};
+//    assert flatten(mapThruKlon({next}, m)) == flatten({cext}) == ({cext} + fcowner);
+    assert csp == flatten(mapThruKlon((done), m));
+    assert (done+{next}) == (done)+({next});    FLATTEN_SUMS(done,{next},done+{next},m);
+    assert (mapThruKlon((done+{next}), m)) == (mapThruKlon((done), m)) + (mapThruKlon(({next}), m));
+//    assert flatten(mapThruKlon((done+{next}), m)) == flatten(mapThruKlon((done), m)) + flatten(mapThruKlon(({next}), m)) == csp + ({cext} + fcowner);
+
+    assert osp == flatten((done)) + flatten({next});
+    assert flatten(done+{next}) == flatten(done) + flatten({next});
+    assert flatten(done+{next}) == osp           + flatten({next});
+
+
+
+    assert oo == todo + {next} + done;
+    assert todo !! {next} !! done;
+//    PLUS4(oo, todo, {next}, done);
+    assert oo == todo + {next} + done;
+
+assert forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp);
+assert forall x <- flatten({next}) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp);
+assert forall x <- flatten(done+{next}) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp);
+//    done := done + {next};
+
+    todo, done := RET_NEXT_OWNER(oo,todo,next,done,m);
+
+    assert oo == todo + done;
+    assert done == oo - todo;
+    assert csp == flatten(mapThruKlon((done), m));
+    assert csp == flatten(mapThruKlon((oo - todo), m));
+    assert osp == obelow + oabove + oabpvt;
+    assert osp == flatten(done);
+
+
+    FLATTINGTONS(done,flatten(done));
+
+    assert forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp);
+  }//end while
+FLATTINGTONS(done,flatten(done));
+
+assert forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp);
+
+  assert csp == flatten(mapThruKlon((oo - todo), m));
+  assert oo == todo + done;
+  assert done == oo - todo;
+  assert todo == {}; assert done == oo;
+  assert csp == flatten(mapThruKlon(oo, m));
+  assert osp == flatten(oo);
+
+  assert cabpvt == (if (m.o in flatten(done)) then (m.c.AMFO) else {});
+
+
+//  assert exists x <- oo   | inside(x, m.o) :: inside(m.m[x], m.c);
+  assert forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp);
+  assert forall x <- done | outside(x,m.o) :: outside(m.m[x],m.c) && (m.m[x] in csp) && (m.m[x] == x);
+
+  assert forall x <- flatten(oo) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp);
+  assert forall x <- flatten(oo) | outside(x,m.o) ::  (m.m[x] == x); //(x in csp) &&
+
+
+  }//end recSplatteno
+
+
+
+
+
+lemma CASE_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+                  csp' : Owner, cbelow' : Owner, cabove' : Owner, cabpvt' : Owner,
+                  osp' : Owner, obelow' : Owner, oabove' : Owner, oabpvt' : Owner)
+          returns (csp : Owner, cbelow : Owner, cabove : Owner, cabpvt : Owner,
+                   osp : Owner, obelow : Owner, oabove : Owner, oabpvt : Owner)
+
+    requires strictlyInside(next, m.o)
+
+    requires AllReady(oo)
+    requires klonReady(m)
+    requires klonCalid(m)
+    requires oo <= m.m.Keys
+    requires done+{next} == oo - todo
+    requires oo     == todo + {next} + done
+    requires todo   == oo - done - {next}
+    requires todo !! {next} !! done
+    requires osp'    == obelow' + oabove' + oabpvt'
+    requires osp' == flatten(done)// == (set d : Object <- done, dd <- flatten({d}) :: dd)
+    requires csp'    == cbelow' + cabove' + cabpvt'
+    requires csp'    == flatten(mapThruKlon(done     , m))
+    requires csp'    == flatten(mapThruKlon(oo - todo, m))   ///GRRR
+    requires cabpvt' == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
+    requires oabpvt' == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
+    requires forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp')
+    requires forall x <- done | outside(x,m.o) :: (m.m[x] in csp') && (m.m[x] == x)
+    requires forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp')
+    requires forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
+
+     ensures done   == oo - todo
+     ensures oo     == todo + done
+     ensures todo   == oo - done
+     ensures todo   !! done
+     ensures osp    == obelow + oabove + oabpvt
+     ensures osp == flatten(done)// == (set d : Object <- done, dd <- flatten({d}) :: dd)
+     ensures csp    == cbelow + cabove + cabpvt
+     ensures csp    == flatten(mapThruKlon(done     , m))
+     ensures csp    == flatten(mapThruKlon(oo - todo, m))   ///GRRR
+     ensures cabpvt == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
+     ensures oabpvt == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
+     ensures forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp)
+     ensures forall x <- done | outside(x,m.o) :: (m.m[x] in csp) && (m.m[x] == x)
+     ensures forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp)
+     ensures forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
+     ensures OOOO(osp,obelow,oabove,oabpvt)
+     ensures OOOO(csp,cbelow,cabove,cabpvt)
+
+
+{
+    osp, obelow, oabove, oabpvt := osp', obelow', oabove', oabpvt';
+    csp, cbelow, cabove, cabpvt := csp', cbelow', cabove', cabpvt';
+    var osp_at_top := osp;
+    var csp_at_top := csp;
+    var done_at_top := done;
+
       assert cabpvt == (if (m.o in flatten(done)) then (m.c.AMFO) else {});
       var cabpvt_before := cabpvt;
       assert taxi: cabpvt_before == (if (m.o in flatten(done)) then (m.c.AMFO) else {});
@@ -2473,89 +2615,7 @@ assert cext.owner ==  mapThruKlon(next.owner, m);
     PACK_OOOO(osp,obelow,oabove,oabpvt);
     PACK_OOOO(csp,cbelow,cabove,cabpvt);
 
-    } //end if elseif else
-//  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-
-        UNPK_OOOO(csp,cbelow,cabove,cabpvt);
-        UNPK_OOOO(osp,obelow,oabove,oabpvt);
-        assert osp == obelow + oabove + oabpvt;  //join
-        assert osp == flatten(done_at_top)+flatten({next});
-
-//     assert osp == obelow + oabove + oabpvt;
-//     assert csp == cbelow + cabove + cabpvt;
-//     assert cabpvt == (if (m.o in flatten(done+{next})) then (m.c.AMFO) else {});
-//
-//older     assert fcowner == flatten(cext.owner);
-  FLATTEN_ONE(cext);
-//    assert flatten({cext}) == ({cext} + flatten(cext.owner)) == ({cext} + fcowner);
-    MAPPEN_ONE(next,m);
-    assert mapThruKlon({next}, m) == {m.m[next]} == {cext};
-//    assert flatten(mapThruKlon({next}, m)) == flatten({cext}) == ({cext} + fcowner);
-    assert csp == flatten(mapThruKlon((done), m));
-    assert (done+{next}) == (done)+({next});    FLATTEN_SUMS(done,{next},done+{next},m);
-    assert (mapThruKlon((done+{next}), m)) == (mapThruKlon((done), m)) + (mapThruKlon(({next}), m));
-//    assert flatten(mapThruKlon((done+{next}), m)) == flatten(mapThruKlon((done), m)) + flatten(mapThruKlon(({next}), m)) == csp + ({cext} + fcowner);
-
-    assert osp == flatten((done)) + flatten({next});
-    assert flatten(done+{next}) == flatten(done) + flatten({next});
-    assert flatten(done+{next}) == osp           + flatten({next});
-
-
-
-    assert oo == todo + {next} + done;
-    assert todo !! {next} !! done;
-//    PLUS4(oo, todo, {next}, done);
-    assert oo == todo + {next} + done;
-
-assert forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp);
-assert forall x <- flatten({next}) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp);
-assert forall x <- flatten(done+{next}) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp);
-//    done := done + {next};
-
-    todo, done := RET_NEXT_OWNER(oo,todo,next,done,m);
-
-    assert oo == todo + done;
-    assert done == oo - todo;
-    assert csp == flatten(mapThruKlon((done), m));
-    assert csp == flatten(mapThruKlon((oo - todo), m));
-    assert osp == obelow + oabove + oabpvt;
-    assert osp == flatten(done);
-
-
-    FLATTINGTONS(done,flatten(done));
-
-    assert forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp);
-  }//end while
-FLATTINGTONS(done,flatten(done));
-
-assert forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp);
-
-  assert csp == flatten(mapThruKlon((oo - todo), m));
-  assert oo == todo + done;
-  assert done == oo - todo;
-  assert todo == {}; assert done == oo;
-  assert csp == flatten(mapThruKlon(oo, m));
-  assert osp == flatten(oo);
-
-  assert cabpvt == (if (m.o in flatten(done)) then (m.c.AMFO) else {});
-
-
-//  assert exists x <- oo   | inside(x, m.o) :: inside(m.m[x], m.c);
-  assert forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp);
-  assert forall x <- done | outside(x,m.o) :: outside(m.m[x],m.c) && (m.m[x] in csp) && (m.m[x] == x);
-
-  assert forall x <- flatten(oo) |  inside(x,m.o) ::  inside(m.m[x],m.c) && (m.m[x] in csp);
-  assert forall x <- flatten(oo) | outside(x,m.o) ::  (m.m[x] == x); //(x in csp) &&
-
-
-  }//end recSplatteno
-
-
-
-
-
-
-
+}
 
 
 
