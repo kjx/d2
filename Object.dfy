@@ -161,6 +161,8 @@ lemma {:isolate_assertions} ExtraReady()
 
     ensures  AMFO >= owner
     ensures  AMFO >= bound
+    ensures  AMFO >  {}
+
 
     ensures  (forall oo <- self   :: AMFO >=  oo.AMFO)
     ensures  (forall oo <- owner  :: AMFO >   oo.AMFO)
