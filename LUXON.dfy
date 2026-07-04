@@ -2006,12 +2006,198 @@ lemma {:timeLimit 20} FLATTEN_TWO(done : Owner, next : Object, m : Klon)
   FLATTEN_SUMS(done,{next},done+{next},m);
 }
 
-function fOutside(ownrs : OWNR, pivot : Object) : (rv : Owner)
+function  fOutside(ownrs : OWNR, pivot : Object) : (rv : Owner)
 //returns all flatatnened owners that are outside the pivot...
   // requires AllReady(flatten(ownrs))
   // requires pivot.Ready()
   //  ensures AllReady(rv)
+  ensures forall r <- rv :: outside(r,pivot)
 { set x <- flatten(ownrs) | outside(x,pivot) } // not(strictlyInside(x, pivot)) }
+
+lemma fOUTSIDE_MONOTONIC(ownrs : OWNR, owmrs : OWNR, pivot : Object)
+  // requires AllReady(flatten(ownrs))
+  // requires pivot.Ready()
+  //  ensures AllReady(rv)
+  ensures fOutside(ownrs, pivot) + fOutside(owmrs, pivot) == fOutside(ownrs+owmrs, pivot)
+   {}
+
+// lemma fOUTSIDE_ZERO(next : Object, m : Klon, rv : Owner)
+//   // requires next.Ready()
+//   // requires next != pivot
+//
+//   requires next.Ready()
+//   requires next in m.m.Keys
+//   requires klonReady(m)
+//   requires klonCalid(m)  requires m.objectInKlown(next)
+//   requires outside(next, m.o)
+//   requires rv == fOutside({m.m[next]}, m.c)
+//    ensures rv == set x <- flatten({m.m[next]}) | outside(x,m.c)
+//    ensures rv == set x <- m.m[next].AMFO | outside(x,m.c)
+//   {
+//      FLATTEN_ONE(m.m[next]);
+// }
+
+lemma fOUTSIDE_ZERO(next : Object, m : Klon, rv : Owner)
+  requires next.Ready()
+  requires next in m.m.Keys
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires m.objectInKlown(next)
+  requires outside(next, m.o)
+  requires rv == fOutside({m.m[next]}, m.c)
+//   ensures rv == set x <- flatten({m.m[next]}) | outside(x,m.c)
+//   ensures rv == set x <- m.m[next].AMFO | outside(x,m.c)
+  {
+    assert fOutside({m.m[next]}, m.c) == ( set x <- flatten({m.m[next]}) | outside(x,m.c));
+//     FLATTEN_ONE(m.m[next]);
+}
+
+
+lemma fOUTSIDE_MINUSONE(o : Object, ownrs : Owner, pivot : Object, rv : Owner)
+  requires ownrs == {o}
+  requires AllReady(ownrs)
+  requires outside(o, pivot)
+   ensures forall x <- o.AMFO :: outside(x, pivot)
+  requires rv == fOutside(ownrs, pivot)
+   ensures rv == set x <- flatten(ownrs) | outside(x,pivot)
+   ensures rv == set x <- o.AMFO | outside(x,pivot)
+   ensures rv == o.AMFO
+  {
+//    assert fOutside(ownrs, pivot) == ( set x <- flatten(ownrs) | outside(x,pivot));
+    FLATTEN_ONE(o);
+    assert flatten({o}) == o.AMFO;
+    assert flatten(ownrs) == flatten({o}) == o.AMFO;
+}
+
+
+lemma fOUTSIDE_MINUSTWO(o : Object, pivot : Object, rv : Owner)
+  requires AllReady({o})
+  requires outside(o, pivot)
+   ensures forall x <- o.AMFO :: outside(x, pivot)
+  requires rv == fOutside({o}, pivot)
+   ensures rv == set x <- flatten({o}) | outside(x,pivot)
+   ensures rv == set x <- o.AMFO | outside(x,pivot)
+   ensures rv == o.AMFO
+  {
+//    assert fOutside(ownrs, pivot) == ( set x <- flatten(ownrs) | outside(x,pivot));
+    FLATTEN_ONE(o);
+    assert flatten({o}) == o.AMFO;
+}
+
+lemma fOUTSIDE_ONE(next : Object, pivot : Object, rv : Owner)
+  requires next.Ready()
+  requires next != pivot
+  requires outside(next, pivot)
+  requires rv == fOutside({next}-{pivot}, pivot)
+   ensures rv == next.AMFO
+{
+    assert next != pivot;
+    assert {next}-{pivot} == {next};
+    assert forall x <- next.AMFO :: outside(x,pivot);
+    assert (set x <- next.AMFO | outside(x,pivot)) == next.AMFO;
+    assert isFlat(next.AMFO);
+    assert flatten(next.AMFO) == next.AMFO;
+    assert (set x <- flatten(next.AMFO) | outside(x,pivot))
+              == (set x <- next.AMFO | outside(x,pivot))
+              == next.AMFO;
+}
+
+
+//{:timeLimit 100}
+ lemma  fOUTSIDE_TWO(next : Object, m : Klon, rv : Owner)
+//like outside-ONE but gor the clone side
+  requires next.Ready()
+  requires next != m.o
+  requires m.objectInKlown(next)
+  requires outside(next, m.o)
+  requires rv == fOutside(mapThruKlon({next}-{m.o},m), m.c)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires klonLine(next, m.m[next], m)
+   ensures rv == m.m[next].AMFO
+{
+    assert next != m.o;
+    assert {next}-{m.o} == {next};
+    assert forall x <- next.AMFO :: outside(x,m.o);
+    assert klonLine(next, m.m[next], m);
+    assert mapThruKlon({next},m) == {m.m[next]};
+    assert mapThruKlon({next}-{m.o},m) == {m.m[next]};
+    assert outside(m.m[next], m.c);
+    assert isFlat(m.m[next].AMFO);
+    IS_FLAT_IS_MONOTONIC(m.m[next].AMFO);
+ assert flatten(m.m[next].AMFO) == m.m[next].AMFO;
+ assert (set x <- flatten(m.m[next].AMFO) | outside(x,m.c)) ==
+        (set x <- m.m[next].AMFO | outside(x,m.c));
+
+assert forall x <- m.m[next].AMFO :: outside(x,m.c);
+
+assert
+        (fOutside(mapThruKlon({next}-{m.o},m), m.c) ==
+        fOutside(mapThruKlon({next},m), m.c)) by
+         { assert next != m.o; assert {next}-{m.o} == {next}; }
+
+  assert
+        fOutside(mapThruKlon({next},m), m.c) ==  fOutside({m.m[next]}, m.c);
+
+
+
+// assert fOutside({m.m[next]}, m.c) ==
+//         ( set x <- flatten({m.m[next]}) | outside(x,m.c) ) ==
+//         ( set x <- m.m[next].AMFO | outside(x,m.c) ) ==
+//         m.m[next].AMFO;
+//
+//     assert rv == (set x <- m.m[next].AMFO | outside(x,m.c))
+//               == m.m[next].AMFO;
+//     assert fOutside(mapThruKlon({next}-{m.o},m), m.c) == m.m[next].AMFO;
+
+
+// assert fOutside({m.m[next]}, m.c)   == m.m[next].AMFO by
+assert (set x <- m.m[next].AMFO | outside(x,m.c)) == m.m[next].AMFO by
+    {
+      forall x <- m.m[next].AMFO ensures (outside(x,m.c))  //by
+       {
+         var k := invert(m.m)[x];
+         assert klonLine(k,x,m);
+         assert klonGeometry(k,x,m);
+         assert outside(k,m.o);
+         assert outside(k,m.c);
+         assert k == x;
+         assert outside(k, m.o) <==> outside(x, m.c);
+         assert outside(x, m.c);
+       }
+//       var pred := (z requires z in m.m[next].AMFO => outside(z,m.c));
+       assert forall x <- m.m[next].AMFO :: outside(x,m.c);
+//       assert forall x <- m.m[next].AMFO :: pred(x) <==> outside(x,m.c);
+//       assert forall x <- m.m[next].AMFO :: pred(x);
+//       SET_SELECT_ALL(m.m[next].AMFO, pred);
+      ALL_OWNERS_OUTSIDE(m.m[next].AMFO, m.c);
+       assert (set x <- m.m[next].AMFO | outside(x,m.c)) == m.m[next].AMFO;
+       }
+
+  fOUTSIDE_MINUSTWO(m.m[next],m.c,fOutside({m.m[next]},m.c));
+  assert fOutside({m.m[next]}, m.c) == (set x <- flatten({m.m[next]}) | outside(x,m.c));
+  FLATTEN_ONE(m.m[next]);
+  assert flatten({m.m[next]}) == m.m[next].AMFO;
+  assert fOutside({m.m[next]}, m.c) == (set x <- m.m[next].AMFO | outside(x,m.c));
+  assert fOutside({m.m[next]}, m.c) == m.m[next].AMFO;
+  assert fOutside(mapThruKlon({next},m), m.c) ==   m.m[next].AMFO;
+  assert fOutside(mapThruKlon({next}-{m.o},m), m.c) ==   m.m[next].AMFO;
+  assert rv == m.m[next].AMFO;
+
+}
+
+
+
+lemma ALL_OWNERS_OUTSIDE(s : Owner, pivot : Object)
+  requires forall x <- s :: outside(x,pivot)
+   ensures (set x <- s | outside(x,pivot)) == s
+{}
+
+lemma SET_SELECT_ALL<T>(s : set<T>, pred : T --> bool)
+  requires forall x <- s :: pred.requires(x)
+  requires forall x <- s :: pred(x)
+   ensures (set x <- s | pred(x)) == s
+{}
 
 function fInside(ownrs : OWNR, pivot : Object) : (rv : Owner)
   requires AllReady(flatten(ownrs))
@@ -2606,7 +2792,7 @@ lemma CASE_OUTSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Obje
     requires obelow' == (set x <- osp' | strictlyInside(x,m.o))
     requires cbelow' == (set x <- csp' | strictlyInside(x,m.c))
     requires oabove' == fOutside(done-{m.o}, m.o)
-    requires cabove' == fOutside(mapThruKlon(done-{m.o},m),m.c)
+    requires cabove' == fOutside(mapThruKlon(done-{m.o},m), m.c)
     requires oabove' == cabove'
     requires oabpvt' == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
     requires cabpvt' == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
@@ -2727,13 +2913,24 @@ assert cabove == cabove' + cext.AMFO;
 // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 
 
-      assert (set x <- osp | strictlyInside(x,m.o)) == obelow;//HHMM
+      assert (set x <- osp | strictlyInside(x,m.o)) == obelow;
 //CANNOT WORK     assert (set x <- osp |        outside(x,m.o)) == oabove;
-      assert (set x <- csp | strictlyInside(x,m.c)) == cbelow; //HHMM
+      assert (set x <- csp | strictlyInside(x,m.c)) == cbelow;
 //CANNOT WRORKA      assert (set x <- csp |        outside(x,m.c)) == cabove;
       assert oabove == cabove;
-      assert oabove == fOutside(done-{m.o}, m.o);  //HMMM
-      assert cabove == fOutside(mapThruKlon(done-{m.o},m),m.c);
+      assert oabove' == fOutside(done-{m.o}, m.o);
+      assert next.AMFO == fOutside({next}-{m.o}, m.o) by
+              { fOUTSIDE_ONE(next,m.o,fOutside({next}-{m.o}, m.o)); }
+      fOUTSIDE_MONOTONIC(done-{m.o},{next}-{m.o}, m.o);
+      assert (done-{m.o}) + ({next}-{m.o}) == (done+{next}-{m.o});
+      assert oabove == fOutside(done+{next}-{m.o}, m.o);
+
+      assert cabove' == fOutside(mapThruKlon(done-{m.o},m), m.c);
+      assert cext.AMFO == fOutside(mapThruKlon({next}-{m.o},m), m.c) by
+              { fOUTSIDE_TWO(next,m,fOutside(mapThruKlon({next}-{m.o},m), m.c)); }
+      fOUTSIDE_MONOTONIC(mapThruKlon(done-{m.o},m),mapThruKlon({next}-{m.o},m), m.c);
+      assert (mapThruKlon(done-{m.o},m) + mapThruKlon({next}-{m.o},m)) == mapThruKlon(done+{next}-{m.o},m);
+      assert cabove == fOutside(mapThruKlon(done+{next}-{m.o},m),m.c);
 
     assert csp == cbelow + cabove + cabpvt;
     assert osp == obelow + oabove + oabpvt;
@@ -2763,7 +2960,7 @@ assert cabove == cabove' + cext.AMFO;
 
     assert mapThruKlon(done, m) + mapThruKlon({next}, m) == mapThruKlon(done+{next}, m);
     assert flatten(mapThruKlon(done, m)) + flatten(mapThruKlon({next}, m)) == flatten(mapThruKlon(done+{next}, m));
-    assert cext.AMFO == flatten(mapThruKlon({next}, m));
+    assert cext.AMFO == flatten(mapThruKlon({next}, m));  //HHMM
     assert csp == flatten(mapThruKlon(done, m)) + cext.AMFO;
     assert csp == flatten(mapThruKlon(done+{next}, m));
   //    assert done+{next} == (oo - todo);

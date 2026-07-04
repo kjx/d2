@@ -156,7 +156,11 @@ predicate {:isolate_assertions} klonGeometry(k : Object, v : Object, m : Klon)
   && ((inside(k,m.o)) ==> (v !in m.oHeap))
 }
 
-
+lemma EXTRA_GEMO(k : Object, v : Object, m : Klon)
+  requires klonReady(m)
+  requires klonGeometry(k,v,m)
+   ensures ( outside(k, m.o)   <==>  outside(v, m.c) )
+{}
 
 predicate {:isolate_assertions} klonIdentity(k : Object, v : Object, m : Klon) : (r : bool)
   requires klonReady(m)

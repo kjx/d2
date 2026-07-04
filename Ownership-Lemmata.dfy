@@ -104,8 +104,10 @@ predicate AllTheseOwnersAreFlatOK(os : set<Object>, context : set<Object> := os)
 { && flatten(os) <= context }
 
 
-
-
+lemma IS_FLAT_IS_MONOTONIC(x : Owner)
+  requires isFlat(x)
+   ensures flatten(x) == x
+{}
 
 
 
