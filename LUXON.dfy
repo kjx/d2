@@ -2008,7 +2008,13 @@ lemma {:timeLimit 20} FLATTEN_TWO(done : Owner, next : Object, m : Klon)
 }
 
 function  fOutside(ownrs : OWNR, pivot : Object) : (rv : Owner)
+//rename to allLOutside???
+//KJX FUCK FUCK FUCK FUCK FUCK FUCK
 //returns all flatatnened owners that are outside the pivot...
+//YEAH I fear this is still the WRONG THING
+//shop;dln't it take in all the *direct* owners
+//throw out all that are inside
+//and flatten the remainder (outside ONLY)
   // requires AllReady(flatten(ownrs))
   // requires pivot.Ready()
   //  ensures AllReady(rv)
@@ -2020,6 +2026,13 @@ lemma fOUTSIDE_MONOTONIC(ownrs : OWNR, owmrs : OWNR, pivot : Object)
   // requires pivot.Ready()
   //  ensures AllReady(rv)
   ensures fOutside(ownrs, pivot) + fOutside(owmrs, pivot) == fOutside(ownrs+owmrs, pivot)
+   {}
+
+lemma fINSIDE_MONOTONIC(ownrs : OWNR, owmrs : OWNR, pivot : Object)
+  // requires AllReady(flatten(ownrs))
+  // requires pivot.Ready()
+  //  ensures AllReady(rv)
+  ensures fInside(ownrs, pivot) + fInside(owmrs, pivot) == fInside(ownrs+owmrs, pivot)
    {}
 
 
@@ -2186,11 +2199,25 @@ lemma SET_SELECT_ALL<T>(s : set<T>, pred : T --> bool)
 {}
 
 function fInside(ownrs : OWNR, pivot : Object) : (rv : Owner)
-  requires AllReady(flatten(ownrs))
-  requires pivot.Ready()
-  ensures AllReady(rv)
-{ set x <- flatten(ownrs) | inside(x,pivot) }
+  // requires AllReady(flatten(ownrs))
+  // requires pivot.Ready()
+  // ensures AllReady(rv)
+  ensures forall r <- rv :: strictlyInside(r,pivot)
+{ set x <- flatten(ownrs) | strictlyInside(x,pivot) }
 
+lemma LIFT_inside(obelow : OWNR, osp : OWNR, done : Owner, pivot : Object)
+  requires obelow == (set x <- flatten(done) | strictlyInside(x,pivot))
+  requires osp == flatten(done)
+   ensures obelow == (set x <- osp | strictlyInside(x,pivot))
+   ensures obelow == fInside(done,pivot)
+{}
+
+// lemma HYPERFUCKED_strictlyInside(obelow : OWNR, osp : OWNR, pivot : Object)
+//    requires pivot.Ready()
+//    requires forall x <- obelow :: strictlyInside(x,pivot)
+//     ensures obelow == osp - pivot.AMFO
+//    requires obelow == set x <- osp | strictlyInside(x,pivot)
+// {}
 
 lemma recSplatten(oo : Owner, m : Klon) returns (sp : Owner)
    ///predicts flatten(mapThruKlon(oo, m))
@@ -2326,13 +2353,15 @@ lemma recSplatten8(oo : Owner, m : Klon) returns (csp : Owner, cbelow : Owner, c
    ensures osp == flatten(oo)
    ensures osp    == obelow + oabove + oabpvt
    ensures (set x <- osp | strictlyInside(x,m.o)) == obelow
-  //  ensures (set x <- osp |        outside(x,m.o)) == oabove
+  //  ensures (set x <- osp |        outside(x,m.o)) == oabove  ///WRONG - see note "FUCK FUCK FUCK FUCK FUCK" above or bnelonw - on fOutside.
+  ///    assert oabove == fOutside(done-{m.o}, m.o);
   //  ensures oabpvt == if (m.o in osp) then (m.o.AMFO) else {}
 
    ensures csp == flatten(mapThruKlon(oo, m))
    ensures csp    == cbelow + cabove + cabpvt
    ensures (set x <- csp | strictlyInside(x,m.c)) == cbelow
-  //  ensures (set x <- csp |        outside(x,m.c)) == cabove
+  //  assert cabove == fOutside(mapThruKlon(done-{m.o},m), m.c);
+  //  ensures (set x <- csp |        outside(x,m.c)) == cabove   //WRONG see note "FUCK FUCK FUCK FUCK FUCK" above or bnelonw - on fOutside.
   //  ensures cabpvt == if (m.o in osp) then (m.c.AMFO) else {}
 
   ensures AllReady(csp)
@@ -2521,8 +2550,8 @@ lemma INNER_LOOP(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object
 //    requires csp'    == flatten(mapThruKlon(oo - todo, m))   ///GRRR
     requires forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
     requires forall x <- done | outside(x,m.o) :: (m.m[x] == x) //&& (m.m[x] in csp')
-    //X requires forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
-    //?b requires forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
+    requires forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
+    requires forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
     requires obelow' == (set x <- osp' | strictlyInside(x,m.o))
     requires cbelow' == (set x <- csp' | strictlyInside(x,m.c))
     requires oabove' == fOutside(done-{m.o}, m.o)
@@ -2543,7 +2572,9 @@ lemma INNER_LOOP(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object
      ensures cabpvt == (if (m.o in flatten(done+{next})) then (m.c.AMFO) else {})
      ensures oabpvt == (if (m.o in flatten(done+{next})) then (m.o.AMFO) else {})
      ensures forall x <- done+{next} |  inside(x,m.o) ::  inside(m.m[x],m.c)
-     ensures forall x <- done+{next} | outside(x,m.o) :: (m.m[x] in csp) && (m.m[x] == x)
+     ensures forall x <- done+{next} | outside(x,m.o) :: (m.m[x] == x) // && (m.m[x] in csp)
+     ensures forall x <- flatten(done+{next}) |  inside(x,m.o) ::  inside(m.m[x],m.c)
+     ensures forall x <- flatten(done+{next}) | outside(x,m.o) :: (m.m[x] == x) // && (m.m[x] in csp)
      ensures OOOO(osp,obelow,oabove,oabpvt)
      ensures OOOO(csp,cbelow,cabove,cabpvt)
      ensures obelow == (set x <- osp | strictlyInside(x,m.o))
@@ -2551,83 +2582,57 @@ lemma INNER_LOOP(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object
      ensures oabove == fOutside(done+{next}-{m.o}, m.o)
      ensures cabove == fOutside(mapThruKlon(done+{next}-{m.o},m),m.c)
      ensures oabove == cabove
-//
-//     var todo_at_top := todo;
-//     var done := done;
-//     var csp' := csp;
-//     var osp' := osp;
-//     FLATTINGTONS(done,flatten(done));
-//     assert csp' ==  flatten(mapThruKlon(done, m));
-//     assert flatten(done) == flatten(done);
-//
-// var next;
-//
-//     todo, next, done := GET_NEXT_OWNER(oo, todo, done, m);
-//     assert todo_at_top decreases to todo;
-//     // assert cabpvt == (if (m.o in flatten(done)) then (m.c.AMFO) else {});
-//     // assert cabpvt == (if (m.o in flatten(done)) then (m.c.AMFO) else {});
-//
-//     // assert oo == todo + {next} + done;
-//
-//     // assert done == oo - (todo + {next});
-//     PLUS_MINUS(done,oo,todo,{next});
-// //    assert done == oo - todo - {next};
-//
-// //todo is updated.  done is NOT updated.
-// //so e.g. flatten(DONE) is correct for other thins NOT updatred
-// //white flatten(done + {nexdt})  or flatten(oo - todo) is for things AFTER updates
-//
-//     var cext := m.m[next];
-//     assert klonLine(next, cext, m);
-//     assert klonIdentity(next, cext, m);
-//     assert csp == flatten(mapThruKlon(done, m));
-//     assert forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c); //&& (m.m[x] in csp);
-//
-// //  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-//
-//     if (next == m.o)
-// {
-//
-//       osp, obelow, oabove, oabpvt,
-//       csp, cbelow, cabove, cabpvt
-//             :=
-//           CASE_PIVOT(oo, m, done, todo, next, cext,
-//                       osp, obelow, oabove, oabpvt,
-//                       csp, cbelow, cabove, cabpvt);
-//
-// }
-//     else if (outside(next, m.o))  //  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-//     {
-//
-//       osp, obelow, oabove, oabpvt,
-//       csp, cbelow, cabove, cabpvt
-//             :=
-//           CASE_OUTSIDE(oo, m, done, todo, next, cext,
-//                       osp, obelow, oabove, oabpvt,
-//                       csp, cbelow, cabove, cabpvt);
-//
-//     }
-//     else //  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-//     {
-//       assert strictlyInside(next, m.o);
-//       // assert cabpvt == (if (m.o in flatten(done)) then (m.c.AMFO) else {});
-//       // assert oabpvt == (if (m.o in flatten(done)) then (m.o.AMFO) else {});
-//       osp, obelow, oabove, oabpvt,
-//       csp, cbelow, cabove, cabpvt
-//             :=
-//           CASE_INSIDE(oo, m, done, todo, next, cext,
-//                       osp, obelow, oabove, oabpvt,
-//                       csp, cbelow, cabove, cabpvt);
-//     assert osp == flatten(done+{next});
-//     assert csp == flatten(mapThruKlon(done+{next}, m));
-// assert OOOO(osp,obelow,oabove,oabpvt);
-// assert OOOO(csp,cbelow,cabove,cabpvt);
-//
-//     // assert  cabpvt == (if (m.o in flatten(done+{next})) then (m.c.AMFO) else {});
-//     // assert  oabpvt == (if (m.o in flatten(done+{next})) then (m.o.AMFO) else {});
-//     // assert (cabpvt == {}) != (cabpvt == m.c.AMFO);
-//     // assert (oabpvt == {}) != (oabpvt == m.o.AMFO);
-//     } //end if elseif else
+     {
+       var todo_at_top := todo;
+
+    assert klonLine(next, cext, m);
+    assert klonIdentity(next, cext, m);
+
+//  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+
+    if (next == m.o)
+{
+
+      osp, obelow, oabove, oabpvt,
+      csp, cbelow, cabove, cabpvt
+            :=
+          CASE_PIVOT(oo, m, done, todo, next, cext,
+                      osp', obelow', oabove', oabpvt',
+                      csp', cbelow', cabove', cabpvt');
+
+}
+    else if (outside(next, m.o))  //  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+    {
+
+      osp, obelow, oabove, oabpvt,
+      csp, cbelow, cabove, cabpvt
+            :=
+          CASE_OUTSIDE(oo, m, done, todo, next, cext,
+                      osp', obelow', oabove', oabpvt',
+                      csp', cbelow', cabove', cabpvt');
+
+    }
+    else //  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+    {
+      assert strictlyInside(next, m.o);
+      // assert cabpvt == (if (m.o in flatten(done)) then (m.c.AMFO) else {});
+      // assert oabpvt == (if (m.o in flatten(done)) then (m.o.AMFO) else {});
+      osp, obelow, oabove, oabpvt,
+      csp, cbelow, cabove, cabpvt
+            :=
+          CASE_INSIDE(oo, m, done, todo, next, cext,
+                      osp', obelow', oabove', oabpvt',
+                      csp', cbelow', cabove', cabpvt');
+    assert osp == flatten(done+{next});
+    assert csp == flatten(mapThruKlon(done+{next}, m));
+assert OOOO(osp,obelow,oabove,oabpvt);
+assert OOOO(csp,cbelow,cabove,cabpvt);
+
+    // assert  cabpvt == (if (m.o in flatten(done+{next})) then (m.c.AMFO) else {});
+    // assert  oabpvt == (if (m.o in flatten(done+{next})) then (m.o.AMFO) else {});
+    // assert (cabpvt == {}) != (cabpvt == m.c.AMFO);
+    // assert (oabpvt == {}) != (oabpvt == m.o.AMFO);
+    } //end if elseif else
 // //  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 //
 //         UNPK_OOOO(csp,cbelow,cabove,cabpvt);
@@ -2688,7 +2693,7 @@ lemma INNER_LOOP(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object
 //      //kjx    assert   oo == todo + done;
 
 
-
+     }
 
 
 
@@ -2742,7 +2747,9 @@ lemma CASE_PIVOT(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object
      ensures cabpvt == (if (m.o in flatten(done+{next})) then (m.c.AMFO) else {})
      ensures oabpvt == (if (m.o in flatten(done+{next})) then (m.o.AMFO) else {})
      ensures forall x <- done+{next} |  inside(x,m.o) ::  inside(m.m[x],m.c)
-     ensures forall x <- done+{next} | outside(x,m.o) :: (m.m[x] in csp) && (m.m[x] == x)
+     ensures forall x <- done+{next} | outside(x,m.o) :: (m.m[x] == x) // && (m.m[x] in csp)
+     ensures forall x <- flatten(done+{next}) |  inside(x,m.o) ::  inside(m.m[x],m.c)
+     ensures forall x <- flatten(done+{next}) | outside(x,m.o) :: (m.m[x] == x) // && (m.m[x] in csp)
      ensures OOOO(osp,obelow,oabove,oabpvt)
      ensures OOOO(csp,cbelow,cabove,cabpvt)
      ensures obelow == (set x <- osp | strictlyInside(x,m.o))
@@ -2832,6 +2839,32 @@ lemma CASE_PIVOT(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object
     assert osp == flatten(done)+flatten({next});
     assert osp == obelow + oabove + oabpvt;
 
+//////////////////////////////////////////////
+  assert not(strictlyInside(next,m.o));
+  assert forall x <- flatten({next}) ::  not(strictlyInside(x,m.o));
+  assert   (set x <- flatten({next}) |       strictlyInside(x,m.o)) == {};
+  SET_SELECT_MONO2(osp', flatten({next}), m.o);
+  assert  flatten({next}) == next.AMFO by { FLATTEN_ONE(next); }
+  assert (set x <- next.AMFO | strictlyInside(x,m.o)) == {};
+  assert (set x <- osp' + next.AMFO | strictlyInside(x,m.o)) == (set x <- osp' | strictlyInside(x,m.o)) == obelow';
+  assert obelow == (set x <- osp | strictlyInside(x,m.o));
+///////////////////////////////////////////////
+  assert not(strictlyInside(cext,m.c));
+  assert forall x <- flatten({cext}) ::  not(strictlyInside(x,m.c));
+  assert   (set x <- flatten({cext}) |       strictlyInside(x,m.c)) == {};
+  SET_SELECT_MONO2(csp', flatten({cext}), m.c);
+  assert  flatten({cext}) == cext.AMFO by { FLATTEN_ONE(cext); }
+  assert (set x <- cext.AMFO | strictlyInside(x,m.c)) == {};
+  assert (set x <- csp' + cext.AMFO | strictlyInside(x,m.c)) == (set x <- csp' | strictlyInside(x,m.c)) == cbelow';
+  assert cbelow == (set x <- csp | strictlyInside(x,m.c));
+//////////////////////////////////////////////////
+  assert next == m.o;   assert {next}-{m.o} == {};
+  assert (done+{next})-{m.o} == (done-{m.o}) by { CORDELIA(done,{next}); }
+  assert oabove == fOutside((done+{next})-{m.o}, m.o) == fOutside(done-{m.o}, m.o) == oabove';
+  assert cabove == fOutside(mapThruKlon((done+{next})-{m.o},m), m.c) == fOutside(mapThruKlon(done-{m.o},m), m.c) == cabove';
+//////////////////////////////////////////////////
+
+
 //dodgy    assert oabpvt == (if (m.o in flatten(done)) then (m.o.AMFO) else {});
     assert forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c);// && (m.m[x] in csp);
   assert forall x <- flatten({next}) |  inside(x,m.o) ::  inside(m.m[x],m.c);// && (m.m[x] in csp);
@@ -2845,6 +2878,11 @@ assert OOOO(csp,cbelow,cabove,cabpvt);
     assert (cabpvt == {}) != (cabpvt == m.c.AMFO);
     assert (oabpvt == {}) != (oabpvt == m.o.AMFO);
 
+     assert obelow == (set x <- osp | strictlyInside(x,m.o));
+     assert cbelow == (set x <- csp | strictlyInside(x,m.c));
+     assert oabove == fOutside((done+{next})-{m.o}, m.o);
+     assert cabove == fOutside(mapThruKlon((done+{next})-{m.o},m), m.c);
+     assert oabove == cabove;
 
 }
 
@@ -2903,7 +2941,9 @@ lemma CASE_OUTSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Obje
      ensures oabpvt == (if (m.o in flatten(done+{next})) then (m.o.AMFO) else {})
      ensures cabpvt == (if (m.o in flatten(done+{next})) then (m.c.AMFO) else {})
      ensures forall x <- done+{next} |  inside(x,m.o) ::  inside(m.m[x],m.c)
-     ensures forall x <- done+{next} | outside(x,m.o) :: (m.m[x] in csp) && (m.m[x] == x)
+     ensures forall x <- done+{next} | outside(x,m.o) :: (m.m[x] == x) // && (m.m[x] in csp)
+     ensures forall x <- flatten(done+{next}) |  inside(x,m.o) ::  inside(m.m[x],m.c)
+     ensures forall x <- flatten(done+{next}) | outside(x,m.o) :: (m.m[x] == x) // && (m.m[x] in csp)
      ensures OOOO(osp,obelow,oabove,oabpvt)
      ensures OOOO(csp,cbelow,cabove,cabpvt)
      ensures obelow == (set x <- osp | strictlyInside(x,m.o))
@@ -3198,7 +3238,9 @@ lemma CASE_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Objec
      ensures cabpvt == (if (m.o in flatten(done+{next})) then (m.c.AMFO) else {})
      ensures oabpvt == (if (m.o in flatten(done+{next})) then (m.o.AMFO) else {})
      ensures forall x <- done+{next} |  inside(x,m.o) ::  inside(m.m[x],m.c)
-     ensures forall x <- done+{next} | outside(x,m.o) :: (m.m[x] in csp) && (m.m[x] == x)
+     ensures forall x <- done+{next} | outside(x,m.o) :: (m.m[x] == x) // && (m.m[x] in csp)
+     ensures forall x <- flatten(done+{next}) |  inside(x,m.o) ::  inside(m.m[x],m.c)
+     ensures forall x <- flatten(done+{next}) | outside(x,m.o) :: (m.m[x] == x) // && (m.m[x] in csp)
      ensures OOOO(osp,obelow,oabove,oabpvt)
      ensures OOOO(csp,cbelow,cabove,cabpvt)
      ensures obelow == (set x <- osp | strictlyInside(x,m.o))
@@ -3236,6 +3278,8 @@ assert cext.owner ==  mapThruKlon(next.owner, m);
 //     fcowner := cext.AMFO; //KJX
 // // older     fcowner := flatten(cext.owner);
       var oInside := next.AMFO - m.o.AMFO;
+      assert oInside == (set x <- next.AMFO | strictlyInside(x, m.o));
+
       SLICE_N_DICE(next.AMFO, m.o, oInside);
          assert next.AMFO == oInside + m.o.AMFO;
          assert NAMFO: next.AMFO == oInside + m.o.AMFO;
@@ -3255,7 +3299,7 @@ assert cext.owner ==  mapThruKlon(next.owner, m);
       assert m.o in flatten({next});
       assert m.o in flatten(done+{next});
 
-    assert csp == flatten(mapThruKlon(done, m));
+    assert csp == flatten(mapThruKlon(done+{next}, m));
     assert csp' == csp == flatten(mapThruKlon(done, m));
     assert csp' == cbelow + cabove + cabpvt;
     assert m.m[next] == cext;
@@ -3276,17 +3320,6 @@ assert cext.owner ==  mapThruKlon(next.owner, m);
     assert      flatten(mapThruKlon({next}, m)) == cInside + m.c.AMFO;
     assert NCM: flatten(mapThruKlon({next}, m)) == cInside + m.c.AMFO;
     assert MCN: (cInside + m.c.AMFO) == flatten(mapThruKlon({next}, m));
-
-    // assert flatten(mapThruKlon(done, m)) + flatten(mapThruKlon({next}, m)) ==
-    //   cbelow + cabove + cabpvt + cInside + m.c.AMFO
-    //      by {
-    //         assert flatten(mapThruKlon(done, m))   == cbelow + cabove + cabpvt;
-    //         assert flatten(mapThruKlon({next}, m)) == cInside + m.c.AMFO;
-    //         assert flatten(mapThruKlon(done, m)) + flatten(mapThruKlon({next}, m)) ==
-    //                  cbelow + cabove + cabpvt + cInside + m.c.AMFO;
-    //         }
-    // assert flatten(mapThruKlon(done+{next}, m)) ==
-    //   cbelow + cabove + cabpvt + cInside + m.c.AMFO;
 
     osp, obelow, oabove, oabpvt := FOUR_BY_FOUR(osp, obelow, oabove, oabpvt, oInside, {}, m.o.AMFO);
     csp, cbelow, cabove, cabpvt := FOUR_BY_FOUR(csp', cbelow, cabove, cabpvt, cInside, {}, m.c.AMFO);
@@ -3311,15 +3344,11 @@ assert cext.owner ==  mapThruKlon(next.owner, m);
        FLATMAP_ONE(next,cext,m);
     assert flatten(mapThruKlon(done, m)) + flatten(mapThruKlon({next}, m)) == flatten(mapThruKlon(done+{next}, m));
 
-
     assert csp == flatten(mapThruKlon(done+{next}, m));
 //    assert done+{next} == (oo - todo);
 //    assert csp == flatten(mapThruKlon((oo - todo), m));
 
-
-
     assert osp' == flatten(done);
-    assert osp == osp' + oInside + {} + m.o.AMFO;
     assert osp == osp' + oInside + m.o.AMFO by { FUCKNUTTIN(osp,osp',oInside,m.o.AMFO); }
     assert osp == flatten(done) + oInside + m.o.AMFO;
     assert next.AMFO == oInside + m.o.AMFO by { reveal NAMFO; }
@@ -3328,15 +3357,62 @@ assert cext.owner ==  mapThruKlon(next.owner, m);
     assert oInside + m.o.AMFO == flatten({next});
     FARKWUFFUN(osp, flatten(done), oInside, m.o.AMFO, flatten({next}) );
 
-    assert osp == flatten(done) + flatten({next});
-    assert done == done;
+
+
+assert osp  == flatten(done+{next});
+fINSIDE_MONOTONIC(done,{next},m.o);
+LIFT_inside(obelow, osp, done+{next}, m.o);
+
+assert osp  == flatten(done) + flatten({next});
+LIFT_inside(obelow', osp', done, m.o);
+
+
+
+assert osp' == flatten(done);
+assert osp  == osp' + flatten({next});
+
+assert obelow' == (set x <- osp' | strictlyInside(x,m.o));
+assert obelow' == (set x <- flatten(done) | strictlyInside(x,m.o));
+assert obelow' == fInside(done,m.o);
+
+assert obelow  == (set x <- osp  | strictlyInside(x,m.o));
+assert obelow ==  fInside(done+{next},m.o);
+assert obelow ==  fInside(done,m.o) + fInside({next},m.o);
+assert obelow ==  obelow' + fInside({next},m.o);
+assert oInside == next.AMFO - m.o.AMFO;
+FLATTEN_ONE(next);
+assert flatten({next}) == next.AMFO;
+assert oInside == (set x <- flatten({next}) | strictlyInside(x,m.o));
+assert oInside == fInside({next},m.o);
+assert obelow ==  obelow' + oInside;
+
+
+
     assert osp == flatten(done) + flatten({next});
     assert oabpvt == (if (m.o in flatten(done+{next})) then (m.o.AMFO) else {});
     assert osp == obelow + oabove + oabpvt;
     PACK_OOOO(osp,obelow,oabove,oabpvt);
     PACK_OOOO(csp,cbelow,cabove,cabpvt);
 
+
+
+    assert obelow == obelow' + oInside;
+    assert cbelow == cbelow' + cInside;
+
+    assert oabove == oabove';
+    assert cabove == cabove';
+
+     assert obelow == (set x <- osp | strictlyInside(x,m.o));
+     assert cbelow == (set x <- csp | strictlyInside(x,m.c));
+     assert oabove == fOutside((done+{next})-{m.o}, m.o);
+     assert cabove == fOutside(mapThruKlon((done+{next})-{m.o},m), m.c);
+     assert oabove == cabove;
+
+
 }
+
+
+
 
 
 
@@ -3432,6 +3508,9 @@ lemma PLUS_MINUS3(b : Owner, c : Owner, d : Owner)
    ensures (b - d) + (c - d) == (b + c - d)
 {}
 
+lemma CORDELIA(a : Owner, b : Owner)
+   ensures (a - b) == ((a + b) - b)
+{}
 
 lemma MINUS3(a : Owner, b : Owner, c : Owner)
   requires c <= b
