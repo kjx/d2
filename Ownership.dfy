@@ -46,6 +46,14 @@ predicate outside(part : Object, whole : Object) : (rv : bool) reads {}  { not(i
 
 predicate colinear<T>(a : set<T>, b : set<T>) { (a > b) || (a == b) || (a < b) }
 
+predicate offside(part : Object, whole : Object) reads {} { not(colinear(part.AMFO,whole.AMFO)) }
+
+function  allInside(soup : set<Object>, whole : Object) : (rv : set<Object>) reads {}  { set o <- soup | inside(o,whole) }
+function allOutside(soup : set<Object>, whole : Object) : (rv : set<Object>) reads {}  { set o <- soup | outside(o,whole) }
+function allOffside(soup : set<Object>, whole : Object) : (rv : set<Object>) reads {}  { set o <- soup | offside(o,whole) }
+
+function  allStrictlyInside(soup : set<Object>, whole : Object) : (rv : set<Object>) reads {}  { set o <- soup | strictlyInside(o,whole) }
+
 
 
 //[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
