@@ -2054,22 +2054,23 @@ lemma DELTA(q : Owner, q' : Owner, q_ : Owner, o : Owner, o' : Owner, o_ : Owner
 
 lemma DELTA_strictlyInside(q : Owner, q' : Owner, q_ : Owner, o : Owner, o' : Owner, o_ : Owner,  pivot : Object)
      ensures q  == (set x : Object <- o  | strictlyInside(x, pivot))
-
     requires o  == o' + o_
     requires q  == q' + q_
-    requires q' == (set x : Object <- o' | strictlyInside(x, pivot))
-    requires q_ == (set x : Object <- o_ | strictlyInside(x, pivot))
+
+    requires q' == allStrictlyInside(o', pivot);
+    requires q_ == allStrictlyInside(o_, pivot);
+     ensures q' == (set x : Object <- o' | strictlyInside(x, pivot))
+     ensures q' == (set x : Object <- o' | strictlyInside(x, pivot))
+     ensures q_ == (set x : Object <- o_ | strictlyInside(x, pivot))
 {}
 
 
+
+
+
 predicate triangular(q : Owner, q' : Owner, q_ : Owner)
-
-
-
-
-
-
-
+   //should this be a predicate or a lemma??
+  { q == q' + q_ }
 
 lemma fOUTSIDE_MINUSONE(o : Object, ownrs : Owner, pivot : Object, rv : Owner)
   requires ownrs == {o}
@@ -3162,22 +3163,28 @@ lemma CASE_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Objec
     requires oo       <= m.m.Keys
     requires oo       == todo + {next} + done
     requires todo !! {next} !! done
-    requires osp'     == obelow' + oabove' + oabpvt'
     requires osp'     == flatten(done)
-    requires csp'     == cbelow' + cabove' + cabpvt'
     requires csp'     == flatten(mapThruKlon(done, m))
-    requires forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
-    requires forall x <- done | outside(x,m.o) :: (m.m[x] == x) //&& (m.m[x] in csp')
-    requires forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
-    requires forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
-    requires obelow'  == (set x <- osp' | strictlyInside(x,m.o))
-    requires OBELOW_PRIME: obelow'  == (set x <- osp' | strictlyInside(x,m.o))
-    requires cbelow'  == (set x <- csp' | strictlyInside(x,m.c))
-    requires oabove'  == fOutside(done-{m.o}, m.o)
-    requires cabove'  == fOutside(mapThruKlon(done-{m.o},m), m.c)
-    requires oabove'  == cabove'
-    requires oabpvt'  == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
-    requires cabpvt'  == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
+
+//     requires forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
+//     requires forall x <- done | outside(x,m.o) :: (m.m[x] == x) //&& (m.m[x] in csp')
+//     requires forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
+//     requires forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
+//
+//     requires osp'     == obelow' + oabove' + oabpvt'
+//     requires csp'     == cbelow' + cabove' + cabpvt'
+//
+    requires obelow'  == allStrictlyInside(osp', m.o);
+    requires cbelow'  == allStrictlyInside(csp', m.o);
+    // requires obelow'  == (set x <- osp' | strictlyInside(x,m.o))
+    // requires cbelow'  == (set x <- csp' | strictlyInside(x,m.c))
+
+//     requires oabove'  == fOutside(done-{m.o}, m.o)
+//     requires cabove'  == fOutside(mapThruKlon(done-{m.o},m), m.c)
+//     requires oabove'  == cabove'
+//
+//     requires oabpvt'  == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
+//     requires cabpvt'  == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
 
 
     //  ensures oo     == todo + {next} + done
@@ -3201,11 +3208,26 @@ lemma CASE_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Objec
     //  ensures cabove == fOutside(mapThruKlon(done+{next}-{m.o},m),m.c)
     //  ensures oabove == cabove
 {
-      assert obelow' == (set x <- osp' | strictlyInside(x,m.o));
+  //// assert obelow' == (set x <- osp' | strictlyInside(x,m.o));
 
-   ///prefer NOT to o this but...
+   ///prefer NOT to do this but...
     osp, obelow, oabove, oabpvt := osp', obelow', oabove', oabpvt';
     csp, cbelow, cabove, cabpvt := csp', cbelow', cabove', cabpvt';
+
+    osp  := osp' + next.AMFO;
+//    assert triangular(osp, osp', next.AMFO);
+
+//    assert obelow' == (set x : Object <- osp' | strictlyInside(x, m.o));
+       var obelow_ := allStrictlyInside(next.AMFO, m.o);
+//    var obelow_ := (set x : Object <- next.AMFO | strictlyInside(x, m.o));
+    obelow := obelow' + obelow_;
+
+    // assert obelow' == allStrictlyInside(osp', m.o);
+    // assert obelow_ == allStrictlyInside(next.AMFO, m.o);
+    DELTA_strictlyInside(obelow, obelow', obelow_, osp, osp', next.AMFO, m.o);
+    assert obelow  == allStrictlyInside(osp, m.o);
+
+return;
 
       // assert AllReady(next.owner);
       // assert klonReady(m);
@@ -3275,16 +3297,14 @@ var cOffside := (set x <- cext.AMFO | offside(x, m.c));
           ensures obelow' == (set x <- osp' | strictlyInside(x,m.o))
           ensures oInside == (set x <- next.AMFO | strictlyInside(x, m.o))
          {
-          reveal OBELOW_PRIME, OINSIDE;
-          assert obelow' == (set x <- osp' | strictlyInside(x,m.o));
+         assert obelow' == (set x <- osp' | strictlyInside(x,m.o));
           assert oInside == (set x <- next.AMFO | strictlyInside(x, m.o));
         }
 
 
 
-    assert obelow' == (set x <- osp' | strictlyInside(x,m.o))
-      by { reveal OBELOW_PRIME; }
-    assert oInside == (set x <- next.AMFO | strictlyInside(x, m.o))
+    assert obelow' == (set x <- osp' | strictlyInside(x,m.o));
+        assert oInside == (set x <- next.AMFO | strictlyInside(x, m.o))
      by { reveal OINSIDE; }
 
 
