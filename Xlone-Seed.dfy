@@ -119,8 +119,10 @@ method {:isolate_assertions} {:timeLimit 20 } sheepKlon(o : Object, clowner : Ow
         assert x.Context(oHeap);
         assert x.Context(oHeap+mep.Values);
         assert x.AMFO <= mep.Keys;
-      }
 
+        assert mep[x].AMFB >= x.AMFB; //OK cos mep[x] == x
+      }
+assert forall x <- mep.Keys :: mep[x].AMFB >= x.AMFB;
 reveal COK();
 assert COK(o, oHeap);
 
@@ -130,7 +132,7 @@ assert c.Ready();
 assert c.Valid();
 assert c.Context(oHeap+{c});
 assert c.fieldModes == o.fieldModes;
-
+assert c.AMFB >= o.AMFB;
 
 forall x <- oHeap ensures (x.Context(oHeap+{c}))
  { reveal COK();
@@ -157,20 +159,15 @@ assert me.Keys == mep.Keys + {o};   assert forall x : Object <- me.Keys ::  (x.f
 
 assert me.Keys == o.AMFO;
 assert me.Values == o.AMFX+{c};
-assert AllReady(me.Keys);
-assert AllReady(me.Values);
+assert AllReady(me.Keys); assert AllReady(me.Values);
+assert AllValid(me.Keys); assert AllValid(me.Values);
+
+assert forall x <- me.Keys ::
+  &&  (if (x == o)  then ((me[x] == c) && (c.AMFB >= o.AMFB))
+                else ((me[x] == x) && (mep[x].AMFB >= x.AMFB)))
+  &&  (me[x].AMFB >= x.AMFB);
 
 
-// assert forall x <- me.Keys ::
-//   (if (x == o)  then ((me[x] == c) && (c.Ready()))
-//                 else ((me[x] == x) && (x.Ready())))
-//    && me[x].Ready();
-//
-//
-// assert forall x <- me.Keys ::
-//   (if (x == o)  then ((me[x] == c) && (c.Context(oHeap+{c})))
-//               else ((me[x] == x) && (x.Context(oHeap+{c})))
-// ) && me[x].Context(oHeap+{c});
 
 //NO_FIELDMODES
 assert forall x <- me.Keys ::
@@ -184,7 +181,7 @@ forall x <- me.Values ensures (x.Context(me.Values+oHeap)) //by
   {
      assert x.Context(oHeap+{c});
      x.WiderContext(oHeap+{c},me.Values+oHeap);
-     assert x.Context(oHeap+{c});
+     assert x.Context(me.Values+oHeap);
   }
 assert forall x <- me.Values :: x.Context(me.Values+oHeap); ///Err
 
@@ -201,7 +198,7 @@ var clamfx := flatten(clowner);
 
 assert AllReady(me.Keys);
 assert AllReady(me.Values);
-
+assert forall x <- me.Keys :: me[x].AMFB >= x.AMFB;
 m := Klon(me,
                             o,
                             c,
@@ -211,11 +208,11 @@ m := Klon(me,
                             o.AMFX,
                             clamfx,
                             flatten(clbound));
-
+assert forall x <- m.m.Keys :: (m.m[x] == me[x]) && (m.m[x].AMFB >= x.AMFB);
 assert forall x <- m.m.Values :: x.Context(me.Values+oHeap);
-assert m.hns() ==   me.Values+oHeap;
-assert m.hns() ==  m.m.Values+m.oHeap;
-assert forall x <- m.m.Values :: x.Context(m.hns());
+//assert m.hns() ==   me.Values+oHeap;
+// assert m.hns() ==  m.m.Values+m.oHeap;
+// assert forall x <- m.m.Values :: x.Context(m.hns());
 
 assert o == m.o;
 assert c == m.c == m.m[m.o];
@@ -245,13 +242,13 @@ assert c == m.c == m.m[m.o];
 
   assert (forall x <- m.oHeap :: x.Context(m.oHeap));
   assert (forall x <- m.m.Values :: x.Context(m.hns()));
-  assert klonHeap(m);
-
+  assert klonHeap(m); klonHeapValid(m);
+  assert forall  x <- m.m.Keys :: x.Valid() && m.m[x].Valid();
 forall k <- m.m.Keys ensures klonLine(k, m.m[k], m) //by
  {
-        var v := m.m[k];
-        assert (k.Ready() && k in m.oHeap    && k.Valid());
-        assert (v.Ready() && v in m.hns({v}) && v.Valid());
+        var v := m.m[k]; assert v in m.m.Values; assert v.Context(m.hns());
+        assert (k.Ready() && k in m.oHeap    && k.Valid()) && k.Context(m.oHeap);
+        assert (v.Ready() && v in m.hns({v}) && v.Valid()) && v.Context(m.hns({v}));
         assert (m.m.Keys >= k.AMFX);
         assert (k.AMFO >  k.AMFB);
         assert (v.AMFO >= v.AMFB);
@@ -272,7 +269,7 @@ forall k <- m.m.Keys ensures klonLine(k, m.m[k], m) //by
 
     assert klonIdentity(k,v,m);
  }
-
+//this is not a drill...
    assert klonAllLines(m);
 
 //assert HighLineKV(o, c, m);
