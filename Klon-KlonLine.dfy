@@ -10,7 +10,7 @@ include "Bound.dfy"  //shouild this be Ownerhsip=Bound?
 ////////////////////////////////////////////
 //core definitions of klonLine
 
-predicate {:isolate_assertions}  klonReady(m : Klon) : (b : bool) ///like Ready, should be built in to the type
+predicate  klonReady(m : Klon) : (b : bool) ///like Ready, should be built in to the type
   //constant true facts about all Klons!
   reads {}
   ensures (m.m.Values <= m.hns())
@@ -40,7 +40,7 @@ predicate {:isolate_assertions}  klonReady(m : Klon) : (b : bool) ///like Ready,
     && (m.c_amfx <= m.oHeap)
   }
 
-predicate {:isolate_assertions} klonCalid(m : Klon)
+predicate klonCalid(m : Klon)
 //  requires klonReady(m)  //?
   reads m.hns()
 {
@@ -50,7 +50,7 @@ predicate {:isolate_assertions} klonCalid(m : Klon)
   && klonHeap(m)
 }
 
-predicate {:isolate_assertions} klonHeap(m : Klon)
+predicate klonHeap(m : Klon)
   requires klonReady(m)
   reads m.hns()
 {
@@ -58,6 +58,24 @@ predicate {:isolate_assertions} klonHeap(m : Klon)
   && (forall x <- m.m.Values :: x.Context(m.hns()))
 }
 
+lemma klonHeapValid(m : Klon)
+  requires klonReady(m)
+  requires klonHeap(m)
+   ensures forall x <- m.oHeap    :: x.Ready()
+   ensures forall x <- m.m.Keys   :: x.Ready()
+   ensures forall x <- m.m.Keys   :: m.m[x].Ready()
+   ensures forall x <- m.m.Values :: x.Ready()
+   ensures forall x <- m.oHeap    :: x.Valid()
+   ensures forall x <- m.m.Keys   :: x.Valid()
+   ensures forall x <- m.m.Keys   :: m.m[x].Valid()
+   ensures forall x <- m.m.Values :: x.Valid()
+{
+  reveal Object.Context();
+  assert m.m.Keys <= m.oHeap;
+  assert forall x <- m.m.Keys   :: m.m[x] in m.m.Values;
+  assert forall x <- m.oHeap    :: x.Context(m.oHeap);
+  assert forall x <- m.m.Values :: x.Context(m.hns());
+}
 
 lemma WidenTheHeap(m : Klon)
   requires klonReady(m)
@@ -65,12 +83,12 @@ lemma WidenTheHeap(m : Klon)
    ensures forall x <- m.oHeap :: x.Context(m.hns())
 {}
 
-predicate {:isolate_assertions} klonAllLines(m : Klon) : (r : bool)
+predicate klonAllLines(m : Klon) : (r : bool)
   requires klonReady(m)
   reads m.hns()
   {forall k <- m.m.Keys :: klonLine(k, m.m[k], m)}
 
-predicate {:isolate_assertions} klonLine(k : Object, v : Object, m : Klon)
+predicate klonLine(k : Object, v : Object, m : Klon)
   //Ward Cunningham - the simplest thing that could possibly work...
   //now chopped up into bits
   //this should answer this qustion **is k,v OK in this klon**
@@ -85,7 +103,7 @@ predicate {:isolate_assertions} klonLine(k : Object, v : Object, m : Klon)
 }
 
 
-predicate {:isolate_assertions} klonPivot(m : Klon)
+predicate klonPivot(m : Klon)
   requires klonReady(m)
  reads m.hns()
 {
@@ -94,7 +112,7 @@ predicate {:isolate_assertions} klonPivot(m : Klon)
 }
 
 
-predicate {:isolate_assertions} OLD_klonPivot(m : Klon)
+predicate OLD_klonPivot(m : Klon)
   requires klonReady(m)
   reads m.hns()
 {
@@ -116,7 +134,7 @@ predicate {:isolate_assertions} OLD_klonPivot(m : Klon)
 
 
 
-predicate {:isolate_assertions} klonBound(k : Object, v : Object, m : Klon)
+predicate klonBound(k : Object, v : Object, m : Klon)
   requires klonReady(m)
   reads m.hns(), k, v
 {
@@ -129,7 +147,7 @@ predicate {:isolate_assertions} klonBound(k : Object, v : Object, m : Klon)
   && (v.AMFB   >= k.AMFB)
 }
 
-predicate {:isolate_assertions} klonModes(k : Object, v : Object, m : Klon)
+predicate klonModes(k : Object, v : Object, m : Klon)
   requires klonReady(m)
   reads m.hns(), k, v
   //field modes
@@ -140,7 +158,7 @@ predicate {:isolate_assertions} klonModes(k : Object, v : Object, m : Klon)
 }
 
 
-predicate {:isolate_assertions} klonGeometry(k : Object, v : Object, m : Klon)
+predicate klonGeometry(k : Object, v : Object, m : Klon)
   //the geometric constraints -- all compatible iwth "old" version
   requires klonReady(m)
   reads m.hns(), k, v
@@ -162,7 +180,7 @@ lemma EXTRA_GEMO(k : Object, v : Object, m : Klon)
    ensures ( outside(k, m.o)   <==>  outside(v, m.c) )
 {}
 
-predicate {:isolate_assertions} klonIdentity(k : Object, v : Object, m : Klon) : (r : bool)
+predicate klonIdentity(k : Object, v : Object, m : Klon) : (r : bool)
   requires klonReady(m)
   reads m.hns(), k, v
   {
@@ -193,7 +211,7 @@ predicate {:isolate_assertions} klonIdentity(k : Object, v : Object, m : Klon) :
 // // // // // //  // // // // // //  // // // // // //  // // // // // //  // // // // // //  // // // // // //  // // // // // /
 
 
-lemma {:isolate_assertions} KlonReadyFromKV(m : Klon, m' : Klon, k : Object, v : Object)
+lemma KlonReadyFromKV(m : Klon, m' : Klon, k : Object, v : Object)
   requires m.from(m')
   requires klonReady(m')
 
@@ -216,7 +234,7 @@ lemma {:isolate_assertions} KlonReadyFromKV(m : Klon, m' : Klon, k : Object, v :
     KlonReadyFrom(m,m');
    }
 
-lemma {:isolate_assertions} KlonReadyFrom(m : Klon, m' : Klon)
+lemma KlonReadyFrom(m : Klon, m' : Klon)
   requires klonReady(m')
   requires m.from(m')
 
@@ -257,7 +275,7 @@ lemma {:isolate_assertions} KlonReadyFrom(m : Klon, m' : Klon)
   }
 
 
-lemma {:isolate_assertions} KlonLineFrom(k : Object, v : Object, m : Klon, m' : Klon)
+lemma KlonLineFrom(k : Object, v : Object, m : Klon, m' : Klon)
   //given klonLine(k,v,m') move to klonLine(k,v,m)
   requires klonReady(m')
   requires klonLine(k,v,m')
@@ -275,7 +293,7 @@ lemma {:isolate_assertions} KlonLineFrom(k : Object, v : Object, m : Klon, m' : 
 }
 
 
-lemma {:isolate_assertions} KlonIdentityFrom(k : Object, v : Object, m : Klon, m' : Klon)
+lemma KlonIdentityFrom(k : Object, v : Object, m : Klon, m' : Klon)
   requires klonReady(m')
   requires klonIdentity(k,v,m')
   requires m.from(m')
@@ -286,7 +304,7 @@ lemma {:isolate_assertions} KlonIdentityFrom(k : Object, v : Object, m : Klon, m
 
 
 //
-// lemma {:isolate_assertions} KLF_Line(m : Klon, m' : Klon)
+// lemma KLF_Line(m : Klon, m' : Klon)
 //     requires klonReady(m')
 //     requires klonCalid(m')
 //      ensures klonAllLines(m')
@@ -321,7 +339,7 @@ lemma {:isolate_assertions} KlonIdentityFrom(k : Object, v : Object, m : Klon, m
 // }
 
 
-lemma {:isolate_assertions} KlonCalidFrom(m : Klon, m' : Klon)
+lemma KlonCalidFrom(m : Klon, m' : Klon)
   requires klonReady(m')
   requires klonCalid(m')
 
@@ -406,7 +424,7 @@ lemma {:isolate_assertions} KlonCalidFrom(m : Klon, m' : Klon)
 //====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//
 
 //
-// lemma {:isolate_assertions} InternalOwnersWithinPivot(oo : Owner, bb : Bound, co : Owner, cb : Bound, m : Klon)
+// lemma InternalOwnersWithinPivot(oo : Owner, bb : Bound, co : Owner, cb : Bound, m : Klon)
 //   requires klonReady(m)
 //   requires klonCalid(m)
 //   requires AllReady(oo)
@@ -428,7 +446,7 @@ lemma {:isolate_assertions} KlonCalidFrom(m : Klon, m' : Klon)
 
 
 
-function {:isolate_assertions} InternalOwnersWithinPivot(o : Object, m : Klon) : Owner
+function InternalOwnersWithinPivot(o : Object, m : Klon) : Owner
   //recursivelylooks at all of o's owners that are inside m.o, classifying them as either
   requires klonReady(m)
   requires klonCalid(m)
@@ -448,7 +466,7 @@ function {:isolate_assertions} InternalOwnersWithinPivot(o : Object, m : Klon) :
 
 
 
-function {:isolate_assertions} {:timeLimit 10} internalOwners(o : Object, m : Klon) : Owner
+function {:timeLimit 10} internalOwners(o : Object, m : Klon) : Owner
   decreases allAMFOs({o}), 1
 //      reads m.hns()
    requires klonReady(m)
@@ -461,7 +479,7 @@ function {:isolate_assertions} {:timeLimit 10} internalOwners(o : Object, m : Kl
       else {}
    }
 
-function {:isolate_assertions} {:timeLimit 10} internalFlatten(oo : Owner, m : Klon) : Owner
+function {:timeLimit 10} internalFlatten(oo : Owner, m : Klon) : Owner
   //decreases allAMFOs(oo), 2
 //      reads m.hns()
    requires klonReady(m)
@@ -485,7 +503,7 @@ function {:isolate_assertions} {:timeLimit 10} internalFlatten(oo : Owner, m : K
 
 
 
-function {:isolate_assertions} UNFINISHED_classifyOwnersWithin(o : Object, m : Klon) : (Owner, Owner, Owner)
+function UNFINISHED_classifyOwnersWithin(o : Object, m : Klon) : (Owner, Owner, Owner)
   //looks at all of o's owners that are inside m.o, classifying them as either
    //- internal ---
    //- external --- outsife
