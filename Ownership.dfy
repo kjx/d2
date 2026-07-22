@@ -260,7 +260,7 @@ lemma {:isolate_assertions}  FLATTEN_ALLAMFOS(oo : Owner)
 
 
 predicate AllReady(os : Owner) {forall oo <- os :: oo.Ready()}
-predicate AllValid(os : Owner) {forall oo <- os :: oo.Valid()}
+predicate AllValid(os : Owner) reads os`fields, os`fieldModes {forall oo <- os :: oo.Valid()}
 
 function allAMFOs(oo : Owner) : (r : OWNR)
   ensures AllReady(oo) ==> (oo <= r)
