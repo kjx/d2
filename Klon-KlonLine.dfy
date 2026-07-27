@@ -452,6 +452,7 @@ function InternalOwnersWithinPivot(o : Object, m : Klon) : Owner
   requires klonCalid(m)
   requires o.Ready()
   requires o in m.m.Keys
+     reads m.hns()
 {
   {}
   //  if (inside(o,m.o))
@@ -464,7 +465,21 @@ function InternalOwnersWithinPivot(o : Object, m : Klon) : Owner
 
 
 
+lemma ComeTheFuckOn(o : Object)
+ requires o.Ready()
+  ensures allAMFOs(o.owner) < allAMFOs({o})
+ {
+  assert allAMFOs({o}) == allAMFOs(o.owner) + {o};
+ }
 
+ lemma ComeTheFuckOwner(oo : Owner)
+ requires AllReady(oo)
+  ensures forall o <- oo :: allAMFOs(oo) >= allAMFOs({o})
+  ensures 2 > 1
+  ensures 2 decreases to 1
+  ensures forall o <- oo :: allAMFOs(oo) nonincreases to allAMFOs({o})
+  ensures forall o <- oo :: (allAMFOs(oo), 2 decreases to allAMFOs({o}), 1)
+ {}
 
 function {:timeLimit 10} internalOwners(o : Object, m : Klon) : Owner
   decreases allAMFOs({o}), 1
@@ -475,12 +490,12 @@ function {:timeLimit 10} internalOwners(o : Object, m : Klon) : Owner
    requires o in m.m.Keys
    {
     if (strictlyInside(o,m.o))
-      then ({o} +  internalFlatten(o.owner, m))
+      then ComeTheFuckOn(o); ({o} +  internalFlatten(o.owner, m))
       else {}
    }
 
-function {:timeLimit 10} internalFlatten(oo : Owner, m : Klon) : Owner
-  //decreases allAMFOs(oo), 2
+function {:timeLimit 20} internalFlatten(oo : Owner, m : Klon) : Owner
+  decreases allAMFOs(oo), 2
 //      reads m.hns()
    requires klonReady(m)
   // requires klonCalid(m)
@@ -490,8 +505,11 @@ function {:timeLimit 10} internalFlatten(oo : Owner, m : Klon) : Owner
      assert forall o <- oo :: o.Ready();
      assert forall o <- oo :: ( allAMFOs(oo) >= o.AMFO );
 
-     assert forall o <- oo :: ( allAMFOs(oo) decreases to o.AMFO );
- //    assert forall o <- oo :: ( allAMFOs(oo), 2  decreases to  o.AMFO, 1 );
+   //  assert forall o <- oo :: ( allAMFOs(oo) decreases to o.AMFO );
+     forall o : Object <- oo ensures ( allAMFOs(oo), 2  decreases to allAMFOs({o}), 1 ) //by
+       {
+          ComeTheFuckOwner(oo);
+       }
 
 //  assert  allAMFOs(oo) decreases to allAMFOs(o.owner);
 //  assert  allAMFOs({}) ,lts
@@ -511,6 +529,7 @@ function UNFINISHED_classifyOwnersWithin(o : Object, m : Klon) : (Owner, Owner, 
   requires klonCalid(m)
   requires o.Ready()
   requires o in m.m.Keys
+     reads m.hns()
 {
    ( {}, {}, {} )
   //  if (inside(o,m.o))
