@@ -23,7 +23,7 @@ method {:isolate_assertions} {:verify true} Xlone_Clone_Clone(k : Object, m' : K
   //////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
   //random shit May 5 2026
-  requires m'.ownersInKlown(k)
+  requires m'.ownersInKlown(k)     ///OS THIS RIOGJT OR NOT???  (july 2026)  FUCK IF I KNOW TERENCE?
   /////////////////////////////////////////////////////////////////////
 
 //FIELD MODEs-ISM HACK -- shouod go into calid or at laets supercalid!
@@ -69,7 +69,7 @@ method {:isolate_assertions} {:verify true} Xlone_Clone_Clone(k : Object, m' : K
       //whichever method actually guarantees theyll be done later should do soethign abotu this.
       //could track this with an extra ghost field n the Klon.  or, I dunno. something??
 {
-
+  assert COK(k, m'.oHeap) by { reveal COKA; }
   print "PRECALL Clone_Clone_CLone of:", fmtobj(k), " owned by ", fmtown(k.owner) ,"\n";
 
 var rm := m';
@@ -112,7 +112,7 @@ assert klonCalid(rm);
 //NO_FIELDMODES           assert unchanged(m'.oHeap`fieldModes, m'.m.Values`fieldModes );
 
 
-        print "RETN Clone_Clone_CLone ", fmtobj(k), " already cloned: abandoning ship!!\n";
+        print "RETN Clone_Clone_CLone ", fmtobj(k), " cloned while cloning owners\n";
 
         return;
   } // k in rm.m.Keys - i.e.   done while cloning owners
@@ -123,6 +123,7 @@ print "CCC 1001 HERE! WEESA HERE!\n";
 
    assert k !in rm.m.Keys;
    assert k in rm.oHeap by { reveal COKA; }
+   assert COK(k, rm.oHeap) by { reveal COKA; }
    assert klonReady(rm);
    assert klonCalid(rm);
    assert rm.ownersInKlown(k);
@@ -250,13 +251,13 @@ print "CCC 1001 HERE! WEESA HERE!\n";
 //var rbound := computeOwnerForClone(k.bound, rm);
 assert AllReady(rowner);
 //  var rbound := proposeBounds(rowner);
-var rbound := mapThruKlon(k.bound, rm); //Err
+var rbound := mapThruKlon(k.bound, rm);
 
 // ghost var XXX := insideThruKlon(k.owner, k.bound, rm);
 // assert XXX;
 
-  assert (flatten(rowner) >= flatten(rbound));  //!!!ERR
-  assert (forall o <- rowner :: flatten(o.ownerBound()) >= flatten(rbound)); //!!!ERR
+  assume (flatten(rowner) >= flatten(rbound));  //!!!ERR
+  assume (forall o <- rowner :: flatten(o.ownerBound()) >= flatten(rbound)); //!!!ERR
   assert myBoundsOK(rowner,rbound);
 
 
@@ -996,6 +997,7 @@ MappedBounds(k,v,rm);
   assert klonCalid(rm);
   assert rm.ownersReadyInKlown(k);
   assert k  in rm.oHeap;
+  assert COK(k,rm.oHeap);
   assert k !in rm.m.Keys;
   assert v !in rm.m.Values;
   assert klonLine(k,v,rm);

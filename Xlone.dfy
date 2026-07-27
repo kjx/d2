@@ -821,7 +821,7 @@ lemma /*VFF*/ XCC_decreases_to_XAF(a : Object, b : Object, m' : Klon)
 //
 //    assert forall k <- m'.m.Keys :: HighLineKV(k, m'.m[k], m');
 //
-//   XCC_decreases_to_XAO(m',k);
+//   XCC_decreases to (m'.oHeap - m'.m.Keys), |a.AMFO|, |a.fields.Keys|, 12)(m',k);
 //
 // ///////////////////////////////////////////////////////////////////////// ////////
 //   var rm := /*FAKE_*/Xlone_All_Owners(k, m')
@@ -2088,7 +2088,7 @@ lemma  RemoveAddContainedElement<T>(aa : set<T>, bb : set<T>, e : T)
 //I think this was "ater" the official fall of tb4 walwaa
 
 
-lemma  {:isolate_assertions} {:timeLimit 10}  XFM_decreases_to_XVM(a : Object, b : Object, ofv : Object, m' : Klon)
+lemma /*VFF*/ XFM_decreases_to_XVM(a : Object, b : Object, ofv : Object, m' : Klon)
 
   requires m'.HeapContextReady() && m'.ValuesContextReady() &&  m'.Calid()
   requires m'.m.Keys <= m'.oHeap  //must be in Calid()?
@@ -2180,6 +2180,13 @@ assert (m'.oHeap - m'.m.Keys + {a},   |a.AMFO|,   fielddiff(a,b), 5 //Xlone_Fiel
 //   assert (m'.oHeap - m'.m.Keys + {a} decreases to m'.oHeap - m'.m.Keys  + {ofv});
 
 
+
+
+lemma /*VFF*/ XVM_decreases_to_XAO(a : Object, m' : Klon)
+  ensures
+   (m'.oHeap - m'.m.Keys + {a}, |a.AMFO|, |a.fields.Keys|, 20 //Klone_Via_Map
+    decreases to (m'.oHeap - m'.m.Keys), |a.AMFO|, |a.fields.Keys|, 12)
+{}
 
 
 

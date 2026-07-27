@@ -39,8 +39,8 @@ function collectAllOwners(o : Object) : (rv : Owner)
   {o} + o.owner + (set xo <- o.owner, co <- collectAllOwners(xo) :: co)
 }
 
-function {:isolate_assertions} collectAllXOwners(o : Object) : (rv : Owner)
-  // decreases o.AMFO
+function collectAllXOwners(o : Object) : (rv : Owner)
+  decreases o.AMFO
    requires o.Ready()
     ensures rv < o.AMFO
     ensures rv <= o.AMFX
@@ -49,12 +49,25 @@ function {:isolate_assertions} collectAllXOwners(o : Object) : (rv : Owner)
   o.owner + (set oo <- o.owner, ooo <- collectAllXOwners(oo) :: ooo)
 }
 
-lemma CXO(o : Object)
-//  decreases o.AMFO
-  requires o.Ready()
-//   ensures rv <= o.AMFO
-  ensures collectAllOwners(o) == (collectAllXOwners(o) + {o})
-{}
+// lemma CXO(o : Object)
+// //  decreases o.AMFO
+//   requires o.Ready()
+// //   ensures rv <= o.AMFO
+//   ensures collectAllOwners(o) == (collectAllXOwners(o) + {o})
+// {
+//   if (o.owner == {})
+//    {
+//     assert collectAllOwners(o) == {o};
+//     assert collectAllXOwners(o) == {};
+//     assert {o} == {} + {o};
+//     assert collectAllOwners(o) == (collectAllXOwners(o) + {o});
+//    }
+//    else
+//    {
+//     assume  collectAllOwners(o) == (collectAllXOwners(o) + {o});
+//    }
+//
+// }
 
 
 
@@ -70,12 +83,12 @@ lemma ExtraOwnersDon'tMatterToTheCollection(o : Object)
     ensures collectAllOwners(o) == collectAllOwnersWithoutExtraOwners(o)
 {}
 
-function {:isolate_assertions} collectAllOwnersButForOwners(oo : Owner) : (rv : Owner)
+function collectAllOwnersButForOwners(oo : Owner) : (rv : Owner)
   decreases allAMFOs(oo)
    requires AllReady(oo)
     { oo + (set o <- oo, ooo <- collectAllOwnersButForOwners(o.owner) :: ooo) }
 //
-// lemma {:isolate_assertions} OwnersSchmonersCollectionEmAll(o : Object)
+// lemma OwnersSchmonersCollectionEmAll(o : Object)
 //   decreases o.AMFO
 //    requires o.Ready()
 //     ensures collectAllOwnersWithoutExtraOwners(o) == collectAllOwnersButForOwners({o})
@@ -101,7 +114,7 @@ function {:isolate_assertions} collectAllOwnersButForOwners(oo : Owner) : (rv : 
 // }
 //
 //
-// lemma {:isolate_assertions} SchmonersOwnersCollectionEmAll(oo : Owner)
+// lemma SchmonersOwnersCollectionEmAll(oo : Owner)
 //   decreases allAMFOs(oo)
 //    requires AllReady(oo)
 //     ensures collectAllOwnersButForOwners(oo) == (set o <- oo, ooo <- collectAllOwnersWithoutExtraOwners(o) :: ooo)
@@ -109,7 +122,7 @@ function {:isolate_assertions} collectAllOwnersButForOwners(oo : Owner) : (rv : 
 //
 //
 //
-// lemma {:isolate_assertions} {:timeLimit 60}  SchmonersSingles(oo : Owner)
+// lemma {:timeLimit 60}  SchmonersSingles(oo : Owner)
 //   decreases allAMFOs(oo)
 //    requires AllReady(oo)
 //    requires forall o <- oo :: o.Ready()
@@ -126,7 +139,7 @@ function {:isolate_assertions} collectAllOwnersButForOwners(oo : Owner) : (rv : 
 // }
 //
 //
-// function  {:isolate_assertions} zlork(oo : Owner) : (rv : OWNR)
+// function  zlork(oo : Owner) : (rv : OWNR)
 //   decreases allAMFOs(oo)
 //    requires AllReady(oo)
 //   { oo + (set o <- oo, ooo <- flown(o.owner) :: ooo) }
@@ -137,7 +150,7 @@ function {:isolate_assertions} collectAllOwnersButForOwners(oo : Owner) : (rv : 
 //    requires AllReady(oo)
 //     ensures zlork(oo) == (oo + (set o <- oo, ooo <- flown(o.owner) :: ooo))
 
-lemma {:isolate_assertions} InsideCollectAllOwners(part : Object, whole : Object)
+lemma InsideCollectAllOwners(part : Object, whole : Object)
   requires part.Ready()
   requires whole.Ready()
   requires recInside(part, whole)
@@ -165,7 +178,7 @@ lemma collectAllAMFO1(o : Object)
   ensures   o.AMFO == collectAllOwnersWithoutExtraOwners(o)
   {}
 //
-// lemma {:isolate_assertions} collectAllAMFO2(o : Object, z : Object)
+// lemma collectAllAMFO2(o : Object, z : Object)
 //   decreases o.AMFO
 //   requires  o.Ready()
 //   requires (|o.owner| == 1) ==> (o.owner == {z})
@@ -283,7 +296,7 @@ lemma AXIOMFLAT(a : Object, b : Object)
 {}
 
 
-lemma  {:isolate_assertions} FLATAMFO(a : Object)
+lemma  FLATAMFO(a : Object)
   requires a.Ready()
    ensures a.AMFO == flatten({a})
    ensures forall oo <- a.AMFO :: inside(a,oo)
@@ -300,7 +313,7 @@ lemma  {:isolate_assertions} FLATAMFO(a : Object)
 }
 
 
-lemma {:isolate_assertions} AXIOMFLATOWNERS(a : Object, b : Owner)
+lemma AXIOMFLATOWNERS(a : Object, b : Owner)
   requires a.Ready()
   requires AllReady(b)
 
@@ -321,7 +334,7 @@ lemma AXIOMAMFOS(a : Object, b : Object)
   ensures  (a != b) <==> (a.AMFO != b.AMFO)
 {}
 
-lemma  {:isolate_assertions} AXIOMOWNERSFLAT(a : Owner, b : Owner)
+lemma  AXIOMOWNERSFLAT(a : Owner, b : Owner)
   requires AllReady(a)
   requires AllReady(b)
    ensures  (a == b)  ==> (flatten(a) == flatten(b))
@@ -355,7 +368,7 @@ lemma AXIOMAMFOREVERSE(part : Object, whole : Object)
 
 
 
-lemma {:isolate_assertions} AXIOMAMFODIRECT0(part : Object, whole : Object)
+lemma AXIOMAMFODIRECT0(part : Object, whole : Object)
    requires part.Ready()
    requires whole.Ready()
    requires part.owner == {whole}
@@ -363,7 +376,7 @@ lemma {:isolate_assertions} AXIOMAMFODIRECT0(part : Object, whole : Object)
 { }
 
 
-lemma {:isolate_assertions} AXIOMAMFODIRECT(part : Object, whole : Object)
+lemma AXIOMAMFODIRECT(part : Object, whole : Object)
 // inside(part,whole) ==> whole in part.AMFO
    requires part.Ready()
    requires whole.Ready()
@@ -391,13 +404,13 @@ predicate goodFlatten(o : Object, myAMFO : Owner)
     && (forall x <- o.owner :: goodFlatten(x, myAMFO))
    }
 
-lemma {:isolate_assertions}  LetsBeGood1(o : Object)
+lemma  LetsBeGood1(o : Object)
    requires o.Ready()
   decreases o.AMFO
     ensures isFlat(o.AMFO) <==  goodFlatten(o, o.AMFO)
 {}
 
-lemma {:isolate_assertions}  LetsBeGood2(o : Object)
+lemma  LetsBeGood2(o : Object)
    requires o.Ready()
    requires o.owner == {}
   decreases o.AMFO
@@ -405,7 +418,7 @@ lemma {:isolate_assertions}  LetsBeGood2(o : Object)
     ensures isFlat(o.AMFO)  ==> goodFlatten(o, o.AMFO)
 {}
 
-// lemma {:isolate_assertions}  LetsBeGood3(o : Object)
+// lemma  LetsBeGood3(o : Object)
 //    requires o.Ready()
 //    requires o.owner > {}
 //   decreases o.AMFO
@@ -414,7 +427,7 @@ lemma {:isolate_assertions}  LetsBeGood2(o : Object)
 //   LetsBeGood3a(o, o.AMFO);
 // }
 
-// lemma {:isolate_assertions}  LetsBeGood3a(o : Object, a : OWNR)
+// lemma  LetsBeGood3a(o : Object, a : OWNR)
 //    requires o.Ready()
 //    requires o.owner > {}
 //   decreases o.AMFO
@@ -429,7 +442,7 @@ lemma {:isolate_assertions}  LetsBeGood2(o : Object)
 //  }
 // }
 
-// lemma {:isolate_assertions}  LetsBeGood4(o : Object)
+// lemma  LetsBeGood4(o : Object)
 //    requires o.Ready()
 //   decreases o.AMFO
 //     ensures isFlat(o.AMFO)  ==> goodFlatten(o, o.AMFO)
@@ -496,7 +509,7 @@ predicate goodCloneOwnershipWithin(left : Object, right : Object, pivot : Object
 
 
 
-lemma {:isolate_assertions}  prog_is_paranoid(left : Object, right : Object, pivot : Object,  m : Klon)
+lemma  prog_is_paranoid(left : Object, right : Object, pivot : Object,  m : Klon)
 ///checks left' ownership matches right, based on the Klojn
   decreases left.AMFO, right.AMFO
    requires klonReady(m)
@@ -512,7 +525,7 @@ lemma {:isolate_assertions}  prog_is_paranoid(left : Object, right : Object, piv
   //  ensures (strictlyInside(left, m.o)) <==> strictlyInside(right, m.m[m.o]) // HHMMMMM
   {}
 
-predicate {:isolate_assertions} noExternalOwners(k : Object, m : Klon)
+predicate noExternalOwners(k : Object, m : Klon)
  requires k.Ready()
  { forall x <- k.AMFX :: colinear(x.AMFO,m.o.AMFO) }
 
@@ -526,7 +539,7 @@ function relatives(o : Object, m : Klon) : RelativeOwnerRelation
       else External
   }
 
-lemma {:isolate_assertions} TestNoExternalOwners1(k : Object, x : Object, m : Klon)
+lemma TestNoExternalOwners1(k : Object, x : Object, m : Klon)
   requires k.Ready()
   requires x.Ready()
   requires m.SuperCalidFragilistic()
@@ -534,7 +547,7 @@ lemma {:isolate_assertions} TestNoExternalOwners1(k : Object, x : Object, m : Kl
    ensures forall x <- k.AMFX :: colinear(x.AMFO,m.o.AMFO)
 {}
 
-lemma {:isolate_assertions} TestNoExternalOwners2(k : Object, x : Object, m : Klon)
+lemma TestNoExternalOwners2(k : Object, x : Object, m : Klon)
   requires k.Ready()
   requires x.Ready()
   requires m.SuperCalidFragilistic()
@@ -542,7 +555,7 @@ lemma {:isolate_assertions} TestNoExternalOwners2(k : Object, x : Object, m : Kl
    ensures forall x <- k.AMFX :: (inside(x,m.o)) || (inside(m.o,x))
 {}
 
-lemma {:isolate_assertions} TestNoExternalOwners3(k : Object, x : Object, m : Klon)
+lemma TestNoExternalOwners3(k : Object, x : Object, m : Klon)
   requires k.Ready()
   requires x.Ready()
   requires m.SuperCalidFragilistic()
@@ -550,7 +563,7 @@ lemma {:isolate_assertions} TestNoExternalOwners3(k : Object, x : Object, m : Kl
    ensures forall x <- k.AMFX :: relatives(x, m) != External
 {}
 
-lemma {:isolate_assertions} TestRecombine(p0 : OWNR, w0 : OWNR, p1 : OWNR)
+lemma TestRecombine(p0 : OWNR, w0 : OWNR, p1 : OWNR)
     requires AllReady(p0)
     requires AllReady(w0)
     requires AllReady(p1)
@@ -564,7 +577,7 @@ lemma {:isolate_assertions} TestRecombine(p0 : OWNR, w0 : OWNR, p1 : OWNR)
 
 //================================================================
 
-function  {:isolate_assertions} flown(oo : Owner) : (rv : OWNR)
+function  flown(oo : Owner) : (rv : OWNR)
   decreases allAMFOs(oo)
    requires AllReady(oo)
     ensures AllReady(rv)
@@ -573,20 +586,20 @@ function  {:isolate_assertions} flown(oo : Owner) : (rv : OWNR)
 //  { (set o <- oo, ooo <- flown({o}) :: ooo) }   //nice but loops & doesn't call owner!!!!!
 //    { (set o <- oo, ooo <- (flown(o.owner) + {o}) :: ooo) }
 
-function  {:isolate_assertions} flownr(o : Object) : (rv : OWNR)
+function  flownr(o : Object) : (rv : OWNR)
   requires o.Ready()
    { flown({o}) }
 //   ensures rv == o.AMFO // it does. but...
 //   { flown(o.owner) + {o} }   //earlier versuon - clearly I was askeeo at hte keyboard
 
-function  {:isolate_assertions} {:timeLimit 20} flowin(oo : Owner, pivot : Owner) : (rv : Owner)
+function  {:timeLimit 20} flowin(oo : Owner, pivot : Owner) : (rv : Owner)
  decreases allAMFOs(oo)
   requires AllReady(oo)
   requires AllReady(pivot)
    ensures rv <= flown(oo)
            { flown(oo) - flown(pivot) }
 
-function  {:isolate_assertions} {:timeLimit 20} flowrin(o : Object, pivot : Object) : (rv : Owner)
+function  {:timeLimit 20} flowrin(o : Object, pivot : Object) : (rv : Owner)
  decreases o.AMFO
   requires o.Ready()
   requires pivot.Ready()
@@ -612,7 +625,7 @@ function  {:isolate_assertions} {:timeLimit 20} flowrin(o : Object, pivot : Obje
 //   { forall x <- fhole :: not(strictlyInside(x,w)) }
 //  // { forall x <- fhole :: w !in x.AMFX }
 //
-// function {:isolate_assertions} allMinimal(whole : Owner, fhole : Owner) : (r : Owner)
+// function allMinimal(whole : Owner, fhole : Owner) : (r : Owner)
 //  //returns subset of minimal elements of flown(whole) / fhole
 //   requires AllReady(whole)
 //   requires AllReady(fhole)
@@ -620,7 +633,7 @@ function  {:isolate_assertions} {:timeLimit 20} flowrin(o : Object, pivot : Obje
 //    ensures r <= fhole
 //  { set x <- whole | isMinimal(x, whole, fhole) }
 //
-// lemma {:isolate_assertions} existsMinimal(whole : Owner, fhole : Owner)
+// lemma existsMinimal(whole : Owner, fhole : Owner)
 // //this surely cannot work!
 //   requires whole != {}
 //   requires AllReady(whole)
@@ -646,7 +659,7 @@ function  {:isolate_assertions} {:timeLimit 20} flowrin(o : Object, pivot : Obje
 //
 // //  { minimal in s && forall x | x in s && lessOrEqual(x, minimal) :: lessOrEqual(minimal, x) }
 //
-// function {:isolate_assertions} allMowner(whole : Owner, fhole : Owner) : (r : Owner)
+// function allMowner(whole : Owner, fhole : Owner) : (r : Owner)
 //  //returns subset of minimal elements of flown(whole) / fhole
 //  //should decide is this in WHOLE or FHOLE
 //   requires AllReady(whole)
@@ -658,7 +671,7 @@ function  {:isolate_assertions} {:timeLimit 20} flowrin(o : Object, pivot : Obje
 //
 //
 //
-// lemma {:isolate_assertions} existsMowner(whole : Owner, fhole : Owner)
+// lemma existsMowner(whole : Owner, fhole : Owner)
 // //this surely cannot work!
 //   requires whole != {}
 //   requires AllReady(whole)
@@ -682,7 +695,7 @@ function  {:isolate_assertions} {:timeLimit 20} flowrin(o : Object, pivot : Obje
 // }
 //
 //
-// lemma {:isolate_assertions} withoutMinimal(whole : Owner, fhole : Owner, minimal : Owner, min : Object, mhole : Owner)
+// lemma withoutMinimal(whole : Owner, fhole : Owner, minimal : Owner, min : Object, mhole : Owner)
 //   requires AllReady(whole)
 //   requires AllReady(fhole)
 //   requires fhole == frown(whole)
@@ -697,7 +710,7 @@ function  {:isolate_assertions} {:timeLimit 20} flowrin(o : Object, pivot : Obje
 //
 //
 //
-// lemma {:isolate_assertions} FrownFratten(oo : Owner)
+// lemma FrownFratten(oo : Owner)
 //   requires AllReady(oo)
 //   requires AllReady(frown(oo))  //jusgt easier than whatevs
 //  decreases allAMFOs(oo)
@@ -795,7 +808,7 @@ lemma Frown3( a : Owner, b : Owner, c : Owner)
 {}
 
 
- lemma  {:isolate_assertions} OwnershipIsAcyclic(o : Object)
+ lemma  OwnershipIsAcyclic(o : Object)
   requires o.Ready()
    ensures o !in allAMFOs(o.owner)
    ensures o !in allAMFXs(o.owner)
@@ -808,7 +821,7 @@ lemma Frown3( a : Owner, b : Owner, c : Owner)
     assert frown(o.owner) == o.AMFX;
    }
 
-// function  {:isolate_assertions} FR2(oo : Owner) : (r : Owner)
+// function  FR2(oo : Owner) : (r : Owner)
 //    requires |oo| > 1
 //    requires AllReady(oo)
 //     ensures r <= frown(oo)
@@ -820,12 +833,12 @@ lemma Frown3( a : Owner, b : Owner, c : Owner)
 //     assert frown({o}) + frown(oo - {o}) == frown(oo);
 //     frown({o}) + frown(oo - {o}) }
 
- function  {:isolate_assertions} frown(oo : Owner) : (rv : OWNR)
+ function  frown(oo : Owner) : (rv : OWNR)
   requires AllReady(oo)
   decreases allAMFOs(oo)
  { (set o <- oo, ooo <- frown(o.owner) :: ooo) + oo }
 
-// lemma {:isolate_assertions} FlownFlatten(oo : Owner)
+// lemma FlownFlatten(oo : Owner)
 //
 // NO LONGER NEEDED  5 Nov
 //
@@ -861,7 +874,7 @@ lemma Frown3( a : Owner, b : Owner, c : Owner)
 //   {(set o <- os, oo <- o.AMFO :: oo) + os}
 
 
-predicate {:isolate_assertions} isFlown(os : Owner)
+predicate isFlown(os : Owner)
   decreases allAMFOs(os)
    requires AllReady(os)
   //flown analogue o isFlat
@@ -880,7 +893,7 @@ ghost function recFlown(os : Owner) : Owner
        else (var z :| z in os; z.AMFO + recFlown(os - {z})) }
 
 
-ghost predicate {:isolate_assertions} isRecFlown(os : Owner)
+ghost predicate isRecFlown(os : Owner)
   decreases allAMFOs(os)
    requires AllReady(os)
   //flown analogue o isFlat
@@ -897,7 +910,7 @@ ghost predicate {:isolate_assertions} isRecFlown(os : Owner)
 
 ///----------------------------------------------------------------------
 
-lemma {:isolate_assertions} FlownIsFlatten0(oo : Owner)
+lemma FlownIsFlatten0(oo : Owner)
  decreases allAMFOs(oo)
   requires AllReady(oo)
   requires oo == {}
@@ -905,7 +918,7 @@ lemma {:isolate_assertions} FlownIsFlatten0(oo : Owner)
 {}
 
 
-lemma {:isolate_assertions} FlownIsFlatten1(oo : Owner)
+lemma FlownIsFlatten1(oo : Owner)
  decreases allAMFOs(oo)
   requires AllReady(oo)
   requires |oo| == 1
@@ -916,7 +929,7 @@ lemma {:isolate_assertions} FlownIsFlatten1(oo : Owner)
 {}
 
 
-lemma {:isolate_assertions}  FlownIsFlatten2(o : Object)
+lemma  FlownIsFlatten2(o : Object)
  decreases allAMFOs({o})
   requires AllReady({o})
   requires AllReady(o.owner)
@@ -956,13 +969,13 @@ FlattenFlownFrown({o});
 //
 // assert  flatten({o }) == flown({o});
 
-lemma {:isolate_assertions}  FlownIsFlatten3(oo : Owner)
+lemma  FlownIsFlatten3(oo : Owner)
  decreases allAMFOs(oo)
   requires AllReady(oo)
    ensures flatten(oo) == allAMFOs(oo)
    {}
 
-lemma {:isolate_assertions} {:timeLimit 40} FlownIsFlatten4(o : Object)
+lemma {:timeLimit 40} FlownIsFlatten4(o : Object)
  decreases o.AMFO
   requires o.Ready()
    ensures flatten({o}) == flown({o})
@@ -973,7 +986,7 @@ lemma {:isolate_assertions} {:timeLimit 40} FlownIsFlatten4(o : Object)
 FlownAllAMFOs(o.owner);
 }
 
-lemma {:isolate_assertions}  FlownrIsFlatten5(o : Object)
+lemma  FlownrIsFlatten5(o : Object)
  decreases o.AMFO
   requires o.Ready()
    ensures (flown(o.owner) + {o}) == flown({o}) == flownr(o)
@@ -987,14 +1000,14 @@ lemma {:isolate_assertions}  FlownrIsFlatten5(o : Object)
 
 
 
-lemma {:isolate_assertions} {:timeLimit 20} TryFlownrWhenYouWantToFlattenAnOwner(o : Object)
+lemma {:timeLimit 20} TryFlownrWhenYouWantToFlattenAnOwner(o : Object)
  decreases o.AMFO
   requires o.Ready()
    ensures flownr(o) ==  flown(o.owner)+{o}
    ensures (flown(o.owner)+{o}) == flown(o.owner+{o}) == flown({o})
    {}
 
-lemma {:isolate_assertions} {:timeLimit 30} FlownrIsAMFX(o : Object)
+lemma {:timeLimit 30} FlownrIsAMFX(o : Object)
  decreases o.AMFO
   requires o.Ready()
    ensures (flown(o.owner)+{o}) == flown(o.owner+{o})
@@ -1003,7 +1016,7 @@ lemma {:isolate_assertions} {:timeLimit 30} FlownrIsAMFX(o : Object)
    ensures flatten({o}) == flown({o})
    {}
 
-// function  {:isolate_assertions} {:timeLimit 20} flowinWTF(oo : Owner, pivot : Owner) : (rv : Owner)
+// function  {:timeLimit 20} flowinWTF(oo : Owner, pivot : Owner) : (rv : Owner)
 //   decreases allAMFOs(oo)
 //   requires AllReady(oo)
 //    ensures rv <= allAMFOs(oo)
@@ -1012,7 +1025,7 @@ lemma {:isolate_assertions} {:timeLimit 30} FlownrIsAMFX(o : Object)
 //       | objectInsideOwner(ooo, pivot) :: ooo }
 
 
-lemma {:isolate_assertions} FlowinPrefix(oo : OWNR, pivoto : OWNR)
+lemma FlowinPrefix(oo : OWNR, pivoto : OWNR)
   //ahh FUCK = issue here is a set of individually "flat" owwners  (set<OWNR>)
   //is not quite the same a flat set of owners :-) (OWNR)
   //grrr o : Object is Ready
@@ -1037,7 +1050,7 @@ lemma {:isolate_assertions} FlowinPrefix(oo : OWNR, pivoto : OWNR)
   assert flatten(pivoto) == (pivoto);
 }
 
-lemma {:isolate_assertions}  FlownrPrefix1(o : Object, pivot : Object)
+lemma  FlownrPrefix1(o : Object, pivot : Object)
   requires o.Ready()
   requires pivot.Ready()
   requires strictlyInside(o,pivot)
@@ -1054,7 +1067,7 @@ FlownrIsFlatten5(pivot);
   assert  flowrin(o,pivot) + flownr(pivot) == flownr(o);
 }
 
-lemma {:isolate_assertions} FlownMyAMFO(o : Object)
+lemma FlownMyAMFO(o : Object)
  decreases o.AMFO
  requires o.Ready()
   ensures o.AMFB == frown(o.bound) == flown(o.bound) == flatten(o.bound)
@@ -1080,7 +1093,7 @@ FlownAllAMFOs(o.bound); FlownAllAMFOs(o.owner); FlownAllAMFOs(o.self); FlownAllA
 
 
 
-lemma {:isolate_assertions} {:timeLimit 30} {:verify false} FlattenFlownFrown(oo : Owner)
+lemma {:timeLimit 30} {:verify false} FlattenFlownFrown(oo : Owner)
  decreases allAMFOs(oo)
  requires AllReady(oo)
   ensures flatten(oo) == flown(oo) == frown(oo) == allAMFOs(oo)
@@ -1106,7 +1119,7 @@ lemma {:isolate_assertions} {:timeLimit 30} {:verify false} FlattenFlownFrown(oo
 
 
 
-lemma {:isolate_assertions} FlownAllAMFOs(oo : Owner)
+lemma FlownAllAMFOs(oo : Owner)
  decreases allAMFOs(oo)
  requires AllReady(oo)
   ensures forall o <- oo :: o.AMFX == flatten(o.owner)
@@ -1152,7 +1165,7 @@ assert flatten(oo) == set o <- oo, ooo <- flatten({o}) :: ooo;
 
 
 
-lemma {:isolate_assertions} NonCachedDefinitionsForPaper1(f : Object, t : Object)
+lemma NonCachedDefinitionsForPaper1(f : Object, t : Object)
   requires f.Ready()
   requires t.Ready()
 
@@ -1179,7 +1192,7 @@ predicate refBW(f : Object, t : Object) {outgoingAllowed(f) && ownerInside(f.bou
 predicate refBX(f : Object, t : Object) {if (outgoingAllowed(f)) then (ownerInside(f.bound, t.owner)) else (false)}
 
 //{:timeLimit 30}
-lemma {:isolate_assertions} NonCachedDefinitionsForPaper2(f : Object, t : Object)
+lemma NonCachedDefinitionsForPaper2(f : Object, t : Object)
   requires f.Ready()
   requires t.Ready()
   ensures refBF(f,t) == if (f.AMFB > {}) then (f.AMFB >=  t.AMFX) else (false)
@@ -1202,7 +1215,7 @@ lemma {:isolate_assertions} NonCachedDefinitionsForPaper2(f : Object, t : Object
  // ensures refBI(f,t) == (f.AMFB > {}) && (f.AMFB >=  t.AMFX)
 {}
 
-  // lemma {:isolate_assertions} {:timeLimit 30} NonCachedDefinitionsForPaper3(f : Object, t : Object)
+  // lemma {:timeLimit 30} NonCachedDefinitionsForPaper3(f : Object, t : Object)
   //   requires f.Ready()
   //   requires t.Ready()
   //   requires not(outgoingAllowed(f))
@@ -1219,7 +1232,7 @@ lemma {:isolate_assertions} NonCachedDefinitionsForPaper2(f : Object, t : Object
   // }
   //
   // //{:timeLimit 30}
-  // lemma {:isolate_assertions} {:timeLimit 30} NonCachedDefinitionsForPaper9(f : Object, t : Object)
+  // lemma {:timeLimit 30} NonCachedDefinitionsForPaper9(f : Object, t : Object)
   //   requires f.Ready()
   //   requires t.Ready()
   //   ensures refBF(f,t) == if (f.AMFB > {}) then (f.AMFB >=  t.AMFX) else (false)
@@ -1275,7 +1288,7 @@ predicate outgoingAllowed(f : Object) {f.bound > {}}
 // predicate ownerInside(l : Owner, r : Owner)  { flatten(l) >= flatten(r)}  //currently a definition in OutDamnedSpot...
 
 
-lemma {:isolate_assertions} Cache(o : Object)
+lemma Cache(o : Object)
   requires o.Ready()
    ensures o.AMFX == flatten(o.owner)
    ensures o.AMFX == flown(o.owner)

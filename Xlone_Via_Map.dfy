@@ -7,6 +7,8 @@ method {:isolate_assertions} {:timeLimit 10} {:verify true} Xlone_Via_Map(a : Ob
   returns (b : Object, m : Klon)
   //if a is not already cloned, we arrange to clone it
   //we return b, the clone of a, in new Klon m.
+  //
+  //this i
 
     decreases * //(m'.oHeap - m'.m.Keys + {a}), |a.AMFO|, |a.fields.Keys|, 20 //Klone_Via_Map
 
@@ -75,7 +77,7 @@ method {:isolate_assertions} {:timeLimit 10} {:verify true} Xlone_Via_Map(a : Ob
   }
 
   if (outside(a,m'.o)) { //outside. so just map to itself
-                        //but we should put all the owne  rs in, just in cases...
+                        //but we should put all the owners in, just in cases...
     b := a;
     print "OOPS Clone_Via_Map calling out to XAO\n";
 
@@ -190,9 +192,24 @@ KlonLineFrom(a,b,m,om);
 //////////////////SPLIT  HERE
 
 
-XVM_decreases_to_XCC(a,m');
-b, m := /*FAKE_*/Xlone_Clone_Clone(a, m')  by {  assert COK(a, m'.oHeap);  }
-//end of insixde case
+
+  //we need to decideif this bit in in X_C_C or not!
+
+  XVM_decreases_to_XAO(a,m');
+
+  print "Clone_Via_Map ", fmtobj(a), " calling CAO ", fmtown(a.owner) ,"\n";
+  var rm := /*FAKE_*/Xlone_All_Owners(a, m');
+  if (a in rm.m.Keys) {
+     print "CCC we got it\n";
+     m := rm;  b := m.m[a];    //NO_FIELDMODES assert unchanged(m'.oHeap`fieldModes, m'.m.Values`fieldModes );
+     print "RETN Clone_Via_Map ", fmtobj(a), " cloned while cloning owners\n";
+     return;
+  } // k in rm.m.Keys - i.e.   done while cloning owners
+
+
+XVM_decreases_to_XCC(a,rm);
+b, m := /*FAKE_*/Xlone_Clone_Clone(a, rm)  by {  assert COK(a, rm.oHeap);  }
+//end of insixde case????
 
 // assert HighCalidFragilistic(m);
 // assume m.apoCalidse();

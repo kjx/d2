@@ -5,6 +5,10 @@ include "Bound.dfy"
 
 //KJX_WARD_REFAC
 
+lemma PLUS_EMPTY(a : Owner, b : Owner)
+  ensures a + b == (a + b) + {} == a + b + {}
+{}
+
 method {:isolate_assertions} {:timeLimit 5} clone(a : Object, context : set<Object>,  into : Owner := a.owner)
      returns (b : Object, subtext : set<Object>)
    decreases *
@@ -56,7 +60,7 @@ method {:isolate_assertions} {:timeLimit 5} clone(a : Object, context : set<Obje
 }
 
 
-method {:isolate_assertions} {:timeLimit 20 } sheepKlon(o : Object, clowner : Owner, oHeap : set<Object>, clbound : Owner := froposeBounds(clowner)) returns  (m : Klon)
+method {:isolate_assertions} {:timeLimit 30 } sheepKlon(o : Object, clowner : Owner, oHeap : set<Object>, clbound : Owner := froposeBounds(clowner)) returns  (m : Klon)
 //seed Klon for cloning object o,  owner of clone being clowner, within heap oHeap...
    decreases *
     requires AllReady(clowner)
@@ -162,10 +166,15 @@ assert me.Values == o.AMFX+{c};
 assert AllReady(me.Keys); assert AllReady(me.Values);
 assert AllValid(me.Keys); assert AllValid(me.Values);
 
+assert forall x <- mep.Keys :: x == mep[x] == me[x];
+assert forall x <- mep.Keys :: x.AMFB == mep[x].AMFB == me[x].AMFB;
+assert c.AMFB >= o.AMFB;
+
 assert forall x <- me.Keys ::
   &&  (if (x == o)  then ((me[x] == c) && (c.AMFB >= o.AMFB))
-                else ((me[x] == x) && (mep[x].AMFB >= x.AMFB)))
-  &&  (me[x].AMFB >= x.AMFB);
+                else ((me[x] == x) && (mep[x].AMFB >= x.AMFB)));
+
+ assert forall x <- me.Keys :: (me[x].AMFB >= x.AMFB);
 
 
 
@@ -184,7 +193,7 @@ forall x <- me.Values ensures (x.Context(me.Values+oHeap)) //by
      assert x.Context(me.Values+oHeap);
   }
 assert forall x <- me.Values :: x.Context(me.Values+oHeap); ///Err
-
+assert ME_VALUES: forall x <- me.Values :: x.Context(me.Values+oHeap); ///Err
 //
 // assert forall k : Object <- me.Keys :: ( && (k.Ready()) && (objectInKlown(k)) && (me[k].Ready()) && (me[k] in hns()) );
 //
@@ -208,11 +217,16 @@ m := Klon(me,
                             o.AMFX,
                             clamfx,
                             flatten(clbound));
+
+assert forall x <- me.Values :: x.Context(me.Values+oHeap) by { reveal ME_VALUES; }
+assert m.m == me;
+assert forall x <- m.m.Values :: x.Context(m.m.Values+oHeap);
+assert (m.m.Values+oHeap)+{} == (m.m.Values+oHeap) by { PLUS_EMPTY(m.m.Values, oHeap); }
+assert forall x <- m.m.Values :: x.Context((m.m.Values+oHeap)+{});
+assert m.hns() == m.m.Values+oHeap+{};
+assert forall x <- m.m.Values :: x.Context(m.hns());
+
 assert forall x <- m.m.Keys :: (m.m[x] == me[x]) && (m.m[x].AMFB >= x.AMFB);
-assert forall x <- m.m.Values :: x.Context(me.Values+oHeap);
-//assert m.hns() ==   me.Values+oHeap;
-// assert m.hns() ==  m.m.Values+m.oHeap;
-// assert forall x <- m.m.Values :: x.Context(m.hns());
 
 assert o == m.o;
 assert c == m.c == m.m[m.o];
