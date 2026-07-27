@@ -246,8 +246,8 @@ lemma APOCAKLON()
 
 
 
-//{:timeLimit 60} {:timeLimit 30}
-  function {:isolate_assertions} {:timeLimit 20} CalidKV(k : Object, v : Object) : (mK : Klon)
+//{:timeLimit 60}
+  function {:isolate_assertions} {:timeLimit 30} CalidKV(k : Object, v : Object) : (mK : Klon)
    //shojld be calidKV, shouldn't it. GRRRR
     //givne a Calid Klon, add in k:=v to the mapping and get a  Calid result.
     //the heart of the heart of the klon
@@ -1050,7 +1050,7 @@ predicate {:isolate_assertions}  checkOwnershipOfClone(k : Object, v : Object, m
   ////requires kk > m.o.AMFO  //gotta be inside kloned bit..  //JDVANCE yeah shoud do that!
   { vv == (mapThruKlon(kk, m)) }
 //         {
-// //I have NO FUCKING IDEA if this is dong te RIGHT THING or not.
+// //I have NO FUCKING IDEA if this is dong  te RIGHT THING or not.
 // //anin't that great.
 // //i think its dong CLOSE ENOUGH to the right thing for a paper
 // //the visualisations all look OK now
@@ -1071,6 +1071,15 @@ predicate {:isolate_assertions}  checkOwnershipOfClone(k : Object, v : Object, m
 //         }
 //
 
+lemma FLATTEN_IN_KLON(oo : Owner, m : Klon)
+  requires klonReady(m)
+  requires oo <= m.m.Keys
+   ensures flatten(oo) <= m.m.Keys
+
+   {
+    assert forall k <- m.m.Keys :: m.objectInKlown(k);
+    assert forall k <- m.m.Keys :: flatten({k}) <= m.m.Keys;
+   }
 
 function {:isolate_assertions} computeOwnerForClone(oo : Owner, m : Klon) : (nuowner : Owner)
   //given some flattened Owner oo, calculate the mapped / cloned version
@@ -1092,13 +1101,14 @@ function {:isolate_assertions} computeOwnerForClone(oo : Owner, m : Klon) : (nuo
   requires klonReady(m)
 //  requires m.apoCalidse()  //note that this requires m.o already in m.m.Keys
   requires oo <= m.m.Keys
-//  requires flatten(oo) >= m.o.AMFO //hmmmA
-//  requires m.SuperCalidFragilistic()
-   ensures nuowner <= m.hns()
+   ensures nuowner <= m.m.Values
+   ensures m.m.Values <= m.hns()
+   ensures nuowner <= m.m.Values <= m.hns()
    ensures flatten(oo) <= m.oHeap //so this MUST be preexisting.
-   ensures flatten(nuowner) <= m.hns()
    ensures mappingOWNRsThruKlownKV(oo, nuowner, m)   //rather important
+
        //yes 'rathr imoportant" infdeed,
+   // ensures flatten(nuowner) <= m.hns() // I have no idea weather this is or should be correct or not
 
 
  //  ensures nuowner == global(sideways(local(oo, m),m),m)
