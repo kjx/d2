@@ -687,7 +687,6 @@ function recOwnersOutside2(k : Object, pivot : Object) : (rv : Owner)
   }
 
 
-
 function recOwnersPivot(k : Object, pivot : Object) : (rv : Owner)
 ///if k inside pviot then pivot * owners
 //opthwerise not
@@ -701,7 +700,23 @@ function recOwnersPivot(k : Object, pivot : Object) : (rv : Owner)
   {
     if (inside(k, pivot))
       then (recOwners(pivot))
-      else ({})
+      else ({})    ///?
+  }
+
+function recOwnersPivot2(k : Object, pivot : Object) : (rv : Owner)
+///if k inside pviot then pivot * owners
+//opthwerise not
+   requires k.Ready()
+   requires pivot.Ready()
+   decreases k.AMFO
+     ensures rv <= k.AMFO
+    ensures rv <= recOwners(k)
+     ensures forall r <- rv :: outside(r, pivot) || (r == pivot)
+   //  ensures forall r <- k.AMFO :: strictlyInside(r, pivot) ==> (r in rv)
+  {
+    if (inside(k, pivot))
+      then (recOwners(pivot))
+      else (set oo <- k.owner, ooo <- recOwnersPivot2(oo,pivot) :: ooo)
   }
 
   lemma RecOwnersOutsidePivot(k : Object, pivot : Object)
@@ -710,6 +725,7 @@ function recOwnersPivot(k : Object, pivot : Object) : (rv : Owner)
     requires pivot.Ready()
     requires (k == pivot) || outside(k,pivot)
      ensures not(strictlyInside(k, pivot))
+     ensures forall oo <- k.owner :: k.Ready()
      ensures forall oo <- k.owner :: outside(oo,pivot)
      ensures (strictlyInside(k, pivot)) != ((k == pivot) || outside(k, pivot))
      ensures recOwnersOutside2(k,pivot) == recOwners(k)
@@ -725,7 +741,9 @@ function recOwnersPivot(k : Object, pivot : Object) : (rv : Owner)
 //     ensures forall oo <- k.owner :: outside(oo,pivot)
     //  ensures (strictlyInside(k, pivot)) != ((k == pivot) || outside(k, pivot))
      ensures recOwnersInside(k,pivot) == set o <- recOwners(k) | strictlyInside(o, pivot)
-     {}
+     {
+      k.ExtraReady();
+     }
 
 
 //
@@ -856,6 +874,7 @@ lemma RecOwnerSanity0(k : Object, pivot : Object)
    decreases k.AMFO
      ensures recOwnersInside(k,pivot) <= recOwners(k)
      ensures forall x <- recOwnersInside(k,pivot) :: inside(x,pivot)
+ //hmm    ensures forall x <- recOwners(k) | inside(x,pivot) ::  x in recOwnersInside(k,pivot)
  {}
 
 lemma RecOwnerSanity1(k : Object, pivot : Object)
@@ -894,6 +913,22 @@ lemma RecOwnerSanity3bis(k : Object, pivot : Object)
     requires not(inside(k, pivot))
    decreases k.AMFO
      ensures recOwnersPivot(k,pivot) == {}
+{}
+
+lemma RecOwnerSanity3alpha(k : Object, pivot : Object)
+    requires k.Ready()
+    requires pivot.Ready()
+    requires inside(k, pivot)
+   decreases k.AMFO
+     ensures recOwners(k) == recOwnersOutside(k,pivot) + recOwnersInside(k,pivot)
+{}
+
+lemma RecOwnerSanity3beta(k : Object, pivot : Object)
+    requires k.Ready()
+    requires pivot.Ready()
+    requires inside(k, pivot)
+   decreases k.AMFO
+     ensures recOwnersOutside(k,pivot) == recFlatten(recOwnersFringe(k,pivot)) + recOwnersPivot(k,pivot)
 {}
 
 lemma RecOwnerSanity4(k : Object, pivot : Object)

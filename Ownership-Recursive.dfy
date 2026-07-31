@@ -252,6 +252,25 @@ lemma recInsideAMFO2(part : Object, whole : Object)
   ensures   (whole in part.AMFO)
 {}
 
+
+
+lemma InsideRecInside(part : Object, whole : Object)
+   requires part.Ready()
+   requires whole.Ready() //why not?
+   requires part.Ready()
+   requires whole.Ready() //why not?
+   requires inside(part,whole) || recInside(part,whole)
+    ensures inside(part,whole)  ==> recInside(part,whole)
+    ensures inside(part,whole) <==  recInside(part,whole)
+    ensures inside(part,whole) <==> recInside(part,whole)
+   {
+     if recInside(part,whole) { InsideRecInside1(part,whole); }
+     if    inside(part,whole) { InsideRecInside2(part,whole); }
+   }
+
+
+
+
 lemma InsideRecInside1(part : Object, whole : Object)
    requires part.Ready()
    requires whole.Ready() //why not?
