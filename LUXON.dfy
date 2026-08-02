@@ -6635,7 +6635,7 @@ function walkOutsideOrPivot(o : Object, pivot : Object) : (rv : Owner)
 //    decreases o.AMFO
 //    requires o.Ready()
 //    {
-//      if (outside(o, pivot))
+//      if (outside(o, pivot)) { assert pivot.AMFO <= rv)
 //         then {}
 //         else {}
 // HERE HERE HERE HERE HERE
@@ -6646,6 +6646,21 @@ function walkOutsideOrPivot(o : Object, pivot : Object) : (rv : Owner)
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 
+lemma SKIP_ALL_OUTSIDE_FROM_INSIDE_REACHES_PIVOT(o : Object, pivot : Object)
+  decreases o.AMFO
+   requires o.Ready()
+   requires inside(o,pivot)
+   requires pivot in o.AMFO //hhmm
+    ensures pivot.AMFO <= skipAllOutside'(o, pivot)
+{
+    WHOLE_ENCHILADA(o,pivot.AMFO);
+    if (o == pivot) {
+      assert pivot.AMFO <=  skipAllOutside'(o, pivot);
+      return;
+    }
+    ThereIsALightThatNeverGoesOut(o,pivot);
+    var next := YouCan'tGetThereFromHereBut(o,pivot);
+}
 
 function skipAllOutside(o : Object, pivot : Object) : (rv : set<Object>)
   decreases o.AMFO
@@ -6654,6 +6669,24 @@ function skipAllOutside(o : Object, pivot : Object) : (rv : set<Object>)
       if (not(strictlyInside(o,pivot))) then (o.AMFO)
           else (set oo <- o.owner, ooo <- skipAllOutside(oo, pivot) :: ooo)
     }
+
+function skipAllOutside'(o : Object, pivot : Object) : (rv : set<Object>)
+  decreases o.AMFO
+   requires o.Ready()
+    ensures (o == pivot) || not(inside(o,pivot)) ==> (rv == o.AMFO)
+//    ensures not( strictlyInside(o,pivot) || (o == pivot) ) ==> (rv == o.AMFO)
+    {
+      STRICTLY_COME_INSIDE(o,pivot);
+
+      if (o == pivot) then (o.AMFO) //==pivot.amfo
+        else if (not(inside(o,pivot))) then (o.AMFO)
+          else (set oo <- o.owner, ooo <- skipAllOutside'(oo, pivot) :: ooo)
+
+      // if (not(strictlyInside(o,pivot))) then (o.AMFO)
+      //     else (set oo <- o.owner, ooo <- skipAllOutside(oo, pivot) :: ooo)
+
+    }
+
 
 function skipAllInside(o : Object, pivot : Object) : (rv : set<Object>)
   decreases o.AMFO
@@ -6685,6 +6718,27 @@ function skipOutsideOnlyPivot(o : Object, pivot : Object) : (rv : set<Object>)
         else ({})
     }
 
+function skipOutsideOnlyPivot'(o : Object, pivot : Object) : (rv : set<Object>)
+  decreases o.AMFO
+   requires o.Ready()
+    ensures strictlyInside(o,pivot)                      ==> (rv == pivot.AMFO)
+    ensures (o == pivot)                                 ==> (rv == pivot.AMFO)
+    ensures (strictlyInside(o,pivot) || (o == pivot))    ==> (rv == pivot.AMFO)
+//  ensures (inside(o,pivot))                            ==> (rv == pivot.AMFO)
+
+    ensures not(strictlyInside(o,pivot) || (o == pivot)) ==> (rv == {})
+ // ensures (outside(o,pivot))                           ==> (rv == {})
+
+    ensures (if (strictlyInside(o,pivot) || (o == pivot)) then (rv == pivot.AMFO) else (rv == {}))
+    ensures rv == if (strictlyInside(o,pivot) || (o == pivot)) then (pivot.AMFO) else ({})
+ // ensures (if (inside(o,pivot)) then (rv == pivot.AMFO) else (rv == {}))
+ // ensures rv == if (inside(o,pivot)) then (pivot.AMFO) else ({}))
+    {
+     if (o == pivot) then (pivot.AMFO)
+      else if (strictlyInside(o,pivot)) then (pivot.AMFO)
+        else ({})
+    }
+
 function skipOutsideExceptPivot(o : Object, pivot : Object) : (rv : set<Object>)
   decreases o.AMFO
    requires o.Ready()
@@ -6692,6 +6746,17 @@ function skipOutsideExceptPivot(o : Object, pivot : Object) : (rv : set<Object>)
       if (not(inside(o,pivot))) then (o.AMFO)
         else if (o == pivot) then ({})
           else (set oo <- o.owner, ooo <- skipOutsideExceptPivot(oo, pivot) :: ooo)
+    }
+
+
+
+function skipOutsideExceptPivot'(o : Object, pivot : Object) : (rv : set<Object>)
+  decreases o.AMFO
+   requires o.Ready()
+    {
+      if (o == pivot) then ({})
+        else if (not(inside(o,pivot))) then (o.AMFO)
+          else (set oo <- o.owner, ooo <- skipOutsideExceptPivot'(oo, pivot) :: ooo)
     }
 
 
@@ -6716,24 +6781,22 @@ lemma ANTI_TRUMP(o : Object, pivot : Object)
    decreases o.AMFO
     requires o.Ready()
 //    requires strictlyInside(o,pivot)  --- org outside more likely?  - do we know any?
-    ensures skipAllOutside(o,pivot) == skipOutsideExceptPivot(o,pivot) + skipOutsideExceptPivot(o,pivot)
+//    ensures skipAllOutside(o,pivot) == skipOutsideExceptPivot(o,pivot) + skipOutsideExceptPivot(o,pivot)
     {
       assert skipAllOutside(o,pivot) ==
         if (not(strictlyInside(o,pivot))) then (o.AMFO)
           else (set oo <- o.owner, ooo <- skipAllOutside(oo, pivot) :: ooo);
 
-assert skipOutsideOnlyPivot(o, pivot) ==
-    if (strictlyInside(o,pivot)) then (pivot.AMFO)
-      else if (o == pivot) then (pivot.AMFO)
-        else ({});
+      assert skipOutsideOnlyPivot(o, pivot) ==
+          if (strictlyInside(o,pivot)) then (pivot.AMFO)
+            else if (o == pivot) then (pivot.AMFO)
+              else ({});
 
 
-assert skipOutsideExceptPivot(o, pivot) ==
-     ( if (not(inside(o,pivot))) then (o.AMFO)
-        else if (o == pivot) then ({})
-          else (set oo <- o.owner, ooo <- skipOutsideExceptPivot(oo, pivot) :: ooo) );
-
-
+      assert skipOutsideExceptPivot(o, pivot) ==
+          ( if (not(inside(o,pivot))) then (o.AMFO)
+              else if (o == pivot) then ({})
+                else (set oo <- o.owner, ooo <- skipOutsideExceptPivot(oo, pivot) :: ooo) );
 
     }
 
@@ -7116,7 +7179,49 @@ lemma WALK_OUTSIDE_PIVOT_AND_NOT_PIVOT(o : Object, pivot : Object, rv : (Owner, 
      assert rv.1 == walkOutsideNotPivot(o, pivot);
      assert rv.0 + rv.1 == recOwners(o);
 
-    }
+//
+// lemma WALK_OUTSIDE_PIVOT_AND_NOT_PIVOT(o : Object, pivot : Object, rv : (Owner, Owner))
+//     decreases o.AMFO
+//    requires o.Ready()
+//    requires rv == walkOutsidePivotAndNotPivot(o, pivot)
+//     ensures rv.0 == walkOutsidePivot(o, pivot)
+//     ensures rv.1 == walkOutsideNotPivot(o, pivot)
+//     ensures rv.0 + rv.1 == recOwners(o)
+//    {
+//       var po : Owner := {};
+//       var no : Owner := {};
+//
+//       po := (  if (outside(o, pivot) && (o == pivot)) then (recOwners(o)) else ({})  );
+//       no := (  if (outside(o, pivot) && (o != pivot)) then (recOwners(o)) else ({})  );
+//
+//       if (outside(o, pivot)) { assert po + no == recOwners(o); }
+//
+//       if (outside(o, pivot) && (o == pivot)) {
+//         assert walkOutsidePivot(o, pivot) == po;
+//       }
+//
+//       if (outside(o, pivot) && (o != pivot)) {
+//         assert walkOutsideNotPivot(o, pivot) >= no;
+//       }
+//
+//       var rec : set<(Owner, Owner)> :=
+//          (  set xo <- o.owner :: walkOutsidePivotAndNotPivot(xo, pivot)  );
+//
+//      forall xo <- o.owner ensures (true) {
+//          var rrv :=  walkOutsidePivotAndNotPivot(xo, pivot);
+//          WALK_OUTSIDE_PIVOT_AND_NOT_PIVOT(xo, pivot, rrv);
+//          assert rrv.0 == walkOutsidePivot(xo, pivot);
+//          assert rrv.1 == walkOutsideNotPivot(xo, pivot);
+//          assert rrv.0 + rrv.1 == recOwners(xo);
+//         }
+//
+//      assert rv ==  compress(po,no,rec);
+//
+//      assert rv.0 == walkOutsidePivot(o, pivot);
+//      assert rv.1 == walkOutsideNotPivot(o, pivot);
+//      assert rv.0 + rv.1 == recOwners(o);
+//
+//     }
 
 
 
@@ -7197,7 +7302,7 @@ lemma precessionOfOwners(o : Object, pivot : Object)
     ensures strictlyInside(o,pivot)  ==> forall oo <- o.owner | outside(oo,pivot) && outside(pivot,oo) :: offside(oo,pivot)
 {
   forall oo <- o.owner ensures (inside(oo,pivot) <==> (strictlyInside(oo,pivot) || (oo == pivot)))  //by
-    { StrictlyComeInside(oo,pivot); }
+    { STRICTLY_COME_INSIDE(oo,pivot); }
 }
 
 function collapse(a : set<Owner>) : set<Object>
