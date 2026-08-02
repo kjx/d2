@@ -61,15 +61,33 @@ lemma OffsideIsSideways(part : Object, whole : Object)
   ensures offside(part, whole) == (outside(part,whole) && not(inside(whole,part)))
 {}
 
-lemma StrictlyComeInside(part : Object, whole : Object)
-  requires part.Ready()
-  requires whole.Ready()
-   ensures inside(part, whole) <==> (strictlyInside(part, whole) || (part == whole))
-{}
+lemma STRICTLY_COME_INSIDE(part : Object, whole : Object)
+  // requires part.Ready()
+  // requires whole.Ready()
+   ensures     inside(part, whole)  <==>    (strictlyInside(part, whole) || (part == whole))
+   ensures not(inside(part, whole)) <==> not(strictlyInside(part, whole) || (part == whole))
 
-lemma SoItGoes(part : Object, whole : Object)
-  ensures outside(part,whole) != inside(part,whole)
-{}
+   ensures     strictlyInside(part, whole)  <==>    (inside(part, whole) && (part != whole))
+   ensures not(strictlyInside(part, whole)) <==> not(inside(part, whole) && (part != whole))
+   ensures not(strictlyInside(part, whole)) <==>   (outside(part, whole) || (part == whole))
+   ensures outside(part,whole) != inside(part,whole)
+{
+  assume part.Ready();
+  assume whole.Ready();
+}
+
+//
+// lemma AXIOMFFFFF(part : Object, whole : Object)
+// // o in AMFO ==> o.AMFO <= AMFO
+//    requires part.Ready()
+//    requires inside(part,whole)
+//     ensures whole in part.AMFO
+//     ensures forall o <- part.AMFO :: o.Ready();
+//     ensures whole.Ready()
+//    {
+//     part.RettyBetty({part});
+//     }
+
 
 // lemma OffsideIsSideways0(part : Object, whole : Object, side1 : Object, side2 : Object)
 //   requires side1 in whole.owner // side is one of whole's owners
@@ -333,3 +351,48 @@ function allAMFXs(oo : OWNR)  : (r : Owner)  { set o <- oo, ooo <- o.AMFX :: ooo
 function allReadyAMFOs(oo : Owner) : (r : OWNR)
     requires AllReady(oo)     { set o <- oo, ooo <- o.AMFO :: ooo }
 function allObjectsAndAMFOs(oo : Owner) : (r : OWNR)   { set o <- oo, ooo <- o.AMFO :: ooo }
+
+
+predicate insideAndReady(part : Object, whole : Object)
+  requires part.Ready()
+  requires whole in part.AMFO
+   ensures whole.Ready()
+   {
+    WHOLE_ENCHILADA(part,whole.AMFO);
+    inside(part,whole)
+   }
+
+
+
+
+lemma WHOLE_READY(part : Object, whole : Object)
+  decreases part.AMFO
+   requires part.Ready()
+   requires whole in part.AMFO
+    ensures inside(part,whole)
+    ensures whole.Ready()
+  {
+   assert whole.AMFO <= part.AMFO;
+    AllOwnersFlatAndReady(part);
+   }
+
+lemma WHOLE_ENCHILADA(part : Object, random : set<Object>)
+  decreases part.AMFO
+   requires part.Ready()
+   requires random <= part.AMFO
+    ensures forall x <- random :: x.Ready()
+    ensures forall x <- random :: isFlat(x.AMFO)
+    ensures forall x <- random :: x.AMFO <= part.AMFO
+    ensures forall x <- random :: inside(part, x)
+  {
+   AllOwnersFlatAndReady(part);
+  }
+
+lemma AllOwnersFlatAndReady(part : Object)
+  decreases part.AMFO
+   requires part.Ready()
+    ensures isFlat(part.AMFO)
+    ensures forall x <- part.AMFO :: x.AMFO <= part.AMFO
+    ensures forall x <- part.AMFO :: isFlat(x.AMFO)
+    ensures forall x <- part.AMFO :: x.Ready()
+{}

@@ -165,7 +165,6 @@ lemma InsideCollectAllOwners(part : Object, whole : Object)
   //assert collectAllOwners(part) >= collectAllOwners(whole);
 }
 
-
 lemma collectAllAMFO(o : Object)
   decreases o.AMFO
   requires  o.Ready()
@@ -255,8 +254,6 @@ lemma recInsideAMFO2(part : Object, whole : Object)
 
 
 lemma InsideRecInside(part : Object, whole : Object)
-   requires part.Ready()
-   requires whole.Ready() //why not?
    requires part.Ready()
    requires whole.Ready() //why not?
    requires inside(part,whole) || recInside(part,whole)
@@ -370,7 +367,7 @@ lemma AXIOMAMFO(part : Object, whole : Object)
 // o in AMFO ==> o.AMFO <= AMFO
    requires  part.Ready()
    requires  whole      in part.AMFO
-   ensures   whole.AMFO <= part.AMFO
+   ensures   part.AMFO >= whole.AMFO
    ensures   inside(part,whole)
    { }
 
