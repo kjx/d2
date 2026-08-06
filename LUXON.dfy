@@ -6788,29 +6788,29 @@ function rd(o : Object) : Object requires o.Ready() {o}
 
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-
-lemma ANTI_TRUMP(o : Object, pivot : Object)
-   decreases o.AMFO
-    requires o.Ready()
-//    requires strictlyInside(o,pivot)  --- org outside more likely?  - do we know any?
-//    ensures skipAllOutside(o,pivot) == skipOutsideExceptPivot(o,pivot) + skipOutsideExceptPivot(o,pivot)
-    {
-      assert skipAllOutside(o,pivot) ==
-        if (not(strictlyInside(o,pivot))) then (o.AMFO)
-          else (set oo <- o.owner, ooo <- skipAllOutside(oo, pivot) :: ooo);
-
-      assert skipOutsideOnlyPivot(o, pivot) ==
-          if (strictlyInside(o,pivot)) then (pivot.AMFO)
-            else if (o == pivot) then (pivot.AMFO)
-              else ({});
-
-
-      assert skipOutsideExceptPivot(o, pivot) ==
-          ( if (not(inside(o,pivot))) then (o.AMFO)
-              else if (o == pivot) then ({})
-                else (set oo <- o.owner, ooo <- skipOutsideExceptPivot(oo, pivot) :: ooo) );
-
-    }
+//
+// lemma ANTI_TRUMP(o : Object, pivot : Object)
+//    decreases o.AMFO
+//     requires o.Ready()
+// //    requires strictlyInside(o,pivot)  --- org outside more likely?  - do we know any?
+// //    ensures skipAllOutside(o,pivot) == skipOutsideExceptPivot(o,pivot) + skipOutsideExceptPivot(o,pivot)
+//     {
+//       assert skipAllOutside(o,pivot) ==
+//         if (not(strictlyInside(o,pivot))) then (o.AMFO)
+//           else (set oo <- o.owner, ooo <- skipAllOutside(oo, pivot) :: ooo);
+//
+//       assert skipOutsideOnlyPivot(o, pivot) ==
+//           if (strictlyInside(o,pivot)) then (pivot.AMFO)
+//             else if (o == pivot) then (pivot.AMFO)
+//               else ({});
+//
+//
+//       assert skipOutsideExceptPivot(o, pivot) ==
+//           ( if (not(inside(o,pivot))) then (o.AMFO)
+//               else if (o == pivot) then ({})
+//                 else (set oo <- o.owner, ooo <- skipOutsideExceptPivot(oo, pivot) :: ooo) );
+//
+//     }
 
 
 
@@ -7335,49 +7335,6 @@ function walkOutsidePivotAndNotPivot(o : Object, pivot : Object) : (rv : (Owner,
 
 /////
 
-lemma WALK_OUTSIDE_PIVOT_AND_NOT_PIVOT(o : Object, pivot : Object, rv : (Owner, Owner))
-    decreases o.AMFO
-   requires o.Ready()
-   requires rv == walkOutsidePivotAndNotPivot(o, pivot)
-    ensures rv.0 == walkOutsidePivot(o, pivot)
-    ensures rv.1 == walkOutsideNotPivot(o, pivot)
-    ensures rv.0 + rv.1 == recOwners(o)
-   {
-      var po : Owner := {};
-      var no : Owner := {};
-
-      po := (  if (outside(o, pivot) && (o == pivot)) then (recOwners(o)) else ({})  );
-      no := (  if (outside(o, pivot) && (o != pivot)) then (recOwners(o)) else ({})  );
-
-      if (outside(o, pivot)) { assert po + no == recOwners(o); }
-
-      if (outside(o, pivot) && (o == pivot)) {
-        assert walkOutsidePivot(o, pivot) == po;
-      }
-
-      if (outside(o, pivot) && (o != pivot)) {
-        assert walkOutsideNotPivot(o, pivot) >= no;
-      }
-
-      var rec : set<(Owner, Owner)> :=
-         (  set xo <- o.owner :: walkOutsidePivotAndNotPivot(xo, pivot)  );
-
-     forall xo <- o.owner ensures (true) {
-         var rrv :=  walkOutsidePivotAndNotPivot(xo, pivot);
-         WALK_OUTSIDE_PIVOT_AND_NOT_PIVOT(xo, pivot, rrv);
-         assert rrv.0 == walkOutsidePivot(xo, pivot);
-         assert rrv.1 == walkOutsideNotPivot(xo, pivot);
-         assert rrv.0 + rrv.1 == recOwners(xo);
-        }
-
-     assert rv ==  compress(po,no,rec);
-
-     assert rv.0 == walkOutsidePivot(o, pivot);
-     assert rv.1 == walkOutsideNotPivot(o, pivot);
-     assert rv.0 + rv.1 == recOwners(o);
-   }
-
-//
 // lemma WALK_OUTSIDE_PIVOT_AND_NOT_PIVOT(o : Object, pivot : Object, rv : (Owner, Owner))
 //     decreases o.AMFO
 //    requires o.Ready()
@@ -7418,8 +7375,7 @@ lemma WALK_OUTSIDE_PIVOT_AND_NOT_PIVOT(o : Object, pivot : Object, rv : (Owner, 
 //      assert rv.0 == walkOutsidePivot(o, pivot);
 //      assert rv.1 == walkOutsideNotPivot(o, pivot);
 //      assert rv.0 + rv.1 == recOwners(o);
-//
-//     }
+//    }
 
 
 
