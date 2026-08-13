@@ -2498,7 +2498,7 @@ lemma FOUR_BY_FOUR(osp : Owner, obelow : Owner, oabove : Owner, opivot : Owner,
 
 
 
-lemma  SIX_BY_FOUR(osp : Owner, obelow : Owner, oabove : Owner, opivot : Owner,
+lemma SIX_BY_FOUR(osp : Owner, obelow : Owner, oabove : Owner, opivot : Owner,
                                 dbelow : Owner, dabove : Owner, dpivot : Owner,
                  rsp : Owner, rbelow : Owner, rabove : Owner, rpivot : Owner)
    requires osp == obelow + oabove + opivot
@@ -3431,6 +3431,14 @@ lemma GEFUCKENHEGSETH(a : Owner, b : Owner , c : Owner, d : Owner, e : Owner)
    ensures a == (b + c + e) + d
 {}
 
+
+lemma GEFUCKENMILLER(a : Owner, b : Owner , c : Owner, d : Owner, e : Owner)
+  requires a == (b + e) + c + d
+   ensures a == b + c + d + e
+   ensures a == (b + c + d) + e
+{}
+
+
 lemma GEFUCKENRUBIO(a : Owner, b : Owner)
   requires a == (b + b)
    ensures a == b
@@ -3620,7 +3628,7 @@ lemma CASE_Z5_PIVOT(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Obj
            }
 
   assert opivot == m.o.AMFO;
-  assume cpivot == m.c.AMFO;
+  assert cpivot == m.c.AMFO;
 }
 
 
@@ -3683,7 +3691,7 @@ lemma CASE_Z6_PIVOT(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Obj
 //////////////////////////////////////////////////////////////////////
 
 
-lemma CASE_U0_PIVOT(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma CASE_PIVOT_U0(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -3731,7 +3739,7 @@ lemma CASE_U0_PIVOT(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Obj
 
     }
 
-lemma {:timeLimit 15} CASE_U1_PIVOT(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma {:timeLimit 15} CASE_PIVOT_U1(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -3799,7 +3807,7 @@ lemma {:timeLimit 15} CASE_U1_PIVOT(oo : Owner, m : Klon, done : Owner, todo : O
 
 }
 
-lemma CASE_U2_PIVOT(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma CASE_PIVOT_U2(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -3907,7 +3915,7 @@ lemma CASE_U2_PIVOT(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Obj
 
 
 
-lemma {:timeLimit 15} CASE_U3_PIVOT(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma {:timeLimit 15} CASE_PIVOT_U3(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -3962,7 +3970,7 @@ lemma {:timeLimit 15} CASE_U3_PIVOT(oo : Owner, m : Klon, done : Owner, todo : O
 
 }
 
-lemma CASE_U4_PIVOT(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma CASE_PIVOT_U4(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -4018,7 +4026,7 @@ lemma CASE_U4_PIVOT(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Obj
 }
 
 
-lemma {:timeLimit 40} CASE_U5_PIVOT(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma {:timeLimit 40} CASE_PIVOT_U5(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -4092,14 +4100,14 @@ lemma {:timeLimit 40} CASE_U5_PIVOT(oo : Owner, m : Klon, done : Owner, todo : O
            }
 
   assert opivot == m.o.AMFO;
-  assume cpivot == m.c.AMFO;
+  assert cpivot == m.c.AMFO;
 }
 
 
 
 
 
-lemma CASE_U6_PIVOT(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma CASE_PIVOT_U6(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -4160,7 +4168,7 @@ lemma CASE_U6_PIVOT(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Obj
 //////// /////////// /////////// //  /////// //////////// ////// //////  //// ////// ///// // //
 
 
-lemma CASE_U0_OUTSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma CASE_OUTSIDE_U0(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -4209,7 +4217,7 @@ lemma CASE_U0_OUTSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : O
     }
 
 
-  lemma {:timeLimit 30} CASE_U1_OUTSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+  lemma {:timeLimit 30} CASE_OUTSIDE_U1(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -4278,7 +4286,7 @@ assert cpivot == cpivot' == cpivot' + {};
 
 }
 
-lemma CASE_U2_OUTSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma CASE_OUTSIDE_U2(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -4396,7 +4404,7 @@ lemma CASE_U2_OUTSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : O
 
 
 
-lemma {:timeLimit 60} CASE_U3_OUTSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma {:timeLimit 60} CASE_OUTSIDE_U3(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -4465,7 +4473,7 @@ lemma {:timeLimit 60} CASE_U3_OUTSIDE(oo : Owner, m : Klon, done : Owner, todo :
 
 
 
-lemma CASE_U4_OUTSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma CASE_OUTSIDE_U4(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -4523,7 +4531,7 @@ lemma CASE_U4_OUTSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : O
 
 
 
-lemma {:timeLimit 40} CASE_U5_OUTSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma {:timeLimit 40} CASE_OUTSIDE_U5(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -4576,7 +4584,7 @@ lemma {:timeLimit 40} CASE_U5_OUTSIDE(oo : Owner, m : Klon, done : Owner, todo :
 
 
 
-lemma CASE_U6_OUTSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma CASE_OUTSIDE_U6(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -4633,61 +4641,191 @@ lemma CASE_U6_OUTSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : O
 //////// /////////// /////////// //  /////// //////////// ////// //////  //// ////// ///// // //
 
 
+//opaque
+predicate REQ_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+                  osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
+                  csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
+                  osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
+                  csp  : Owner, cbelow  : Owner, cabove  : Owner, cpivot  : Owner)
+
+{
+    && (strictlyInside(next,m.o))    //should this be here or refactor?
+
+    && (AllReady(oo))
+    && (next.Ready())
+    && (cext.Ready())
+    && (klonReady(m))
+    && (klonCalid(m))
+    && (m.m.Keys >= flatten(oo) >= oo)
+    && (next in m.m.Keys)
+    && (cext == m.m[next])
+    && (klonLine(next,cext,m))
+
+    && (oo     == todo + {next} + done)
+    && (todo !! {next} !! done)
+
+    && (osp'    == obelow' + oabove' + opivot')
+    && (osp' == flatten(done))
+    && (csp'    == cbelow' + cabove' + cpivot')
+    && (csp'    == flatten(mapThruKlon(done, m)))
+
+    && (obelow' == (set x <- osp' | strictlyInside(x,m.o)))
+    && (cbelow' == (set x <- csp' | strictlyInside(x,m.c)))
+    && (oabove' == fOutside(done-{m.o}, m.o))
+    && (cabove' == fOutside(mapThruKlon(done-{m.o},m), m.c))
+    && (oabove' == cabove')
+    && (opivot' == (if (m.o in flatten(done)) then (m.o.AMFO) else {}))
+    && (cpivot' == (if (m.o in flatten(done)) then (m.c.AMFO) else {}))
+
+    && (obelow == obelow' + skipAllInside(next,m.o))
+    && (cbelow == cbelow' + skipAllInside(cext,m.c))
+    && (oabove == oabove')
+    && (cabove == cabove')
+    && (opivot == opivot')
+    && (cpivot == cpivot')
+
+    // && (osp    == osp' + next.AMFO)
+    // && (csp    == csp' + cext.AMFO)
+    // && (osp    == flatten(done+{next}))
+    // && (csp    == flatten(mapThruKlon(done+{next}, m)))
+    //U3
+    //  ensures obelow  == (set x <- osp | strictlyInside(x,m.o))
+    //  ensures cbelow  == (set x <- csp | strictlyInside(x,m.c))
+    //U4
+    //  ensures oabove == fOutside((done+{next})-{m.o}, m.o)
+    //  ensures cabove == fOutside(mapThruKlon((done+{next})-{m.o},m), m.c)
+
+    && (osp    == obelow + oabove + opivot)
+    && (csp    == cbelow + cabove + cpivot)
+}
+
+
+lemma REQ_INSIDE_GETS_PIVOTS(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+                  osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
+                  csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
+                  osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
+                  csp  : Owner, cbelow  : Owner, cabove  : Owner, cpivot  : Owner)
+
+    requires REQ_INSIDE(oo, m, done, todo, next, cext,
+                      osp', obelow', oabove', opivot',
+                      csp', cbelow', cabove', cpivot',
+                      osp, obelow, oabove, opivot,
+                      csp, cbelow, cabove, cpivot)
+
+    ensures opivot == opivot'
+    ensures cpivot == cpivot'
+      {
+         reveal REQ_INSIDE();
+      }
+
+lemma REQ_INSIDE_GETS_READY(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+                  osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
+                  csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
+                  osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
+                  csp  : Owner, cbelow  : Owner, cabove  : Owner, cpivot  : Owner)
+
+    requires REQ_INSIDE(oo, m, done, todo, next, cext,
+                      osp', obelow', oabove', opivot',
+                      csp', cbelow', cabove', cpivot',
+                      osp, obelow, oabove, opivot,
+                      csp, cbelow, cabove, cpivot)
+    ensures AllReady(oo)
+    ensures next.Ready()
+    ensures cext.Ready()
+    ensures m.o.Ready()
+    ensures m.c.Ready()
+      { reveal REQ_INSIDE();
+        assert AllReady(oo);
+        assert next.Ready();
+        assert cext.Ready();
+        assert m.o.Ready();
+        assert m.c.Ready();
+      }
+
+lemma REQ_INSIDE_GETS_KLON(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+                  osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
+                  csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
+                  osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
+                  csp  : Owner, cbelow  : Owner, cabove  : Owner, cpivot  : Owner)
+
+    requires REQ_INSIDE(oo, m, done, todo, next, cext,
+                      osp', obelow', oabove', opivot',
+                      csp', cbelow', cabove', cpivot',
+                      osp, obelow, oabove, opivot,
+                      csp, cbelow, cabove, cpivot)
+    ensures AllReady(oo)
+    ensures klonReady(m)
+    ensures klonCalid(m)
+    ensures m.m.Keys >= flatten(oo) >= oo
+      { reveal REQ_INSIDE();
+        assert AllReady(oo);
+        assert klonReady(m);
+        assert klonCalid(m);
+        assert m.m.Keys >= flatten(oo) >= oo;
+      }
+
 
 //////// /////////// /////////// //  /////// //////////// ////// //////  //// ////// ///// // //
 //////// /////////// /////////// //  /////// //////////// ////// //////  //// ////// ///// // //
 
 
-lemma CASE_U0_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma CASE_INSIDE_U0(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
                   csp  : Owner, cbelow  : Owner, cabove  : Owner, cpivot  : Owner)
 
     requires strictlyInside(next,m.o)
+//
+//     requires AllReady(oo)
+//     requires klonReady(m)
+//     requires klonCalid(m)
+//     requires m.m.Keys >= flatten(oo) >= oo
+//     requires next in m.m.Keys
+//     requires cext == m.m[next]
+//     requires klonLine(next,cext,m)
+//
+//     requires oo     == todo + {next} + done
+//     requires todo !! {next} !! done
+//
+//     requires osp'    == obelow' + oabove' + opivot'
+//     requires osp' == flatten(done)
+//     requires csp'    == cbelow' + cabove' + cpivot'
+//     requires csp'    == flatten(mapThruKlon(done, m))
+//
+//     requires obelow' == (set x <- osp' | strictlyInside(x,m.o))
+//     requires cbelow' == (set x <- csp' | strictlyInside(x,m.c))
+//     requires oabove' == fOutside(done-{m.o}, m.o)
+//     requires cabove' == fOutside(mapThruKlon(done-{m.o},m), m.c)
+//     requires oabove' == cabove'
+//     requires opivot' == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
+//     requires cpivot' == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
+//
+//     requires obelow == obelow' + skipAllInside(next,m.o)
+//     requires cbelow == cbelow' + skipAllInside(cext,m.c)
+//     requires oabove == oabove'
+//     requires cabove == cabove'
+//     requires opivot == opivot'
+//     requires cpivot == cpivot'
+//
+//     requires osp    == flatten(done)
+//     requires csp    == flatten(mapThruKlon(done, m))
+//     requires osp    == obelow + oabove + opivot
+//     requires csp    == cbelow + cabove + cpivot
 
-    requires obelow == obelow'
-    requires cbelow == cbelow'
-    requires oabove == oabove' + next.AMFO
-    requires cabove == cabove' + cext.AMFO
-    requires opivot == opivot'
-    requires cpivot == cpivot'
-    requires osp    == obelow + oabove + opivot
-    requires csp    == cbelow + cabove + cpivot
-
-    requires AllReady(oo)
-    requires klonReady(m)
-    requires klonCalid(m)
-    requires flatten(oo) <= m.m.Keys
-    requires next in m.m.Keys
-    requires cext == m.m[next]
-    requires klonLine(next,cext,m)
-    requires oo <= m.m.Keys
-    requires oo     == todo + {next} + done
-    requires todo !! {next} !! done
-    requires osp'    == obelow' + oabove' + opivot'
-    requires osp' == flatten(done)// == (set d : Object <- done, dd <- flatten({d}) :: dd)
-    requires csp'    == cbelow' + cabove' + cpivot'
-    requires csp'    == flatten(mapThruKlon(done, m))
-    // requires forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
-    // requires forall x <- done | outside(x,m.o) :: (m.m[x] == x) //&& (m.m[x] in csp')
-    // requires forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
-    // requires forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
-    requires obelow' == (set x <- osp' | strictlyInside(x,m.o))
-    requires cbelow' == (set x <- csp' | strictlyInside(x,m.c))
-    requires oabove' == fOutside(done-{m.o}, m.o)
-    requires cabove' == fOutside(mapThruKlon(done-{m.o},m), m.c)
-    requires oabove' == cabove'
-    requires opivot' == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
-    requires cpivot' == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
+    requires REQ_INSIDE(oo, m, done, todo, next, cext,
+                      osp', obelow', oabove', opivot',
+                      csp', cbelow', cabove', cpivot',
+                      osp, obelow, oabove, opivot,
+                      csp, cbelow, cabove, cpivot)
 
      ensures oo     == todo + {next} + done
     {
-
+        reveal REQ_INSIDE();
     }
 
 
-  lemma {:timeLimit 30} CASE_U1_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+  lemma {:timeLimit 30} CASE_INSIDE_U1(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -4695,68 +4833,90 @@ lemma CASE_U0_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Ob
 
     requires strictlyInside(next,m.o)
 
-    requires obelow == obelow'
-    requires cbelow == cbelow'
-    requires oabove == oabove' + next.AMFO
-    requires cabove == cabove' + cext.AMFO
-    requires opivot == opivot'
-    requires cpivot == cpivot'
-    requires osp    == obelow + oabove + opivot
-    requires csp    == cbelow + cabove + cpivot
+    requires REQ_INSIDE(oo, m, done, todo, next, cext,
+                      osp', obelow', oabove', opivot',
+                      csp', cbelow', cabove', cpivot',
+                      osp, obelow, oabove, opivot,
+                      csp, cbelow, cabove, cpivot)
 
-    requires AllReady(oo)
-    requires klonReady(m)
-    requires klonCalid(m)
-    requires flatten(oo) <= m.m.Keys
-    requires next in m.m.Keys
-    requires cext == m.m[next]
-    requires klonLine(next,cext,m)
-    requires oo <= m.m.Keys
-    requires oo     == todo + {next} + done
-    requires todo !! {next} !! done
-    requires osp'    == obelow' + oabove' + opivot'
-    requires osp' == flatten(done)// == (set d : Object <- done, dd <- flatten({d}) :: dd)
-    requires csp'    == cbelow' + cabove' + cpivot'
-    requires csp'    == flatten(mapThruKlon(done, m))
-    // requires forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
-    // requires forall x <- done | outside(x,m.o) :: (m.m[x] == x) //&& (m.m[x] in csp')
-    // requires forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
-    // requires forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
-    requires obelow' == (set x <- osp' | strictlyInside(x,m.o))
-    requires cbelow' == (set x <- csp' | strictlyInside(x,m.c))
-    requires oabove' == fOutside(done-{m.o}, m.o)
-    requires cabove' == fOutside(mapThruKlon(done-{m.o},m), m.c)
-    requires oabove' == cabove'
-    requires opivot' == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
-    requires cpivot' == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
+//
+//     requires obelow == obelow' + skipAllInside(next,m.o)
+//     requires cbelow == cbelow' + skipAllInside(cext,m.c)
+//     requires oabove == oabove'
+//     requires cabove == cabove'
+//     requires opivot == opivot'
+//     requires cpivot == cpivot'
+//     requires osp    == obelow + oabove + opivot
+//     requires csp    == cbelow + cabove + cpivot
+//
+//     requires AllReady(oo)
+//     requires klonReady(m)
+//     requires klonCalid(m)
+//     requires flatten(oo) <= m.m.Keys
+//     requires next in m.m.Keys
+//     requires cext == m.m[next]
+//     requires klonLine(next,cext,m)
+//     requires oo <= m.m.Keys
+//     requires oo     == todo + {next} + done
+//     requires todo !! {next} !! done
+//     requires osp'    == obelow' + oabove' + opivot'
+//     requires osp' == flatten(done)// == (set d : Object <- done, dd <- flatten({d}) :: dd)
+//     requires csp'    == cbelow' + cabove' + cpivot'
+//     requires csp'    == flatten(mapThruKlon(done, m))
+//     // requires forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
+//     // requires forall x <- done | outside(x,m.o) :: (m.m[x] == x) //&& (m.m[x] in csp')
+//     // requires forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
+//     // requires forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
+//     requires obelow' == (set x <- osp' | strictlyInside(x,m.o))
+//     requires cbelow' == (set x <- csp' | strictlyInside(x,m.c))
+//     requires oabove' == fOutside(done-{m.o}, m.o)
+//     requires cabove' == fOutside(mapThruKlon(done-{m.o},m), m.c)
+//     requires oabove' == cabove'
+//     requires opivot' == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
+//     requires cpivot' == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
+//
+//      ensures osp   == obelow + oabove + opivot
+//       //  ensures osp   == flatten(done+{next})
+//      ensures csp   == cbelow + cabove + cpivot
+//       //  ensures csp   == flatten(mapThruKlon(done+{next}, m))
+//      ensures OOOO(osp,obelow,oabove,opivot)
+//      ensures OOOO(csp,cbelow,cabove,cpivot)
+//     //  ensures obelow == (set x <- osp | strictlyInside(x,m.o))
+//     //  ensures cbelow == (set x <- csp | strictlyInside(x,m.c))
+// //TODO     ensures oabove == fOutside((done+{next})-{m.o}, m.o)
+// //TODO     ensures cabove == fOutside(mapThruKlon((done+{next})-{m.o},m), m.c)
+//      ensures oabove == cabove
 
-     ensures osp   == obelow + oabove + opivot
-      //  ensures osp   == flatten(done+{next})
-     ensures csp   == cbelow + cabove + cpivot
-      //  ensures csp   == flatten(mapThruKlon(done+{next}, m))
-     ensures OOOO(osp,obelow,oabove,opivot)
-     ensures OOOO(csp,cbelow,cabove,cpivot)
-    //  ensures obelow == (set x <- osp | strictlyInside(x,m.o))
-    //  ensures cbelow == (set x <- csp | strictlyInside(x,m.c))
-//TODO     ensures oabove == fOutside((done+{next})-{m.o}, m.o)
-//TODO     ensures cabove == fOutside(mapThruKlon((done+{next})-{m.o},m), m.c)
-     ensures oabove == cabove
 {
 
-assert opivot == opivot' == opivot' + {};
-assert cpivot == cpivot' == cpivot' + {};
+       reveal REQ_INSIDE();
+
+       REQ_INSIDE_GETS_PIVOTS(oo, m, done, todo, next, cext,
+                      osp', obelow', oabove', opivot',
+                      csp', cbelow', cabove', cpivot',
+                      osp, obelow, oabove, opivot,
+                      csp, cbelow, cabove, cpivot);
+
+       REQ_INSIDE_GETS_READY(oo, m, done, todo, next, cext,
+                      osp', obelow', oabove', opivot',
+                      csp', cbelow', cabove', cpivot',
+                      osp, obelow, oabove, opivot,
+                      csp, cbelow, cabove, cpivot);
+
+assert opivot == opivot' by { reveal REQ_INSIDE(); assert opivot == opivot'; }
+assert cpivot == cpivot' by { reveal REQ_INSIDE(); assert cpivot == cpivot'; }
 
     SIX_BY_FOUR(osp', obelow', oabove', opivot',
-                      {}, next.AMFO, {},
+                      skipAllInside(next,m.o), {}, {},
                 osp , obelow , oabove , opivot);
 
     SIX_BY_FOUR(csp', cbelow', cabove', cpivot',
-                      {}, cext.AMFO, {},
+                      skipAllInside(cext,m.c), {}, {},
                csp , cbelow , cabove , cpivot);
 
 }
 
-lemma CASE_U2_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma CASE_INSIDE_U2(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -4764,45 +4924,23 @@ lemma CASE_U2_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Ob
 
     requires strictlyInside(next,m.o)
 
-    requires obelow == obelow'
-    requires cbelow == cbelow'
-    requires oabove == oabove' + next.AMFO
-    requires cabove == cabove' + cext.AMFO
-    requires opivot == opivot'
-    requires cpivot == cpivot'
-    requires osp    == obelow + oabove + opivot
-    requires csp    == cbelow + cabove + cpivot
-
-    requires AllReady(oo)
-    requires klonReady(m)
-    requires klonCalid(m)
-    requires flatten(oo) <= m.m.Keys
-    requires next in m.m.Keys
-    requires cext == m.m[next]
-    requires klonLine(next,cext,m)
-    requires oo <= m.m.Keys
-    requires oo     == todo + {next} + done
-    requires todo !! {next} !! done
-    requires osp'    == obelow' + oabove' + opivot'
-    requires osp' == flatten(done)// == (set d : Object <- done, dd <- flatten({d}) :: dd)
-    requires csp'    == cbelow' + cabove' + cpivot'
-    requires csp'    == flatten(mapThruKlon(done, m))
-    // requires forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
-    // requires forall x <- done | outside(x,m.o) :: (m.m[x] == x) //&& (m.m[x] in csp')
-    // requires forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
-    // requires forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
-    requires obelow' == (set x <- osp' | strictlyInside(x,m.o))
-    requires cbelow' == (set x <- csp' | strictlyInside(x,m.c))
-    requires oabove' == fOutside(done-{m.o}, m.o)
-    requires cabove' == fOutside(mapThruKlon(done-{m.o},m), m.c)
-    requires oabove' == cabove'
-    requires opivot' == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
-    requires cpivot' == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
-
+       requires REQ_INSIDE(oo, m, done, todo, next, cext,
+                      osp', obelow', oabove', opivot',
+                      csp', cbelow', cabove', cpivot',
+                      osp, obelow, oabove, opivot,
+                      csp, cbelow, cabove, cpivot)
 
      ensures osp   == flatten(done+{next})
      ensures csp   == flatten(mapThruKlon(done+{next}, m))
 {
+       reveal REQ_INSIDE();
+
+       REQ_INSIDE_GETS_READY(oo, m, done, todo, next, cext,
+                      osp', obelow', oabove', opivot',
+                      csp', cbelow', cabove', cpivot',
+                      osp, obelow, oabove, opivot,
+                      csp, cbelow, cabove, cpivot);
+
 //IS THIS REWALLY IT?  HOPEFULLY!!!!!Q
     // osp    := osp'    + m.o.AMFO;
     // csp    := csp'    + m.c.AMFO;
@@ -4874,7 +5012,7 @@ lemma CASE_U2_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Ob
 
 
 
-lemma {:timeLimit 60} CASE_U3_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma {:timeLimit 60} CASE_INSIDE_U3(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -4882,60 +5020,38 @@ lemma {:timeLimit 60} CASE_U3_INSIDE(oo : Owner, m : Klon, done : Owner, todo : 
 
     requires strictlyInside(next,m.o)
 
-    requires obelow == obelow'
-    requires cbelow == cbelow'
-    requires oabove == oabove' + next.AMFO
-    requires cabove == cabove' + cext.AMFO
-    requires opivot == opivot'
-    requires cpivot == cpivot'
-    requires osp    == obelow + oabove + opivot
-    requires csp    == cbelow + cabove + cpivot
-
-    requires AllReady(oo)
-    requires klonReady(m)
-    requires klonCalid(m)
-    requires flatten(oo) <= m.m.Keys
-    requires next in m.m.Keys
-    requires cext == m.m[next]
-    requires klonLine(next,cext,m)
-    requires oo <= m.m.Keys
-    requires oo     == todo + {next} + done
-    requires todo !! {next} !! done
-    requires osp'    == obelow' + oabove' + opivot'
-    requires osp' == flatten(done)// == (set d : Object <- done, dd <- flatten({d}) :: dd)
-    requires csp'    == cbelow' + cabove' + cpivot'
-    requires csp'    == flatten(mapThruKlon(done, m))
-    // requires forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
-    // requires forall x <- done | outside(x,m.o) :: (m.m[x] == x) //&& (m.m[x] in csp')
-    // requires forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
-    // requires forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
-    requires obelow' == (set x <- osp' | strictlyInside(x,m.o))
-    requires cbelow' == (set x <- csp' | strictlyInside(x,m.c))
-    requires oabove' == fOutside(done-{m.o}, m.o)
-    requires cabove' == fOutside(mapThruKlon(done-{m.o},m), m.c)
-    requires oabove' == cabove'
-    requires opivot' == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
-    requires cpivot' == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
+       requires REQ_INSIDE(oo, m, done, todo, next, cext,
+                      osp', obelow', oabove', opivot',
+                      csp', cbelow', cabove', cpivot',
+                      osp, obelow, oabove, opivot,
+                      csp, cbelow, cabove, cpivot)
 
      requires osp     == osp' + next.AMFO
      requires csp     == csp' + cext.AMFO
      ensures obelow  == (set x <- osp | strictlyInside(x,m.o))
      ensures cbelow  == (set x <- csp | strictlyInside(x,m.c))
 {
+       reveal REQ_INSIDE();
+
+       REQ_INSIDE_GETS_READY(oo, m, done, todo, next, cext,
+                      osp', obelow', oabove', opivot',
+                      csp', cbelow', cabove', cpivot',
+                      osp, obelow, oabove, opivot,
+                      csp, cbelow, cabove, cpivot);
+
+//NEEDS lots of  WORK
+
   assert obelow' == (set x <- osp' | strictlyInside(x,m.o));
   assert cbelow' == (set x <- csp' | strictlyInside(x,m.c));
 
-  assert not(strictlyInside(next,m.o));
-  assert not(strictlyInside(cext,m.c));
+  assert (strictlyInside(next,m.o));
+  assert (strictlyInside(cext,m.c));
 
-  assert (set x <- next.AMFO | strictlyInside(x,m.o)) == {};
-  assert (set x <- cext.AMFO | strictlyInside(x,m.c)) == {};
+  assert (set x <- next.AMFO | strictlyInside(x,m.o)) == skipAllInside(next,m.o);
+  assert (set x <- cext.AMFO | strictlyInside(x,m.c)) == skipAllInside(cext,m.c);
 
-  assert obelow' + (set x <- next.AMFO | strictlyInside(x,m.o)) == obelow;
-  assert cbelow' + (set x <- cext.AMFO | strictlyInside(x,m.c)) == cbelow;
-
-  assert obelow + (set x <- next.AMFO | strictlyInside(x,m.o)) == obelow;
-  assert cbelow + (set x <- cext.AMFO | strictlyInside(x,m.c)) == cbelow;
+  assert obelow' + skipAllInside(next,m.o) == obelow;
+  assert cbelow' + skipAllInside(cext,m.c) == cbelow;
 
   assert obelow  == (set x <- osp | strictlyInside(x,m.o));
   assert cbelow  == (set x <- csp | strictlyInside(x,m.c));
@@ -4943,53 +5059,61 @@ lemma {:timeLimit 60} CASE_U3_INSIDE(oo : Owner, m : Klon, done : Owner, todo : 
 
 
 
-lemma CASE_U4_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma CASE_INSIDE_U4(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
                   csp  : Owner, cbelow  : Owner, cabove  : Owner, cpivot  : Owner)
 
     requires strictlyInside(next,m.o)
-
-    requires obelow == obelow'
-    requires cbelow == cbelow'
-    requires oabove == oabove' + next.AMFO
-    requires cabove == cabove' + cext.AMFO
-    requires opivot == opivot'
-    requires cpivot == cpivot'
-    requires osp    == obelow + oabove + opivot
-    requires csp    == cbelow + cabove + cpivot
-
-    requires AllReady(oo)
-    requires klonReady(m)
-    requires klonCalid(m)
-    requires flatten(oo) <= m.m.Keys
-    requires next in m.m.Keys
-    requires cext == m.m[next]
-    requires klonLine(next,cext,m)
-    requires oo <= m.m.Keys
-    requires oo     == todo + {next} + done
-    requires todo !! {next} !! done
-    requires osp'    == obelow' + oabove' + opivot'
-    requires osp' == flatten(done)// == (set d : Object <- done, dd <- flatten({d}) :: dd)
-    requires csp'    == cbelow' + cabove' + cpivot'
-    requires csp'    == flatten(mapThruKlon(done, m))
-    // requires forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
-    // requires forall x <- done | outside(x,m.o) :: (m.m[x] == x) //&& (m.m[x] in csp')
-    // requires forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
-    // requires forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
-    requires obelow' == (set x <- osp' | strictlyInside(x,m.o))
-    requires cbelow' == (set x <- csp' | strictlyInside(x,m.c))
-    requires oabove' == fOutside(done-{m.o}, m.o)
-    requires cabove' == fOutside(mapThruKlon(done-{m.o},m), m.c)
-    requires oabove' == cabove'
-    requires opivot' == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
-    requires cpivot' == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
+//
+//     requires obelow == obelow' + skipAllInside(next,m.o)
+//     requires cbelow == cbelow' + skipAllInside(cext,m.c)
+//     requires oabove == oabove'
+//     requires cabove == cabove'
+//     requires opivot == opivot'
+//     requires cpivot == cpivot'
+//     requires osp    == obelow + oabove + opivot
+//     requires csp    == cbelow + cabove + cpivot
+//
+//     requires AllReady(oo)
+//     requires klonReady(m)
+//     requires klonCalid(m)
+//     requires flatten(oo) <= m.m.Keys
+//     requires next in m.m.Keys
+//     requires cext == m.m[next]
+//     requires klonLine(next,cext,m)
+//     requires oo <= m.m.Keys
+//     requires oo     == todo + {next} + done
+//     requires todo !! {next} !! done
+//     requires osp'    == obelow' + oabove' + opivot'
+//     requires osp' == flatten(done)// == (set d : Object <- done, dd <- flatten({d}) :: dd)
+//     requires csp'    == cbelow' + cabove' + cpivot'
+//     requires csp'    == flatten(mapThruKlon(done, m))
+//     // requires forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
+//     // requires forall x <- done | outside(x,m.o) :: (m.m[x] == x) //&& (m.m[x] in csp')
+//     // requires forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
+//     // requires forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
+//     requires obelow' == (set x <- osp' | strictlyInside(x,m.o))
+//     requires cbelow' == (set x <- csp' | strictlyInside(x,m.c))
+//     requires oabove' == fOutside(done-{m.o}, m.o)
+//     requires cabove' == fOutside(mapThruKlon(done-{m.o},m), m.c)
+//     requires oabove' == cabove'
+//     requires opivot' == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
+//     requires cpivot' == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
 
      ensures oabove == fOutside((done+{next})-{m.o}, m.o)
      ensures cabove == fOutside(mapThruKlon((done+{next})-{m.o},m), m.c)
      ensures oabove == cabove
 {
+         reveal REQ_INSIDE();
+
+       REQ_INSIDE_GETS_READY(oo, m, done, todo, next, cext,
+                      osp', obelow', oabove', opivot',
+                      csp', cbelow', cabove', cpivot',
+                      osp, obelow, oabove, opivot,
+                      csp, cbelow, cabove, cpivot);
+
     assert next != m.o;
     assert {next} - {m.o} == {next};
     assert done+{next}-{m.o} == (done+{next})-{m.o} == (done-{m.o})+{next};
@@ -5001,7 +5125,7 @@ lemma CASE_U4_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Ob
 
 
 
-lemma {:timeLimit 40} CASE_U5_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma {:timeLimit 40} CASE_INSIDE_U5(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -5010,10 +5134,10 @@ lemma {:timeLimit 40} CASE_U5_INSIDE(oo : Owner, m : Klon, done : Owner, todo : 
 
     requires strictlyInside(next,m.o)
 
-    requires obelow == obelow'
-    requires cbelow == cbelow'
-    requires oabove == oabove' + next.AMFO
-    requires cabove == cabove' + cext.AMFO
+    requires obelow == obelow' + skipAllInside(next,m.o)
+    requires cbelow == cbelow' + skipAllInside(cext,m.c)
+    requires oabove == oabove'
+    requires cabove == cabove'
     requires opivot == opivot'
     requires cpivot == cpivot'
     requires osp    == obelow + oabove + opivot
@@ -5049,12 +5173,23 @@ lemma {:timeLimit 40} CASE_U5_INSIDE(oo : Owner, m : Klon, done : Owner, todo : 
 //      ensures cpivot == (if (m.o in flatten(done+{next})) then (m.c.AMFO) else {})
 
     requires opivot' == (if (m.o in osp') then (m.o.AMFO) else {})
+    requires cpivot' == (if (m.o in csp') then (m.c.AMFO) else {})
+     ensures opivot  == (if (m.o in osp ) then (m.o.AMFO) else {})
+     ensures cpivot  == (if (m.o in csp ) then (m.c.AMFO) else {})
+{
+       reveal REQ_INSIDE();
+
+       REQ_INSIDE_GETS_READY(oo, m, done, todo, next, cext,
+                      osp', obelow', oabove', opivot',
+                      csp', cbelow', cabove', cpivot',
+                      osp, obelow, oabove, opivot,
+                      csp, cbelow, cabove, cpivot);
+}
 
 
 
 
-
-lemma CASE_U6_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma CASE_INSIDE_U6(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -5062,46 +5197,62 @@ lemma CASE_U6_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Ob
 
     requires strictlyInside(next,m.o)
 
-    requires obelow == obelow'
-    requires cbelow == cbelow'
-    requires oabove == oabove' + next.AMFO
-    requires cabove == cabove' + cext.AMFO
-    requires opivot == opivot'
-    requires cpivot == cpivot'
-    requires osp    == obelow + oabove + opivot
-    requires csp    == cbelow + cabove + cpivot
+    requires REQ_INSIDE(oo, m, done, todo, next, cext,
+                  osp', obelow', oabove', opivot',
+                  csp', cbelow', cabove', cpivot',
+                  osp, obelow, oabove, opivot,
+                  csp, cbelow, cabove, cpivot)
 
-    requires AllReady(oo)
-    requires klonReady(m)
-    requires klonCalid(m)
-    requires flatten(oo) <= m.m.Keys
-    requires next in m.m.Keys
-    requires cext == m.m[next]
-    requires klonLine(next,cext,m)
-    requires oo <= m.m.Keys
-    requires oo     == todo + {next} + done
-    requires todo !! {next} !! done
-    requires osp'    == obelow' + oabove' + opivot'
-    requires osp' == flatten(done)// == (set d : Object <- done, dd <- flatten({d}) :: dd)
-    requires csp'    == cbelow' + cabove' + cpivot'
-    requires csp'    == flatten(mapThruKlon(done, m))
-    // requires forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
-    // requires forall x <- done | outside(x,m.o) :: (m.m[x] == x) //&& (m.m[x] in csp')
-    // requires forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
-    // requires forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
-    requires obelow' == (set x <- osp' | strictlyInside(x,m.o))
-    requires cbelow' == (set x <- csp' | strictlyInside(x,m.c))
-    requires oabove' == fOutside(done-{m.o}, m.o)
-    requires cabove' == fOutside(mapThruKlon(done-{m.o},m), m.c)
-    requires oabove' == cabove'
-    requires opivot' == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
-    requires cpivot' == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
+
+
+//     requires obelow == obelow' + skipAllInside(next,m.o)
+//     requires cbelow == cbelow' + skipAllInside(cext,m.c)
+//     requires oabove == oabove'
+//     requires cabove == cabove'
+//     requires opivot == opivot'
+//     requires cpivot == cpivot'
+//     requires osp    == obelow + oabove + opivot
+//     requires csp    == cbelow + cabove + cpivot
+//
+//     requires AllReady(oo)
+//     requires klonReady(m)
+//     requires klonCalid(m)
+//     requires flatten(oo) <= m.m.Keys
+//     requires next in m.m.Keys
+//     requires cext == m.m[next]
+//     requires klonLine(next,cext,m)
+//     requires oo <= m.m.Keys
+//     requires oo     == todo + {next} + done
+//     requires todo !! {next} !! done
+//     requires osp'    == obelow' + oabove' + opivot'
+//     requires osp' == flatten(done)// == (set d : Object <- done, dd <- flatten({d}) :: dd)
+//     requires csp'    == cbelow' + cabove' + cpivot'
+//     requires csp'    == flatten(mapThruKlon(done, m))
+//     // requires forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
+//     // requires forall x <- done | outside(x,m.o) :: (m.m[x] == x) //&& (m.m[x] in csp')
+//     // requires forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
+//     // requires forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
+//     requires obelow' == (set x <- osp' | strictlyInside(x,m.o))
+//     requires cbelow' == (set x <- csp' | strictlyInside(x,m.c))
+//     requires oabove' == fOutside(done-{m.o}, m.o)
+//     requires cabove' == fOutside(mapThruKlon(done-{m.o},m), m.c)
+//     requires oabove' == cabove'
+//     requires opivot' == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
+//     requires cpivot' == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
 
      ensures forall x <- done+{next} |  inside(x,m.o) ::  inside(m.m[x],m.c)
      ensures forall x <- done+{next} | outside(x,m.o) :: (m.m[x] == x) // && (m.m[x] in csp)
      ensures forall x <- flatten(done+{next}) |  inside(x,m.o) ::  inside(m.m[x],m.c)
      ensures forall x <- flatten(done+{next}) | outside(x,m.o) :: (m.m[x] == x)
 {
+       reveal REQ_INSIDE();
+
+       REQ_INSIDE_GETS_KLON(oo, m, done, todo, next, cext,
+                      osp', obelow', oabove', opivot',
+                      csp', cbelow', cabove', cpivot',
+                      osp, obelow, oabove, opivot,
+                      csp, cbelow, cabove, cpivot);
+
     IN_N_OUT_LEMMER(oo, m);
     assert IN_N_OUT_BURGER(oo, m);
 }
@@ -5230,7 +5381,7 @@ assert cabove == cabove' + cext.AMFO;  assert csp == cbelow + cabove + cpivot;
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 
-    CASE_U3_OUTSIDE(oo, m, done, todo, next, cext,
+    CASE_OUTSIDE_U3(oo, m, done, todo, next, cext,
                   osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
                   osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot)
         by {
@@ -6518,9 +6669,6 @@ lemma CAXE_UALL_PIVOT(oo : Owner, m : Klon, done : Owner, todo : Owner, next : O
      ensures cabove == fOutside(mapThruKlon((done+{next})-{m.o},m), m.c)
      ensures oabove == cabove
 
-    //  ensures osp   == flatten(done+{next})
-    //  ensures csp   == flatten(mapThruKlon(done+{next}, m))
-
      ensures IN_N_OUT_BURGER(oo, m)
 
 {
@@ -6536,25 +6684,25 @@ lemma CAXE_UALL_PIVOT(oo : Owner, m : Klon, done : Owner, todo : Owner, next : O
     osp    := obelow + oabove + opivot;
     csp    := cbelow + cabove + cpivot;
 
-    CASE_U0_PIVOT(oo, m, done, todo, next, cext,
+    CASE_PIVOT_U0(oo, m, done, todo, next, cext,
                   osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
                   osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
-    CASE_U1_PIVOT(oo, m, done, todo, next, cext,
+    CASE_PIVOT_U1(oo, m, done, todo, next, cext,
                   osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
                   osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
-    CASE_U2_PIVOT(oo, m, done, todo, next, cext,
+    CASE_PIVOT_U2(oo, m, done, todo, next, cext,
                   osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
                   osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
-    CASE_U3_PIVOT(oo, m, done, todo, next, cext,
+    CASE_PIVOT_U3(oo, m, done, todo, next, cext,
                   osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
                   osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
-    CASE_U4_PIVOT(oo, m, done, todo, next, cext,
+    CASE_PIVOT_U4(oo, m, done, todo, next, cext,
                   osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
                   osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
-    CASE_U5_PIVOT(oo, m, done, todo, next, cext,
+    CASE_PIVOT_U5(oo, m, done, todo, next, cext,
                   osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
                   osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
-    CASE_U6_PIVOT(oo, m, done, todo, next, cext,
+    CASE_PIVOT_U6(oo, m, done, todo, next, cext,
                   osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
                   osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
 }
@@ -6572,13 +6720,17 @@ lemma CAXE_UALL_OUTSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next :
     requires AllReady(oo)
     requires klonReady(m)
     requires klonCalid(m)
-    requires flatten(oo) <= m.m.Keys
+
     requires next in m.m.Keys
+    requires next.Ready()
+    requires AllReady(flatten({next}))
+    requires m.m.Keys >= oo
+    requires m.m.Keys >= flatten(oo) >= flatten({next})
     requires cext == m.m[next]
     requires klonLine(next,cext,m)
-    requires oo <= m.m.Keys
     requires oo     == todo + {next} + done
     requires todo !! {next} !! done
+
     requires osp'    == obelow' + oabove' + opivot'
     requires osp' == flatten(done)// == (set d : Object <- done, dd <- flatten({d}) :: dd)
     requires csp'    == cbelow' + cabove' + cpivot'
@@ -6602,7 +6754,6 @@ lemma CAXE_UALL_OUTSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next :
      ensures osp   == flatten(done+{next})
      ensures csp   == cbelow + cabove + cpivot
      ensures csp   == flatten(mapThruKlon(done+{next}, m))
-
      ensures cpivot == (if (m.o in flatten(done+{next})) then (m.c.AMFO) else {})
      ensures opivot == (if (m.o in flatten(done+{next})) then (m.o.AMFO) else {})
 
@@ -6641,25 +6792,25 @@ lemma CAXE_UALL_OUTSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next :
     assert osp == osp' + next.AMFO;
     assert csp == csp' + cext.AMFO;
 
-    CASE_U0_OUTSIDE(oo, m, done, todo, next, cext,
+    CASE_OUTSIDE_U0(oo, m, done, todo, next, cext,
                   osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
                   osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
-    CASE_U1_OUTSIDE(oo, m, done, todo, next, cext,
+    CASE_OUTSIDE_U1(oo, m, done, todo, next, cext,
                   osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
                   osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
-    CASE_U2_OUTSIDE(oo, m, done, todo, next, cext,
+    CASE_OUTSIDE_U2(oo, m, done, todo, next, cext,
                   osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
                   osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
-    CASE_U3_OUTSIDE(oo, m, done, todo, next, cext,
+    CASE_OUTSIDE_U3(oo, m, done, todo, next, cext,
                   osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
                   osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
-    CASE_U4_OUTSIDE(oo, m, done, todo, next, cext,
+    CASE_OUTSIDE_U4(oo, m, done, todo, next, cext,
                   osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
                   osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
-    CASE_U5_OUTSIDE(oo, m, done, todo, next, cext,
+    CASE_OUTSIDE_U5(oo, m, done, todo, next, cext,
                   osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
                   osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
-    CASE_U6_OUTSIDE(oo, m, done, todo, next, cext,
+    CASE_OUTSIDE_U6(oo, m, done, todo, next, cext,
                   osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
                   osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
 }
@@ -6675,103 +6826,182 @@ lemma CAXE_UALL_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : 
 
     requires strictlyInside(next, m.o)
 
-    requires AllReady(oo)
-    requires klonReady(m)
-    requires klonCalid(m)
 
+    requires AllReady(oo)
+    requires klonReady(m)               requires KRDY: klonReady(m)
+    requires klonCalid(m)               requires KCLD: klonCalid(m)
+    requires m.m.Keys >= flatten(oo) >= oo
     requires next in m.m.Keys
-    requires next.Ready()
-    requires AllReady(flatten({next}))
-    requires m.m.Keys >= oo
-    requires m.m.Keys >= flatten(oo) >= flatten({next})
-    requires cext     == m.m[next]
+    requires cext == m.m[next]
     requires klonLine(next,cext,m)
-    requires oo <= m.m.Keys
+
     requires oo     == todo + {next} + done
     requires todo !! {next} !! done
 
-    requires osp' == flatten(done)
-    requires csp'    == flatten(mapThruKlon(done, m))
     requires osp'    == obelow' + oabove' + opivot'
+    requires osp' == flatten(done)
     requires csp'    == cbelow' + cabove' + cpivot'
-//kjx what's the story with this??
-    // requires forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
-    // requires forall x <- done | inside(x,m.o) :: (m.m[x] == x) //&& (m.m[x] in csp')
-    // requires forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
-    // requires forall x <- flatten(done) | inside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
+    requires csp'    == flatten(mapThruKlon(done, m))
+
     requires obelow' == (set x <- osp' | strictlyInside(x,m.o))
     requires cbelow' == (set x <- csp' | strictlyInside(x,m.c))
+
+    requires OBSI: obelow' == (set x <- osp' | strictlyInside(x,m.o))
+    requires CBSI: cbelow' == (set x <- csp' | strictlyInside(x,m.c))
+
     requires oabove' == fOutside(done-{m.o}, m.o)
     requires cabove' == fOutside(mapThruKlon(done-{m.o},m), m.c)
     requires oabove' == cabove'
-
     requires opivot' == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
     requires cpivot' == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
 
-     ensures oo     == todo + {next} + done
-     ensures todo  !! {next} !! done
-     ensures osp   == obelow + oabove + opivot
-     ensures osp   == flatten(done+{next})
-     ensures csp   == cbelow + cabove + cpivot
-     ensures csp   == flatten(mapThruKlon(done+{next}, m))
+//     requires obelow == obelow' + skipAllInside(next,m.o)
+//     requires cbelow == cbelow' + skipAllInside(cext,m.c)
+//     requires oabove == oabove'
+//     requires cabove == cabove'
+//     requires opivot == opivot'
+//     requires cpivot == cpivot'
+//
+//     requires osp    == flatten(done)
+//     requires csp    == flatten(mapThruKlon(done, m))
+//     requires osp    == obelow + oabove + opivot
+//     requires csp    == cbelow + cabove + cpivot
 
-     ensures cpivot == (if (m.o in flatten(done+{next})) then (m.c.AMFO) else {})
-     ensures opivot == (if (m.o in flatten(done+{next})) then (m.o.AMFO) else {})
+//     requires AllReady(oo)
+//     requires klonReady(m)
+//     requires klonCalid(m)
+//
+//     requires next in m.m.Keys
+//     requires next.Ready()
+//     requires AllReady(flatten({next}))
+//     requires m.m.Keys >= oo
+//     requires m.m.Keys >= flatten(oo) >= flatten({next})
+//     requires cext     == m.m[next]
+//     requires klonLine(next,cext,m)
+//     requires oo     == todo + {next} + done
+//     requires todo !! {next} !! done
+//
+//     requires osp' == flatten(done)
+//     requires csp' == flatten(mapThruKlon(done, m))
+//     requires osp' == obelow' + oabove' + opivot'
+//     requires csp' == cbelow' + cabove' + cpivot'
+// //kjx what's the story with this??
+//     // requires forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
+//     // requires forall x <- done | inside(x,m.o) :: (m.m[x] == x) //&& (m.m[x] in csp')
+//     // requires forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
+//     // requires forall x <- flatten(done) | inside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
+//     requires obelow' == (set x <- osp' | strictlyInside(x,m.o))
+//     requires cbelow' == (set x <- csp' | strictlyInside(x,m.c))
+//     requires oabove' == fOutside(done-{m.o}, m.o)
+//     requires cabove' == fOutside(mapThruKlon(done-{m.o},m), m.c)
+//     requires oabove' == cabove'
+//     requires opivot' == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
+//     requires cpivot' == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
 
-//kjx what's the story with this??
-    //  ensures forall x <- done+{next} |  inside(x,m.o) ::  inside(m.m[x],m.c)
-    //  ensures forall x <- done+{next} | inside(x,m.o) :: (m.m[x] == x) // && (m.m[x] in csp)
-    //  ensures forall x <- flatten(done+{next}) |  inside(x,m.o) ::  inside(m.m[x],m.c)
-    //  ensures forall x <- flatten(done+{next}) | inside(x,m.o) :: (m.m[x] == x) // && (m.m[x] in csp)
-     ensures OOOO(osp,obelow,oabove,opivot)
-     ensures OOOO(csp,cbelow,cabove,cpivot)
-     ensures obelow == (set x <- osp | strictlyInside(x,m.o))
-     ensures cbelow == (set x <- csp | strictlyInside(x,m.c))
-     ensures oabove == fOutside((done+{next})-{m.o}, m.o)
-     ensures cabove == fOutside(mapThruKlon((done+{next})-{m.o},m), m.c)
-     ensures oabove == cabove
+//
 
-     ensures IN_N_OUT_BURGER(oo, m)
 {
     IN_N_OUT_LEMMER(oo, m);
     assert IN_N_OUT_BURGER(oo, m);
 
-    obelow := obelow';
-    cbelow := cbelow';
+var obelow_ := skipAllInside(next,m.o);   assert OBELOW: obelow_ == skipAllInside(next,m.o);
+var cbelow_ := skipAllInside(cext,m.c);   assert CBELOW: cbelow_ == skipAllInside(cext,m.c);
+
+    obelow := obelow' + obelow_;
+    cbelow := cbelow' + cbelow_;
+
+opaque {
+   assert obelow_ == skipAllInside(next,m.o) by { reveal OBELOW; }
+   assert cbelow_ == skipAllInside(cext,m.c) by { reveal CBELOW; }
+   assert obelow  == obelow' + obelow_;
+   assert cbelow  == cbelow' + cbelow_;
+   assert obelow  == obelow' + skipAllInside(next,m.o);
+   assert cbelow  == cbelow' + skipAllInside(cext,m.c);
+}
     oabove := oabove';
     cabove := cabove';
     opivot := opivot';
     cpivot := cpivot';
     osp    := obelow + oabove + opivot;
     csp    := cbelow + cabove + cpivot;
-//
-//     GEFUCKENHEGSETH(osp, obelow', oabove', next.AMFO, opivot');
-//     GEFUCKENHEGSETH(csp, cbelow', cabove', cext.AMFO, cpivot');
 
-    // assert osp == osp' + next.AMFO;
-    // assert csp == csp' + cext.AMFO;
+    GEFUCKENMILLER(osp, obelow', oabove', opivot', obelow_);
+    GEFUCKENMILLER(csp, cbelow', cabove', cpivot', cbelow_);
 
-    CASE_U0_INSIDE(oo, m, done, todo, next, cext,
+assert obelow' == (set x <- osp' | strictlyInside(x,m.o)) by { reveal OBSI; }
+assert cbelow' == (set x <- csp' | strictlyInside(x,m.c)) by { reveal CBSI; }
+// assert obelow == obelow' + skipAllInside(next,m.o);
+// assert cbelow == cbelow' + skipAllInside(cext,m.c);
+
+    assert (strictlyInside(next,m.o));
+
+    assert (AllReady(oo));
+    assert (klonReady(m))  by { reveal KRDY; }
+    assert (klonCalid(m))  by { reveal KCLD; }
+    assert (m.m.Keys >= flatten(oo) >= oo);
+    assert (next in m.m.Keys);
+    assert (cext == m.m[next]);
+    assert (klonLine(next,cext,m));
+
+    assert (oo     == todo + {next} + done);
+    assert (todo !! {next} !! done);
+
+    assert (osp'    == obelow' + oabove' + opivot');
+    assert (osp' == flatten(done));
+    assert (csp'    == cbelow' + cabove' + cpivot');
+    assert (csp'    == flatten(mapThruKlon(done, m)));
+
+    assert (obelow' == (set x <- osp' | strictlyInside(x,m.o)));
+    assert (cbelow' == (set x <- csp' | strictlyInside(x,m.c)));
+    assert (oabove' == fOutside(done-{m.o}, m.o));
+    assert (cabove' == fOutside(mapThruKlon(done-{m.o},m), m.c));
+    assert (oabove' == cabove');
+    assert (opivot' == (if (m.o in flatten(done)) then (m.o.AMFO) else {}));
+    assert (cpivot' == (if (m.o in flatten(done)) then (m.c.AMFO) else {}));
+
+    assert (obelow == obelow' + skipAllInside(next,m.o)) by { reveal OBELOW, OBSI; }
+    assert (cbelow == cbelow' + skipAllInside(cext,m.c)) by { reveal CBELOW, CBSI; }
+    assert (oabove == oabove');
+    assert (cabove == cabove');
+    assert (opivot == opivot');
+    assert (cpivot == cpivot');
+
+    // assert (osp    == flatten(done));
+    // assert (csp    == flatten(mapThruKlon(done, m)));
+    assert (osp    == obelow + oabove + opivot);
+    assert (csp    == cbelow + cabove + cpivot);
+
+
+
+    assert REQ_INSIDE(oo, m, done, todo, next, cext,
+                      osp', obelow', oabove', opivot',
+                      csp', cbelow', cabove', cpivot',
+                      osp, obelow, oabove, opivot,
+                      csp, cbelow, cabove, cpivot)
+                      by { reveal REQ_INSIDE(); }
+
+
+    CASE_INSIDE_U0(oo, m, done, todo, next, cext,  //ERR
                   osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
                   osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
-    CASE_U1_INSIDE(oo, m, done, todo, next, cext,
-                  osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
-                  osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
-    CASE_U2_INSIDE(oo, m, done, todo, next, cext,
-                  osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
-                  osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
-    CASE_U3_INSIDE(oo, m, done, todo, next, cext,
-                  osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
-                  osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
-    CASE_U4_INSIDE(oo, m, done, todo, next, cext,
-                  osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
-                  osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
-    CASE_U5_INSIDE(oo, m, done, todo, next, cext,
-                  osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
-                  osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
-    CASE_U6_INSIDE(oo, m, done, todo, next, cext,
-                  osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
-                  osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
+    // CASE_INSIDE_U1(oo, m, done, todo, next, cext,
+    //               osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
+    //               osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
+    // CASE_INSIDE_U2(oo, m, done, todo, next, cext,
+    //               osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
+    //               osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
+    // CASE_INSIDE_U3(oo, m, done, todo, next, cext,  //ERR
+    //               osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
+    //               osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
+    // CASE_INSIDE_U4(oo, m, done, todo, next, cext,
+    //               osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
+    //               osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
+    // CASE_INSIDE_U5(oo, m, done, todo, next, cext,
+    //               osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
+    //               osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
+    // CASE_INSIDE_U6(oo, m, done, todo, next, cext,
+    //               osp', obelow', oabove', opivot', csp', cbelow', cabove', cpivot',
+    //               osp , obelow , oabove , opivot , csp , cbelow , cabove , cpivot);
 }
 
 
