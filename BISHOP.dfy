@@ -44,22 +44,22 @@ lemma Enclosed_Enclosed(part : Object, whole : Object)
 
    }
 
-
-lemma HappyFamilies0(next : Object, whole : Object)
-  requires next.Ready()
-   ensures (allInside(next.AMFO, whole) + allOutside(next.AMFO, whole) + allOffside(next.AMFO, whole)) == next.AMFO
-   ensures (allInside({next}, whole) + allOutside({next}, whole) + allOffside({next}, whole)) == {next}
-{
-
-}
-
-
-lemma HappyFamilies(soup : set<Object>, whole : Object, ins: set<Object>, outs: set<Object>, sides: set<Object>)
-  requires ins   == allInside(soup, whole)
-  requires outs  == allOutside(soup, whole)
-  requires sides == allOffside(soup, whole)
-   ensures soup  == ins + outs + sides
-{}
+//
+// lemma HappyFamilies0(next : Object, whole : Object)
+//   requires next.Ready()
+//    ensures (allInside(next.AMFO, whole) + allOutside(next.AMFO, whole) + allOffside(next.AMFO, whole)) == next.AMFO
+//    ensures (allInside({next}, whole) + allOutside({next}, whole) + allOffside({next}, whole)) == {next}
+// {
+//
+// }
+//
+//
+// lemma HappyFamilies(soup : set<Object>, whole : Object, ins: set<Object>, outs: set<Object>, sides: set<Object>)
+//   requires ins   == allInside(soup, whole)
+//   requires outs  == allOutside(soup, whole)
+//   requires sides == allOffside(soup, whole)
+//    ensures soup  == ins + outs + sides
+// {}
 
 predicate Xoffside(part : Object, whole : Object) reads {} { not(colinear(part.AMFO,whole.AMFO)) }
 
