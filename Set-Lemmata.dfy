@@ -57,6 +57,11 @@ lemma  Set3Eq3<T>(a : set<T>, b : set<T>, c : set<T>, d : set<T>, e : set<T>, f 
 
 
 
+lemma SetPlus1<T>(o : T, left : set<T>, right : set<T>)
+// (left == right) ==> ({o}+left == {o}+right)
+ requires left == right
+  ensures {o} + left == {o} + right
+{}
 
 
 
