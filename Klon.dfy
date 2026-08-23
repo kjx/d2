@@ -112,7 +112,7 @@ datatype Klon = Klon
     requires k.Ready()
     requires ownersInKlown(k)
     requires v.Ready()
-        requires CalidLineKV(k,v)
+    requires CalidLineKV(k,v)
     requires m1.from(this)
     requires m1.apoCalidse()
      ensures m1.CalidLineKV(k,v)

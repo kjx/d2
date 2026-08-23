@@ -207,6 +207,29 @@ predicate klonIdentity(k : Object, v : Object, m : Klon) : (r : bool)
 }
 
 
+lemma EXTRA_KLON_LINE(k : Object, v : Object, m : Klon)
+  requires klonReady(m)
+  requires klonCalid(m)
+  requires klonLine(k,v,m)
+   ensures forall o <- k.owner :: klonLine(o, m.m[o], m)
+   ensures forall o <- k.AMFX  :: klonLine(o, m.m[o], m)
+{
+  assert m.ownersInKlown(k);
+  forall o <- k.owner ensures (klonLine(o, m.m[o], m)) //by
+  {
+    assert o in m.m.Keys;
+    assert klonLine(o, m.m[o], m);
+  }
+
+  assert m.ownersInKlown(k);
+  forall o <- k.AMFX ensures (klonLine(o, m.m[o], m)) //by
+  {
+    assert o in m.m.Keys;
+    assert klonLine(o, m.m[o], m);
+  }
+
+}
+
 
 // // // // // //  // // // // // //  // // // // // //  // // // // // //  // // // // // //  // // // // // //  // // // // // /
 
