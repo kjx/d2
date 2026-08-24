@@ -540,17 +540,17 @@ lemma argh_LEMMA9(o : Object, pivot : Object)
 }
 
 
-lemma argh_LEMMA13(o : Object, pivot : Object)  //doesn't work without assume
-   decreases o.AMFO
+lemma argh_LEMMA13(o : Object, pivot : Object)
     requires o.Ready()
     requires pivot.Ready()
-     ensures arghStrictlyInside(o,pivot) == skipAllInside(o,pivot)
+     ensures skipAllInside(o,pivot) == amfoStrictlyInside(o,pivot)
 {
+   unskipAllInside_LEMMA0(o,pivot, skipAllInside(o, pivot), unskipAllInside(o, pivot));
     assert skipAllInside(o,pivot) == unskipAllInside(o,pivot);
-// unskipAllInside_LEMMA0(o, pivot
-//oretyt========//paste in australian version?
-
-
+   unskipAllInside_LEMMA1z(o, pivot);
+    assert unskipAllInside(o, pivot) == arghStrictlyInside(o,pivot);
+   arghStrictlyInside_LEMMA0(o,pivot);
+    assert arghStrictlyInside(o,pivot) == amfoStrictlyInside(o,pivot);
 }
 
 
