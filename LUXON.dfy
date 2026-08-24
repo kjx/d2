@@ -4646,7 +4646,7 @@ predicate REQ_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Ob
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
                   csp  : Owner, cbelow  : Owner, cabove  : Owner, cpivot  : Owner)
-
+  reads m.hns()
 {
     && (strictlyInside(next,m.o))    //should this be here or refactor?
 
@@ -4869,7 +4869,7 @@ lemma CASE_INSIDE_U0(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Ob
     }
 
 
-  lemma {:timeLimit 30} CASE_INSIDE_U1(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+  lemma {:timeLimit 7} CASE_INSIDE_U1(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
@@ -4883,6 +4883,17 @@ lemma CASE_INSIDE_U0(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Ob
                       osp, obelow, oabove, opivot,
                       csp, cbelow, cabove, cpivot)
 
+     ensures osp   == obelow + oabove + opivot
+      //  ensures osp   == flatten(done+{next})
+     ensures csp   == cbelow + cabove + cpivot
+      //  ensures csp   == flatten(mapThruKlon(done+{next}, m))
+     ensures OOOO(osp,obelow,oabove,opivot)
+     ensures OOOO(csp,cbelow,cabove,cpivot)
+    //  ensures obelow == (set x <- osp | strictlyInside(x,m.o))
+    //  ensures cbelow == (set x <- csp | strictlyInside(x,m.c))
+//TODO     ensures oabove == fOutside((done+{next})-{m.o}, m.o)
+//TODO     ensures cabove == fOutside(mapThruKlon((done+{next})-{m.o},m), m.c)
+     ensures oabove == cabove
 {
 
        reveal REQ_INSIDE();
@@ -4899,7 +4910,7 @@ lemma CASE_INSIDE_U0(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Ob
                       osp, obelow, oabove, opivot,
                       csp, cbelow, cabove, cpivot);
 
-assert oabove == oabove' + {} by { reveal REQ_INSIDE(); assert oabove == oabove'; AddToEmptySet(oabove'); assert oabove == oabove' + {}; }
+assert oabove == oabove' + {} by { reveal REQ_INSIDE(); assert oabove == oabove' + {}; AddEmptySetAfter(oabove,oabove'); assert oabove == oabove';}
 assert cabove == cabove' + {} by { reveal REQ_INSIDE(); assert cabove == cabove'; }
 assert opivot == opivot' + {} by { reveal REQ_INSIDE(); assert opivot == opivot'; }
 assert cpivot == cpivot' + {} by { reveal REQ_INSIDE(); assert cpivot == cpivot'; }
@@ -7551,8 +7562,10 @@ function skipAllOutside'(o : Object, pivot : Object) : (rv : set<Object>)
 
     }
 
-
+//COPIED from BROWNE!!!
 function skipAllInside(o : Object, pivot : Object) : (rv : set<Object>)
+  // all o's transitive owners strictly inside pivot
+  // recursive, shortcutting analogue of allInside
   decreases o.AMFO
    requires o.Ready()
     {
