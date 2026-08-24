@@ -205,6 +205,18 @@ lemma AddToEmptySet<T>(t : T)
    ensures {t} + {} == {t}
 {}
 
+ lemma AddEmptySetBefore<T>(l : set<T>, r : set<T>)
+   //l == {} + r
+   requires l == {} + r
+    ensures l == r
+ {}
+
+ lemma AddEmptySetAfter<T>(l : set<T>, r : set<T>)
+   //l == r + {}
+   requires l == {} + r
+    ensures l == r
+ {}
+
 lemma AddToDisjointSet<T>(t : T, u : set<T>, v : set<T>)
 // adding t into u makes u, remains disjoint from v if u' and b are disjoint
   requires u !! v
