@@ -32,6 +32,7 @@ include "Context.dfy"
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 lemma MappedInside(part : Object, whole : Object, m : Klon )
+  // inside relation holds from original to clone thru map
  decreases part.AMFO
   requires part.Ready()
   requires whole.Ready()
@@ -57,12 +58,12 @@ lemma MappedInside(part : Object, whole : Object, m : Klon )
     var next := YouCan'tGetThereFromHereBut(part, whole);
 
     MappedInside(next,whole,m);
-
 }
 
 
 
 lemma FlattenOutsideIsTheSame(o : Object, m : Klon)
+   //if o is outside m's pivot, then the mapped AMFO is o's. AMFO
   requires o.Ready()
   requires m.objectInKlown(o)
   requires klonReady(m)
@@ -97,22 +98,7 @@ forall x <- o.AMFO ensures ({x} == mapThruKlon({x},m))   //by
     assert {x} == mapThruKlon({x},m);
 
   }
-//
-// assert not(o.AMFO >= m.o.AMFO);
-//
-// assert forall x <- o.AMFO :: (x == m.m[x]) && (flatten({x}) == flatten({m.m[x]}));
-//
-   //   assert forall x <- o.AMFO :: x.AMFO < m.o.AMFO;  //how thte FUCK does this work????
-   //answerr = ot doesn't
-
-//      assert forall x <- o.AMFO :: m.m[x] in m.m[o].AMFO;
-
-//
-//       assert flatten(mapThruKlon({o},m)) == flatten({o}) by { reveal NOMAP; }
-//       assert flatten({o}) == mapThruKlon(flatten({o}),m) by { reveal NOMAP; }
-//      assert flatten({o}) == flatten({o});
-    //  assert flatten(mapThruKlon({o},m)) == mapThruKlon(flatten({o}),m);
-  }
+}
 
 
 
@@ -3914,7 +3900,7 @@ lemma CASE_PIVOT_U2(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Obj
 
 
 
-lemma {:timeLimit 15} CASE_PIVOT_U3(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma {:timeLimit 60} CASE_PIVOT_U3(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                   osp' : Owner, obelow' : Owner, oabove' : Owner, opivot' : Owner,
                   csp' : Owner, cbelow' : Owner, cabove' : Owner, cpivot' : Owner,
                   osp  : Owner, obelow  : Owner, oabove  : Owner, opivot  : Owner,
