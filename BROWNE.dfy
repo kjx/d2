@@ -337,7 +337,7 @@ lemma arghStrictlyInside_LEMMA1b(o : Object, pivot : Object)   //WORKS
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 
-lemma skipAllInside_LEMMA1a(o : Object, pivot : Object)   ///DOESNT WORK - calls UNPROVED subLEMMERS
+lemma XXXskipAllInside_LEMMA1a(o : Object, pivot : Object)   ///DOESNT WORK - calls UNPROVED subLEMMERS
    decreases o.AMFO
     requires o.Ready()
     requires pivot.Ready()
@@ -367,7 +367,7 @@ lemma skipAllInside_LEMMA1a(o : Object, pivot : Object)   ///DOESNT WORK - calls
        forall oo <- o.owner
          ensures allStrictlyInside(oo.AMFO,pivot) == skipAllInside(oo,pivot)
          {
-            skipAllInside_LEMMA1a(oo,pivot);
+            XXXskipAllInside_LEMMA1a(oo,pivot);
             assert allStrictlyInside(oo.AMFO,pivot) == skipAllInside(oo,pivot);
          }
 
