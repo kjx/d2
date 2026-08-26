@@ -7548,7 +7548,7 @@ function skipAllOutside'(o : Object, pivot : Object) : (rv : set<Object>)
       // if (not(strictlyInside(o,pivot))) then (o.AMFO)
       //     else (set oo <- o.owner, ooo <- skipAllOutside(oo, pivot) :: ooo)
 
-    }4
+    }
 
 //COPIED from BROWNE!!!
 function skipAllInside(o : Object, pivot : Object) : (rv : set<Object>)
