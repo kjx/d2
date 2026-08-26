@@ -162,7 +162,7 @@ lemma unskipAllInside_LEMMA1i(o : Object, pivot : Object)
 
 
 lemma unskipAllInside_LEMMA1a(o : Object, pivot : Object)
-  //unskip is always from tranwitive ownerhsip (AMFO/argh)
+  //unskip is always from transitive ownerhsip (AMFO/argh)
   decreases o.AMFO
    requires o.Ready()
     ensures forall r <- unskipAllInside(o, pivot) :: (r in argh(o))
