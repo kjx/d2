@@ -9,8 +9,8 @@ include "Context.dfy"
 ///            ->  CASE_INSIDE
 
 
-//  skip is based on if not inside as first condition
-//  skip=prime is based on o == pivot as first condition
+//  skip is based on "if not inside" as first condition
+//  skip-prime is based on o == pivot as first condition
 // LEMMA0   establishes skipX == skipX'
 
 
@@ -4466,14 +4466,14 @@ lemma CASE_OUTSIDE_U4(oo : Owner, m : Klon, done : Owner, todo : Owner, next : O
 
     requires outside(next,m.o)
 
-    requires obelow == obelow'
-    requires cbelow == cbelow'
+    // requires obelow == obelow'
+    // requires cbelow == cbelow'
     requires oabove == oabove' + next.AMFO
     requires cabove == cabove' + cext.AMFO
-    requires opivot == opivot'
-    requires cpivot == cpivot'
-    requires osp    == obelow + oabove + opivot
-    requires csp    == cbelow + cabove + cpivot
+    // requires opivot == opivot'
+    // requires cpivot == cpivot'
+    // requires osp    == obelow + oabove + opivot
+    // requires csp    == cbelow + cabove + cpivot
 
     requires AllReady(oo)
     requires klonReady(m)
@@ -4485,31 +4485,33 @@ lemma CASE_OUTSIDE_U4(oo : Owner, m : Klon, done : Owner, todo : Owner, next : O
     requires oo <= m.m.Keys
     requires oo     == todo + {next} + done
     requires todo !! {next} !! done
-    requires osp'    == obelow' + oabove' + opivot'
-    requires osp' == flatten(done)// == (set d : Object <- done, dd <- flatten({d}) :: dd)
-    requires csp'    == cbelow' + cabove' + cpivot'
-    requires csp'    == flatten(mapThruKlon(done, m))
+    // requires osp'    == obelow' + oabove' + opivot'
+    // requires osp' == flatten(done)// == (set d : Object <- done, dd <- flatten({d}) :: dd)
+    // requires csp'    == cbelow' + cabove' + cpivot'
+    // requires csp'    == flatten(mapThruKlon(done, m))
     // requires forall x <- done |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
     // requires forall x <- done | outside(x,m.o) :: (m.m[x] == x) //&& (m.m[x] in csp')
     // requires forall x <- flatten(done) |  inside(x,m.o) ::  inside(m.m[x],m.c) //&& (m.m[x] in csp')
     // requires forall x <- flatten(done) | outside(x,m.o) ::  (m.m[x] == x) //&& (m.m[x] in csp)
-    requires obelow' == (set x <- osp' | strictlyInside(x,m.o))
-    requires cbelow' == (set x <- csp' | strictlyInside(x,m.c))
+    // requires obelow' == (set x <- osp' | strictlyInside(x,m.o))
+    // requires cbelow' == (set x <- csp' | strictlyInside(x,m.c))
     requires oabove' == fOutside(done-{m.o}, m.o)
     requires cabove' == fOutside(mapThruKlon(done-{m.o},m), m.c)
     requires oabove' == cabove'
-    requires opivot' == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
-    requires cpivot' == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
+    // requires opivot' == (if (m.o in flatten(done)) then (m.o.AMFO) else {})
+    // requires cpivot' == (if (m.o in flatten(done)) then (m.c.AMFO) else {})
 
      ensures oabove == fOutside((done+{next})-{m.o}, m.o)
      ensures cabove == fOutside(mapThruKlon((done+{next})-{m.o},m), m.c)
      ensures oabove == cabove
 {
-    assert next != m.o;
-    assert {next} - {m.o} == {next};
+    assert next != m.o;           assert {next} - {m.o}    == {next};
+    assert next.AMFO !! {m.o};    assert next.AMFO - {m.o} == next.AMFO;
+
     assert done+{next}-{m.o} == (done+{next})-{m.o} == (done-{m.o})+{next};
     assert fOutside(done+{next}-{m.o}, m.o) == fOutside(done-{m.o}+{next}, m.o);
     assert fOutside(mapThruKlon(done+{next}-{m.o},m), m.c) ==  fOutside(mapThruKlon(done-{m.o}+{next},m), m.c);
+
     assert oabove == cabove;
 }
 
@@ -7546,7 +7548,7 @@ function skipAllOutside'(o : Object, pivot : Object) : (rv : set<Object>)
       // if (not(strictlyInside(o,pivot))) then (o.AMFO)
       //     else (set oo <- o.owner, ooo <- skipAllOutside(oo, pivot) :: ooo)
 
-    }
+    }4
 
 //COPIED from BROWNE!!!
 function skipAllInside(o : Object, pivot : Object) : (rv : set<Object>)
@@ -7629,7 +7631,7 @@ function skipAllBoth(oo : Object, pivot : Object) : (rv : set<Object>)
      { skipAllOutside(oo,pivot) + skipAllInside(oo,pivot) }
 
 function amfoBinary(oo : Object, pivot : Object) : (rv : Owner)
-  //2-argument version of .AMFO for us as an argument..
+  //2-argument version of .AMFO for use as an argument..
   decreases oo.AMFO
    requires oo.Ready()
      { oo.AMFO }
