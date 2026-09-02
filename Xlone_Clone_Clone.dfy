@@ -3,6 +3,17 @@ include "Xlone.dfy"
 include "Klon-Lemmata.dfy"
 include "LUXON.dfy"
 
+function proposeOwnerAndBound(kowner : Owner, kbound : Bound, m : Klon) : (r : (Owner, Bound))
+  requires myBoundsOK(kowner, kbound)
+   ensures myBoundsOK(r.0, r.1)
+ {
+   var rowner := mapThruKlon(kowner, m);
+   var rbound := mapThruKlon(kbound, m);
+   //ici c'est la problème
+   assume myBoundsOK(rowner, rbound);
+   (rowner, rbound)
+ }
+
 
 //{:timeLimit 300}
 method {:isolate_assertions} {:verify true} Xlone_Clone_Clone(k : Object, m' : Klon)
@@ -256,6 +267,7 @@ var rbound := mapThruKlon(k.bound, rm);
 // ghost var XXX := insideThruKlon(k.owner, k.bound, rm);
 // assert XXX;
 
+  //Ici m'siur Napoleon!
   assume (flatten(rowner) >= flatten(rbound));  //!!!ERR
   assume (forall o <- rowner :: flatten(o.ownerBound()) >= flatten(rbound)); //!!!ERR
   assert myBoundsOK(rowner,rbound);
