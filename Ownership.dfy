@@ -52,10 +52,10 @@ function  allInside(soup : set<Object>, whole : Object) : (rv : set<Object>) rea
 function allOutside(soup : set<Object>, whole : Object) : (rv : set<Object>) reads {}  { set o <- soup | outside(o,whole) }
 function allOffside(soup : set<Object>, whole : Object) : (rv : set<Object>) reads {}  { set o <- soup | offside(o,whole) }
 
-function  allStrictlyInside(soup : set<Object>, whole : Object) : (rv : set<Object>) reads {}  { set o <- soup | strictlyInside(o,whole) }
+function allStrictlyInside(soup : set<Object>, whole : Object) : (rv : set<Object>) reads {}  { set o <- soup | strictlyInside(o,whole) }
 
 lemma OffsideIsSideways(part : Object, whole : Object)
- //important bit is that we don't *just want these offsiders*
+ //important bit is that we don't *just want these offsiders*4
  //we *also* want any "outsiders" that are reachable without going through the pivot / the whole
  //see point below
   ensures offside(part, whole) == (outside(part,whole) && not(inside(whole,part)))
@@ -223,6 +223,31 @@ predicate isFlat(os : Owner) {forall o <- os, oo <- o.AMFO :: oo in os}    //see
 lemma FLAT_EITHER_WAY(os : Owner)
   ensures (forall o <- os, oo <- o.AMFO :: oo in os) == (forall o <- os :: o.AMFO <= os)
   {}
+
+
+
+function flattenInside(ownrs : OWNR, pivot : Object) : (rv : Owner)
+  ensures forall r <- rv :: inside(r,pivot)
+  ensures forall r <- flatten(ownrs) :: inside(r,pivot) ==> r in rv
+{ set x <- flatten(ownrs) | inside(x,pivot) }
+
+
+function flattenOutside(ownrs : OWNR, pivot : Object) : (rv : Owner)
+  ensures forall r <- rv :: outside(r,pivot)
+  ensures forall r <- flatten(ownrs) :: outside(r,pivot) ==> r in rv
+{ set x <- flatten(ownrs) | outside(x,pivot) }
+
+
+function flattenOffside(ownrs : OWNR, pivot : Object) : (rv : Owner)
+  ensures forall r <- rv :: offside(r,pivot)
+  ensures forall r <- flatten(ownrs) :: offside(r,pivot) ==> r in rv
+{ set x <- flatten(ownrs) | offside(x,pivot) }
+
+
+function flattenStrictlyInside(ownrs : OWNR, pivot : Object) : (rv : Owner)
+  ensures forall r <- rv :: strictlyInside(r,pivot)
+  ensures forall r <- flatten(ownrs) :: strictlyInside(r,pivot) ==> r in rv
+{ set x <- flatten(ownrs) | strictlyInside(x,pivot) }
 
 
 
