@@ -43,6 +43,8 @@ predicate directlyBounded(part : Object, bound : Object) : (rv : bool) {  part.A
 // or part.bound == bound ??
 
 predicate outside(part : Object, whole : Object) : (rv : bool) reads {}  { not(inside(part,whole)) }
+predicate pivotlyOutside(part : Object, whole : Object) : (rv : bool) reads {}  { not(strictlyInside(part,whole)) }
+
 
 predicate colinear<T>(a : set<T>, b : set<T>) { (a > b) || (a == b) || (a < b) }
 
