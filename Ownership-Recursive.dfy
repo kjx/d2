@@ -350,6 +350,18 @@ lemma AXIOMAMFOS(a : Object, b : Object)
   ensures  (a != b) <==> (a.AMFO != b.AMFO)
 {}
 
+lemma Unready_AXIOMAMFOS(a : Object, b : Object)
+  // equal AMFOs iff same objects
+  ensures (a == b)  ==> (a.AMFO == b.AMFO)
+  ensures (a == b) <==  (a.AMFO == b.AMFO)
+  ensures (a == b) <==> (a.AMFO == b.AMFO)
+  ensures (a != b) <==> (a.AMFO != b.AMFO)
+  ensures a.Ready()
+  ensures b.Ready()
+{
+  assume a.Ready(); assume b.Ready();
+}
+
 lemma  AXIOMOWNERSFLAT(a : Owner, b : Owner)
   requires AllReady(a)
   requires AllReady(b)
