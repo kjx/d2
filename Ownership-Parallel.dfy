@@ -345,6 +345,7 @@ lemma {:timeLimit 120} RecOwnersIsCAOWEO2(o : Object, ro : Owner, rv : Owner)
 // {}
 
 lemma RecOwnersIsCAOWEO9(o : Object, ro : Owner, rv : Owner)
+ //better versions below
    decreases o.AMFO
     requires o.owner > {}
     requires o.Ready()
@@ -362,23 +363,29 @@ lemma RecOwnersIsCAOWEO9(o : Object, ro : Owner, rv : Owner)
   }
 }
 
-
-
-lemma RecOwnersIsFlat(o : Object, ro : Owner, rv : Owner)
+lemma RecOwnersIsCAOWEO9h1(o : Object, ro : Owner, rv : Owner)
    decreases o.AMFO
-    requires o.owner > {}
+//    requires o.owner > {}
     requires o.Ready()
     requires ro == recOwners(o)
     requires rv == CAOWEO(o)
-     ensures rv == ro //ERR
+     ensures rv == ro
 {
  forall oo <- o.owner ensures (recOwners(oo) == CAOWEO(oo)) //by
   {
-    if (oo.owner == {}) {assert recOwners(oo) == CAOWEO(oo) == {oo}; }
-      else
-      {
-        RecOwnersIsCAOWEO9(oo,recOwners(oo),CAOWEO(oo));
-      }
+        RecOwnersIsCAOWEO9h1(oo,recOwners(oo),CAOWEO(oo));
+  }
+}
+
+
+lemma RecOwnersIsCAOWEO9h2(o : Object)
+   decreases o.AMFO
+    requires o.Ready()
+     ensures recOwners(o) == CAOWEO(o)
+{
+ forall oo <- o.owner ensures (recOwners(oo) == CAOWEO(oo)) //by
+  {
+        RecOwnersIsCAOWEO9h2(oo);
   }
 }
 
@@ -404,11 +411,27 @@ lemma RecFlattenFlatten(oo : Owner)
    { }
 
 
-predicate pivotlyOutside(p : Object, w : Object) : (rv : bool)
+predicate pivotlyOutsideOLD(p : Object, w : Object) : (rv : bool)
    //WTF Does this mean?  it means outsideOrEquals!
   //  ensures rv == ((p == w) || outside(p,w))
   //  ensures rv == (not(p.AMFO > w.AMFO))
     {((p == w) || outside(p,w))}
+
+lemma PIVOTLY_PIVOTLY(p : Object, w : Object)
+ ensures pivotlyOutsideOLD(p,w) == pivotlyOutside(p,w) == not(p.AMFO > w.AMFO)
+ {
+//    if (p == w) { assert pivotlyOutsideOLD(p,w) == pivotlyOutside(p,w); return; }
+//
+//    if (outside(p,w))  { assert pivotlyOutsideOLD(p,w) == pivotlyOutside(p,w); return; }
+//
+//    assert p != w;  assert not(outside(p,w));
+   Unready_AXIOMAMFOS(p,w);
+//    assert not(p.AMFO == w.AMFO);   assert not(not(p.AMFO >= w.AMFO));
+//
+//    assert pivotlyOutsideOLD(p,w) == false;
+//    assert pivotlyOutside(p,w) == false;
+ }
+
 
 function recOwnersInsideOLD(k : Object, pivot : Object) : (rv : Owner)
  //returns all k's owners that are *strictly* inside the pivot
