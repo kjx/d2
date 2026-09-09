@@ -3,16 +3,18 @@ include "Xlone.dfy"
 include "Klon-Lemmata.dfy"
 include "LUXON.dfy"
 
-function proposeOwnerAndBound(kowner : Owner, kbound : Bound, m : Klon) : (r : (Owner, Bound))
-  requires myBoundsOK(kowner, kbound)
-   ensures myBoundsOK(r.0, r.1)
- {
-   var rowner := mapThruKlon(kowner, m);
-   var rbound := mapThruKlon(kbound, m);
-   //ici c'est la problème
-   assume myBoundsOK(rowner, rbound);
-   (rowner, rbound)
- }
+//now importnated from Ownership-Trilemma most likely via Luxon...
+//
+// function proposeOwnerAndBound(kowner : Owner, kbound : Bound, m : Klon) : (r : (Owner, Bound))
+//   requires myBoundsOK(kowner, kbound)
+//    ensures myBoundsOK(r.0, r.1)
+//  {
+//    var rowner := mapThruKlon(kowner, m);
+//    var rbound := mapThruKlon(kbound, m);
+//    //ici c'est la problème
+//    assume myBoundsOK(rowner, rbound);
+//    (rowner, rbound)
+//  }
 
 
 //{:timeLimit 300}
@@ -604,7 +606,7 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
     assert (v.owner == (mapThruKlon(k.owner, rm)));
     assert (v.bound == (mapThruKlon(k.bound, rm)));
 
-MappedBounds(k,v,rm);
+// MappedBounds(k,v,rm);
 
 ///// hmm...
   //  assert klonReady(rm);
@@ -1230,7 +1232,7 @@ assert (flatten(k.owner) >= flatten(k.bound));
 assert (forall o <- k.owner :: flatten(o.ownerBound()) >= flatten(k.bound));
 
 
-MappedBounds(k,v,m);
+// MappedBounds(k,v,m);
 
 assert (flatten(v.owner) >= flatten(v.bound));
 

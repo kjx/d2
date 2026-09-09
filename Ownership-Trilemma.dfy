@@ -1,7 +1,7 @@
 include "Ownership-Recursive.dfy"
 include "Set-Lemmata.dfy"
 include "Ownership-Recursive.dfy"
-include "Ownership-Parallel.dfy"
+//include "Ownership-Parallel.dfy"
 include "Context.dfy"
 
 
@@ -206,7 +206,6 @@ function skipOutsideExceptPivot(o : Object, pivot : Object) : (rv : set<Object>)
     }
 
 
-
 function skipOutsideExceptPivot'(o : Object, pivot : Object) : (rv : set<Object>)
   decreases o.AMFO
    requires o.Ready()
@@ -229,37 +228,6 @@ function amfoBinary(oo : Object, pivot : Object) : (rv : Owner)
      { oo.AMFO }
 
 
-function id(o : Object) : Object {o}
-function rd(o : Object) : Object requires o.Ready() {o}
-
-
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-//
-// lemma ANTI_TRUMP(o : Object, pivot : Object)
-//    decreases o.AMFO
-//     requires o.Ready()
-// //    requires strictlyInside(o,pivot)  --- org outside more likely?  - do we know any?
-// //    ensures skipAllOutside(o,pivot) == skipOutsideExceptPivot(o,pivot) + skipOutsideExceptPivot(o,pivot)
-//     {
-//       assert skipAllOutside(o,pivot) ==
-//         if (not(strictlyInside(o,pivot))) then (o.AMFO)
-//           else (set oo <- o.owner, ooo <- skipAllOutside(oo, pivot) :: ooo);
-//
-//       assert skipOutsideOnlyPivot(o, pivot) ==
-//           if (strictlyInside(o,pivot)) then (pivot.AMFO)
-//             else if (o == pivot) then (pivot.AMFO)
-//               else ({});
-//
-//
-//       assert skipOutsideExceptPivot(o, pivot) ==
-//           ( if (not(inside(o,pivot))) then (o.AMFO)
-//               else if (o == pivot) then ({})
-//                 else (set oo <- o.owner, ooo <- skipOutsideExceptPivot(oo, pivot) :: ooo) );
-//
-//     }
-
-
-
 lemma skipOutsideOnlyPivot_LEMMA0(o : Object, pivot : Object)
  //version equals prime
    decreases o.AMFO
@@ -272,14 +240,7 @@ lemma skipOutsideExceptPivot_LEMMA0(o : Object, pivot : Object)
    decreases o.AMFO
     requires o.Ready()
      ensures skipOutsideExceptPivot(o,pivot) == skipOutsideExceptPivot'(o,pivot)
-{
-//   if (o == pivot) {
-//     assert skipOutsideExceptPivot(o,pivot)  == ;
-//     assert skipOutsideExceptPivot(o,pivot)' == ;
-//
-//     assert skipOutsideExceptPivot(o,pivot) == skipOutsideExceptPivot'(o,pivot);
-//     return;
-}
+{}
 
 lemma skipAllOutside_LEMMA0(o : Object, pivot : Object)
  //version equals prime
@@ -335,32 +296,6 @@ lemma skipAllOutside_LEMMA8(o : Object, pivot : Object)
                 || (x in skipOutsideOnlyPivot'(o,pivot))
 {}
 
-//
-//
-// lemma {:verify false} skipAllOutside_LEMMA8a(o : Object, pivot : Object)
-//   //outside splits into Only & Except
-//    decreases o.AMFO
-//     requires o.Ready()
-//      ensures forall x <- skipAllOutside'(o,pivot) ::
-//                    (x in skipOutsideExceptPivot'(o,pivot)) ==> (x !in skipOutsideOnlyPivot'(o,pivot))
-// {}
-//
-// lemma {:verify false}  skipAllOutside_LEMMA8b(o : Object, pivot : Object)
-//   //outside splits into Only & Except
-//    decreases o.AMFO
-//     requires o.Ready()
-//      ensures forall x <- skipAllOutside'(o,pivot) ::
-//                    (x !in skipOutsideExceptPivot'(o,pivot)) <== (x in skipOutsideOnlyPivot'(o,pivot))
-// {}
-//
-// lemma {:verify false}  skipAllOutside_LEMMA8c(o : Object, pivot : Object)
-//   //outside splits into Only & Except
-//    decreases o.AMFO
-//     requires o.Ready()
-//      ensures forall x <- skipAllOutside'(o,pivot) ::
-//                    (x in skipOutsideExceptPivot'(o,pivot))
-//                 != (x in skipOutsideOnlyPivot'(o,pivot))
-// {}
 
 
 lemma skipAllOutside_LEMMA9(o : Object, pivot : Object)   //WORKS!!!
@@ -375,97 +310,42 @@ lemma skipAllOutside_LEMMA9(o : Object, pivot : Object)   //WORKS!!!
   skipAllOutside_LEMMA2(o,pivot);
 }
 
-lemma {:timeLimit 30} skipAllBoth_LEMMA8(o : Object, pivot : Object, other : Object)
-   decreases o.AMFO
+
+lemma {:timeLimit 30} skipAllBoth_LEMMA8(o : Object, pivot : Object)
+ //skipAllBoth == collectAllOwnersWithoutExtraOwners(o) --- ie argh() or flatten({o})
+ ///verifies on nightly-2026-08-29-f3c2fed/github/dafny/dafny at least
+ //and on       nightly-2026-09-08-98ac8c0/github/dafny/dafn
+ //but not on lately='/Users/kjx/work/dafny/backup/nightly-2026-04-22-13bdccd/github/dafny/dafny'
+   decreases o.AMFO, 1
     requires o.Ready()
     requires pivot.Ready()
      ensures skipAllBoth(o,pivot) == collectAllOwnersWithoutExtraOwners(o)
-
-    // requires (o.owner == {other}) || (o.owner == {})
-
-//    requires (o.owner > {}) ==> (o.owner == {other})
-//   requires (o.owner > {}) ==> (other.owner == {})
-
-//     ensures skipAllBoth(o,pivot) == o.AMFO //amfoBinary(o,pivot)
- ensures skipAllBoth(o,pivot) == collectAllOwnersWithoutExtraOwners(o)
 {
   if (o.owner == {})
     { assert skipAllBoth(o,pivot) == {o}; assert collectAllOwnersWithoutExtraOwners(o) == {o}; return; }
 
-forall other <- o.owner ensures ( skipAllBoth(other,pivot) == collectAllOwnersWithoutExtraOwners(other) ) //by
+forall oo <- o.owner ensures ( skipAllBoth(oo,pivot) == collectAllOwnersWithoutExtraOwners(oo) ) //by
   {
-//    assert other.owner == {};
-    skipAllBoth_LEMMA8(other, pivot, other);
-    assert skipAllBoth(other,pivot) == collectAllOwnersWithoutExtraOwners(other);
-
-    // assert collectAllOwnersWithoutExtraOwners(o) == {o} + collectAllOwnersWithoutExtraOwners(other);
-    // assert skipAllBoth(other,pivot) == {o} + skipAllBoth(other,pivot);
-
- //  assert skipAllBoth(o,pivot) == collectAllOwnersWithoutExtraOwners(o);
+    skipAllBoth_LEMMA8(oo, pivot);
+    assert skipAllBoth(oo,pivot) == collectAllOwnersWithoutExtraOwners(oo);
 }
 
-assert forall other <- o.owner :: skipAllBoth(other,pivot) == collectAllOwnersWithoutExtraOwners(other);
+assert forall oo <- o.owner :: skipAllBoth(oo,pivot) == collectAllOwnersWithoutExtraOwners(oo);
 
 
-forall other <-  skipAllBoth(o,pivot) ensures ( other in collectAllOwnersWithoutExtraOwners(o) ) //by
+forall oo <-  skipAllBoth(o,pivot) ensures ( oo in collectAllOwnersWithoutExtraOwners(o) ) //by
   {
-    assert other in skipAllBoth(o,pivot);
-    if (other == o) { assert other in collectAllOwnersWithoutExtraOwners(other); }
+    assert oo in skipAllBoth(o,pivot);
+    if (oo == o) { assert oo in collectAllOwnersWithoutExtraOwners(o); }
       else
       {
-        ThereIsALightThatNeverGoesOut(o, other);
+        ThereIsALightThatNeverGoesOut(o, oo);
       }
   }
-
-
-
-assert  skipAllBoth(o,pivot) == {o} + (set other <- o.owner, ooo <-  skipAllBoth(other,pivot) :: ooo);
-// assert  collectAllOwnersWithoutExtraOwners(o) ==  {o} + (set other <- o.owner, ooo <-  collectAllOwnersWithoutExtraOwners(o) :: ooo);
-//
-//  assert skipAllBoth(o,pivot) == collectAllOwnersWithoutExtraOwners(o);
 }
 
-//  if (o.owner == {other})
-//   {
-//     assert other.owner == {};
-//     skipAllBoth_LEMMA8(other, pivot, other);
-//     assert skipAllBoth(other,pivot) == collectAllOwnersWithoutExtraOwners(other);
-//     assert collectAllOwnersWithoutExtraOwners(o) == {o} + collectAllOwnersWithoutExtraOwners(other);
-//     assert skipAllBoth(o,pivot) == {o} + skipAllBoth(other,pivot);
-//
-//     assert skipAllBoth(o,pivot) == collectAllOwnersWithoutExtraOwners(o);
-//     return;
-// }
-//
-//
-//   forall oo <- o.owner ensures (skipAllBoth(oo,pivot) == collectAllOwnersWithoutExtraOwners(oo)) //by
-//    {
-//      skipAllBoth_LEMMA8(oo, pivot);
-// //     assert  (skipAllBoth(oo,pivot) == collectAllOwnersWithoutExtraOwners(oo));
-//    }
-//   assert (set oo <- o.owner, ooo <- skipAllBoth(oo,pivot) :: ooo) == (set oo <- o.owner, ooo <- collectAllOwnersWithoutExtraOwners(oo) :: ooo);
-// }
 
-//
-// lemma skipAllBoth_LEMMA8q(o : Object, pivot : Object)
-//    decreases o.AMFO
-//     requires o.Ready()
-//     requires pivot.Ready()
-//      requires skipAllBoth(o,pivot) == collectAllOwnersWithoutExtraOwners(o)
-//      requires forall oo <- o.owner :: skipAllBoth(oo,pivot) == collectAllOwnersWithoutExtraOwners(oo)
-//      ensures (set oo <- o.owner, ooo <- skipAllBoth(oo,pivot) :: ooo) == (set oo <- o.owner, ooo <- collectAllOwnersWithoutExtraOwners(oo) :: ooo)
-// {}
-//
-// lemma skipAllBoth_LEMMA8s(o : Object, pivot : Object)
-//    decreases o.AMFO
-//     requires o.Ready()
-//     requires pivot.Ready()
-//     //requires skipAllBoth(o,pivot) == collectAllOwnersWithoutExtraOwners(o)
-//      requires forall oo <- o.owner :: skipAllBoth(oo,pivot) == collectAllOwnersWithoutExtraOwners(oo)
-//      ensures (set oo <- o.owner, ooo <- skipAllBoth(oo,pivot) :: ooo) == (set oo <- o.owner, ooo <- collectAllOwnersWithoutExtraOwners(oo) :: ooo)
-// {}
-
-lemma skipAllBoth_LEMMA9(o : Object, pivot : Object)   //WORKS!!!
+lemma skipAllBoth_LEMMA9(o : Object, pivot : Object)
   //outside splits into Only & Except
    decreases o.AMFO
     requires o.Ready()
@@ -473,6 +353,21 @@ lemma skipAllBoth_LEMMA9(o : Object, pivot : Object)   //WORKS!!!
      ensures skipAllBoth(o,pivot) == (skipAllOutside(o,pivot) + skipAllInside(o,pivot))
 {
 skipAllBoth_LEMMA0({o}+o.owner,pivot);
+}
+
+
+lemma skipAllBoth_LEMMA8a(o : Object, pivot : Object)
+  //outside splits into Only & Except
+   decreases o.AMFO, 2
+    requires o.Ready()
+    requires pivot.Ready()
+     ensures skipAllBoth(o,pivot) == argh(o)
+{
+  skipAllBoth_LEMMA8(o,pivot);
+  assert skipAllBoth(o,pivot) == collectAllOwnersWithoutExtraOwners(o);
+  collectAllAMFO3(o);
+  assert collectAllOwnersWithoutExtraOwners(o) == argh(o);
+  assert skipAllBoth(o,pivot) == argh(o);
 }
 
 
@@ -624,19 +519,13 @@ lemma skipAllBoth_LEMMA1(seed : Object,  pivot : Object, left0 : set<Object>, le
   }
 
 lemma BLANCHE(o : Object, pivot : Object)
+ //given amfoBinary == skipAllBoth, lifts to set
    decreases o.AMFO
     requires o.Ready()
     requires strictlyInside(o,pivot)
     requires forall oo <- o.owner :: amfoBinary(oo,pivot) == skipAllBoth(oo,pivot)
      ensures (set oo <- o.owner, ooo <- amfoBinary(oo,pivot) :: ooo) == (set oo <- o.owner, ooo <- skipAllBoth(oo,pivot) :: ooo)
-    //  requires forall oo <- o.owner :: (set ooo <- oo.AMFO :: ooo) == (set ooo <- (skipAllOutside(oo,pivot) + skipAllInside(oo,pivot)) :: ooo)
-    //   ensures (set oo <- o.owner, ooo <- oo.AMFO :: ooo) == (set oo <- o.owner, ooo <- (skipAllOutside(oo,pivot) + skipAllInside(oo,pivot)) :: ooo)
-
-{
-    // assert forall oo <- o.owner :: skipAllBoth(oo,pivot) == skipAllOutside(oo,pivot) + skipAllInside(oo,pivot);
-    // assert forall oo <- o.owner ::  amfoBinary(oo,pivot) == oo.AMFO;
-  //  forall oo <- o.owner ensures (skipAllBoth(oo,pivot) == amfoBinary(oo,pivot)) { gefucked(o,pivot,skipAllBoth,amfoBinary); }
-}
+{}
 
 lemma LANCHIN(o : Object, pivot : Object)
    decreases o.AMFO

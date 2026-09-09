@@ -1,6 +1,6 @@
 include "Klon.dfy"
 include "Set-Lemmata.dfy"
-
+include "BROWNE.dfy"
 
 //first chunk is "recursice ownership"
 //rest is - likely not needed?
@@ -176,7 +176,23 @@ lemma collectAllAMFO1(o : Object)
   requires  o.Ready()
   ensures   o.AMFO == collectAllOwnersWithoutExtraOwners(o)
   {}
-//
+
+lemma collectAllAMFO2(o : Object)
+  decreases o.AMFO
+  requires  o.Ready()
+  ensures   o.AMFO == argh(o)
+  {}
+
+
+lemma collectAllAMFO3(o : Object)
+  decreases o.AMFO
+  requires  o.Ready()
+  ensures   collectAllOwnersWithoutExtraOwners(o) == argh(o)
+  {}
+
+
+
+
 // lemma collectAllAMFO2(o : Object, z : Object)
 //   decreases o.AMFO
 //   requires  o.Ready()
@@ -212,7 +228,6 @@ lemma recInsideCollectsAllOwners2(part : Object, whole : Object)
   requires whole in collectAllOwners(part)
   ensures recInside(part,whole)
 {}
-
 
 lemma recInsideCollectsAllOwners3(part : Object, whole : Object)
   decreases part.AMFO

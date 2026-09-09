@@ -55,6 +55,8 @@ function allOutside(soup : set<Object>, whole : Object) : (rv : set<Object>) rea
 function allOffside(soup : set<Object>, whole : Object) : (rv : set<Object>) reads {}  { set o <- soup | offside(o,whole) }
 
 function allStrictlyInside(soup : set<Object>, whole : Object) : (rv : set<Object>) reads {}  { set o <- soup | strictlyInside(o,whole) }
+function allPivotlyOutside(soup : set<Object>, whole : Object) : (rv : set<Object>) reads {}  { set o <- soup | pivotlyOutside(o,whole) }
+
 
 lemma OffsideIsSideways(part : Object, whole : Object)
  //important bit is that we don't *just want these offsiders*4

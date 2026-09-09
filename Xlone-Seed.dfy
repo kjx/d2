@@ -171,8 +171,8 @@ assert forall x <- mep.Keys :: x.AMFB == mep[x].AMFB == me[x].AMFB;
 assert c.AMFB >= o.AMFB;
 
 assert forall x <- me.Keys ::
-  &&  (if (x == o)  then ((me[x] == c) && (c.AMFB >= o.AMFB))
-                else ((me[x] == x) && (mep[x].AMFB >= x.AMFB)));
+  &&  (if (x == o) then ((me[x] == c) && (c.AMFB >= o.AMFB)      && (me[x].AMFB >= x.AMFB))
+                   else ((me[x] == x) && (mep[x].AMFB >= x.AMFB) && (me[x].AMFB >= x.AMFB)));
 
  assert forall x <- me.Keys :: (me[x].AMFB >= x.AMFB);
 
