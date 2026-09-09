@@ -246,8 +246,8 @@ lemma APOCAKLON()
 
 
 
-//{:timeLimit 60}
-  function {:isolate_assertions} {:timeLimit 30} CalidKV(k : Object, v : Object) : (mK : Klon)
+//{:timeLimit 60}  {:timeLimit 30}
+function {:timeLimit 30} CalidKV(k : Object, v : Object) : (mK : Klon)
    //shojld be calidKV, shouldn't it. GRRRR
     //givne a Calid Klon, add in k:=v to the mapping and get a  Calid result.
     //the heart of the heart of the klon
@@ -292,6 +292,28 @@ ensures klonCalid(mK)
   KlonReadyFromKV(mK,this,k,v);
   assert klonReady(mK);
 
+//  assert forall x : Object <- (mK.m.Values - this.m.Values) :: x.Context(mK.hns());
+
+
+
+
+var newValues := (mK.m.Values - this.m.Values);
+assert NVV: newValues == {v};
+assert DRK:forall x : Object <- {v}   :: x == v;
+assert forall x : Object <- newValues :: x == v by {
+       reveal NVV, DRK;
+       assert forall x : Object <- {v} :: x == v;
+       assert newValues == {v};
+       FORALL_SINGLETON(v,{v});
+       assert forall x : Object <- newValues :: x == v;
+       }
+
+
+assert v.Context(this.hns({v}));
+assert this.hns({v}) == mK.hns({});
+assert v.Context(mK.hns());
+assert forall x : Object <- newValues :: x.Context(mK.hns());
+assert forall x : Object <- (mK.m.Values - this.m.Values) :: x.Context(mK.hns());
 
 
   KlonCalidFrom(mK,this);
@@ -299,6 +321,13 @@ ensures klonCalid(mK)
   mK
 }
 
+
+lemma FORALL_SINGLETON( v : Object, vs : Owner )
+  requires v.Ready()
+  requires AllReady(vs)
+  requires vs == {v}
+   ensures forall x : Object <- vs :: x == v
+{}
 
 //{:timeLimit 60} {:timeLimit 30}
   function {:isolate_assertions} {:verify false} OLDCalidKV(k : Object, v : Object) : (mK : Klon)
