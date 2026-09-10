@@ -228,7 +228,30 @@ lemma FLAT_EITHER_WAY(os : Owner)
   ensures (forall o <- os, oo <- o.AMFO :: oo in os) == (forall o <- os :: o.AMFO <= os)
   {}
 
+lemma FLATTEN0(o : Object)
+ decreases o.AMFO
+  requires o.Ready()
+   ensures flatten(o.owner) == o.AMFX
+   ensures flatten({o}) == o.AMFO
+   ensures o.AMFO == argh(o)
+   ensures flatten({o}) == argh(o)
+{}
 
+lemma FLATTEN1(os : Owner, o : Object, fs : Owner)
+ decreases o.AMFO
+  requires o.Ready()
+  requires os + {o} == fs
+   ensures flatten(os) + flatten({o}) == flatten(fs)
+   ensures flatten(os) + o.AMFO == flatten(fs)
+   ensures flatten(os) + argh(o) == flatten(fs)
+  {
+    FLATTEN0(o); FLATTEN2(os,{o},fs);
+  }
+
+lemma FLATTEN2(os : Owner, ps : Owner, fs : Owner)
+  requires os + ps == fs
+   ensures flatten(os) + flatten(ps) == flatten(fs)
+  {}
 
 function flattenInside(ownrs : OWNR, pivot : Object) : (rv : Owner)
   ensures forall r <- rv :: inside(r,pivot)
