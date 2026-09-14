@@ -31,7 +31,7 @@ predicate ONE_FOURTH(os : Owner, pivot : Object,  sp : Owner, above : Owner, mid
 //LOOP   && (sp    == above + middle + below)
 
     && (below == (set x <- sp | strictlyInside(x,pivot)))
-    // && (below == skipAllInside(xxx,pivot))
+    // && (below == collectAllInside(xxx,pivot))
     && (middle == (if (pivot in sp) then (pivot.AMFO) else {}))
     && (above  == fOutside(os, pivot))
 
@@ -113,8 +113,8 @@ lemma {:timeLimit 100} CAXE_UALL_INSIDE(oo : Owner, m : Klon, done : Owner, todo
 //      ensures cabove == cabove'
 //      ensures opivot == opivot'
 //      ensures cpivot == cpivot'
-//      ensures obelow == obelow' + skipAllInside(next,m.o)
-//      ensures cbelow == cbelow' + skipAllInside(cext,m.c)
+//      ensures obelow == obelow' + collectAllInside(next,m.o)
+//      ensures cbelow == cbelow' + collectAllInside(cext,m.c)
 //
 //      ensures oabove == fOutside(done+{next}-{m.o}, m.o)
 //      ensures cabove == fOutside(mapThruKlon(done+{next}-{m.o},m),m.c)
@@ -147,19 +147,19 @@ lemma {:timeLimit 100} CAXE_UALL_INSIDE(oo : Owner, m : Klon, done : Owner, todo
 
 //////////////////////////////////////////////////////////////////////
 //
-var obelow_ := skipAllInside(next,m.o);  // assert OBELOW: obelow_ == skipAllInside(next,m.o);
-var cbelow_ := skipAllInside(cext,m.c);  // assert CBELOW: cbelow_ == skipAllInside(cext,m.c);
+var obelow_ := collectAllInside(next,m.o);  // assert OBELOW: obelow_ == collectAllInside(next,m.o);
+var cbelow_ := collectAllInside(cext,m.c);  // assert CBELOW: cbelow_ == collectAllInside(cext,m.c);
 
     obelow := obelow' + obelow_;
     cbelow := cbelow' + cbelow_;
 
 // opaque {
-//    assert obelow_ == skipAllInside(next,m.o) by { reveal OBELOW; }
-//    assert cbelow_ == skipAllInside(cext,m.c) by { reveal CBELOW; }
+//    assert obelow_ == collectAllInside(next,m.o) by { reveal OBELOW; }
+//    assert cbelow_ == collectAllInside(cext,m.c) by { reveal CBELOW; }
 //    assert obelow  == obelow' + obelow_;
 //    assert cbelow  == cbelow' + cbelow_;
-//    assert obelow  == obelow' + skipAllInside(next,m.o);
-//    assert cbelow  == cbelow' + skipAllInside(cext,m.c);
+//    assert obelow  == obelow' + collectAllInside(next,m.o);
+//    assert cbelow  == cbelow' + collectAllInside(cext,m.c);
 // }
     oabove := oabove';
     cabove := cabove';
@@ -223,8 +223,8 @@ assert ONE_FOURTH(done,                       m.o, osp', oabove', opivot', obelo
 // assert obelow' == (set x <- osp' | strictlyInside(x,m.o)) by { reveal OBSI; }
 // assert cbelow' == (set x <- csp' | strictlyInside(x,m.c)) by { reveal CBSI; }
 //
-// assert obelow == obelow' + skipAllInside(next,m.o);
-// assert cbelow == cbelow' + skipAllInside(cext,m.c);
+// assert obelow == obelow' + collectAllInside(next,m.o);
+// assert cbelow == cbelow' + collectAllInside(cext,m.c);
 //
 //     assert (strictlyInside(next,m.o));
 //     assert (AllReady(oo));
@@ -251,8 +251,8 @@ assert ONE_FOURTH(done,                       m.o, osp', oabove', opivot', obelo
 //     assert (opivot' == (if (m.o in flatten(done)) then (m.o.AMFO) else {}));
 //     assert (cpivot' == (if (m.o in flatten(done)) then (m.c.AMFO) else {}));
 //
-//     assert (obelow == obelow' + skipAllInside(next,m.o)) by { reveal OBELOW, OBSI; }
-//     assert (cbelow == cbelow' + skipAllInside(cext,m.c)) by { reveal CBELOW, CBSI; }
+//     assert (obelow == obelow' + collectAllInside(next,m.o)) by { reveal OBELOW, OBSI; }
+//     assert (cbelow == cbelow' + collectAllInside(cext,m.c)) by { reveal CBELOW, CBSI; }
 //     assert (oabove == oabove');
 //     assert (cabove == cabove');
 //     assert (opivot == opivot');
@@ -302,13 +302,10 @@ assert ONE_FOURTH(done,                       m.o, osp', oabove', opivot', obelo
 
 
 
-lemma {:timeLimit 100} Trilemma_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
+lemma Trilemma_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Object, cext : Object,
                  o' : Trilemma, c' : Trilemma)
          returns (o : Trilemma, c  : Trilemma)
 
-
-//////////////////////////////////////////////////////////////////////
-//
     requires strictlyInside(next, m.o)
 
     requires AllReady(oo)
@@ -327,15 +324,77 @@ lemma {:timeLimit 100} Trilemma_INSIDE(oo : Owner, m : Klon, done : Owner, todo 
     requires c'.owners == mapThruKlon(oo,m)
     requires c'.pivot == m.c
 
-
-     ensures next.Ready()
-     ensures cext.Ready()
+    //  ensures next.Ready()
+    //  ensures cext.Ready()
 
 {
+//   assert o'.Valid();
+//
+//   assert (next.Ready() && cext.Ready()) by { assert klonLine(next,cext,m); }
+//   o'.LEMMA_below();
+//   assert o'.PRED_below1();
+//   assert o'.PRED_below2();
+//   //assert (o'.below == (set x <- o'.flatness | strictlyInside(x,o'.pivot))) by { assert o'.PRED_below1(); }
+//   assert o'.below == flattenStrictlyInside(o'.owners, o'.pivot);
+//   assert o'.below == allStrictlyInside(o'.flatness,o'.pivot);
+//
+//   assert
+//     && (o'.flatness == flatten(o'.owners))
+//     && (o'.below == flattenStrictlyInside(o'.owners, o'.pivot))
+//     && (o'.middle == (if (o'.pivot in o'.flatness) then (o'.pivot.AMFO) else {}))
+//     && (o'.above  == flattenOutside(o'.owners, o'.pivot))
+//     && (o'.flatness == o'.above + o'.middle + o'.below)
+//     ;
 
+    FLATTEN_DELTA(o'.owners, next);
+    assert flatten(o'.owners + {next}) == (flatten(o'.owners) + next.AMFO);
 
+    flattenStrictlyInside_DELTA(o'.owners, next, m.o);
+    assert flattenStrictlyInside(o'.owners+{next}, m.o) == (flattenStrictlyInside(o'.owners,m.o) + flattenStrictlyInside({next},m.o));
+
+    var z : Trilennnna :=
+         o'.(  owners := o'.owners + {next},
+             flatness := o'.flatness + next.AMFO,
+                below := o'.below + flattenStrictlyInside({next},m.o),
+               middle := (if (o'.pivot in o'.flatness) then (o'.pivot.AMFO) else (o'.middle)),
+                above := flattenOutside(o'.owners + {next}, o'.pivot) //this is either EVIL or evil...
+             );
+
+    assert
+       && (z.flatness == flatten(z.owners))
+       && (z.below == flattenStrictlyInside(z.owners, z.pivot))
+       && (z.middle == (if (z.pivot in z.flatness) then (z.pivot.AMFO) else {}))
+       && (z.above  == flattenOutside(z.owners, z.pivot))
+       && (z.flatness == z.above + z.middle + z.below)
+    ;
+
+    o := z;
+    c := c';
+    // c := c'.(owners := o'.owners + {next},
+    //          flatness := c'.flatness + cext.AMFO,
+    //          below := c'.below + allStrictlyInside(cext.AMFO,m.c));
 }
 
+
+
+lemma FLATTEN_DELTA(o' : Owner, o_ : Object)
+ requires o_.Ready()
+  ensures flatten(o'+{o_}) == flatten(o') + o_.AMFO
+  ensures flatten(o'+{o_}) == flatten(o') + argh(o_)
+  {
+    FLATTEN1(o', o_,  o'+{o_});
+  }
+
+
+lemma StrictlyInside_DELTA(o' : Owner, o_ : Object, pivot : Object)
+ requires o_.Ready()
+  ensures allStrictlyInside(flatten(o'+{o_}), pivot) == allStrictlyInside(flatten(o'), pivot) + allStrictlyInside(o_.AMFO,pivot)
+  {       }
+
+lemma flattenStrictlyInside_DELTA(o' : Owner, o_ : Object, pivot : Object)
+ requires o_.Ready()
+  ensures flattenStrictlyInside((o'+{o_}),pivot) == flattenStrictlyInside(o',pivot) + flattenStrictlyInside({o_},pivot)
+  {  }
 
 
 
@@ -520,14 +579,14 @@ function  fOutside(ownrs : OWNR, pivot : Object) : (rv : Owner)
 
 
 
-// function skipAllInside(o : Object, pivot : Object) : (rv : set<Object>)
+// function collectAllInside(o : Object, pivot : Object) : (rv : set<Object>)
 //   // all o's transitive owners strictly inside pivot
 //   // recursive, shortcutting analogue of allInside
 //   decreases o.AMFO
 //    requires o.Ready()  //GRR
 //     {
 //       if (not(strictlyInside(o,pivot))) then ({})
-//           else  {o} + (set oo <- o.owner, ooo <- skipAllInside(oo, pivot) :: ooo)
+//           else  {o} + (set oo <- o.owner, ooo <- collectAllInside(oo, pivot) :: ooo)
 //     }
 
 
@@ -537,7 +596,7 @@ function flattenAllInside(os : Owner, pivot : Object) : (rv : set<Object>)
   // recursive, shortcutting analogue of allInside
    requires AllReady(os)
     requires forall oo <- os :: oo.Ready()
-    {set oo <- os, ooo <- skipAllInside(oo,pivot) :: ooo}
+    {set oo <- os, ooo <- collectAllInside(oo,pivot) :: ooo}
 
 
 lemma INCREMENTAL_AllInside(next : Object, os : Owner, pivot : Object)
@@ -546,13 +605,13 @@ lemma INCREMENTAL_AllInside(next : Object, os : Owner, pivot : Object)
    requires forall oo <- os :: oo.Ready()
 //requires pivot.Ready() //or not!
    ensures AllReady(os+{next})
-   ensures flattenAllInside(os+{next}, pivot) == flattenAllInside(os,pivot) + skipAllInside(next,pivot)
+   ensures flattenAllInside(os+{next}, pivot) == flattenAllInside(os,pivot) + collectAllInside(next,pivot)
    {
      assert forall x <- flattenAllInside(os+{next},pivot) ::
         || x in flattenAllInside(os,pivot)
-        || x in skipAllInside(next,pivot);
+        || x in collectAllInside(next,pivot);
 
-    assert forall x <- flattenAllInside(os,pivot) + skipAllInside(next,pivot) ::
+    assert forall x <- flattenAllInside(os,pivot) + collectAllInside(next,pivot) ::
            x in flattenAllInside(os+{next},pivot);
 
    }
@@ -599,8 +658,8 @@ predicate REQ_INSIDE(oo : Owner, m : Klon, done : Owner, todo : Owner, next : Ob
     && (cabove' == fOutside(mapThruKlon(done-{m.o},m), m.c))
     && (oabove' == cabove')
 
-    && (obelow == obelow' + skipAllInside(next,m.o))
-    && (cbelow == cbelow' + skipAllInside(cext,m.c))
+    && (obelow == obelow' + collectAllInside(next,m.o))
+    && (cbelow == cbelow' + collectAllInside(cext,m.c))
     && (opivot == m.o.AMFO)
     && (cpivot == m.c.AMFO)
     && (oabove == oabove')

@@ -8,6 +8,12 @@ include "Library.dfy"
 //    ensures  a <= b
 // {}
 
+lemma SetLtGtEq<T>(a : set<T>, b : set<T>)
+  requires a >= b
+  requires a <= b
+   ensures a == b
+{}
+
 lemma {:isolate_assertions}  SetMinus0<T>(a : set<T>, b : set<T>)
   requires (a - b) == {}
    ensures  a <= b
