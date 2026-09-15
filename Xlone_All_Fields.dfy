@@ -2,7 +2,7 @@ include "Xlone.dfy"
 
 
 
-method {:isolate_assertions} {:timeLimit 300} {:verify true} Xlone_All_Fields(a : Object, b : Object, m' : Klon)
+method Xlone_All_Fields(a : Object, b : Object, m' : Klon)
   returns (m : Klon)
 
   decreases * //(m'.oHeap - m'.m.Keys + {a}), |a.AMFO|, fielddiff(a,b), 10
@@ -13,6 +13,9 @@ method {:isolate_assertions} {:timeLimit 300} {:verify true} Xlone_All_Fields(a 
   requires m'.objectInKlown(a)
   requires COK(a,m'.oHeap)      requires COKA: COK(a, m'.oHeap)
   requires b.Context(m'.hns({b}))
+
+  requires b.fields == map[]
+//NOFIELDMODES  requires b.fieldModes == map[]
 
 //prog inside
 //  requires strictlyInside(a, m'.o)
@@ -88,46 +91,49 @@ method {:isolate_assertions} {:timeLimit 300} {:verify true} Xlone_All_Fields(a 
 {
   print "CALL Clone_All_Fields: ", fmtobj(a), " pivot:", fmtobj(m'.o), "\n";
 
-assert m'.Calid();
-  assert inside(a, m'.o);
+// assert m'.Calid();
+//   assert inside(a, m'.o);
   m := m';  assert allocated(m.oHeap);
-assert m.Calid();//W8NK3R
-assert HighCalidFragilistic(m); //W8NK3R II
+// assert m.Calid();//W8NK3R
+// assert HighCalidFragilistic(m); //W8NK3R II
   assert AIMO: inside(a, m.o);
-
-assert m'.HeapContextReady() && m'.ValuesContextReady();
-assert HVCR: m.HeapContextReady() && m.ValuesContextReady();
-
-//NO_FIELDMODES assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
-//NO_FIELDMODES assert FAM: forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
-
-//TUESDAY15DEC2024
+//
+// assert m'.HeapContextReady() && m'.ValuesContextReady();
+// assert HVCR: m.HeapContextReady() && m.ValuesContextReady();
+//
+// //NO_FIELDMODES assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
+// //NO_FIELDMODES assert FAM: forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
+//
+// //TUESDAY15DEC2024
 
 //prog  print "VARIANT CAF ", (m.oHeap - m.m.Keys) + {a}, " ", |a.AMFO|, " ", fielddiff(a,b), " ", 10, "\n";
   print "<<<<<<<<<<<\n";
   print "just cloned ", fmtobj(a), " as ", fmtobj(b), "\n";
   print "<<<<<<<<<<<\n";
-
-assert m.Calid(); //W8NK3R
-assert HighCalidFragilistic(m); //W8NK3R II
-
+//
+// assert m.Calid(); //W8NK3R
+// assert HighCalidFragilistic(m); //W8NK3R II
+//
   print "<<<<<<<<<<<\n";
   printmapping(m.m);
   print "<<<<<<<<<<<\n";
 
-label POSTMAPPING:
 
-assert m.Calid();//W8NK3R
-assert HighCalidFragilistic(m); assert HCFm: HighCalidFragilistic(m); //W8NK3R II
+//W8NK3Rassert m.Calid();//W8NK3R
+//W8NK3Rassert HighCalidFragilistic(m); assert HCFm: HighCalidFragilistic(m); //W8NK3R II
+assert klonCalid(m);
   var fieldNames : seq<string> := set2seq(a.fields.Keys);
-assert HighCalidFragilistic(m) by { reveal HCFm; } //W8NK3R II  //THIS ONE!
+  assert b.fields == map[];
+assert klonCalid(m);
+//W8NK3R assert HighCalidFragilistic(m) by { reveal HCFm; } //W8NK3R II  //THIS ONE!
     assert seq2set(fieldNames) <= a.fields.Keys;
-    assert forall n <- fieldNames :: n in a.fields.Keys;
+    assert forall n <- fieldNames :: n in a.fields.Keys;   //NOTE:: a.fields.keys!   a.
 
 //NO_FIELDMODES   assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
 
  print "Clone_All_Fields fields:", fmtobj(a), " fields=", fmtseqstr(fieldNames), "\n";
-  assert HighCalidFragilistic(m) by { reveal HCFm; } //W8NK3R II
+assert klonCalid(m);
+//W8NK3R II assert HighCalidFragilistic(m) by { reveal HCFm; } //W8NK3R II
 
   print "BLOOP BLOOP BLOOP\n";
 
@@ -136,16 +142,17 @@ assert HighCalidFragilistic(m) by { reveal HCFm; } //W8NK3R II  //THIS ONE!
   //   invariant forall n <- fieldNames :: n in a.fields.Keys
   //   invariant a.fields.Keys == old(a.fields.Keys)
   //   invariant unchanged(m'.oHeap)
-
-
-assert m.HeapContextReady() && m.ValuesContextReady();
-
-assert m.Calid();//W8NK3R
-assert HighCalidFragilistic(m) by { reveal HCFm; } //W8NK3R II
-assert m.objectInKlown(a);
-assert m.m[a] == b;
-//NO_FIELDMODES assert a.fieldModes.Keys == b.fieldModes.Keys;
-//NO_FIELDMODES assert forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes;
+//
+//
+// assert m.HeapContextReady() && m.ValuesContextReady();
+//
+// assert klonCalid(m);
+// //W8NK3Rassert m.Calid();//W8NK3R
+// //W8NK3R  assert HighCalidFragilistic(m) by { reveal HCFm; } //W8NK3R II
+// assert m.objectInKlown(a);
+// assert m.m[a] == b;
+// //NO_FIELDMODES assert a.fieldModes.Keys == b.fieldModes.Keys;
+// //NO_FIELDMODES assert forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes;
 
 var OLDDIFF := fielddiff(a,b);
 
@@ -183,9 +190,9 @@ while ((a.fields.Keys - b.fields.Keys) > {})
   decreases fielddiff(a,b)
 
       {
-  assert a.fields.Keys >= b.fields.Keys;
+  // assert a.fields.Keys >= b.fields.Keys;
     OLDDIFF := fielddiff(a,b);
-  assert a.fields.Keys >= b.fields.Keys;
+  // assert a.fields.Keys >= b.fields.Keys;
 
 
 //NO_FIELDMODES assert a.fieldModes.Keys == b.fieldModes.Keys;
@@ -231,55 +238,57 @@ print "->WHOOPS ", |m'.oHeap - m'.m.Keys +{a}|, " ", |a.AMFO|," ",|a.fields.Keys
 //NO_FIELDMODES assert a.fieldModes.Keys == b.fieldModes.Keys;
 //KEYS    assert a.fields.Keys == old(a.fields.Keys);
     assert unchanged@PRELOOP(m.oHeap);
-  assert a.fields.Keys >= b.fields.Keys;
+//   assert a.fields.Keys >= b.fields.Keys;
+//
+//   //progTODOFUCKNUKE NUKE // FAKE_
+//   //progTODOFUCKNUKE NUKE // FAKE_
+//   assert n  in a.fields.Keys;
+//   assert n !in b.fields.Keys;
+//
+//   assert a.Ready() && a.Valid();
+//
+//   //we're just called from Xlone_Via_Map  (and could be reintergrated, who knows?)
+// //  assert m.oHeap >= flatten(m.clowner) >= flatten(m.clbound);
+//   assert a in m.m.Keys;
+//   assert m.m[a] == b;
+//   assert m.objectInKlown(a);
+//   assert inside(a, m.o) by { reveal AIMO; }
+//
+// //START FROM XVMq
+//   assert m.HeapContextReady() && m.ValuesContextReady();
+//   assert m.Calid();
+//   assert m.from(m');
+assert COKK2A: COK(a, m.oHeap) by { reveal COKA; reveal COK(); assert COK(a, m'.oHeap); }
+//
+//   assert forall f <- m.m.Keys :: HighLineKV(f,m.m[f],m);
+//
+//   assert (m.c_amfx >= flatten(m.clbound) >= flatten(m.o.bound));
+//
+//   assert forall oo <- a.AMFO ::oo.Ready();
+//
+//   assert a.Ready() && a.Valid();
+//
+//   //surely much of the following comes down from Calid()?
+//   assert m.o.Ready() && m.o.Valid();
+//   assert m.objectInKlown(m.o);
+//   assert m.objectInKlown(a);
+//
+// //  assert m.CalidCanKey(a);
+//
+//   assert m.HeapContextReady();
+//   assert m.ValuesContextReady();
+//   assert m.Calid();
+//   assert m.from(m');
+//
+//   assert HighCalidFragilistic(m); //TUESDAY
+//   assert forall f <- m.m.Keys :: HighLineKV(f,m.m[f],m);  //TUESDAY
+//
+//
+//   assert a in m.oHeap;
+//   assert m.m.Keys <= m.oHeap;
+// //END FROM XVM
+//
 
-  //progTODOFUCKNUKE NUKE // FAKE_
-  //progTODOFUCKNUKE NUKE // FAKE_
-  assert n  in a.fields.Keys;
-  assert n !in b.fields.Keys;
-
-  assert a.Ready() && a.Valid();
-
-  //we're just called from Xlone_Via_Map  (and could be reintergrated, who knows?)
-//  assert m.oHeap >= flatten(m.clowner) >= flatten(m.clbound);
-  assert a in m.m.Keys;
-  assert m.m[a] == b;
-  assert m.objectInKlown(a);
-  assert inside(a, m.o) by { reveal AIMO; }
-
-//START FROM XVMq
-  assert m.HeapContextReady() && m.ValuesContextReady();
-  assert m.Calid();
-  assert m.from(m');
-  assert COKK2A: COK(a, m.oHeap) by { reveal COKA; reveal COK(); assert COK(a, m'.oHeap); }
-
-  assert forall f <- m.m.Keys :: HighLineKV(f,m.m[f],m);
-
-  assert (m.c_amfx >= flatten(m.clbound) >= flatten(m.o.bound));
-
-  assert forall oo <- a.AMFO ::oo.Ready();
-
-  assert a.Ready() && a.Valid();
-
-  //surely much of the following comes down from Calid()?
-  assert m.o.Ready() && m.o.Valid();
-  assert m.objectInKlown(m.o);
-  assert m.objectInKlown(a);
-
-//  assert m.CalidCanKey(a);
-
-  assert m.HeapContextReady();
-  assert m.ValuesContextReady();
-  assert m.Calid();
-  assert m.from(m');
-
-  assert HighCalidFragilistic(m); //TUESDAY
-  assert forall f <- m.m.Keys :: HighLineKV(f,m.m[f],m);  //TUESDAY
-
-
-  assert a in m.oHeap;
-  assert m.m.Keys <= m.oHeap;
-//END FROM XVM
 
 assert unchanged@PRELOOP(m.oHeap);
 //NO_FIELDMODES   assert a.fieldModes.Keys == b.fieldModes.Keys;
@@ -296,99 +305,101 @@ assert unchanged@PRELOOP(m.oHeap);
 // /*FAKE_*/Xlone_Field_Map(a,n,b,oldham); PRECONDITIONS
 //////////////////////////////////////////////////////////////////////////////
 //updated 7 Feb 2025
-  assert b != a;
-  assert a.Ready();
-  assert a in m.m.Keys;
-  assert m.m[a] == b;
-  assert m.objectInKlown(a);
-//prog inside
-//  assert strictlyInside(a, m.o);    //   requires AMO: strictlyInside(a, m'.o)
-//  assert inside(a, m.o);  //   requires AMO: strictlyInside(a, m'.o)
-//assume strictlyInside(a, m.o);
-//prog inside
-  assert a.Valid();
-
-  assert n  in a.fields.Keys;
-  assert n !in b.fields.Keys;
-//NO_FIELDMODES   assert a.fieldModes.Keys == b.fieldModes.Keys;
-  assert b.Ready() && b.Valid();
-  assert a.fields.Keys > b.fields.Keys;
-
-  assert m.SuperCalidFragilistic(); //is this posible. likely NOT - if not, need to debug Xlone_Field_Map
-  assert m.AllLinesCalid();
-  assert HighCalidFragilistic(m); //is this posible. likely NOT
-
-  assert COK(a, m.oHeap)  by { reveal COKK2A; reveal COK(); assert COK(a, m'.oHeap); }
-
-  assert m.o.Ready() && m.o.Valid();
-  assert m.objectInKlown(m.o);
-
-  assert a  in m.oHeap;
-  assert b !in m.oHeap;
-  assert b in m.hns();
-//NO_FIELDMODES   assert a.fieldModes.Keys == b.fieldModes.Keys;
-//NO_FIELDMODES   assert n in b.fieldModes.Keys;
-
-  assert m.m.Keys <= m.oHeap;
-  assert allocated(m.oHeap);
-//NO_FIELDMODES   assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
-
-//extra shit
-  assert m.oHeap >= flatten(m.clowner) >= flatten(m.clbound);
-  assert m.HeapContextReady() && m.ValuesContextReady();
-  assert m.Calid();
-  assert m.from(m');
-  assert (m.c_amfx >= flatten(m.clbound) >= flatten(m.o.bound));
-  assert forall oo <- a.AMFO :: oo.Ready();
-
-  assert m.HeapContextReady();
-  assert m.ValuesContextReady();
-  assert m.Calid();
-
-  assert m.oHeap == m'.oHeap;
-
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-  assert a.fields.Keys >= b.fields.Keys;
-  assert b.fields.Keys == OLDFLDS;
+//   assert b != a;
+//   assert a.Ready();
+//   assert a in m.m.Keys;
+//   assert m.m[a] == b;
+//   assert m.objectInKlown(a);
+// //prog inside
+// //  assert strictlyInside(a, m.o);    //   requires AMO: strictlyInside(a, m'.o)
+// //  assert inside(a, m.o);  //   requires AMO: strictlyInside(a, m'.o)
+// //assume strictlyInside(a, m.o);
+// //prog inside
+//   assert a.Valid();
+//
+//   assert n  in a.fields.Keys;
+//   assert n !in b.fields.Keys;
+// //NO_FIELDMODES   assert a.fieldModes.Keys == b.fieldModes.Keys;
+//   assert b.Ready() && b.Valid();
+//   assert a.fields.Keys > b.fields.Keys;
+//
+//   assert m.SuperCalidFragilistic(); //is this posible. likely NOT - if not, need to debug Xlone_Field_Map
+//   assert m.AllLinesCalid();
+//   assert HighCalidFragilistic(m); //is this posible. likely NOT
+//
+//   assert COK(a, m.oHeap)  by { reveal COKK2A; reveal COK(); assert COK(a, m'.oHeap); }
+//
+//   assert m.o.Ready() && m.o.Valid();
+//   assert m.objectInKlown(m.o);
+//
+//   assert a  in m.oHeap;
+//   assert b !in m.oHeap;
+//   assert b in m.hns();
+// //NO_FIELDMODES   assert a.fieldModes.Keys == b.fieldModes.Keys;
+// //NO_FIELDMODES   assert n in b.fieldModes.Keys;
+//
+//   assert m.m.Keys <= m.oHeap;
+//   assert allocated(m.oHeap);
+// //NO_FIELDMODES   assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
+//
+// //extra shit
+//   assert m.oHeap >= flatten(m.clowner) >= flatten(m.clbound);
+//   assert m.HeapContextReady() && m.ValuesContextReady();
+//   assert m.Calid();
+//   assert m.from(m');
+//   assert (m.c_amfx >= flatten(m.clbound) >= flatten(m.o.bound));
+//   assert forall oo <- a.AMFO :: oo.Ready();
+//
+//   assert m.HeapContextReady();
+//   assert m.ValuesContextReady();
+//   assert m.Calid();
+//
+//   assert m.oHeap == m'.oHeap;
+//
+// //////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
+//   assert a.fields.Keys >= b.fields.Keys;
+//   assert b.fields.Keys == OLDFLDS;
   var OLDHAMFLDS := b.fields.Keys;
   var oldham := m;
   label B4:
 //  / /   / /   / /    / /   / /   / /    / /   / /   / /    / /   / /   / /    / /   / /   / /    / /   / /   / /    / /   / /   / /
       m := /*FAKE_*/Xlone_Field_Map(a,n,b,oldham);
+
+    assert klonCalid(m);
 //  / /   / /   / /    / /   / /   / /    / /   / /   / /    / /   / /   / /    / /   / /   / /    / /   / /   / /    / /   / /   / /
-  assert m.oHeap == oldham.oHeap;
-  assert m.from(oldham);
-  assert m.from(m');
-
-  assert unchanged@PRELOOP(m.oHeap);
-  assert b.fields.Keys == OLDHAMFLDS + {n};
-  assert b.fields.Keys == old@B4(b.fields.Keys) + {n};
-
-  assert b.fields.Keys == OLDFLDS + {n};
-  assert a.fields.Keys >= b.fields.Keys;
-
-//NO_FIELDMODES assert forall z <- m'.m.Keys :: z.fieldModes == old(z.fieldModes) == m'.m[z].fieldModes;
-//NO_FIELDMODES assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
-
-    assert seq2set(fieldNames) <= a.fields.Keys;
-    assert forall n <- fieldNames :: n in a.fields.Keys;
-
-    assert a.fields.Keys == old(a.fields.Keys);
-
-    // assert (OLDDIFF) decreases to (fielddiff(a,b));
-    // assert OLDDIFF >= fielddiff(a,b);
-
-
-    assert a.fields.Keys >= b.fields.Keys;
+//   assert m.oHeap == oldham.oHeap;
+//   assert m.from(oldham);
+//   assert m.from(m');
+//
+//   assert unchanged@PRELOOP(m.oHeap);
+//   assert b.fields.Keys == OLDHAMFLDS + {n};
+//   assert b.fields.Keys == old@B4(b.fields.Keys) + {n};
+//
+//   assert b.fields.Keys == OLDFLDS + {n};
+//   assert a.fields.Keys >= b.fields.Keys;
+//
+// //NO_FIELDMODES assert forall z <- m'.m.Keys :: z.fieldModes == old(z.fieldModes) == m'.m[z].fieldModes;
+// //NO_FIELDMODES assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
+//
+//     assert seq2set(fieldNames) <= a.fields.Keys;
+//     assert forall n <- fieldNames :: n in a.fields.Keys;
+//
+//     assert a.fields.Keys == old(a.fields.Keys);
+//
+//     // assert (OLDDIFF) decreases to (fielddiff(a,b));
+//     // assert OLDDIFF >= fielddiff(a,b);
+//
+//
+//     assert a.fields.Keys >= b.fields.Keys;
   }//end while
-
-  assert m.oHeap == m'.oHeap;
-  assert (a.fields.Keys -  b.fields.Keys) == {};
-  assert a.fields.Keys == b.fields.Keys by {
-            Set2NoDifferenceEq(a.fields.Keys, b.fields.Keys); ///copilot...
-            }
+//
+//   assert m.oHeap == m'.oHeap;
+//   assert (a.fields.Keys -  b.fields.Keys) == {};
+//   assert a.fields.Keys == b.fields.Keys by {
+//             Set2NoDifferenceEq(a.fields.Keys, b.fields.Keys); ///copilot...
+//             }
 
 //NO_FIELDMODES   assert forall z <- m.m.Keys :: z.fieldModes == m.m[z].fieldModes;
 
@@ -400,19 +411,21 @@ assert unchanged@PRELOOP(m.oHeap);
 //NO_FIELDMODES assert forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes;
 
   print "RETN Clone_All_Fields done ", fmtobj(a), "\n";
+//
+// assert m.from(m');
+// assert m.SuperCalidFragilistic();
+// assert m.AllLinesCalid();
+// assert HighCalidFragilistic(m);
+// assert a.fields.Keys == b.fields.Keys;
+// //NO_FIELDMODES  assert a.fieldModes  == b.fieldModes;
+// assert m.oHeap == m'.oHeap;
+//
+// CalidKVFromHighLineKV(a,b,m);
+// assert m.CalidLineKV(a,b);
 
-assert m.from(m');
-assert m.SuperCalidFragilistic();
-assert m.AllLinesCalid();
-assert HighCalidFragilistic(m);
-assert a.fields.Keys == b.fields.Keys;
-//NO_FIELDMODES  assert a.fieldModes  == b.fieldModes;
-assert m.oHeap == m'.oHeap;
-
-CalidKVFromHighLineKV(a,b,m);
-assert m.CalidLineKV(a,b);
+assert klonLine(a,b,m);
 
 //assert m.m.Values >= m'.m.Values + {b};
-  return;
+//  return;
 }
 ///end Xlone_All_Fields

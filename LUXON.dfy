@@ -1887,7 +1887,7 @@ lemma FLATTEN_SUM3(a : Owner, b : Owner, c : Owner)
   ensures flatten(a) + flatten(b) == flatten(a+b)
 {}
 
-lemma FLATTEN_SUM4(a : Owner, b : Owner, c : Owner, cc : Owner)
+lemma XXXFLATTEN_SUM4(a : Owner, b : Owner, c : Owner, cc : Owner)
   requires a+b+c == cc
   ensures flatten(a) + flatten(b) + flatten(c) == flatten(cc)
 {}

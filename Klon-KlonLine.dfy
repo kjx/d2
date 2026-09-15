@@ -42,7 +42,7 @@ predicate  klonReady(m : Klon) : (b : bool) ///like Ready, should be built in to
 
 predicate klonCalid(m : Klon)
 //  requires klonReady(m)  //?
-  reads m.hns()
+//  reads m.hns()
 {
   && klonReady(m)
   && klonPivot(m)
@@ -161,7 +161,7 @@ predicate klonModes(k : Object, v : Object, m : Klon)
 predicate klonGeometry(k : Object, v : Object, m : Klon)
   //the geometric constraints -- all compatible iwth "old" version
   requires klonReady(m)
-  reads m.hns(), k, v
+  // reads m.hns(), k, v   //cos ownership is constant RIGHT
 {
   && (m.o.Ready())           //precond?
   && (m.objectInKlown(m.o))  //precond?
@@ -182,7 +182,7 @@ lemma EXTRA_GEMO(k : Object, v : Object, m : Klon)
 
 predicate klonIdentity(k : Object, v : Object, m : Klon) : (r : bool)
   requires klonReady(m)
-  reads m.hns(), k, v
+//  reads m.hns(), k, v
   {
   && (m.ownersReadyInKlown(k))
   && (m.objectReadyInKlown(m.o))
@@ -470,12 +470,13 @@ lemma KlonCalidFrom(m : Klon, m' : Klon)
 
 
 function InternalOwnersWithinPivot(o : Object, m : Klon) : Owner
+  ///JUNK DELETE
   //recursivelylooks at all of o's owners that are inside m.o, classifying them as either
   requires klonReady(m)
   requires klonCalid(m)
   requires o.Ready()
   requires o in m.m.Keys
-     reads m.hns()
+//     reads m.hns()
 {
   {}
   //  if (inside(o,m.o))
@@ -552,7 +553,7 @@ function UNFINISHED_classifyOwnersWithin(o : Object, m : Klon) : (Owner, Owner, 
   requires klonCalid(m)
   requires o.Ready()
   requires o in m.m.Keys
-     reads m.hns()
+//     reads m.hns()
 {
    ( {}, {}, {} )
   //  if (inside(o,m.o))
