@@ -119,6 +119,26 @@ lemma AMFOsisAMFOs(o : Object)
   ensures forall oo <- o.AMFO           :: inside(o, oo)
 {}
 
+
+
+lemma Tobais_Intersection_World(a : Object, b : Object, world : Object, U : set<Object>)
+  requires a in U
+  requires b in U
+  requires world in U
+
+  requires forall u <- U :: inside(u,world) && u.Ready()
+
+  requires world !in a.owner
+   ensures not(directlyInside(a,world))
+
+  requires b.owner == (a.owner - {a}) + {b} + {world}
+   ensures directlyInside(b,world)
+
+  requires forall x <- U                                        :: refOK(a,x) <==> refOK(b,x)
+
+  requires forall x <- U | not(inside(a,x)) && not(inside(b,x)) :: refOK(a,x) <==> refOK(b,x)
+{}
+
 ///=====================================================================================
 ///
 /// spare stuff that as lurking in Ownership that seems pretty damn preipheral.
