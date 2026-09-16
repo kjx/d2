@@ -70,10 +70,26 @@ lemma SetPlus1<T>(o : T, left : set<T>, right : set<T>)
 {}
 
 
+lemma SetGTEQ3<T>(a : set<T>, a0 : set<T>, a1 : set<T>, a2 : set<T>, b : set<T>, b0 : set<T>, b1 : set<T>, b2 : set<T>)
+  requires a == a0 + a1 + a2
+  requires b == b0 + b1 + b2
+  requires a0 !! a1 !! a2
+  requires b0 !! b1 !! b2
+  requires (a0 >= b0)
+  requires (a1 >= b1)
+  requires (a2 >= b2)
+   ensures a >= b
+{}
 
-
-
-
+lemma SetGTEQ2<T>(a : set<T>, a0 : set<T>, a1 : set<T>, b : set<T>, b0 : set<T>, b1 : set<T>)
+  requires a == a0 + a1
+  requires b == b0 + b1
+  requires a0 !! a1
+  requires b0 !! b1
+  requires (a0 >= b0)
+  requires (a1 >= b1)
+   ensures a >= b
+{}
 
 
 
