@@ -77,16 +77,18 @@ method Xlone_All_Fields(a : Object, b : Object, m' : Klon)
 
    ensures klonReady(m)
    ensures klonCalid(m)
+   ensures klonLine(a,b,m)
 
    ensures m.objectInKlown(a)
    ensures COK(a,m.oHeap)
    ensures b.Context(m.hns({b}))
+   ensures b.Context(m.hns())
+
    ensures m.from(m')
 //NO_FIELDMODES    ensures a.fieldModes  == b.fieldModes
    ensures m.m[a] == b
    ensures a.Ready() && a.Valid() //NOCONTEXT && a.Context(m.hns())
    ensures b.Ready() && b.Valid()
-//NOCONTEXT   ensures b.Context(m.hns())
    ensures m.oHeap == m'.oHeap
 
   //ensures  m.m.Values >= m'.m.Values + {b} //WRONGO cos we require  m.m[a] == b
@@ -180,9 +182,11 @@ while ((a.fields.Keys - b.fields.Keys) > {})
   invariant m.HeapContextReady() && m.ValuesContextReady()
 //NO_FIELDMODES   invariant forall z <- m.m.Keys  :: z.fieldModes == m .m[z].fieldModes
   invariant m.oHeap >= flatten(m.clowner) >= flatten(m.clbound)
-  invariant m.Calid()
-  invariant HighCalidFragilistic(m)
-  invariant forall f <- m.m.Keys :: HighLineKV(f,m.m[f],m)
+//  invariant m.Calid()
+  invariant klonCalid(m)
+  invariant forall f <- m.m.Keys :: klonLine(f,m.m[f],m)
+//  invariant HighCalidFragilistic(m)
+//  invariant forall f <- m.m.Keys :: HighLineKV(f,m.m[f],m)
   invariant m.from(m')
   invariant m.objectInKlown(a)
   invariant m.m[a] == b

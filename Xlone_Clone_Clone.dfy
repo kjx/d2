@@ -109,7 +109,6 @@ assert klonCalid(rm);
   print "Clone_Clone_Clone ", fmtobj(k), " calling CAO ", fmtown(k.owner) ,"\n";
 ///////////////////////////////////////////////////////////////////////// ////////
 
-
    rm := /*FAKE_*/Xlone_All_Owners(k, m');
 
 //////////////////////////////////////////////////////////////
@@ -118,7 +117,9 @@ assert klonCalid(rm);
   print "CCC k in rm.m.Keys ", fmtobj(k), " = ", (k in rm.m.Keys), "\n";
 
 
-   assert rm.ownersInKlown(k);
+  assert klonReady(rm);
+  assert klonCalid(rm);
+  assert rm.ownersInKlown(k);
 
   if (k in rm.m.Keys) {
      print "CCC we got it\n";
@@ -279,10 +280,12 @@ var rbound := mapThruKlon(k.bound, rm);
   assume (flatten(rowner) >= flatten(rbound));  //!!!ERR
   assume (forall o <- rowner :: flatten(o.ownerBound()) >= flatten(rbound)); //!!!ERR
   assert myBoundsOK(rowner,rbound);
+  assert nuBoundsOK(rowner,rbound);
 
-
-
-
+//
+//   && (flatten(oo) >= flatten(mb))
+//   && (forall o <- oo :: flatten(o.ownerBound()) >= flatten(mb))
+//
 
   var context := rm.hns();
 
@@ -582,7 +585,7 @@ print "Clone_Clone_Clone ", fmtobj(k), " boodle boodle boodle\n";
 // assert flatten(rowner) >= flatten(rbound);   ///JDVANCE
 // //TRUMP assume context >= flatten(rowner) >= flatten(rbound);
 //
-   assert nuBoundsOK(rowner, rbound);  ///TRUMP TRUMPP TRUMPPP
+   assert nuBoundsOK(rowner, rbound);  ///TRUMP TRUMPP TRUMPPP  //ERR
 //
   //  assert klonReady(rm);
   //  assert klonCalid(rm);
@@ -676,9 +679,9 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 // }
 
 
-//    assert klonBound(k,v,rm);   //Err
+//    assert klonBound(k,v,rm);
 //    assert klonModes(k,v,rm);
-//    assert klonGeometry(k,v,rm); //Err
+//    assert klonGeometry(k,v,rm);
 //    assert klonIdentity(k,v,rm);
 //
 //    assert klonLine(k,v,rm);
@@ -853,10 +856,10 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 //                 assert rm.HeapOwnersReady();
 //  //DAFWONT               assert rm.c_amfx <= rm.oHeap;
 //                 //checkBoundOfClone body
-//                 assert  ((v == k) || (v.AMFB >=  k.AMFB));     //ERR.
-//  //ERR.            assert (checkBoundOfClone(k,v,rm));         //ERR.
+//                 assert  ((v == k) || (v.AMFB >=  k.AMFB));
+//  .            assert (checkBoundOfClone(k,v,rm));
 //            assert (mappingOwnersThruKlownKV(k,v,rm));
-//         assert rm.CalidLineKV(k,v);                            //ERR.?
+//         assert rm.CalidLineKV(k,v);
 //         assert rm.OwnersLineKV(k,v);
 //
 //                 //HighLineKV precondition
@@ -1027,7 +1030,10 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
   // CKV_PRECONDS(k,v,rm);
   // assert rm.CKV_preconditions(k,v);
 
-
+    assert klonReady(rm);
+    assert klonCalid(rm);
+    assert rm.CKV_preconditions(k,v);
+    assert klonLine(k,v,rm);
 // //axxume rm.CKV_preconditions(k,v);
    var xm := rm.CalidKV(k,v);
 // //////////////////////////////////////////////////////////////////////
@@ -1056,7 +1062,7 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 // //NO_FIELDMODES      assert forall z <- m .m.Keys :: z.fieldModes == m .m[z].fieldModes;
 //  //DAFWONT       assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
 //    assert m.SuperCalidFragilistic();
-//    assert HighCalidFragilistic(m);   //Err.
+//    assert HighCalidFragilistic(m);
 //    assert m.from(m');
 //    assert m.objectInKlown(k);
 //    assert m.m[k] == v;
@@ -1099,13 +1105,13 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
   // assert klonReady(xm);
   // assert klonCalid(xm);
   // assert xm.objectInKlown(k);
-  // assert COK(k,xm.oHeap);  //ERR?
+  // assert COK(k,xm.oHeap);
   // assert v.Context(xm.hns({v}));
   // assert inside(k, xm.o);
   // assert xm.m[k] == v;
 // //////////////////////////////////////////////////////////////////////
 // assert COK(k, xm.oHeap);
-  m := /*FAKE_*/Xlone_All_Fields(k,v, xm); //this was deleted - who the fuck knows how long for?  //ERR. - likely can't called precondis...
+  m := /*FAKE_*/Xlone_All_Fields(k,v, xm); //this was deleted - who the fuck knows how long for?  . - likely can't called precondis...
 
 //
 // assert klonLine(k,v,m);
