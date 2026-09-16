@@ -1,6 +1,12 @@
-include "Xlone.dfy"
+// include "Xlone.dfy"
 
+include "Library.dfy"
+include "Ownership-Recursive.dfy"
+include "Klon.dfy"
+include "Printing.dfy"
+include "Context.dfy"
 
+include "Xlone_Field_Map.dfy"
 
 method Xlone_All_Fields(a : Object, b : Object, m' : Klon)
   returns (m : Klon)

@@ -1,7 +1,11 @@
 include "Xlone.dfy"
 
+include "Xlone_All_Owners.dfy"
+include "Xlone_All_Fields.dfy"
+
+
 include "Klon-Lemmata.dfy"
-include "LUXON.dfy"
+ include "LUXON.dfy"
 
 //now importnated from Ownership-Trilemma most likely via Luxon...
 //
