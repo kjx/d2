@@ -26,7 +26,7 @@ print "done\n";
 }
 
 
-method  {:isolate_assertions} Chain(args : seq<string>)
+method Chain(args : seq<string>)
 {
   print "Chain\n";
 
@@ -50,7 +50,7 @@ method  {:isolate_assertions} Chain(args : seq<string>)
 
 
 
-method  {:isolate_assertions} MainWrong1(args : seq<string>)
+method MainWrong1(args : seq<string>)
 {
   print "Wrong1\n";
 
@@ -75,7 +75,7 @@ method  {:isolate_assertions} MainWrong1(args : seq<string>)
 
 
 
-method  {:isolate_assertions} MainWrong2(args : seq<string>)
+method MainWrong2(args : seq<string>)
 {
   print "Wrong2\n";
 
@@ -98,7 +98,7 @@ method  {:isolate_assertions} MainWrong2(args : seq<string>)
 }
 
 
-method  {:isolate_assertions} MainTop(args : seq<string>)
+method MainTop(args : seq<string>)
 {
   print "Top\n";
 
@@ -121,7 +121,7 @@ method  {:isolate_assertions} MainTop(args : seq<string>)
 
 
 
-method  {:isolate_assertions} MainMid(args : seq<string>)
+method MainMid(args : seq<string>)
 {
   print "Yaunch\n";  //
 
@@ -145,7 +145,7 @@ method  {:isolate_assertions} MainMid(args : seq<string>)
 
 
 //
-// method  {:isolate_assertions} XMain(args : seq<string>)
+// method XMain(args : seq<string>)
 // {
 //     print "Xaunch\n";
 //
@@ -191,7 +191,7 @@ method printbounds(o : Object)
         if (not(o.AMFO == o.AMFX+{o})) {print "  FUCKED AMFO";}
       print "\n      proposed bounds:";
         printset(froposeBounds(o.owner));
-//        if (nuBoundsOK(o.owner, froposeBounds(o.self))) {print " ok";} else {print "REALLY REWALLYU FUCKED!!!";}
+//        if (boundsOK(o.owner, froposeBounds(o.self))) {print " ok";} else {print "REALLY REWALLYU FUCKED!!!";}
 
 
       var oo := o.owner;
@@ -205,7 +205,7 @@ method printbounds(o : Object)
 
       print "\n";
 //        if (not(forall oo <- o.owner :: ( (oo.AMFB > {}) ==> (o.AMFB <= oo.AMFB)))) {
-          // if (not(nuBoundsOK(o.owner,o.bound))) {
+          // if (not(boundsOK(o.owner,o.bound))) {
           //   print "SO YOU REALLY FUCKED UP DIDN'T YOU!!!\n";
           //   print "SO YOU REALLY FUCKED UP DIDN'T YOU!!!\n";
           //   print "SO YOU REALLY FUCKED UP DIDN'T YOU!!!\n";
@@ -216,7 +216,7 @@ method printbounds(o : Object)
 //
 // function froposeBounds(os : set<Object>) : (b : Owner)
 //  //propose boubnsf but it;'s a function withtout READY as a precondition.
-//  //  ensures myBoundsOK(os, b)
+//  //  ensures boundsOK(os, b)
 //  {
 //     var all : set<Object> := set o <- os, a <- o.bound :: a;
 //     set a <- all | forall o <- os :: a in o.AMFB
@@ -225,7 +225,7 @@ method printbounds(o : Object)
 
 
 
-method {:isolate_assertions} Paranoia_boundless_chain(t : Object, a : Object, b : Object, c : Object, d : Object, e : Object)
+method Paranoia_boundless_chain(t : Object, a : Object, b : Object, c : Object, d : Object, e : Object)
    requires t.owner == {}
    requires t.bound == {}
    requires Paranoid(t)
@@ -273,7 +273,7 @@ method {:isolate_assertions} Paranoia_boundless_chain(t : Object, a : Object, b 
 
 
 
-predicate {:isolate_assertions} Paranoid(o : Object)
+predicate Paranoid(o : Object)
     //well-formdness of ownership
     reads {}
     decreases o.AMFO

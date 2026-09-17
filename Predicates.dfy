@@ -149,22 +149,22 @@ include "Incoming.dfy"
               //if there's a write borrow it must be the only one.
 
 
-    predicate  WriterEdge(e : Edge) { e.m.Borrow? && e.m.perm == Write }
+    predicate WriterEdge(e : Edge) { e.m.Borrow? && e.m.perm == Write }
 
-    predicate  OwnedOrLoanedEdge(e : Edge) { e.m.Owned? || e.m.Loaned? }
+    predicate OwnedOrLoanedEdge(e : Edge) { e.m.Owned? || e.m.Loaned? }
 
 
-    predicate  OwnedOrLoanedEdgeIncoming(partition : Incoming)
+    predicate OwnedOrLoanedEdgeIncoming(partition : Incoming)
         { (forall o <- partition.Keys ::
             |(set e <- partition[o] | OwnedOrLoanedEdge(e) )| <= 1)}
               //if there's a write borrow it must be the only one.
 
-    predicate  OnlyOneWriterEdgeIncoming(partition : Incoming)
+    predicate OnlyOneWriterEdgeIncoming(partition : Incoming)
         { (forall o <- partition.Keys ::
             |(set e <- partition[o] | WriterEdge(e) )| <= 1)}
               //if there's a write borrow it must be the only one.
 
-    predicate  OnlyOnePredEdges(pred : Edge -> bool, es : set<Edge>  )
+    predicate OnlyOnePredEdges(pred : Edge -> bool, es : set<Edge>  )
         { |FilteredEdges(pred, es)| <= 1}
 
     lemma OnlyOnePredEdgesMonotonic(pred : Edge -> bool, less : set<Edge>, more : set<Edge> )
@@ -179,7 +179,7 @@ include "Incoming.dfy"
 
     }
 
-    function  FilteredEdges(pred : Edge -> bool, es : set<Edge>) : (r : set<Edge>)
+    function FilteredEdges(pred : Edge -> bool, es : set<Edge>) : (r : set<Edge>)
       ensures r <= es
     {
       set e <- es | pred(e) :: e

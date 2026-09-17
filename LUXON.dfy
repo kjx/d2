@@ -42,7 +42,7 @@ lemma MappedInside(part : Object, whole : Object, m : Klon )
   requires part.Ready()
   requires whole.Ready()
   requires inside(part,whole)
-  requires m.objectInKlown(part)
+  requires m.objectInKlon(part)
   requires klonReady(m)
   requires klonCalid(m)
 
@@ -70,7 +70,7 @@ lemma MappedInside(part : Object, whole : Object, m : Klon )
 lemma FlattenOutsideIsTheSame(o : Object, m : Klon)
    //if o is outside m's pivot, then the mapped AMFO is o's. AMFO
   requires o.Ready()
-  requires m.objectInKlown(o)
+  requires m.objectInKlon(o)
   requires klonReady(m)
   requires klonCalid(m)
 
@@ -95,7 +95,7 @@ assert forall x <- o.AMFO :: m.m[x] == x;
 
 forall x <- o.AMFO ensures ({x} == mapThruKlon({x},m))   //by
   {
-    assert m.objectInKlown(o);
+    assert m.objectInKlon(o);
     assert x in m.m.Keys;
     assert m.m[x] == x;
     MAPPEN_ONE(x,m);
@@ -132,29 +132,29 @@ lemma MTKEQNEQ(a : Owner, b : Owner, m : Klon)
  }
 
 
-method {:isolate_assertions}  ownerAndBoundViaMeppy(k : Object, m' : Klon) returns (rowner : Owner, rbound : Owner)
+method  ownerAndBoundViaMeppy(k : Object, m' : Klon) returns (rowner : Owner, rbound : Owner)
  //doesnt work, no surprise :-)
   requires k !in m'.m.Keys
   requires strictlyInside(k, m'.o)
   requires klonReady(m')
   requires klonCalid(m')
   requires COK(k, m'.oHeap)   requires COKA: COK(k, m'.oHeap)
-  requires m'.ownersInKlown(k)
-//   ensures myBoundsOK(rowner, rbound)
+  requires m'.ownersInKlon(k)
+//   ensures boundsOK(rowner, rbound)
 {
   reveal COK();
   assert k.Ready();
   var owner := k.owner;
   var bound := k.bound;
 
-  assert myBoundsOK(owner, bound);
+  assert boundsOK(owner, bound);
   assert (flatten(owner) >= flatten(bound));
   assert (forall o <- owner :: flatten(o.ownerBound()) >= flatten(bound));
 
    rowner := mapThruKlon(owner, m');
    rbound := mapThruKlon(bound, m');
 
-//  assert myBoundsOK(rowner, rbound);
+//  assert boundsOK(rowner, rbound);
 
 }
 
@@ -289,24 +289,24 @@ lemma naive_ne_marche_pas(oo : Owner, mb : Bound, m : Klon) returns (rowner : Ow
 
 
 
-method {:isolate_assertions} {:verify false} ownerAndBoundForClone(k : Object, m' : Klon) returns (rowner : Owner, rbound : Owner)
+method {:verify false} ownerAndBoundForClone(k : Object, m' : Klon) returns (rowner : Owner, rbound : Owner)
   requires k !in m'.m.Keys
   requires strictlyInside(k, m'.o)
   requires klonReady(m')
   requires klonCalid(m')
   requires COK(k, m'.oHeap)   requires COKA: COK(k, m'.oHeap)
-  requires m'.ownersInKlown(k)
+  requires m'.ownersInKlon(k)
 
-//   ensures myBoundsOK(rowner, rbound)
+//   ensures boundsOK(rowner, rbound)
 {
-  assert myBoundsOK(k.owner, k.bound);
+  assert boundsOK(k.owner, k.bound);
 
   assert forall o <- k.owner :: klonLine(o, m'.m[o], m');
 
   forall o <- k.owner ensures (true) {
       assert klonLine(o, m'.m[o], m');
       assert klonIdentity(o, m'.m[o], m');
-      assert myBoundsOK(o.owner, o.bound);
+      assert boundsOK(o.owner, o.bound);
 
       if (o == m'.o)
          {
@@ -317,7 +317,7 @@ method {:isolate_assertions} {:verify false} ownerAndBoundForClone(k : Object, m
 
            assert (flatten(m'.m[o].owner) >= flatten(m'.m[o].bound));
            assert ( forall o <- m'.m[o].owner :: flatten(o.ownerBound()) >= flatten(m'.m[o].bound) );
-           assert myBoundsOK(m'.m[o].owner, m'.m[o].bound);
+           assert boundsOK(m'.m[o].owner, m'.m[o].bound);
 
           assert mapThruKlon(o.ownerBound(), m') == m'.m[o].ownerBound();
          }
@@ -327,7 +327,7 @@ method {:isolate_assertions} {:verify false} ownerAndBoundForClone(k : Object, m
 
            assert (flatten(m'.m[o].owner) >= flatten(m'.m[o].bound));
            assert (forall o <- m'.m[o].owner :: flatten(o.ownerBound()) >= flatten(m'.m[o].bound));
-           assert myBoundsOK(m'.m[o].owner, m'.m[o].bound);
+           assert boundsOK(m'.m[o].owner, m'.m[o].bound);
 
            assert mapThruKlon(o.ownerBound(), m') == m'.m[o].ownerBound();
          }
@@ -355,7 +355,7 @@ method {:isolate_assertions} {:verify false} ownerAndBoundForClone(k : Object, m
 
            assert (flatten(m'.m[o].owner) >= flatten(m'.m[o].bound)); //???
            assert (forall o <- m'.m[o].owner :: flatten(o.ownerBound()) >= flatten(m'.m[o].bound));
-           assert myBoundsOK(m'.m[o].owner, m'.m[o].bound);
+           assert boundsOK(m'.m[o].owner, m'.m[o].bound);
 
           assert mapThruKlon(o.ownerBound(), m') == m'.m[o].ownerBound();
 
@@ -380,7 +380,7 @@ return;
 
   assert (flatten(rowner) >= flatten(rbound));
   assert (forall o <- rowner :: flatten(o.ownerBound()) >= flatten(rbound));
-  assert myBoundsOK(rowner, rbound);
+  assert boundsOK(rowner, rbound);
 
 
 }
@@ -1003,7 +1003,7 @@ predicate frogdisj(owner : Owner, pivot : Object, owners_inside : Owner, owners_
    (flat_below-{pivot}) !! ((flatten(owners_outside) + flatten(fringe) + pflinge(owners_inside, pivot)) - {pivot})
  }
 
-lemma  FROG_DISJOINT(li : Owner, lo : Owner, lb : Owner, lf : Owner,
+lemma FROG_DISJOINT(li : Owner, lo : Owner, lb : Owner, lf : Owner,
                  left : Owner, pivot : Object)
   requires pivot.Ready()
   requires froglet(left, pivot,li,lo,lb,lf)
@@ -1024,7 +1024,7 @@ lemma  FROG_DISJOINT(li : Owner, lo : Owner, lb : Owner, lf : Owner,
 }
 
 
-lemma  NAKED_LIBERATION(li : Owner, lo : Owner, lb : Owner, lf : Owner,
+lemma NAKED_LIBERATION(li : Owner, lo : Owner, lb : Owner, lf : Owner,
                  ri : Owner, ro : Owner, rb : Owner, rf : Owner,
                  left : Owner, right : Owner, pivot : Object)
                     requires left  == (li + lo + lb + lf + pflivot(left, pivot) )
@@ -1040,7 +1040,7 @@ lemma  NAKED_LIBERATION(li : Owner, lo : Owner, lb : Owner, lf : Owner,
 {}
 
 
-lemma  FLAT_LIVERATUIB(li : Owner, lo : Owner, lb : Owner, lf : Owner,
+lemma FLAT_LIVERATUIB(li : Owner, lo : Owner, lb : Owner, lf : Owner,
                  ri : Owner, ro : Owner, rb : Owner, rf : Owner,
                  left : Owner, right : Owner, pivot : Object)
   requires pivot.Ready()
@@ -1220,7 +1220,7 @@ lemma ReadyFlatten(oo : Owner)
 
 //is "inside_pivot" a better name than owners_inside
 //{:timeLimit 20}
-lemma  GordonPivotFringeInsideFlatternOwner(owners_inside_nopivot : Owner, pivot : Object, whole_f : Owner)
+lemma GordonPivotFringeInsideFlatternOwner(owners_inside_nopivot : Owner, pivot : Object, whole_f : Owner)
 
  requires forall i <- owners_inside_nopivot :: inside(i, pivot)
  requires owners_inside_nopivot > {}
@@ -1273,7 +1273,7 @@ lemma  GordonPivotFringeInsideFlatternOwner(owners_inside_nopivot : Owner, pivot
 }
 
 
-lemma  GordonPivotFringeIsPivotOwner(owners_inside_nopivot : Owner, pivot : Object, pivot_f : Owner)
+lemma GordonPivotFringeIsPivotOwner(owners_inside_nopivot : Owner, pivot : Object, pivot_f : Owner)
 
  requires forall i <- owners_inside_nopivot :: inside(i, pivot)
  requires owners_inside_nopivot > {}
@@ -1838,7 +1838,7 @@ lemma YouGetThereEventually(part : Object, whole : Object) returns (prev : Objec
 // }
 //
 //
-// ghost function {:isolate_assertions} YouCan'tGetThereFromHereBut(part : Object, whole : Object) : (next : Object)
+// ghost function YouCan'tGetThereFromHereBut(part : Object, whole : Object) : (next : Object)
 //   //return next - a "direct owner" of part that is on the way up to "whole"
 //   decreases part.AMFO
 //
@@ -2175,7 +2175,7 @@ lemma IN_N_OUT_LEMMER(oo : Owner, m : Klon)
 
     assert forall o <- oo :: klonLine(o,m.m[o],m);
     assert forall o <- oo :: klonGeometry(o,m.m[o],m);
-    assert forall o <- oo :: m.objectReadyInKlown(o);
+    assert forall o <- oo :: m.objectInKlon(o);
     assert forall o <- flatten(oo) :: klonGeometry(o,m.m[o],m);
 }
   // {
@@ -2242,11 +2242,11 @@ lemma fOUTSIDE_ONE(next : Object, pivot : Object, rv : Owner)
 
 
 //{:timeLimit 100}
-lemma  fOUTSIDE_TWO(next : Object, m : Klon, rv : Owner)
+lemma fOUTSIDE_TWO(next : Object, m : Klon, rv : Owner)
 //like outside-ONE but gor the clone side
   requires next.Ready()
   requires next != m.o
-  requires m.objectInKlown(next)
+  requires m.objectInKlon(next)
   requires outside(next, m.o)
   requires rv == fOutside(mapThruKlon({next}-{m.o},m), m.c)
   requires klonReady(m)

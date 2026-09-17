@@ -6,7 +6,7 @@ include "Xlone.dfy"
 
 
 //  {:timeLimit 300} --- real	17m50.852s 09 April
-method {:isolate_assertions} {:timeLimit 300} {:verify true} Xlone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
+method {:timeLimit 300} {:verify true} Xlone_Field_Map(a : Object, n : string, b : Object, m' : Klon)
   returns (m : Klon)
   //given b is an structural clone of a (m.m[a]==b)
   //create a new b.n == cloneOf a.n (m.m[a.n]) and intsall it in b (via Xlone_Set_Field)
@@ -19,7 +19,7 @@ method {:isolate_assertions} {:timeLimit 300} {:verify true} Xlone_Field_Map(a :
   requires m'.m[a] == b              requires MAB: m'.m[a] == b
   requires m'.apoCalidse()
   requires HighLineKV(a,b,m')        requires HIL: HighLineKV(a,b,m')
-  requires m'.objectInKlown(a)       requires AIK: m'.objectInKlown(a)
+  requires m'.objectInKlon(a)       requires AIK: m'.objectInKlon(a)
 
 //prog inside
   requires strictlyInside(a, m'.o)    requires AMI: strictlyInside(a, m'.o)
@@ -51,7 +51,7 @@ method {:isolate_assertions} {:timeLimit 300} {:verify true} Xlone_Field_Map(a :
 
   //surely much of the following comes down from Calid()?
   requires m'.o.Ready() && m'.o.Valid()
-  requires m'.objectInKlown(m'.o)
+  requires m'.objectInKlon(m'.o)
   //requires m'.CalidCanKey(a) err & WRONG - a must already be in the thing
 
   requires a  in m'.oHeap
@@ -75,7 +75,7 @@ method {:isolate_assertions} {:timeLimit 300} {:verify true} Xlone_Field_Map(a :
   //   ensures  m.SuperCalidFragilistic()  //**17Sep*/
   //   ensures  m.apoCalidse() //**17Feb 2026*/
   //   ensures  HighCalidFragilistic(m) //**7feb2026 */  //TUESDAY
-  //   ensures  m.ownersInKlown(a)
+  //   ensures  m.ownersInKlon(a)
   //   ensures  a in m.m.Keys
   //   ensures  n in a.fields.Keys
   //   ensures  unchanged(a`fields)
@@ -83,7 +83,7 @@ method {:isolate_assertions} {:timeLimit 300} {:verify true} Xlone_Field_Map(a :
   //   ensures  b.fields.Keys == old(b.fields.Keys) + {n}
   //   ensures  old(fielddiff(a,b)) decreases to fielddiff(a,b)
   //   ensures  m.m[a] == b
-  //   ensures  m.objectInKlown(a.fields[n])
+  //   ensures  m.objectInKlon(a.fields[n])
   //   ensures  m.m[ a.fields[n] ] == b.fields[n]
   //   ensures  m.m[ a.fields[n] ] == m.m[a].fields[n]  //prog THIS IS THE KEY POSTCONDITION!!
   // //NO_FIELDMODES   ensures  a.fieldModes.Keys == b.fieldModes.Keys
@@ -150,8 +150,8 @@ method {:isolate_assertions} {:timeLimit 300} {:verify true} Xlone_Field_Map(a :
 
         assert m.SuperCalidFragilistic();                  assert m.from(m');
         assert HighCalidFragilistic(m);
-        assert a.Ready();    assert m.objectInKlown(a);    assert b == m.m[a];
-        assert ofv.Ready();  assert m.objectInKlown(ofv);  assert rfv == m.m[ofv];
+        assert a.Ready();    assert m.objectInKlon(a);    assert b == m.m[a];
+        assert ofv.Ready();  assert m.objectInKlon(ofv);  assert rfv == m.m[ofv];
 //NO_FIELDMODES         assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
         assert  b.fields.Keys == old(b.fields.Keys);
         assert  a.fields.Keys == old(a.fields.Keys);
@@ -159,7 +159,7 @@ method {:isolate_assertions} {:timeLimit 300} {:verify true} Xlone_Field_Map(a :
 //much of this should be in CalidLineKV...?
         assert ofv.Ready();
         assert rfv.Ready();
-        assert m.objectInKlown(ofv);
+        assert m.objectInKlon(ofv);
         assert m.m[ofv] == rfv;
         assert m.CalidLineKV(ofv,rfv);
         assert HighLineKV(ofv,rfv,m);
@@ -224,16 +224,16 @@ reveal COK();  assert a.Ready(); assert a.Valid();
   assert ofv.Ready();
   assert ofv.Valid();
   assert m'.o.Ready() && m'.o.Valid();
-  assert m'.objectInKlown(m'.o);
-  assert (m'.ownersInKlown(ofv) ==> m'.CalidCanKey(ofv));
+  assert m'.objectInKlon(m'.o);
+  assert (m'.ownersInKlon(ofv) ==> m'.CalidCanKey(ofv));
   assert m'.m.Keys <= m'.oHeap;
   assert a.Ready() && a.Valid();
 //NO_FIELDMODES   assert forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes;
         // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
         // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
           rfv, m := FAKE_Xlone_Via_Map(ofv, m');   assert m.m[ofv] == rfv; /*FAKE*/
-//      assume m.from(m');   assume klonReady(m); assume klonCalid(m);   assume HighCalidFragilistic(m);   assume m.objectInKlown(ofv); // while XVM is switched off...
-      assert m.from(m');   assert klonReady(m); assert klonCalid(m);   assert HighCalidFragilistic(m);   assert m.objectInKlown(ofv); // while XVM is switched off...
+//      assume m.from(m');   assume klonReady(m); assume klonCalid(m);   assume HighCalidFragilistic(m);   assume m.objectInKlon(ofv); // while XVM is switched off...
+      assert m.from(m');   assert klonReady(m); assert klonCalid(m);   assert HighCalidFragilistic(m);   assert m.objectInKlon(ofv); // while XVM is switched off...
   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
         // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
     assert afK == a.fields.Keys;
@@ -248,20 +248,20 @@ reveal COK();  assert a.Ready(); assert a.Valid();
 
         assert ofv.Ready();
         assert rfv.Ready();
-        assert m.objectInKlown(ofv);
+        assert m.objectInKlon(ofv);
         assert m.m[ofv] == rfv;
   //NO_FIELDMODES         assert ofv.fieldModes == rfv.fieldModes;
 
     assert m.SuperCalidFragilistic();                  assert m.from(m');
     assert HighCalidFragilistic(m);
-    assert a.Ready();    assert m.objectInKlown(a);    assert b == m.m[a];
-    assert ofv.Ready();  assert m.objectInKlown(ofv);  assert rfv == m.m[ofv];
+    assert a.Ready();    assert m.objectInKlon(a);    assert b == m.m[a];
+    assert ofv.Ready();  assert m.objectInKlon(ofv);  assert rfv == m.m[ofv];
 //NO_FIELDMODES     assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
     assert  b.fields.Keys == old(b.fields.Keys);
         //from below
         assert ofv.Ready();
         assert rfv.Ready();
-        assert m.objectInKlown(ofv);
+        assert m.objectInKlon(ofv);
         assert m.m[ofv] == rfv;
         assert m.CalidLineKV(ofv,rfv);
         assert HighLineKV(ofv,rfv,m);
@@ -277,13 +277,13 @@ reveal COK();  assert a.Ready(); assert a.Valid();
   //   assert  b.fields.Keys == old(b.fields.Keys);
   //   assert m.SuperCalidFragilistic();                  assert m.from(m');
   //   assert HighCalidFragilistic(m);
-  //   assert a.Ready();    assert m.objectInKlown(a);    assert b == m.m[a];
-  //   assert ofv.Ready();  assert m.objectInKlown(ofv);  assert rfv == m.m[ofv];
+  //   assert a.Ready();    assert m.objectInKlon(a);    assert b == m.m[a];
+  //   assert ofv.Ready();  assert m.objectInKlon(ofv);  assert rfv == m.m[ofv];
 
 //much of this should be in CalidLineKV...?
         assert ofv.Ready();
         assert rfv.Ready();
-        assert m.objectInKlown(ofv);
+        assert m.objectInKlon(ofv);
         assert m.m[ofv] == rfv;
         assert m.CalidLineKV(ofv,rfv);
         assert HighLineKV(ofv,rfv,m);
@@ -335,14 +335,14 @@ reveal COK();  assert a.Ready(); assert a.Valid();
    assert k.Ready() by { reveal AIR;
                           assert a.Ready();
                           assert k.Ready(); }
-   assert m.objectInKlown(a) by { reveal AIK;
-                            assert m.objectInKlown(a);
-                            assert m.objectInKlown(k); }
-   assert m.objectInKlown(k) by { reveal AIK; }
+   assert m.objectInKlon(a) by { reveal AIK;
+                            assert m.objectInKlon(a);
+                            assert m.objectInKlon(k); }
+   assert m.objectInKlon(k) by { reveal AIK; }
    assert m.m[k] == v by { reveal MAB;  }
 
    assert t.Ready();
-   assert m.objectInKlown(t);
+   assert m.objectInKlon(t);
    assert m.m[t] == u;
    assert m.CalidLineKV(t,u);         assert HighLineKV(t,u,m);
 
@@ -355,8 +355,8 @@ reveal COK();  assert a.Ready(); assert a.Valid();
  assert ofv.Ready();
  assert v.Ready();
  assert rfv.Ready();
- assert m.objectInKlown(k);
- assert m.objectInKlown(ofv);
+ assert m.objectInKlon(k);
+ assert m.objectInKlon(ofv);
  assert m.SuperCalidFragilistic();
  assert refOK(k,ofv);
  assert m.CalidLineKV(k, v);
@@ -439,8 +439,8 @@ reveal COK();  assert a.Ready(); assert a.Valid();
    assert v.Ready();
    assert ofv.Ready();
    assert rfv.Ready();
-   assert m.objectInKlown(k);
-   assert m.objectInKlown(ofv);
+   assert m.objectInKlon(k);
+   assert m.objectInKlon(ofv);
    assert m.SuperCalidFragilistic();
    assert m.CalidLineKV(k, v);
    assert m.CalidLineKV(ofv, rfv);
@@ -544,11 +544,11 @@ reveal COK();  assert a.Ready(); assert a.Valid();
     assert clone.Ready();
     assert t.Ready();
     assert u.Ready();
-    assert m.ownersInKlown(t);
+    assert m.ownersInKlon(t);
     assert m.CalidOwners();
     assert refOK(source, t);
     assert refOK(clone, u);
-    assert m.objectInKlown(source);
+    assert m.objectInKlon(source);
     assert clone == m.m[ source ];
     assert n in source.fields.Keys;
     assert t == source.fields[n];
@@ -578,7 +578,7 @@ label HERE:
     assert HighCalidFragilistic(m);
     assert (forall k <- m.m.Keys :: HighLineKV(k, m.m[k], m));
 
-    assert mappingOwnersThruKlownKV(t,u,m);
+    assert mappingOwnersThruKlonKV(t,u,m);
    } //END PRECONDS RefOKGetsModeOK
 
 
@@ -598,8 +598,8 @@ assert rfv.Context(m.hns());
 
    assert m.SuperCalidFragilistic();                  assert m.from(m');
    assert HighCalidFragilistic(m);      assert HCFm: HighCalidFragilistic(m);
-   assert a.Ready();    assert m.objectInKlown(a);    assert b == m.m[a];
-   assert ofv.Ready();  assert m.objectInKlown(ofv);  assert rfv == m.m[ofv];
+   assert a.Ready();    assert m.objectInKlon(a);    assert b == m.m[a];
+   assert ofv.Ready();  assert m.objectInKlon(ofv);  assert rfv == m.m[ofv];
    assert afK == a.fields.Keys;    assert bfK == b.fields.Keys;
    assert a != b;
 //  / /   / /   / /    / /   / /   / /    / /   / /   / /    / /   / /   / /    / /   / /   / /    / /   / /   / /    / /   / /   / /
@@ -628,7 +628,7 @@ print "RETN Clone_Field_Map: ", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
 
    assert m.SuperCalidFragilistic();                  assert m.from(m');
    assert m.AllLinesCalid();                          assert m.CalidLineKV(ofv,rfv);
-   assert mappingOwnersThruKlownKV(ofv,rfv  ,m);      assert mappingOwnersThruKlownKV(a,b,m);
+   assert mappingOwnersThruKlonKV(ofv,rfv  ,m);      assert mappingOwnersThruKlonKV(a,b,m);
              assert HighLineKV(ofv,rfv ,m);                     assert HighLineKV(a,b,m);
    forall k <- m.m.Keys ensures (HighLineKV(k, m.m[k], m)) //by
        {
@@ -645,8 +645,8 @@ print "RETN Clone_Field_Map: ", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
    assert (forall k <- m.m.Keys :: HighLineKV(k, m.m[k], m));
    assert HighCalidFragilistic(m);
 
-   assert a.Ready();    assert m.objectInKlown(a);    assert b == m.m[a];
-   assert ofv.Ready();  assert m.objectInKlown(ofv);  assert rfv == m.m[ofv];
+   assert a.Ready();    assert m.objectInKlon(a);    assert b == m.m[a];
+   assert ofv.Ready();  assert m.objectInKlon(ofv);  assert rfv == m.m[ofv];
 
   assert  b.fields.Keys == old(b.fields.Keys) + {n};
   }

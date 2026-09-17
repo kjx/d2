@@ -98,7 +98,7 @@ method printobjfields(o : Object)
 }
 
 
-method {:isolate_assertions} printklon(m :  Klon)
+method printklon(m :  Klon)
   modifies {}
 
   requires m.HeapContextReady()
@@ -164,12 +164,12 @@ method jeSuisClone(src : Object, m : Klon, context : set<Object>) returns (rv : 
 
 
 //iterative clone-checker, most likely only dynamic at this point
-method  istEinKlon(src : Object, m : Klon, context : set<Object>) returns (rv : bool)
+method istEinKlon(src : Object, m : Klon, context : set<Object>) returns (rv : bool)
  //probably needs CallOK(context)  for a start!
     requires m.o.Ready()
-    requires m.objectInKlown(m.o)
+    requires m.objectInKlon(m.o)
     requires src.Ready()
-    requires m.objectInKlown(src)
+    requires m.objectInKlon(src)
 
   requires m.SuperCalidFragilistic()
 
@@ -195,8 +195,8 @@ method  istEinKlon(src : Object, m : Klon, context : set<Object>) returns (rv : 
 
     print "   checking ",fmtobj(o)," cloned as ",fmtobj(k), " ";
 
-    assert (o.bound <= m.m.Keys) by  {assert m.objectInKlown(o);}
-    assert (o.owner <= m.m.Keys) by  {assert m.objectInKlown(o);}
+    assert (o.bound <= m.m.Keys) by  {assert m.objectInKlon(o);}
+    assert (o.owner <= m.m.Keys) by  {assert m.objectInKlon(o);}
 
     rv :=
          && istKlonnyKlon(o.bound, k.bound, m)
@@ -499,7 +499,7 @@ function fmtsetstr(Y: set<string>) : string
   }
 
 
-lemma  {:isolate_assertions} SetStrHasMinimum(s : set<string>)
+lemma SetStrHasMinimum(s : set<string>)
   requires |s| > 0
    ensures forall m <- s ::  m == m
    ensures forall m <- s ::  strLEQ(m, m)
@@ -543,7 +543,7 @@ lemma  {:isolate_assertions} SetStrHasMinimum(s : set<string>)
 
 
 
-lemma  {:isolate_assertions} SetStrMin(s : set<string>) returns (min : string)
+lemma SetStrMin(s : set<string>) returns (min : string)
   requires |s| > 0
    ensures forall m <- s ::  m == m
    ensures forall m <- s ::  strLEQ(m, m)

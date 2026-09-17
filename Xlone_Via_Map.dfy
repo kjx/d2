@@ -3,7 +3,7 @@ include "Xlone.dfy"
 
 //{:timeLimit 10}
 // {:isolate_assertions}
-method {:isolate_assertions} {:timeLimit 10} {:verify true} Xlone_Via_Map(a : Object, m' : Klon)
+method {:timeLimit 10} {:verify true} Xlone_Via_Map(a : Object, m' : Klon)
   returns (b : Object, m : Klon)
   //if a is not already cloned, we arrange to clone it
   //we return b, the clone of a, in new Klon m.
@@ -21,8 +21,8 @@ method {:isolate_assertions} {:timeLimit 10} {:verify true} Xlone_Via_Map(a : Ob
     requires forall o <- a.AMFO :: o.Ready()
     requires a.Ready() && a.Valid()
     requires m'.o.Ready() && m'.o.Valid()
-    requires m'.objectInKlown(m'.o)       ///this meqnas we need to "seed" with the actual clone, rignty
-    requires (m'.ownersInKlown(a) ==> m'.CalidCanKey(a))
+    requires m'.objectInKlon(m'.o)       ///this meqnas we need to "seed" with the actual clone, rignty
+    requires (m'.ownersInKlon(a) ==> m'.CalidCanKey(a))
     requires m'.m.Keys <= m'.oHeap //shojld be in Calid?
     requires a.Ready() && a.Valid()
 
@@ -45,7 +45,7 @@ method {:isolate_assertions} {:timeLimit 10} {:verify true} Xlone_Via_Map(a : Ob
  //NO_FIELDMODES    ensures unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes )
 //     ensures m.from(m')
 //     ensures m.SuperCalidFragilistic()  //moved down from 458
-//     ensures m.objectInKlown(a)
+//     ensures m.objectInKlon(a)
 //     ensures m.m[a] == b
 // //NO_FIELDMODES     ensures b.fieldModes == a.fieldModes
 //     ensures a.Ready() && a.Valid()
@@ -82,7 +82,7 @@ method {:isolate_assertions} {:timeLimit 10} {:verify true} Xlone_Via_Map(a : Ob
     print "OOPS Clone_Via_Map calling out to XAO\n";
 
     var om := /*FAKE_*/Xlone_All_Owners(a, m');
-    assert om.ownersInKlown(a);
+    assert om.ownersInKlon(a);
     print "OOPS Clone_Via_Map just returned from XAO\n";
 
       if (a in om.m.Keys) {
@@ -95,7 +95,7 @@ method {:isolate_assertions} {:timeLimit 10} {:verify true} Xlone_Via_Map(a : Ob
 
     assert klonReady(om);
     assert klonCalid(om);
-    // assert om.ownersReadyInKlown(a);
+    // assert om.ownersInKlon(a);
     // assert a in om.oHeap;
     // assert outside(a,om.o);
     // assert a == b;
@@ -127,7 +127,7 @@ method {:isolate_assertions} {:timeLimit 10} {:verify true} Xlone_Via_Map(a : Ob
 //     assert klonModes(k,v,m);
 //
 //         assert (m.o.Ready());
-//         assert (m.objectInKlown(m.o));
+//         assert (m.objectInKlon(m.o));
 //         assert ( (k == m.o)       <==>  (v == m.c)  );
 //         assert ((inside(k, m.o))   ==> (k.AMFB  <= m.o.AMFB));
 //         assert (outside(k, m.o)   <==>  (v == k));
@@ -142,7 +142,7 @@ method {:isolate_assertions} {:timeLimit 10} {:verify true} Xlone_Via_Map(a : Ob
 
   assert klonReady(om);
   assert outside(a,om.o) ==> outside(a,om.c);
-  assert (om.ownersInKlown(a) && outside(a,om.o)) ==> klonLine(a,a,om);
+  assert (om.ownersInKlon(a) && outside(a,om.o)) ==> klonLine(a,a,om);
    assert klonLine(a,b,om);
 
 //////////////////SPLIT  HERE
@@ -154,7 +154,7 @@ method {:isolate_assertions} {:timeLimit 10} {:verify true} Xlone_Via_Map(a : Ob
 //   assert m.from(m');
 //   assert m'.apoCalidse();
 //   assert m.m.Keys <= m.oHeap;
-//   assert forall k <- m'.m.Keys :: k.Ready() && m.objectInKlown(k);
+//   assert forall k <- m'.m.Keys :: k.Ready() && m.objectInKlon(k);
 //   assert forall k <- m'.m.Keys :: HighLineKV(k, m'.m[k], m');
 //   assert klonReady(m');
 //   assert klonCalid(m');
@@ -167,7 +167,7 @@ method {:isolate_assertions} {:timeLimit 10} {:verify true} Xlone_Via_Map(a : Ob
 //   assert a == b;
 //   assert klonLine(a,m.m[a],om);
 //
-//   assert forall x : Object <- (m.m.Keys   - om.m.Keys)   :: m.objectInKlown(x);
+//   assert forall x : Object <- (m.m.Keys   - om.m.Keys)   :: m.objectInKlon(x);
 //   assert forall x : Object <- (m.m.Keys   - om.m.Keys)   :: klonLine(x,m.m[x],m');//Error: was 221
 //   assert forall x : Object <- (m.m.Values - om.m.Values) :: x.Context(m.hns());//Error: was 222
 
@@ -226,7 +226,7 @@ print "RETN Clone_Via_Map: ", fmtobj(a), " pivot:", fmtobj(m.o), "\n";
     // assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
     // assert m.from(m');
     // assert m.SuperCalidFragilistic();
-    // assert m.objectInKlown(a);
+    // assert m.objectInKlon(a);
     // assert m.m[a] == b;
     // assert b.fieldModes == a.fieldModes;
     // assert b.Ready() && b.Valid();
@@ -251,11 +251,11 @@ lemma HeapToHNS(o : Object, m : Klon)
    ensures o in m.hns({o})
   {}
 
-lemma {:isolate_assertions}  AREBOUNDSFUXKED(k : Object, v : Object, m : Klon)
+lemma  AREBOUNDSFUXKED(k : Object, v : Object, m : Klon)
   requires klonReady(m)
   requires && (k.Ready() && k in m.oHeap    && k.Valid() && k.Context(m.oHeap))
   requires && (v.Ready() && v in m.hns({v}) && v.Valid() && v.Context(m.hns()))
-  requires m.ownersInKlown(k)
+  requires m.ownersInKlon(k)
   requires k == v
 
   ensures
@@ -268,10 +268,10 @@ lemma {:isolate_assertions}  AREBOUNDSFUXKED(k : Object, v : Object, m : Klon)
   {}
 
 
-lemma {:isolate_assertions} {:timeLimit 20} OUTSIDE_EQ_OK(k : Object, v : Object, m : Klon)
+lemma {:timeLimit 20} OUTSIDE_EQ_OK(k : Object, v : Object, m : Klon)
   requires klonReady(m)
   requires klonCalid(m)
-  requires m.ownersReadyInKlown(k)
+  requires m.ownersInKlon(k)
   requires k in m.oHeap
   requires outside(k,m.o)
   requires k == v
@@ -282,10 +282,10 @@ lemma {:isolate_assertions} {:timeLimit 20} OUTSIDE_EQ_OK(k : Object, v : Object
   }
 
 
-lemma {:isolate_assertions} {:timeLimit 10} CKV_PRECONDS(k : Object, v : Object, m : Klon)
+lemma {:timeLimit 10} CKV_PRECONDS(k : Object, v : Object, m : Klon)
   requires klonReady(m)
   requires klonCalid(m)
-  requires m.ownersReadyInKlown(k)
+  requires m.ownersInKlon(k)
   requires k  in m.oHeap
   requires k !in m.m.Keys
   requires v !in m.m.Values

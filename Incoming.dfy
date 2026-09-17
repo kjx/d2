@@ -29,7 +29,7 @@ predicate {:opnly} partitionedLessEQ(lesp : Incoming, morp : Incoming)
    && (forall l <- lesp.Keys :: |lesp[l]| <= |morp[l]|)
 }
 
-lemma  partitionedIncomingEdgesMonotonic(
+lemma partitionedIncomingEdgesMonotonic(
         less : set<Edge>, more : set<Edge>,
         lesp : map<Object,set<Edge>>, morp : map<Object,set<Edge>>)
    requires edgesAreConsistentWithDafnyHeap(less)
@@ -76,7 +76,7 @@ lemma IncomingEdgesAreIncoming(es : set<Edge>, ins : Incoming )
 
 
 
-lemma {:timeLimit 30} {:isolate_assertions} FewerPartitionedIncomingEdgesValid(
+lemma {:timeLimit 30} FewerPartitionedIncomingEdgesValid(
         less : set<Edge>, more : set<Edge>,
         lesp : Incoming, morp : Incoming)
     requires less <= more

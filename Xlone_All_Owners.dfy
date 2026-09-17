@@ -3,7 +3,7 @@ include "Xlone.dfy"
 
 
 
-method  {:isolate_assertions} {:verify true} Xlone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
+method {:verify true} Xlone_All_Owners(a : Object,  m' : Klon)  returns (m : Klon)
     decreases * //(m'.oHeap - m'.m.Keys), |a.AMFO|, |a.fields.Keys|, 12
 
    requires klonReady(m')
@@ -22,7 +22,7 @@ method  {:isolate_assertions} {:verify true} Xlone_All_Owners(a : Object,  m' : 
   ensures m.from(m')
   ensures klonReady(m)
   ensures klonCalid(m)
-  ensures m.ownersInKlown(a)  //note - agnostic about whether a is cloned or not
+  ensures m.ownersInKlon(a)  //note - agnostic about whether a is cloned or not
 
  {
   print "CALL Clone_All_Owner of:", fmtobj(a), " owned by ", fmtown(a.owner) ,"\n";
@@ -140,8 +140,8 @@ assert  MX == a.owner - rm.m.Keys;
 
   assert (a.owner - MX) <= rm.m.Keys;  //why -MX???
 
-  m.directOwnerInKlownIsEnough(a);
-  assert  m.ownersInKlown(a);
+  m.directOwnerInKlonIsEnough(a);
+  assert  m.ownersInKlon(a);
   assert  m.from(m');
   assert  klonCalid(m);
 
@@ -175,7 +175,7 @@ assert  MX == a.owner - rm.m.Keys;
 
 //////////////////////////////////////////////////////////////////////
 
-lemma  {:isolate_assertions} {:verify true} REFAC_XAO_OK(a : Object,  m' : Klon)
+lemma {:verify true} REFAC_XAO_OK(a : Object,  m' : Klon)
 
    requires klonReady(m')
    requires klonCalid(m')

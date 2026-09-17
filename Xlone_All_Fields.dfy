@@ -16,7 +16,7 @@ method Xlone_All_Fields(a : Object, b : Object, m' : Klon)
   requires klonReady(m')
   requires klonCalid(m')
 
-  requires m'.objectInKlown(a)
+  requires m'.objectInKlon(a)
   requires COK(a,m'.oHeap)      requires COKA: COK(a, m'.oHeap)
   requires b.Context(m'.hns({b}))
 
@@ -49,9 +49,9 @@ method Xlone_All_Fields(a : Object, b : Object, m' : Klon)
 //   requires forall oo <- a.AMFO :: oo.Ready()
 //
 //   requires a.Ready() && a.Valid()
-//   requires m'.ownersInKlown(a)  //prog??
+//   requires m'.ownersInKlon(a)  //prog??
 //   requires m'.o.Ready() && m'.o.Valid()
-//   requires m'.objectInKlown(m'.o)
+//   requires m'.objectInKlon(m'.o)
 //   //requires m'.CalidCanKey(a)  //prog
 //
 //   requires m'.HeapContextReady()
@@ -79,7 +79,7 @@ method Xlone_All_Fields(a : Object, b : Object, m' : Klon)
    ensures klonCalid(m)
    ensures klonLine(a,b,m)
 
-   ensures m.objectInKlown(a)
+   ensures m.objectInKlon(a)
    ensures COK(a,m.oHeap)
    ensures b.Context(m.hns({b}))
    ensures b.Context(m.hns())
@@ -157,7 +157,7 @@ assert klonCalid(m);
 // assert klonCalid(m);
 // //W8NK3Rassert m.Calid();//W8NK3R
 // //W8NK3R  assert HighCalidFragilistic(m) by { reveal HCFm; } //W8NK3R II
-// assert m.objectInKlown(a);
+// assert m.objectInKlon(a);
 // assert m.m[a] == b;
 // //NO_FIELDMODES assert a.fieldModes.Keys == b.fieldModes.Keys;
 // //NO_FIELDMODES assert forall z <- m'.m.Keys :: z.fieldModes == m'.m[z].fieldModes;
@@ -188,7 +188,7 @@ while ((a.fields.Keys - b.fields.Keys) > {})
 //  invariant HighCalidFragilistic(m)
 //  invariant forall f <- m.m.Keys :: HighLineKV(f,m.m[f],m)
   invariant m.from(m')
-  invariant m.objectInKlown(a)
+  invariant m.objectInKlon(a)
   invariant m.m[a] == b
   invariant a.fields.Keys >= b.fields.Keys
 
@@ -261,7 +261,7 @@ print "->WHOOPS ", |m'.oHeap - m'.m.Keys +{a}|, " ", |a.AMFO|," ",|a.fields.Keys
 // //  assert m.oHeap >= flatten(m.clowner) >= flatten(m.clbound);
 //   assert a in m.m.Keys;
 //   assert m.m[a] == b;
-//   assert m.objectInKlown(a);
+//   assert m.objectInKlon(a);
 //   assert inside(a, m.o) by { reveal AIMO; }
 //
 // //START FROM XVMq
@@ -280,8 +280,8 @@ assert COKK2A: COK(a, m.oHeap) by { reveal COKA; reveal COK(); assert COK(a, m'.
 //
 //   //surely much of the following comes down from Calid()?
 //   assert m.o.Ready() && m.o.Valid();
-//   assert m.objectInKlown(m.o);
-//   assert m.objectInKlown(a);
+//   assert m.objectInKlon(m.o);
+//   assert m.objectInKlon(a);
 //
 // //  assert m.CalidCanKey(a);
 //
@@ -319,7 +319,7 @@ assert unchanged@PRELOOP(m.oHeap);
 //   assert a.Ready();
 //   assert a in m.m.Keys;
 //   assert m.m[a] == b;
-//   assert m.objectInKlown(a);
+//   assert m.objectInKlon(a);
 // //prog inside
 // //  assert strictlyInside(a, m.o);    //   requires AMO: strictlyInside(a, m'.o)
 // //  assert inside(a, m.o);  //   requires AMO: strictlyInside(a, m'.o)
@@ -340,7 +340,7 @@ assert unchanged@PRELOOP(m.oHeap);
 //   assert COK(a, m.oHeap)  by { reveal COKK2A; reveal COK(); assert COK(a, m'.oHeap); }
 //
 //   assert m.o.Ready() && m.o.Valid();
-//   assert m.objectInKlown(m.o);
+//   assert m.objectInKlon(m.o);
 //
 //   assert a  in m.oHeap;
 //   assert b !in m.oHeap;

@@ -9,7 +9,7 @@ lemma PLUS_EMPTY(a : Owner, b : Owner)
   ensures a + b == (a + b) + {} == a + b + {}
 {}
 
-method {:isolate_assertions} {:timeLimit 5} clone(a : Object, context : set<Object>,  into : Owner := a.owner)
+method {:timeLimit 5} clone(a : Object, context : set<Object>,  into : Owner := a.owner)
      returns (b : Object, subtext : set<Object>)
    decreases *
     requires COK(a, context)
@@ -21,10 +21,10 @@ method {:isolate_assertions} {:timeLimit 5} clone(a : Object, context : set<Obje
     requires flatten(into) >= a.AMFB
     requires flatten(into) >= a.AMFB
     requires forall o <- flatten(into) :: o.Ready()
-    requires myBoundsOK(into, into)
+    requires boundsOK(into, into)
     requires forall x <- context :: x.Ready() && x.AllOutgoingReferencesWithinThisHeap(context)
 
-    requires myBoundsOK(into, into)
+    requires boundsOK(into, into)
     requires COK(a, context)
     requires CallOK(context)
     requires forall x <- context :: x.Ready() && x.AllOutgoingReferencesWithinThisHeap(context)
@@ -60,12 +60,12 @@ method {:isolate_assertions} {:timeLimit 5} clone(a : Object, context : set<Obje
 }
 
 
-method {:isolate_assertions} {:timeLimit 30 } sheepKlon(o : Object, clowner : Owner, oHeap : set<Object>, clbound : Owner := froposeBounds(clowner)) returns  (m : Klon)
+method {:timeLimit 30 } sheepKlon(o : Object, clowner : Owner, oHeap : set<Object>, clbound : Owner := froposeBounds(clowner)) returns  (m : Klon)
 //seed Klon for cloning object o,  owner of clone being clowner, within heap oHeap...
    decreases *
     requires AllReady(clowner)
     requires AllReady(clbound)
-    requires myBoundsOK(clowner, clbound)
+    requires boundsOK(clowner, clbound)
     requires COK(o, oHeap)
     requires CallOK(oHeap)
     requires forall x <- oHeap :: x.Ready() && x.AllOutgoingReferencesWithinThisHeap(oHeap)
@@ -195,7 +195,7 @@ forall x <- me.Values ensures (x.Context(me.Values+oHeap)) //by
 assert forall x <- me.Values :: x.Context(me.Values+oHeap); ///Err
 assert ME_VALUES: forall x <- me.Values :: x.Context(me.Values+oHeap); ///Err
 //
-// assert forall k : Object <- me.Keys :: ( && (k.Ready()) && (objectInKlown(k)) && (me[k].Ready()) && (me[k] in hns()) );
+// assert forall k : Object <- me.Keys :: ( && (k.Ready()) && (objectInKlon(k)) && (me[k].Ready()) && (me[k] in hns()) );
 //
 // assert forall k <- me.Keys :: CalidLineKV(k, me[k]);
 //
@@ -233,7 +233,7 @@ assert c == m.c == m.m[m.o];
 
     assert (m.o in m.oHeap);
     assert (m.o.Ready());
-    assert (m.objectInKlown(m.o));
+    assert (m.objectInKlon(m.o));
     assert (m.m[m.o] == m.c);
     assert (m.o.AMFX == m.o_amfx);
     assert (m.o.AMFO == m.o_amfx+{m.o});
@@ -241,12 +241,12 @@ assert c == m.c == m.m[m.o];
     assert (m.clbound == m.c.bound);
     assert ((m.c.AMFX  == m.c_amfx));
     assert ((m.c.AMFB  == m.c_amfb));
-    assert myBoundsOK(m.o.owner, m.o.bound);
+    assert boundsOK(m.o.owner, m.o.bound);
     assert (m.oHeap >= m.c_amfx >= flatten(m.clbound) >= flatten(m.o.bound));
     assert (m.m.Keys <= m.oHeap);
     assert (m.m.Values <= m.hns());
     assert (forall x <- m.hns() :: x.Ready());
-    assert (forall x <- m.m.Keys :: m.objectInKlown(x));
+    assert (forall x <- m.m.Keys :: m.objectInKlon(x));
     assert (m.c_amfx <= m.oHeap);
     assert klonReady(m);
 
@@ -272,7 +272,7 @@ forall k <- m.m.Keys ensures klonLine(k, m.m[k], m) //by
     assert klonModes(k,v,m);
 
         assert (m.o.Ready());
-        assert (m.objectInKlown(m.o));
+        assert (m.objectInKlon(m.o));
         assert ( (k == m.o)       <==>  (v == m.c)  );
         assert ((inside(k, m.o))   ==> (k.AMFB  <= m.o.AMFB));
         assert (outside(k, m.o)   <==>  (v == k));
@@ -296,11 +296,11 @@ forall k <- m.m.Keys ensures klonLine(k, m.m[k], m) //by
 
 // forall k <- m.m.Keys ensures (m.gettingThere()) {
 //    if (k == c) {
-//       assert (k.Ready()) && (m.objectInKlown(k)) && (m.m[k].Ready()) && (m.m[k] in m.hns());
+//       assert (k.Ready()) && (m.objectInKlon(k)) && (m.m[k].Ready()) && (m.m[k] in m.hns());
 //    } else {
-//       assert (k.Ready()) && (m.objectInKlown(k)) && (m.m[k].Ready()) && (m.m[k] in m.hns());
+//       assert (k.Ready()) && (m.objectInKlon(k)) && (m.m[k].Ready()) && (m.m[k] in m.hns());
 //    }
-//  assert (k.Ready()) && (m.objectInKlown(k)) && (m.m[k].Ready()) && (m.m[k] in m.hns());
+//  assert (k.Ready()) && (m.objectInKlon(k)) && (m.m[k].Ready()) && (m.m[k] in m.hns());
 // }
 
 
@@ -322,7 +322,7 @@ forall k <- m.m.Keys ensures klonLine(k, m.m[k], m) //by
 // Error: function precondition could not be proved
 // Inside klonLine(k, m.m[k], m)
 // Inside klonReady(m)
-// Could not prove: forall x <- m.m.Keys :: m.objectInKlown(x)
+// Could not prove: forall x <- m.m.Keys :: m.objectInKlon(x)
 // This is the only assertion in batch #777 of 1290 in method sheepKlon
 // Batch #777 resource usage: 25.8M RU
 
@@ -359,7 +359,7 @@ assert m.c.Ready();
 // // //    assert (outside(x,m.o)); //where the FUCK did this come from?
 // //     assert (x.AMFX <= m.m.Keys);
 // //     assert (x.AMFB <= m.m.Keys);
-// //     assert (m.ownersInKlown(x));
+// //     assert (m.ownersInKlon(x));
 // //     assert (x.Ready());
 // //     assert (m.apoCalidse());
 // //
@@ -371,13 +371,13 @@ assert m.c.Ready();
 // //   assert m.m[x].Ready();
 // //     assert (checkOwnershipOfClone(x,m.m[x],m));
 // //     assert (checkBoundOfClone(x,m.m[x],m));
-// //     assert (mappingOwnersThruKlownKV(x,m.m[x],m));
+// //     assert (mappingOwnersThruKlonKV(x,m.m[x],m));
 // //  }
 //
 //
 // forall k <- m.m.Keys ensures (true) {
 //      assert (k.Ready());
-//      assert (m.objectInKlown(k));
+//      assert (m.objectInKlon(k));
 //      assert (m.m[k].Ready());
 //      assert (m.m[k] in m.hns());
 // }
@@ -404,10 +404,10 @@ assert m.c.Ready();
 // //     && (x.AMFX <= m.m.Keys)
 // //     && (x.AMFB <= m.m.Keys)
 // // //    && (k.bound <= k.owner <= m.Keys)
-// //     && (m.ownersInKlown(x))  //belt and braces--- currently a requirement!
+// //     && (m.ownersInKlon(x))  //belt and braces--- currently a requirement!
 // //
 // //   && (x.Ready())
-// //   && (m.ownersInKlown(x))
+// //   && (m.ownersInKlon(x))
 // //   && (x.Ready())
 // //   && (m.apoCalidse())
 // //   && (x.owner <= m.m.Keys <= m.oHeap)
@@ -418,7 +418,7 @@ assert m.c.Ready();
 // //
 // //     && (checkOwnershipOfClone(x,x,m))
 // //     && (checkBoundOfClone(x,x,m))
-// //     && (mappingOwnersThruKlownKV(x,x,m))
+// //     && (mappingOwnersThruKlonKV(x,x,m))
 // // );
 //
 //
@@ -429,9 +429,9 @@ assert m.c.Ready();
 //    // assert (outside(x,m.o));
 //     assert (x.AMFX <= m.m.Keys);  //???
 //     assert (x.AMFB <= m.m.Keys); //???
-//       assert (m.ownersInKlown(x)) ; //???
+//       assert (m.ownersInKlon(x)) ; //???
 //     assert (x.Ready()); //??? //??? //??? //??? //??? //???
-//     assert (m.ownersInKlown(x));
+//     assert (m.ownersInKlon(x));
 //     assert (x.Ready());
 // //    assert (m.apoCalidse());
 //     assert (x.owner <= m.m.Keys <= m.oHeap);  //???
@@ -441,7 +441,7 @@ assert m.c.Ready();
 //     assert (m.c_amfx <= m.oHeap);            //???
 //     assert (checkOwnershipOfClone(x,m.m[x],m));        //???        //???
 //     assert (checkBoundOfClone(x,m.m[x],m));
-//     assert (mappingOwnersThruKlownKV(x,m.m[x],m)); //???
+//     assert (mappingOwnersThruKlonKV(x,m.m[x],m)); //???
 // }
 //
 // // // assert forall x <- m.m.Keys :: m.CalidLineKV(x,x);
@@ -466,6 +466,6 @@ assert m.c.Ready();
 // //
 // //     assert (m.m.Keys <= m.oHeap);
 // //     assert (m.m.Values <= m.hns());
-// //     assert (m.ownersReadyInKlown(o));
+// //     assert (m.ownersInKlon(o));
 // //     assert (m.HeapOwnersReady());
 // //     assert (m.c_amfx <= m.oHeap);

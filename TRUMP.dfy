@@ -331,7 +331,7 @@ lemma smooveKlonerator(divot : Object, pivot : Object, rivet : Object, blivet : 
   requires blivet == m.c
 
   requires strictlyInside(divot, pivot)
-  requires m.objectInKlown(divot)
+  requires m.objectInKlon(divot)
   requires m.m[pivot] == blivet   //is this too much already?
   requires m.m[divot] == rivet    //is this too much already already?
 
@@ -749,7 +749,7 @@ lemma flatten_monotonic(a : Owner, b : Owner)
    ensures (a > b) ==> flatten(a) >= flatten(b)
 {}
 
-lemma  NAKED_LIBERATION(li : Owner, lo : Owner, lb : Owner, lf : Owner,
+lemma NAKED_LIBERATION(li : Owner, lo : Owner, lb : Owner, lf : Owner,
                  ri : Owner, ro : Owner, rb : Owner, rf : Owner,
                  left : Owner, right : Owner, pivot : Object)
                     requires left  == (li + lo + lb + lf + pflivot(left, pivot) )
@@ -763,7 +763,7 @@ lemma  NAKED_LIBERATION(li : Owner, lo : Owner, lb : Owner, lf : Owner,
 {}
 
 
-lemma  FLAT_LIVERATUIB(li : Owner, lo : Owner, lb : Owner, lf : Owner,
+lemma FLAT_LIVERATUIB(li : Owner, lo : Owner, lb : Owner, lf : Owner,
                  ri : Owner, ro : Owner, rb : Owner, rf : Owner,
                  left : Owner, right : Owner, pivot : Object)
                     requires froglet(left, pivot,li,lo,lb,lf)
@@ -1512,7 +1512,7 @@ lemma ReadyFlatten(oo : Owner)
 
 //is "inside_pivot" a better name than owners_inside
 //{:timeLimit 20}
-lemma  GordonPivotFringeInsideFlatternOwner(owners_inside_nopivot : Owner, pivot : Object, whole_f : Owner)
+lemma GordonPivotFringeInsideFlatternOwner(owners_inside_nopivot : Owner, pivot : Object, whole_f : Owner)
 
  requires forall i <- owners_inside_nopivot :: inside(i, pivot)
  requires owners_inside_nopivot > {}
@@ -1565,7 +1565,7 @@ lemma  GordonPivotFringeInsideFlatternOwner(owners_inside_nopivot : Owner, pivot
 }
 
 
-lemma  GordonPivotFringeIsPivotOwner(owners_inside_nopivot : Owner, pivot : Object, pivot_f : Owner)
+lemma GordonPivotFringeIsPivotOwner(owners_inside_nopivot : Owner, pivot : Object, pivot_f : Owner)
 
  requires forall i <- owners_inside_nopivot :: inside(i, pivot)
  requires owners_inside_nopivot > {}
@@ -2172,7 +2172,7 @@ lemma {:timeLimit 30} ThereIsALightThatNeverGoesOut(part : Object, whole : Objec
 }
 
 
-ghost function {:isolate_assertions} YouCan'tGetThereFromHereBut(part : Object, whole : Object) : (next : Object)
+ghost function YouCan'tGetThereFromHereBut(part : Object, whole : Object) : (next : Object)
   //return next - a "direct owner" of part that is on the way up to "whole"
   decreases part.AMFO
 

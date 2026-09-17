@@ -291,7 +291,7 @@ opaque predicate COK(a : Object, context : set<Object>) : (r : bool)
  }
 
 
-// method  {:verify false}  XXXCOKat(a : Object, n : string, context : set<Object>) returns ( r : Object )
+// method {:verify false}  XXXCOKat(a : Object, n : string, context : set<Object>) returns ( r : Object )
 //   ensures r == a.fields[n]
 //   ensures COK(r,context)
 //   modifies {}
@@ -299,7 +299,7 @@ opaque predicate COK(a : Object, context : set<Object>) : (r : bool)
 //   r := COKat(a,n,context);
 // }
 
-function {:isolate_assertions} COKat(a : Object, n : string, context : set<Object>) : ( r : Object )
+function COKat(a : Object, n : string, context : set<Object>) : ( r : Object )
      reads a`fields, a`fieldModes,  context`fields, context`fieldModes
   requires COK(a,context)
   requires CallOK(context)
@@ -357,7 +357,7 @@ lemma COKfromHeapContextReady(o : Object, m : Klon)
 
 
 
-lemma {:isolate_assertions} CallOKfromHeapContextReady(m : Klon)
+lemma CallOKfromHeapContextReady(m : Klon)
   requires m.HeapContextReady()
    ensures forall x <- m.oHeap :: x.Context(m.oHeap)
    ensures CallOK(m.oHeap)

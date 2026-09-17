@@ -6,7 +6,7 @@ include "Ownership-Recursive.dfy"
 
 type Bound = Owner
 
-predicate  myBoundsOK(oo : Owner, mb : Bound)
+predicate boundsOK(oo : Owner, mb : Bound)
  {
   && (flatten(oo) >= flatten(mb))
   && (forall o <- oo :: flatten(o.ownerBound()) >= flatten(mb))
@@ -18,7 +18,7 @@ lemma boundSanity(part : Object, whole : Object, po : Object)
  decreases part.AMFO
   requires part.Ready() && whole.Ready()
   requires strictlyInside(part,whole)
-  requires myBoundsOK(part.owner, part.bound)
+  requires boundsOK(part.owner, part.bound)
    ensures part.AMFO > part.AMFB
    ensures whole.AMFO > whole.AMFB
 
@@ -42,12 +42,12 @@ lemma testBounds1(oo : Owner, mb : Bound)
   //bound of {} is always OK
  requires AllReady(oo)
  requires AllReady(mb)
-  ensures myBoundsOK(oo, {})
+  ensures boundsOK(oo, {})
   {}
 
 lemma testBounds3(oo : Owner, mb : Bound)
  //bound {} of even at owner {}
-   ensures myBoundsOK({}, {})
+   ensures boundsOK({}, {})
   {}
 
 lemma testBounds4(oo : Owner, mb : Bound)
@@ -56,10 +56,10 @@ lemma testBounds4(oo : Owner, mb : Bound)
   requires AllReady(oo)
   requires AllReady(mb)
   requires forall o <- oo :: flatten(o.ownerBound()) >= flatten(mb)
-   ensures myBoundsOK(oo, mb)
+   ensures boundsOK(oo, mb)
   {}
 
-lemma  {:isolate_assertions} {:timeLimit 20} testBounds5(oo : Owner, mb : Bound)
+lemma {:timeLimit 20} testBounds5(oo : Owner, mb : Bound)
   requires AllReady(oo)
   requires flatten(oo) >= flatten(mb)
   requires forall o <- oo :: (o.bound == o.owner)
@@ -67,20 +67,20 @@ lemma  {:isolate_assertions} {:timeLimit 20} testBounds5(oo : Owner, mb : Bound)
   requires forall o <- oo :: o.AMFX >= flatten(mb)
    ensures forall o <- oo :: o.AMFB >= flatten(mb)
   requires forall o <- oo :: flatten(o.ownerBound()) >= flatten(mb)
-   ensures myBoundsOK(oo, mb)
+   ensures boundsOK(oo, mb)
   {
     // calc {
     //     forall o <- oo :: (o.bound == o.owner);
     //     forall o <- oo :: (o.AMFB == o.AMFX);
     //     forall o <- oo :: o.AMFX >= flatten(mb);
     //     forall o <- oo :: o.AMFB >= flatten(mb);
-    //      myBoundsOK(oo, mb);
+    //      boundsOK(oo, mb);
     // }
   }
 
 
 
-lemma {:isolate_assertions} testBounds6(oo : Owner, mb : Bound, o : Object, b : Bound)
+lemma testBounds6(oo : Owner, mb : Bound, o : Object, b : Bound)
   requires AllReady(oo)
   requires AllReady(mb)
   requires oo == {o}   //singleton
@@ -90,7 +90,7 @@ lemma {:isolate_assertions} testBounds6(oo : Owner, mb : Bound, o : Object, b : 
    ensures (set o <- oo, ooo <- o.AMFB :: ooo ) == o.AMFB == flatten(o.bound)
 //   ensures forall o <- oo :: o.AMFB >= flatten(mb)
    ensures forall o <- oo :: flatten(o.ownerBound()) >= flatten(mb)
-   ensures myBoundsOK(oo, mb)
+   ensures boundsOK(oo, mb)
   {
     assert mb == o.ownerBound();
     assert forall o <- oo :: o.ownerBound() == mb;
@@ -111,12 +111,12 @@ lemma testBounds11(oo : Owner, mb : Bound)
     requires forall o <- oo :: flatten(o.ownerBound())>= flatten(mb)
      ensures forall o <- oo :: (o.AMFB+{o}) >= flatten(mb)   ///how come no PLUSo????
      ensures(forall o <- oo :: ((o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(mb))))
-     ensures myBoundsOK(oo, mb)
+     ensures boundsOK(oo, mb)
   {}
 
 
 
-lemma   {:isolate_assertions} {:timeLimit 20}  testBounds12(oo : Owner, mb : Bound)    //BROKENl
+lemma  {:timeLimit 20}  testBounds12(oo : Owner, mb : Bound)    //BROKENl
     requires flatten(oo) >= flatten(mb)
     requires AllReady(oo)
 //    requires mb == (set o <- oo | forall b <- mb :: inside(b,o))
@@ -124,7 +124,7 @@ lemma   {:isolate_assertions} {:timeLimit 20}  testBounds12(oo : Owner, mb : Bou
 //    requires mb == (set o <- oo | forall b <- o.AMFB :: inside(o,b))
 //    requires mb == (set o <- oo | forall b <- o.AMFB+{o} :: inside(o,b))
 //    ensures forall o <- oo :: (o.AMFB+{o}) >= flatten(mb)
-//    ensures myBoundsOK(oo, mb)
+//    ensures boundsOK(oo, mb)
   { }
 
 
@@ -133,13 +133,13 @@ lemma testBounds13(a : Object, b : Object, c : Object, d : Object)
      requires c.AMFB == {b,a}
      requires b.AMFB == {a}
      requires a.AMFB == {}
-      ensures myBoundsOK( {a,b,c}, {})
+      ensures boundsOK( {a,b,c}, {})
       {}
 
 
 
 
-lemma {:isolate_assertions} testBounds14(a : Object, b : Object, c : Object)
+lemma testBounds14(a : Object, b : Object, c : Object)
 //learning from this method - setup owner and bound, NOT AMFX and friends...
      requires a.Ready() && b.Ready() && c.Ready()
       ensures c.AMFB == {a}
@@ -152,10 +152,10 @@ lemma {:isolate_assertions} testBounds14(a : Object, b : Object, c : Object)
       ensures b.bound == {a}
      requires a.AMFB == {}
      requires a.AMFO == {a}
-      ensures myBoundsOK( {}, {})    //a
-      ensures myBoundsOK( {a}, {a})  //b
-      ensures myBoundsOK( {b}, {a})  //c
-      ensures myBoundsOK( {b}, {} )  //c?
+      ensures boundsOK( {}, {})    //a
+      ensures boundsOK( {a}, {a})  //b
+      ensures boundsOK( {b}, {a})  //c
+      ensures boundsOK( {b}, {} )  //c?
 
       {
         assert flatten( {a} ) == {a};
@@ -189,10 +189,10 @@ lemma testBounds15(a : Object, b : Object, c : Object)
      requires a.bound == {}
      requires a.owner == {}
       ensures flatten({a}) == {a}
-      ensures myBoundsOK( {c,b}, {a})
-      ensures myBoundsOK( {b},   {a})
-      ensures myBoundsOK( {c},   {a})
-      ensures myBoundsOK( {c},   {b})
+      ensures boundsOK( {c,b}, {a})
+      ensures boundsOK( {b},   {a})
+      ensures boundsOK( {c},   {a})
+      ensures boundsOK( {c},   {b})
   { }
 
 
@@ -206,9 +206,9 @@ lemma testBounds16(a : Object, b : Object, c : Object)
      requires a.bound == {}
      requires a.owner == {}
       ensures flatten({a}) == {a}
-      ensures myBoundsOK( {c,b}, {a})
-      ensures myBoundsOK( {b},   {a})
-      ensures myBoundsOK( {c},   {a})
+      ensures boundsOK( {c,b}, {a})
+      ensures boundsOK( {b},   {a})
+      ensures boundsOK( {c},   {a})
   { }
 
 
@@ -221,19 +221,19 @@ lemma testBounds16(a : Object, b : Object, c : Object)
 method proposeBoundsFLAT(os : set<Object>) returns (b : Bound)
  //computes the intersection of the *flattened* bounds of each owner in os...
   requires AllReady(os)
-   ensures myBoundsOK(os, b)
+   ensures boundsOK(os, b)
  {
     var all : set<Object> := set o : Object <- os, oo <- o.AMFB :: oo;
     b := set a <- all | forall o <- os :: a in o.AMFB;
  }
 
 
-method {:isolate_assertions}  opposeBounds(os : set<Object>) returns (b : Bound)
+method  opposeBounds(os : set<Object>) returns (b : Bound)
  //computes the intersection of the nominal bounds of each owner
  //does it?  are we sure?
  //keeping it around because a) paranoia & b) "opposeBounds" is a funny name...
   requires AllReady(os)
-   ensures myBoundsOK(os, b)
+   ensures boundsOK(os, b)
    ensures b == proposeBounds(os)
    ensures flatten(os) >= flatten(b)
  {
@@ -241,10 +241,10 @@ method {:isolate_assertions}  opposeBounds(os : set<Object>) returns (b : Bound)
     b := set a <- all | forall o <- os :: flatten({a}) <= flatten(o.ownerBound());
  }
 
- function  {:isolate_assertions}  proposeBounds(os : set<Object>) : (b : Bound)
+ function  proposeBounds(os : set<Object>) : (b : Bound)
  //propose boubnsf but it;'s a function
   requires AllReady(os)
-   ensures myBoundsOK(os, b)
+   ensures boundsOK(os, b)
    ensures flatten(os) >= flatten(b)
  {
     var all : set<Object> := set o <- os, a <- o.ownerBound() :: a;
@@ -259,11 +259,11 @@ method {:isolate_assertions}  opposeBounds(os : set<Object>) returns (b : Bound)
 // lemma SAME_SAME_BOUNDS(os : set<Object>, all : set<Object>)
 //   requires AllReady(os)
 //   requires all == set o <- os, a <- o.ownerBound() :: a
-// //   ensures myBoundsOK(os, (set a <- all | forall o <- os :: a in flatten(o.ownerBound())))
-//   // ensures myBoundsOK(os, (set a <- all | forall o <- os :: a in o.ownerBound()))
-//  //  ensures myBoundsOK(os, (set a <- all | forall o <- os :: a.AMFO >= flatten(o.ownerBound())))
-//    ensures myBoundsOK(os, set a <- all | forall o <- os :: flatten({a}) <= flatten(o.ownerBound()))
-//    ensures myBoundsOK(os, set a <- all | forall o <- os :: flatten(o.ownerBound()) >= flatten({a}))
+// //   ensures boundsOK(os, (set a <- all | forall o <- os :: a in flatten(o.ownerBound())))
+//   // ensures boundsOK(os, (set a <- all | forall o <- os :: a in o.ownerBound()))
+//  //  ensures boundsOK(os, (set a <- all | forall o <- os :: a.AMFO >= flatten(o.ownerBound())))
+//    ensures boundsOK(os, set a <- all | forall o <- os :: flatten({a}) <= flatten(o.ownerBound()))
+//    ensures boundsOK(os, set a <- all | forall o <- os :: flatten(o.ownerBound()) >= flatten({a}))
 //    {
 //    }
 
@@ -275,7 +275,7 @@ method {:isolate_assertions}  opposeBounds(os : set<Object>) returns (b : Bound)
  //propose boubnsf but it;'s a function withtout READY as a precondition.
  //which mean it can be used to set default argument values (ege in make())
  //but it's got an *assume* in it...
-   ensures myBoundsOK(os, b)
+   ensures boundsOK(os, b)
    ensures flatten(os) >= flatten(b)
  {
    assume AllReady(os);
@@ -291,7 +291,7 @@ method {:isolate_assertions}  opposeBounds(os : set<Object>) returns (b : Bound)
  //propose boubnsf but it;'s a function withtout READY as a precondition.
  //which mean it can be used to set default argument values (ege in make())
  //but can't guarantee anything
- //  ensures myBoundsOK(os, b)
+ //  ensures boundsOK(os, b)
  {
     var all : set<Object> := set o <- os, a <- o.ownerBound() :: a;
   //  set a <- all | forall o <- os :: flatten({a}) <= flatten(o.ownerBound())
@@ -299,22 +299,22 @@ method {:isolate_assertions}  opposeBounds(os : set<Object>) returns (b : Bound)
  }
 
 
-lemma {:isolate_assertions} FroposeGetsBoundsOK(os : set<Object>, fp  : set<Object>)
+lemma FroposeGetsBoundsOK(os : set<Object>, fp  : set<Object>)
     requires froposeBounds(os) == fp
     requires AllReady(os)
      ensures froposeBounds(os) == fp
      ensures proposeBounds(os) == fp
      ensures aroposeBounds(os) == fp
 
-     ensures myBoundsOK(os, fp)
+     ensures boundsOK(os, fp)
 {}
 
-lemma {:isolate_assertions} OneNilOwner(a : Object)
+lemma OneNilOwner(a : Object)
   requires a.Ready()
   requires exists o : Object <- a.owner :: o.ownerBound() == {}
    ensures a.bound == {}
 {
-  assert myBoundsOK(a.owner, a.bound);
+  assert boundsOK(a.owner, a.bound);
   assert forall o <- a.owner :: flatten(o.ownerBound()) >= flatten(a.bound);
   assert flatten( {} ) == {};
   assert exists o : Object <- a.owner :: o.ownerBound() == {};
@@ -325,7 +325,7 @@ lemma {:isolate_assertions} OneNilOwner(a : Object)
 }
 
 
-lemma {:isolate_assertions} OneNilAMFO(a : Object, o : Object)
+lemma OneNilAMFO(a : Object, o : Object)
   decreases a.AMFO
   requires a.Ready()
   requires o in a.AMFO
@@ -348,12 +348,12 @@ lemma {:isolate_assertions} OneNilAMFO(a : Object, o : Object)
 
 
 //////////////////////////////////////////////////////////////////////
-lemma {:isolate_assertions} TransitiveBounds(part : Object,  whole : Object)
+lemma TransitiveBounds(part : Object,  whole : Object)
  decreases part.AMFO
   requires part.Ready() && whole.Ready()
   requires inside(part,whole)
-   ensures myBoundsOK(part.owner, part.bound)
-   ensures myBoundsOK(whole.owner, whole.bound)
+   ensures boundsOK(part.owner, part.bound)
+   ensures boundsOK(whole.owner, whole.bound)
    ensures part.AMFO >=  whole.AMFO
    ensures part.AMFO  > part.AMFB
    ensures whole.AMFO > whole.AMFB
@@ -364,7 +364,7 @@ lemma {:isolate_assertions} TransitiveBounds(part : Object,  whole : Object)
 //   ensures (forall o <- part.owner  :: flatten(o.ownerBound()) >= whole.AMFB)
 {
  InsideRecInside2(part, whole);
-     assert myBoundsOK(part.owner, part.bound);
+     assert boundsOK(part.owner, part.bound);
        assert (flatten(part.owner) >= flatten(part.bound));
        assert (forall o <- part.owner ::( (o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(part.bound))));
 
@@ -372,20 +372,20 @@ lemma {:isolate_assertions} TransitiveBounds(part : Object,  whole : Object)
 
 }
 
-lemma {:isolate_assertions} {:verify false} OLD_TransitiveBounds(part : Object,  whole : Object)
+lemma {:verify false} OLD_TransitiveBounds(part : Object,  whole : Object)
  /// warning - this reqhires SingleOwnership ie is BAD
  decreases part.AMFO
   requires part.Ready() && whole.Ready()
   requires inside(part,whole)
   requires SingleOwnership(part)
    ensures SingleOwnership(whole)
-   ensures myBoundsOK(part.owner, part.bound)
+   ensures boundsOK(part.owner, part.bound)
    // ensures part.AMFB <= whole.AMFB //contravariuant
    // ensures (whole.AMFO > {}) ==> (part.AMFB) <= (whole.AMFB) //contravariuant
   ensures forall o <- whole.owner ::( (o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(whole.bound)))
   {
      InsideRecInside2(part, whole);
-     assert myBoundsOK(part.owner, part.bound);
+     assert boundsOK(part.owner, part.bound);
        assert (flatten(part.owner) >= flatten(part.bound));
        assert (forall o <- part.owner ::( (o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(part.bound))));
 
@@ -407,7 +407,7 @@ assert (forall o <- part.owner ::((o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(par
 
 //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// ////
     assert next.Ready();
-    assert myBoundsOK(next.owner, next.bound);
+    assert boundsOK(next.owner, next.bound);
 
     assert (flatten(next.owner) >= flatten(next.bound));
     assert (flatten(part.owner) >= flatten(part.bound));
@@ -436,7 +436,7 @@ lemma OneIsOne(n : Object, nn : set<Object>)
 
 
 
-predicate {:isolate_assertions} SingleOwnership(o : Object)
+predicate SingleOwnership(o : Object)
   requires o.Ready()
  decreases o.AMFO
   {
@@ -506,15 +506,15 @@ predicate {:isolate_assertions} SingleOwnership(o : Object)
 
 
 
-lemma {:isolate_assertions} {:verify false} BOUNDS_SHOULD_BE_OK(oo : Owner, mb : Owner, m : Klon)
+lemma {:verify false} BOUNDS_SHOULD_BE_OK(oo : Owner, mb : Owner, m : Klon)
   requires klonReady(m)
   requires klonCalid(m)
   requires oo <= m.m.Keys
   requires mb <= m.m.Keys
-  requires nuBoundsOK(oo, mb)
+  requires boundsOK(oo, mb)
   requires flatten(oo) > m.o.AMFO
   requires flatten(mb) > m.o.AMFO
-//   ensures nuBoundsOK(mapThruKlon(oo,m), mapThruKlon(mb,m))
+//   ensures boundsOK(mapThruKlon(oo,m), mapThruKlon(mb,m))
  {
   assert (flatten(oo) >= flatten(mb));
   assert (forall o <- oo :: flatten(o.ownerBound()) >= flatten(mb));

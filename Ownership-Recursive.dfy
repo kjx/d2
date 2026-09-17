@@ -139,7 +139,7 @@ function collectAllOwnersButForOwners(oo : Owner) : (rv : Owner)
 // }
 //
 //
-// function  zlork(oo : Owner) : (rv : OWNR)
+// function zlork(oo : Owner) : (rv : OWNR)
 //   decreases allAMFOs(oo)
 //    requires AllReady(oo)
 //   { oo + (set o <- oo, ooo <- flown(o.owner) :: ooo) }
@@ -327,7 +327,7 @@ lemma AXIOMFLAT(a : Object, b : Object)
 {}
 
 
-lemma  FLATAMFO(a : Object)
+lemma FLATAMFO(a : Object)
   requires a.Ready()
    ensures a.AMFO == flatten({a})
    ensures forall oo <- a.AMFO :: inside(a,oo)
@@ -377,7 +377,7 @@ lemma Unready_AXIOMAMFOS(a : Object, b : Object)
   assume a.Ready(); assume b.Ready();
 }
 
-lemma  AXIOMOWNERSFLAT(a : Owner, b : Owner)
+lemma AXIOMOWNERSFLAT(a : Owner, b : Owner)
   requires AllReady(a)
   requires AllReady(b)
    ensures  (a == b)  ==> (flatten(a) == flatten(b))
@@ -447,13 +447,13 @@ predicate goodFlatten(o : Object, myAMFO : Owner)
     && (forall x <- o.owner :: goodFlatten(x, myAMFO))
    }
 
-lemma  LetsBeGood1(o : Object)
+lemma LetsBeGood1(o : Object)
    requires o.Ready()
   decreases o.AMFO
     ensures isFlat(o.AMFO) <==  goodFlatten(o, o.AMFO)
 {}
 
-lemma  LetsBeGood2(o : Object)
+lemma LetsBeGood2(o : Object)
    requires o.Ready()
    requires o.owner == {}
   decreases o.AMFO
@@ -461,7 +461,7 @@ lemma  LetsBeGood2(o : Object)
     ensures isFlat(o.AMFO)  ==> goodFlatten(o, o.AMFO)
 {}
 
-// lemma  LetsBeGood3(o : Object)
+// lemma LetsBeGood3(o : Object)
 //    requires o.Ready()
 //    requires o.owner > {}
 //   decreases o.AMFO
@@ -470,7 +470,7 @@ lemma  LetsBeGood2(o : Object)
 //   LetsBeGood3a(o, o.AMFO);
 // }
 
-// lemma  LetsBeGood3a(o : Object, a : OWNR)
+// lemma LetsBeGood3a(o : Object, a : OWNR)
 //    requires o.Ready()
 //    requires o.owner > {}
 //   decreases o.AMFO
@@ -485,7 +485,7 @@ lemma  LetsBeGood2(o : Object)
 //  }
 // }
 
-// lemma  LetsBeGood4(o : Object)
+// lemma LetsBeGood4(o : Object)
 //    requires o.Ready()
 //   decreases o.AMFO
 //     ensures isFlat(o.AMFO)  ==> goodFlatten(o, o.AMFO)
@@ -497,7 +497,7 @@ predicate goodCloneOwnership(left : Object, right : Object, m : Klon)
 ///checks left' ownership matches right, based on the Klojn
    requires left.Ready()
    requires right.Ready()
-   requires m.objectInKlown(left)
+   requires m.objectInKlon(left)
    requires right.AMFO <= m.m.Values
    requires right in invert(m.m).Keys
   decreases left.AMFO, right.AMFO
@@ -513,7 +513,7 @@ predicate goodCloneOwnershipWithin(left : Object, right : Object, pivot : Object
 ///checks left' ownership matches right, based on the Klojn
    requires left.Ready()
    requires right.Ready()
-   requires m.objectInKlown(left)
+   requires m.objectInKlon(left)
    requires right.AMFO <= m.m.Values
    requires right in invert(m.m).Keys
   decreases left.AMFO, right.AMFO
@@ -552,14 +552,14 @@ predicate goodCloneOwnershipWithin(left : Object, right : Object, pivot : Object
 
 
 
-lemma  prog_is_paranoid(left : Object, right : Object, pivot : Object,  m : Klon)
+lemma prog_is_paranoid(left : Object, right : Object, pivot : Object,  m : Klon)
 ///checks left' ownership matches right, based on the Klojn
   decreases left.AMFO, right.AMFO
    requires klonReady(m)
    requires klonCalid(m)
    requires left.Ready()
    requires right.Ready()
-   requires m.objectInKlown(left)
+   requires m.objectInKlon(left)
    requires right.AMFO <= m.m.Values
    requires right in invert(m.m).Keys
    requires goodCloneOwnership(left, right, m)
@@ -620,7 +620,7 @@ lemma TestRecombine(p0 : OWNR, w0 : OWNR, p1 : OWNR)
 
 //================================================================
 
-function  flown(oo : Owner) : (rv : OWNR)
+function flown(oo : Owner) : (rv : OWNR)
   decreases allAMFOs(oo)
    requires AllReady(oo)
     ensures AllReady(rv)
@@ -629,20 +629,20 @@ function  flown(oo : Owner) : (rv : OWNR)
 //  { (set o <- oo, ooo <- flown({o}) :: ooo) }   //nice but loops & doesn't call owner!!!!!
 //    { (set o <- oo, ooo <- (flown(o.owner) + {o}) :: ooo) }
 
-function  flownr(o : Object) : (rv : OWNR)
+function flownr(o : Object) : (rv : OWNR)
   requires o.Ready()
    { flown({o}) }
 //   ensures rv == o.AMFO // it does. but...
 //   { flown(o.owner) + {o} }   //earlier versuon - clearly I was askeeo at hte keyboard
 
-function  {:timeLimit 20} flowin(oo : Owner, pivot : Owner) : (rv : Owner)
+function {:timeLimit 20} flowin(oo : Owner, pivot : Owner) : (rv : Owner)
  decreases allAMFOs(oo)
   requires AllReady(oo)
   requires AllReady(pivot)
    ensures rv <= flown(oo)
            { flown(oo) - flown(pivot) }
 
-function  {:timeLimit 20} flowrin(o : Object, pivot : Object) : (rv : Owner)
+function {:timeLimit 20} flowrin(o : Object, pivot : Object) : (rv : Owner)
  decreases o.AMFO
   requires o.Ready()
   requires pivot.Ready()
@@ -851,7 +851,7 @@ lemma Frown3( a : Owner, b : Owner, c : Owner)
 {}
 
 
- lemma  OwnershipIsAcyclic(o : Object)
+ lemma OwnershipIsAcyclic(o : Object)
   requires o.Ready()
    ensures o !in allAMFOs(o.owner)
    ensures o !in allAMFXs(o.owner)
@@ -864,7 +864,7 @@ lemma Frown3( a : Owner, b : Owner, c : Owner)
     assert frown(o.owner) == o.AMFX;
    }
 
-// function  FR2(oo : Owner) : (r : Owner)
+// function FR2(oo : Owner) : (r : Owner)
 //    requires |oo| > 1
 //    requires AllReady(oo)
 //     ensures r <= frown(oo)
@@ -876,7 +876,7 @@ lemma Frown3( a : Owner, b : Owner, c : Owner)
 //     assert frown({o}) + frown(oo - {o}) == frown(oo);
 //     frown({o}) + frown(oo - {o}) }
 
- function  frown(oo : Owner) : (rv : OWNR)
+ function frown(oo : Owner) : (rv : OWNR)
   requires AllReady(oo)
   decreases allAMFOs(oo)
  { (set o <- oo, ooo <- frown(o.owner) :: ooo) + oo }
@@ -972,7 +972,7 @@ lemma FlownIsFlatten1(oo : Owner)
 {}
 
 
-lemma  FlownIsFlatten2(o : Object)
+lemma FlownIsFlatten2(o : Object)
  decreases allAMFOs({o})
   requires AllReady({o})
   requires AllReady(o.owner)
@@ -1012,7 +1012,7 @@ FlattenFlownFrown({o});
 //
 // assert  flatten({o }) == flown({o});
 
-lemma  FlownIsFlatten3(oo : Owner)
+lemma FlownIsFlatten3(oo : Owner)
  decreases allAMFOs(oo)
   requires AllReady(oo)
    ensures flatten(oo) == allAMFOs(oo)
@@ -1029,7 +1029,7 @@ lemma {:timeLimit 40} FlownIsFlatten4(o : Object)
 FlownAllAMFOs(o.owner);
 }
 
-lemma  FlownrIsFlatten5(o : Object)
+lemma FlownrIsFlatten5(o : Object)
  decreases o.AMFO
   requires o.Ready()
    ensures (flown(o.owner) + {o}) == flown({o}) == flownr(o)
@@ -1059,7 +1059,7 @@ lemma {:timeLimit 30} FlownrIsAMFX(o : Object)
    ensures flatten({o}) == flown({o})
    {}
 
-// function  {:timeLimit 20} flowinWTF(oo : Owner, pivot : Owner) : (rv : Owner)
+// function {:timeLimit 20} flowinWTF(oo : Owner, pivot : Owner) : (rv : Owner)
 //   decreases allAMFOs(oo)
 //   requires AllReady(oo)
 //    ensures rv <= allAMFOs(oo)
@@ -1093,7 +1093,7 @@ lemma FlowinPrefix(oo : OWNR, pivoto : OWNR)
   assert flatten(pivoto) == (pivoto);
 }
 
-lemma  FlownrPrefix1(o : Object, pivot : Object)
+lemma FlownrPrefix1(o : Object, pivot : Object)
   requires o.Ready()
   requires pivot.Ready()
   requires strictlyInside(o,pivot)

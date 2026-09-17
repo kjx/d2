@@ -4,7 +4,7 @@ include "Ownership-Recursive.dfy"
 
 //examples from the draft paper - March 2026
 
-method  {:isolate_assertions} ExampleMain(args : seq<string>)
+method ExampleMain(args : seq<string>)
 {
   print "Yaunch\n";
 
@@ -83,10 +83,10 @@ var fremeO := set x : Object <- frameO, y : Object <- x.owner :: y;
 
 expect |fremeO| == 1;
 
-print "boundOK({list,frame},frameO)=", myBoundsOK({list,frame},frameO),"\n";
-print "boundOK({list,frame},fremeO)=", myBoundsOK({list,frame},fremeO),"\n";
-print "boundOK({list,frame},{list,frame})=", myBoundsOK({list,frame},{list,frame}),"\n";
-print "boundOK({list,frame},frameO+{list,frame})=", myBoundsOK({list,frame},frameO+{list,frame}),"\n";
+print "boundOK({list,frame},frameO)=", boundsOK({list,frame},frameO),"\n";
+print "boundOK({list,frame},fremeO)=", boundsOK({list,frame},fremeO),"\n";
+print "boundOK({list,frame},{list,frame})=", boundsOK({list,frame},{list,frame}),"\n";
+print "boundOK({list,frame},frameO+{list,frame})=", boundsOK({list,frame},frameO+{list,frame}),"\n";
 nl();
 
   deadFrame := list_method(list,frame,flatten({list,frame}));
@@ -162,7 +162,7 @@ method drop(frame : Frame, u : U)
 //  assume without(frame, u);
 }
 
-method {:isolate_assertions} {:timeLimit 10} Paper_Embedded_add(a : nat, b : nat, caller : Frame, u : U)
+method {:timeLimit 10} Paper_Embedded_add(a : nat, b : nat, caller : Frame, u : U)
     returns(frame : Frame) ensures without(frame, u)
     requires caller.Ready()
     requires u >= flatten({caller})
@@ -187,7 +187,7 @@ lemma shitX()
  {}
 
 
-method {:isolate_assertions} {:timeLimit 30} MakeList(caller : Frame, u : U)
+method {:timeLimit 30} MakeList(caller : Frame, u : U)
     returns(frame : Frame) ensures without(frame, u)
     requires caller.Ready()
     requires caller.Valid()
@@ -204,7 +204,7 @@ method {:isolate_assertions} {:timeLimit 30} MakeList(caller : Frame, u : U)
     assert lyst.owner == {caller};
     frame.setf("lyst", lyst);
 assert caller.Valid() by { reveal CV; }  assert lyst.owner == {caller};  assert frame.fields["lyst"] == lyst;
-    assert nuBoundsOK({lyst}, {lyst});   ///attempting to get verification times down;
+    assert boundsOK({lyst}, {lyst});   ///attempting to get verification times down;
 
     var i := new Object.make(linkX, {lyst}, flatten({lyst}), "i", {lyst} );
     var j := new Object.make(linkX, {lyst}, flatten({lyst}), "j", {lyst} );  assert JV: j.Valid();
@@ -229,14 +229,14 @@ lemma DifferentOwnersDifferentObjects(a : Object, b : Object)
    ensures a != b
 {}
 
-method {:isolate_assertions} {:timeLimit 100} list_method(list : Object, caller : Frame, u : U)
+method {:timeLimit 100} list_method(list : Object, caller : Frame, u : U)
       returns(frame : Frame) ensures without(frame, u)
       requires caller.Ready()
       requires list.Ready()
       requires list != caller
       requires AllReady(u)
       requires u >= flatten({  caller, list   })
-      //requires nuBoundsOK({caller},{caller}) //seems WEIRD
+      //requires boundsOK({caller},{caller}) //seems WEIRD
 //NO_FIELDMODES      requires list.fieldModes == listX
       requires list.ownerf("head", {list})
       requires caller.bound == caller.owner
@@ -258,7 +258,7 @@ method {:isolate_assertions} {:timeLimit 100} list_method(list : Object, caller 
 
       print "owner  = ", fmtown({caller,list}),"\n";
       print "proposed   =", fmtown(proposeBounds({caller,list})),"\n";
-      print "myBoundsOK =", myBoundsOK({caller,list}, {caller}),"\n";
+      print "boundsOK =", boundsOK({caller,list}, {caller}),"\n";
 
       var os := {caller,list};
       var mb := proposeBounds(os);
@@ -292,7 +292,7 @@ assert flatten(list.ownerBound())   >= flatten(mb);
       assert flatten(caller.ownerBound()) >= flatten(mb);
       assert flatten(list.ownerBound())   >= flatten(mb);
       assert forall o : Object <- {caller,list} :: flatten(o.ownerBound()) >= flatten(mb);
-assert myBoundsOK({caller,list}, {caller});
+assert boundsOK({caller,list}, {caller});
 
       frame := new Object.make(fields({"list","n","link"}), {caller,list}, flatten({caller,list}+u), "list_method_frame");
       assert frame.owner == {caller,list};
@@ -457,7 +457,7 @@ assert forall o <- u :: o != frame;
 
 type Thread = Object
 
-lemma {:isolate_assertions} {:timeLimit 30} ThreadSafe(ta : Thread, tb : Thread, a : Object, b : Object)
+lemma {:timeLimit 30} ThreadSafe(ta : Thread, tb : Thread, a : Object, b : Object)
    requires ta.Ready() && tb.Ready() && a.Ready() && b.Ready()
    requires ta != tb
    requires isThread(ta)

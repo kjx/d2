@@ -21,7 +21,7 @@ include "Graphing.dfy"
 // datatype Split = Split(within : OWNR, without : OWNR, m : Klon)
 //
 // function split(oo : OWNR, m : Klon) : Split
-//   requires forall o <- oo :: m.objectReadyInKlown(o)
+//   requires forall o <- oo :: m.objectInKlon(o)
 // {
 //   Split( (set o <- oo | inside(o, m.o)), (set o <- oo | outside(o, m.o)), m)
 // }
@@ -91,14 +91,14 @@ method {:verify false} Main(args : seq<string>)
   assert km.o in km.m.Keys;
 
   ////////////////////////////////////////////////////////////////////
-//  assume km.objectInKlown(km.o);
+//  assume km.objectInKlon(km.o);
   ////////////////////////////////////////////////////////////////////
 //  assume HighCalidFragilistic(km);
   ///////////////////////////////////////////////////////////////
 
 //    assert forall k <- km.m.Keys :: HighLineKV(k, km.m[k], km);
-    assert forall x <- hq :: km.objectInKlown(x);
-    assert HQIK: forall x <- hq :: km.objectInKlown(x);
+    assert forall x <- hq :: km.objectInKlon(x);
+    assert HQIK: forall x <- hq :: km.objectInKlon(x);
     assert HQNN: forall x <- hq :: x != null;
 
 // printobjectset(hs);
@@ -160,7 +160,7 @@ if (loutName == "zandall9rusty") {
 ///////////////////////////////////////////////////////////////////////////////////////
 
 
-method {:isolate_assertions} {:timeLimit 40} wrangle7()
+method {:timeLimit 40} wrangle7()
 //sets up a full clone with sideways owner
 //pivot is b, external owner is e, orig is b,c,d, d has owner c & sideowner e, clone is k l m
   returns (t : Object, a : Object, b : Object, c : Object, d : Object, e : Object,
@@ -206,7 +206,7 @@ method {:isolate_assertions} {:timeLimit 40} wrangle7()
 // printobject(e);
 // print "\n\n";
 //
-// print "dynamically checking bouds bounds :", myBoundsOK( d.owner, d.bound),"\n";
+// print "dynamically checking bouds bounds :", boundsOK( d.owner, d.bound),"\n";
 
     k := new Object.make(protoTypes, {t}, {t}, "k¢b"); //top of coone - of b
     l := new Object.make(protoTypes, {k}, {t,k}, "l¢c"); //clone of c
@@ -267,7 +267,7 @@ print "AllReady(m_oo)= ", AllReady(m_oo), "\n";
 ///////////////////////////////////////////////////////////////////////////////////////
 
 
-method {:isolate_assertions} {:timeLimit 20} jandal8()
+method {:timeLimit 20} jandal8()
 //sets up a full-done clone *reentrantly*
 //otherwise compatible with wrangle - except klone owned by d  from
 //pivot is b, external owner is e, orig is b,c,d, d has owner c & sideowner e, clone is k l m BUT now owned by **d**
@@ -334,7 +334,7 @@ assert flatten({d}) == {t,a,b,c,d,e};
             assert {t,a,b,c,d,e} >= flatten({d});
             assert flatten({d}) >= flatten({d});
             assert AllReady({d});
-//            assert nuBoundsOK({d},{d});
+//            assert boundsOK({d},{d});
     k := new Object.make(protoTypes, {d}, {t,a,b,c,d,e}, "k¢b"); //top of coone - of b
 
 /// assert k.AMFO == {t,a,b,c,d,e,k};
@@ -345,7 +345,7 @@ assume flatten({k}) == {t,a,b,c,d,e,k};
             assert {t,a,b,c,d,e,k} >= flatten({k});
             assert flatten({k}) >= flatten({k});
             assert AllReady({k});
-//            assert nuBoundsOK({k},{k});
+//            assert boundsOK({k},{k});
     l := new Object.make(protoTypes, {k}, {t,a,b,c,d,e,k}, "l¢c"); //clone of c
 
 /// assert l.AMFO == {t,a,b,c,d,e,k,l};
@@ -440,7 +440,7 @@ nl();
  }
 
 
-method {:isolate_assertions} sandal8()
+method sandal8()
 //sets up a full-done clone *with sideways partial owners*
 //otherwise compatible with wrangle - except klone owned by d  from
 //pivot is b, external owner is e, orig is b,c,d, d has owner c & sideowner e, clone is k l m BUT now owned by **d**
@@ -507,7 +507,7 @@ assert flatten({d}) == {t,a,b,c,d,e};
             assert {t,a,b,c,d,e} >= flatten({d});
             assert flatten({d}) >= flatten({d});
             assert AllReady({d});
-//           assert nuBoundsOK({d},{d});
+//           assert boundsOK({d},{d});
     k := new Object.make(protoTypes, {d}, {t,a,b,c,d,e}, "k¢b"); //top of coone - of b
 
 /// assert k.AMFO == {t,a,b,c,d,e,k};
@@ -518,7 +518,7 @@ assume flatten({k}) == {t,a,b,c,d,e,k};
             assert {t,a,b,c,d,e,k} >= flatten({k});
             assert flatten({k}) >= flatten({k});
             assert AllReady({k});
-//            assert nuBoundsOK({k},{k});
+//            assert boundsOK({k},{k});
     l := new Object.make(protoTypes, {k}, {t,a,b,c,d,e,k}, "l¢c"); //clone of c
 
 /// assert l.AMFO == {t,a,b,c,d,e,k,l};
@@ -583,7 +583,7 @@ nl();
 
 
 
-method {:isolate_assertions} randal9()
+method randal9()
 //sets up a full-done clone *with sideways partial owners*
 //otherwise compatible with wrangle - except klone owned by d  from
 //pivot is b, external owner is e, orig is b,c,d, d has owner c & sideowner e, clone is k l m BUT now owned by **d**
@@ -724,7 +724,7 @@ printAllOwnershipsAndBounds(m_oo, m_context, "m");
 
 
 
-method {:isolate_assertions} {:timeLimit 20} zandal9()
+method {:timeLimit 20} zandal9()
 //sets up a single "row" of objects to show permissible links - five objects, t, a..d
 //in this version, all boundaries == owners
 //
@@ -791,7 +791,7 @@ k := t; l := t; m := t;
 
 
 
-method {:isolate_assertions} {:timeLimit 40}  zandal9bounded()
+method {:timeLimit 40}  zandal9bounded()
 //sets up a single "row" of objects to show permissible links - five objects, t,a..d, with c & d boundary pushed up to a.
 //
   returns (t : Object, a : Object, b : Object, c : Object, d : Object, e : Object,
@@ -849,7 +849,7 @@ k := t; l := t; m := t;
 
 
 
-method {:isolate_assertions} zandal9capsul()
+method zandal9capsul()
 //
 //aims to show a capsul
 //
@@ -903,7 +903,7 @@ k := t; l := t;
    }
 
 //{:timeLimit 15}
-method {:isolate_assertions}  zandal9tapsul()
+method  zandal9tapsul()
 //aims to show a capsule - bounding eveything at {t} not {}
 //time lately run Main.dfy d ORB "" "rankdir=\"RL\"; margin=0; "  --allow-warnings --no-verify | grep -v SATAN | tee DUMP.txt
 //
@@ -965,7 +965,7 @@ assert AllReady({l,k}+{t,a,b}+{c,d,e}+{m});
 
 
 //{:timeLimit 15}
-method {:isolate_assertions}  zandal9rusty()
+method  zandal9rusty()
 //aims to show a capsule - bounding eveything at {t} not {}
 //
 //.time lately run Main.dfy r  ORB "cX" "rankdir=\"RL\"; margin=0;"  --allow-warnings --no-verify | grep -v SATAN | tee DUMP.txt
@@ -1033,7 +1033,7 @@ method {:isolate_assertions}  zandal9rusty()
 
 
 
-lemma {:isolate_assertions} {:timeLimit 60} AllTheseFuckingObjectsAreReadyYouIdiot(
+lemma {:timeLimit 60} AllTheseFuckingObjectsAreReadyYouIdiot(
     t : Object,
     a : Object, b : Object, c : Object, d : Object, e : Object,
     k : Object, l : Object, m : Object,
@@ -1055,7 +1055,7 @@ lemma {:isolate_assertions} {:timeLimit 60} AllTheseFuckingObjectsAreReadyYouIdi
 {}
 
 
-method {:isolate_assertions} zandal0()
+method zandal0()
   //placebo easier than declaring everything in main
   returns (t : Object, a : Object, b : Object, c : Object, d : Object, e : Object,
            k : Object, l : Object, m : Object,
@@ -1087,7 +1087,7 @@ method {:isolate_assertions} zandal0()
 
 
 
-method {:isolate_assertions} {:timeLimit 40} zandalList()
+method {:timeLimit 40} zandalList()
   returns (t : Object, a : Object, b : Object, c : Object, d : Object, e : Object,
            k : Object, l : Object, m : Object,
            os : set<Object>, oq : seq<Object>, loutName : string)
@@ -1156,7 +1156,7 @@ lemma shit()
 
 
 
-method {:isolate_assertions} {:timeLimit 30} zandalThreads()
+method {:timeLimit 30} zandalThreads()
   //easier than declaring everything in main
   returns (t : Object, a : Object, b : Object, c : Object, d : Object, e : Object,
            k : Object, l : Object, m : Object,
@@ -1181,7 +1181,7 @@ method {:isolate_assertions} {:timeLimit 30} zandalThreads()
 
 
 
-assert nuBoundsOK({},{});
+assert boundsOK({},{});
 
 var topLeft  := new Object.make(fields({}), {}, {}, "t1", {});
 var topRite  := new Object.make(fields({}), {}, {}, "t2", {});
@@ -1212,7 +1212,7 @@ var rite2 := new Object.make(fields({}), {rite}, flatten({rite}), "23", {rite} )
     print "zandallThreads - proposed:", ffmtnickset(proposeBounds(oo));
     print "zandallThreads - mbounds:", ffmtnickset((mb));
 
- //   assert nuBoundsOK(oo, mb);
+ //   assert boundsOK(oo, mb);
  }
 var xxxx := new Object.make(fields({}), {left3,rite2}, flatten({left3,rite2}), "X");
 
@@ -1263,7 +1263,7 @@ assume AllReady(os);
 
 
 
-method {:isolate_assertions} zandal9inverted()
+method zandal9inverted()
 //sets up a single "row" of objects to show permissible links - five objects, t, a..d
 //in this version, all boundaries == owners
 //
@@ -1318,7 +1318,7 @@ method {:isolate_assertions} zandal9inverted()
 
 //works with {:timeLimit 0} Sat 18 APri before
 //but file took 25 miniutes
-method {:isolate_assertions} {:timeLimit 40} zandal10()
+method {:timeLimit 40} zandal10()
   returns (t : Object, a : Object, b : Object , c : Object, d : Object, e : Object,
            k : Object, l : Object, m : Object,
            os : set<Object>, oq : seq<Object>, loutName : string)
@@ -1359,7 +1359,7 @@ method {:isolate_assertions} {:timeLimit 40} zandal10()
 //  assert aroposeBounds({l}) == {l};
 //    assert froposeBounds({l}) == {l};
 //     assert proposeBounds({l}) == {l};
-//    assert nuBoundsOK({l},{l});
+//    assert boundsOK({l},{l});
 
       c := new Object.make(linkF, {l}, {t,a,b,k,l,m}, "i",{l});
     assert c.fieldModes == linkF;    assert c.owner == {l}; assert c.bound == aroposeBounds({l}); assert c.bound == {l};
@@ -1405,7 +1405,7 @@ AllTheseFuckingObjectsAreReadyYouIdiotVarargs(os, t, a, b, c, d, e, k, l, m);
 
 
 //works with {:timeLimit 0} Sat 18 APri before
-method {:isolate_assertions} zandal11()
+method zandal11()
   returns (t : Object, a : Object, b : Object, c : Object, d : Object, e : Object,
            k : Object, l : Object, m : Object,
            os : set<Object>, oq : seq<Object>, loutName : string)
@@ -1484,7 +1484,7 @@ assert d.AMFO == {t,a,b,c,d,  k,l,m};
 
 
 
-lemma {:isolate_assertions} {:timeLimit 60} AllTheseFuckingObjectsAreReadyYouIdiotVarargs(
+lemma {:timeLimit 60} AllTheseFuckingObjectsAreReadyYouIdiotVarargs(
     os : set<Object>, t : Object,
      a : Object := t, b : Object := t, c : Object := t, d : Object := t, e : Object := t,
      k : Object := t, l : Object := t, m : Object := t)
@@ -1632,27 +1632,27 @@ lemma {:isolate_assertions} {:timeLimit 60} AllTheseFuckingObjectsAreReadyYouIdi
 //TODO TO LEMMERS
 
 //
-// lemma {:isolate_assertions} MapfoEQ(oo1 : OWNR, oo2 : OWNR, m : Klon)
+// lemma MapfoEQ(oo1 : OWNR, oo2 : OWNR, m : Klon)
 //    requires HighCalidFragilistic(m)
-//    requires forall o <- oo1  :: m.objectReadyInKlown(o)
-//    requires forall o <- oo2  :: m.objectReadyInKlown(o)
+//    requires forall o <- oo1  :: m.objectInKlon(o)
+//    requires forall o <- oo2  :: m.objectInKlon(o)
 //     ensures (oo1 == oo2)  ==> (mapfo(oo1,m) == mapfo(oo2,m))
 //  //   ensures (oo1 == oo2) <==  (mapfo(oo1,m) == mapfo(oo2,m))
 //    {}
 //
 //
-// lemma {:isolate_assertions} MapfoEQ2(o1 : Object, o2 : Object, m : Klon)
+// lemma MapfoEQ2(o1 : Object, o2 : Object, m : Klon)
 //    requires HighCalidFragilistic(m)
-//    requires m.objectReadyInKlown(o1)
-//    requires m.objectReadyInKlown(o2)
+//    requires m.objectInKlon(o1)
+//    requires m.objectInKlon(o2)
 //     ensures (o1 == o2)  ==> (mapfo(o1.AMFO,m) == mapfo(o2.AMFO,m))
 //   //  ensures (o1 == o2) <==  (mapfo(o1.AMFO,m) == mapfo(o2.AMFO,m))
 //    {}
 
 //
 // //compare eeardline!
-//  function {:isolate_assertions} {:timeLimit 20} mapfo_orig(oo : OWNR, m : Klon) : SSO
-//    requires forall o <- oo :: m.objectReadyInKlown(o)
+//  function {:timeLimit 20} mapfo_orig(oo : OWNR, m : Klon) : SSO
+//    requires forall o <- oo :: m.objectInKlon(o)
 //    requires oo <= m.m.Keys
 //    requires HighCalidFragilistic(m)
 //     ensures                 m.o.AMFO <= m.m.Keys

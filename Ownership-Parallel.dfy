@@ -525,7 +525,7 @@ datatype RV = RV(owners : Owner, inside : Owner, outside : Owner, fringe : Owner
  }
 function newRV() : RV {RV({}, {}, {}, {}, {})}
 
-lemma {:isolate_assertions} ClassifyOwners(k : Object, pivot : Object, running' : Running := newRunning()) returns (rv : RV)
+lemma ClassifyOwners(k : Object, pivot : Object, running' : Running := newRunning()) returns (rv : RV)
    requires k.Ready()
    requires pivot.Ready()
   decreases k.AMFO
@@ -631,7 +631,7 @@ lemma {:isolate_assertions} ClassifyOwners(k : Object, pivot : Object, running' 
 
 
 //
-// lemma {:isolate_assertions} {:timeLimit 20} ClassifyOwners(k : Object, pivot : Object) returns (rv : RV)
+// lemma {:timeLimit 20} ClassifyOwners(k : Object, pivot : Object) returns (rv : RV)
 //    requires k.Ready()
 //    requires pivot.Ready()
 //    decreases k.AMFO
@@ -986,7 +986,7 @@ lemma RecOwnerSanity4(k : Object, pivot : Object)
      }
 
 
-lemma {:isolate_assertions} RecOutsideOutside(k : Object, pivot : Object)
+lemma RecOutsideOutside(k : Object, pivot : Object)
      requires k.Ready()
      requires pivot.Ready()
     decreases k.AMFO
@@ -996,7 +996,7 @@ lemma {:isolate_assertions} RecOutsideOutside(k : Object, pivot : Object)
 
 
 
-lemma {:isolate_assertions} RecOwnerInside(k : Object, pivot : Object)
+lemma RecOwnerInside(k : Object, pivot : Object)
      requires k.Ready()
      requires pivot.Ready()
     decreases k.AMFO
@@ -1009,7 +1009,7 @@ lemma {:isolate_assertions} RecOwnerInside(k : Object, pivot : Object)
 
 function amfoOwners(k : Object) : Owner {k.AMFO}
 
-lemma {:isolate_assertions} RecOwnerClassify4(k : Object, pivot : Object)
+lemma RecOwnerClassify4(k : Object, pivot : Object)
      requires k.Ready()
      requires pivot.Ready()
     decreases k.AMFO
@@ -1113,7 +1113,7 @@ lemma {:isolate_assertions} RecOwnerClassify4(k : Object, pivot : Object)
 
 
 
-lemma {:isolate_assertions} RecOwnerClassifyAMFO(k : Object, pivot : Object)
+lemma RecOwnerClassifyAMFO(k : Object, pivot : Object)
      requires k.Ready()
      requires pivot.Ready()
      requires inside(k,pivot) //is this wha we want???????
@@ -1307,7 +1307,7 @@ lemma RecOwnerSanity6(k : Object, pivot : Object)
 
 
 
-lemma {:isolate_assertions} AllWholeInsidePart(partO : Owner, wholeO : Owner)
+lemma AllWholeInsidePart(partO : Owner, wholeO : Owner)
    //HOW THE FUCK DOES THIS HELP AT ALL???
   requires AllReady(partO)
   requires AllReady(wholeO)
@@ -1316,7 +1316,7 @@ lemma {:isolate_assertions} AllWholeInsidePart(partO : Owner, wholeO : Owner)
   {}
 
 
-lemma {:isolate_assertions} MappedAllWholeInsidePart(partO : Owner, wholeO : Owner, m : Klon)
+lemma MappedAllWholeInsidePart(partO : Owner, wholeO : Owner, m : Klon)
   requires AllReady(partO)
   requires AllReady(wholeO)
   requires flatten(partO) >= flatten(wholeO)
@@ -1329,7 +1329,7 @@ lemma {:isolate_assertions} MappedAllWholeInsidePart(partO : Owner, wholeO : Own
   {}
 
 
-lemma {:isolate_assertions} DivotInsidePivot(oo : Owner, m : Klon)
+lemma DivotInsidePivot(oo : Owner, m : Klon)
   requires klonReady(m)
   requires klonCalid(m)
   requires AllReady(oo)
@@ -1342,7 +1342,7 @@ lemma {:isolate_assertions} DivotInsidePivot(oo : Owner, m : Klon)
 
 
 
-lemma {:isolate_assertions} DOESN_TWORK_RivetInsideBlivet(oo : Owner, co : Owner, m : Klon)
+lemma DOESN_TWORK_RivetInsideBlivet(oo : Owner, co : Owner, m : Klon)
   requires klonReady(m)
   requires klonCalid(m)
   requires AllReady(oo)
@@ -1373,7 +1373,7 @@ lemma {:isolate_assertions} DOESN_TWORK_RivetInsideBlivet(oo : Owner, co : Owner
 
 
 
-lemma {:isolate_assertions} FlattenMapsTheSame(oo : Owner, bb : Bound, co : Owner, cb : Bound, m : Klon)
+lemma FlattenMapsTheSame(oo : Owner, bb : Bound, co : Owner, cb : Bound, m : Klon)
   requires klonReady(m)
   requires klonCalid(m)
   requires AllReady(oo)
@@ -1435,7 +1435,7 @@ lemma {:isolate_assertions} FlattenMapsTheSame(oo : Owner, bb : Bound, co : Owne
 }
 
 
-lemma {:isolate_assertions} TOO_EASY_TO_WORK(oo : Owner, bb : Bound, co : Owner, cb : Bound, m : Klon)
+lemma TOO_EASY_TO_WORK(oo : Owner, bb : Bound, co : Owner, cb : Bound, m : Klon)
   requires klonReady(m)
   requires klonCalid(m)
   requires AllReady(oo)
@@ -1536,8 +1536,8 @@ lemma {:verify false} FlattenInsideGEQ(oo : Owner, bb : Bound, co : Owner, cb : 
   requires co == mapThruKlon(oo, m)
   requires cb == mapThruKlon(bb, m)
 
-  requires myBoundsOK(oo,bb)
-  // ensures myBoundsOK(co,cb)
+  requires boundsOK(oo,bb)
+  // ensures boundsOK(co,cb)
  {
   assert (flatten(oo) >= flatten(bb));
 

@@ -30,7 +30,7 @@ datatype Klon = Klon
   c_amfb : OWNR              //expected flattened bound of the clone..
 )
 {
-  function  ns(os : set<Object> := {}) : set<Object>
+  function ns(os : set<Object> := {}) : set<Object>
     ensures ns(os) >= ns()
        { m.Values+os }
   function hns(os : set<Object> := {}) : set<Object>
@@ -41,7 +41,7 @@ datatype Klon = Klon
     ensures os <= hns(os)
        { oHeap+m.Values+os }
 
-  predicate   from(prev : Klon) : (r : bool)
+  predicate  from(prev : Klon) : (r : bool)
     ensures r ==> (isFlat(prev.oHeap) ==> isFlat(oHeap))
     ensures r ==> m.Keys >= prev.m.Keys
   {
@@ -146,8 +146,8 @@ lemma MOVIN_ON_MAP(os: Owner, left : vmap<Object,Object>, right : vmap<Object,Ob
 
 
 
-  predicate objectInKlown(o : Object) : (rv : bool)  //body replace with obejctReadtyInKlon
-    //o and all its owners etc are the Klown m
+  predicate objectInKlon(o : Object) : (rv : bool)
+    //o and all its owners etc are the Klon
     //(doesn't extend to fields)
     //NOTE critical that this does NOT dpend on klonReady() etc
     ///because i5t supprots that definition
@@ -161,66 +161,43 @@ lemma MOVIN_ON_MAP(os: Owner, left : vmap<Object,Object>, right : vmap<Object,Ob
     ensures rv ==> (o.owner <= m.Keys)
     ensures rv ==> (o.self  <= m.Keys)
 
-    // ensures (o.Ready() && rv) ==> objectInKlown(o)
-    // ensures  o.Ready() ==> (rv == objectInKlown(o))
+    // ensures (o.Ready() && rv) ==> objectInKlon(o)
+    // ensures  o.Ready() ==> (rv == objectInKlon(o))
   {
     o.Ready() && (o.AMFO <= m.Keys)
    }
 
 
 
-  predicate ownersInKlown(o : Object) : (rv : bool) //body replace with owners    ReadtyInKlon
+  predicate ownersInKlon(o : Object) : (rv : bool)
+    //sibling of objectInKlon = but only the owners, not the onejkct itself
+    //I guess it could fail iff o is in the Klon but currently it does not.
     ensures rv ==> (o.AMFB <= m.Keys)
     ensures rv ==> (o.AMFX <= m.Keys)
     ensures rv ==> (o.bound <= m.Keys)
     ensures rv ==> (o.owner <= m.Keys)
     ensures rv ==> (o.Ready())
 
-    // ensures (o.Ready() && rv) ==> ownersInKlown(o)
-    // ensures  o.Ready() ==> (rv == ownersInKlown(o))
+    // ensures (o.Ready() && rv) ==> ownersInKlon(o)
+    // ensures  o.Ready() ==> (rv == ownersInKlon(o))
     reads {}
     {
       o.Ready() && (o.AMFX <= m.Keys)
     }
 
-  predicate objectReadyInKlown(o : Object) : (rv : bool)
-    //o and all its owners etc are the Klown m
-    //(doesn't extend to fields)
-    reads {}
-
-    ensures rv ==> (o in m.Keys)
-    ensures rv ==> (o.AMFB <= m.Keys)
-    ensures rv ==> (o.AMFX <= m.Keys)
-    ensures rv ==> (o.AMFO <= m.Keys)
-    ensures rv ==> (o.bound <= m.Keys)
-    ensures rv ==> (o.owner <= m.Keys)
-    ensures rv ==> (o.self  <= m.Keys)
-
-    ensures (o.Ready() && rv) ==> objectInKlown(o)
-    ensures  o.Ready() ==> (rv == objectInKlown(o))
-  {
-    o.Ready() && (o.AMFO <= m.Keys)
-   }
-
-  predicate ownersReadyInKlown(o : Object) : (rv : bool)
-    ensures rv ==> (o.AMFB <= m.Keys)
-    ensures rv ==> (o.AMFX <= m.Keys)
-    ensures rv ==> (o.bound <= m.Keys)
-    ensures rv ==> (o.owner <= m.Keys)
-    ensures rv ==> (o.Ready())
-
-    ensures (o.Ready() && rv) ==> ownersInKlown(o)
-    ensures  o.Ready() ==> (rv == ownersInKlown(o))
-
-    reads {}
-    {
-      o.Ready() && (o.AMFX <= m.Keys) //&& (k in m.oHeap)
-    }
 
 //29 Oct 2025
 //I think the quesiton is whether clowner have tio be in values.
 //and ... it doesn't!!!
-// -- 19 Apr 2026 - no idea wht that means...
+// -- 19 Apr 2026 - no idea wht that means
+// 17 Sep 2026 - sure I do.
+// it's important ownersInKlon doesn't requirew either "o" or it's clone to be in the klon:
+// neither of them, but particularly the clowner, may have been created yet!
+// in order to create an "original" object as part of a clone prpocess
+// all it's owners must be already created and registed in the klon map
+// in order to clone an object, the original object must not be in the klon
+// but all its owners (and the correspojnding owners for the klon) must be.
+
 
 
 
@@ -231,7 +208,7 @@ predicate apoCalidse()
     klonReady(this)
     // && (m.Keys <= oHeap)
     // && (m.Values <= hns())
-    // && (objectReadyInKlown(o))   //this was originally two predicates
+    // && (objectInKlon(o))   //this was originally two predicates
     // && (HeapOwnersReady())  //whatt bno value owners ready??
     // && (c_amfx <= oHeap)
   }
@@ -325,9 +302,9 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
     //
     // assert SuperCalidFragilistic();
     // assert k.Ready();
-    // assert ownersInKlown(k);
+    // assert ownersInKlon(k);
     // assert o.Ready();
-    // assert objectInKlown(o);
+    // assert objectInKlon(o);
     // assert CalidCanKey(k);
     // assert k !in m.Keys;
     // assert v !in m.Values;
@@ -345,9 +322,9 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
     //     requires SuperCalidFragilistic()
     //
     //     requires k.Ready() //&& k.Valid() // should context go in here too? probasbly?
-    //     requires ownersInKlown(k)   //be nice to get rid of this...
+    //     requires ownersInKlon(k)   //be nice to get rid of this...
     //     requires o.Ready() //&& o.Valid()
-    //     requires objectInKlown(o)
+    //     requires objectInKlon(o)
     //
     //     requires CalidCanKey(k)
     //
@@ -377,8 +354,8 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 //
 //     assert HeapContextReady();
 //
-//     assert forall x <- m.Keys :: (x.Ready() && objectInKlown(x))
-//       by { assert SuperCalidFragilistic(); }        // SuperCalidGetsAllOwnersReadyInKlown();\\
+//     assert forall x <- m.Keys :: (x.Ready() && objectInKlon(x))
+//       by { assert SuperCalidFragilistic(); }        // SuperCalidGetsAllOwnersInKlon();\\
 //
 //     assert ValuesContextReady();
 //     assert AllLinesCalid();
@@ -443,8 +420,8 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
      assert forall x  : Object <- mK.m.Values       :: x.OwnersWithin(mK.hns());
 //     assert mK.ValuesContextReady();
 
-//      assert objectInKlown(o);
-//      assert mK.objectInKlown(o);
+//      assert objectInKlon(o);
+//      assert mK.objectInKlon(o);
 //
 //      assert CalidCanKey(k); //pro you're like to want to walk.
 //      // ^-- no idea what that comment means but…
@@ -453,7 +430,7 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 //
 //      assert mK.m.Keys == m.Keys + {k};
 //     //
-//     //  assert forall k <- mK.m.Keys :: mK.objectInKlown(k);
+//     //  assert forall k <- mK.m.Keys :: mK.objectInKlon(k);
 //
 
      assert CKV_preconditions(k,v);
@@ -504,14 +481,14 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
      }
 
 //      assert (forall k <- mK.m.Keys ::  (k.Ready()));
-//      assert (forall k <- mK.m.Keys ::  (mK.objectInKlown(k)));
+//      assert (forall k <- mK.m.Keys ::  (mK.objectInKlon(k)));
 //      assert (forall k <- mK.m.Keys ::  (var v := mK.m[k]; (v.Ready())));
 //      assert (forall k <- mK.m.Keys ::  (var v := mK.m[k]; (v in mK.hns({v}))));
 //
 //     //  assert mK.thettinGhere();
 //     //  assert mK.gettingThere();
 //      assert mK.o.Ready();
-//      assert mK.objectInKlown(mK.o);
+//      assert mK.objectInKlon(mK.o);
 //      assert mK.m.Keys <= mK.oHeap;
 //      assert mK.HeapOwnersReady();
 //      assert mK.c_amfx <= mK.oHeap;
@@ -598,8 +575,8 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 //                    && (forall v <- mK.m.Values :: (v.Ready() && v.Valid()))
 //
 //                    //the pivot object "o" being cloned
-//                    // && (o.Ready() && o.Valid() && o.Context(oHeap) && objectInKlown(o))
-//                    && (mK.o.Ready() && mK.o.Valid() && mK.o.Context(mK.oHeap) && mK.objectInKlown(mK.o))
+//                    // && (o.Ready() && o.Valid() && o.Context(oHeap) && objectInKlon(o))
+//                    && (mK.o.Ready() && mK.o.Valid() && mK.o.Context(mK.oHeap) && mK.objectInKlon(mK.o))
 //
 //                    && (forall k <- mK.m.Keys   :: mK.m[k].AMFO  >= mK.m[k].AMFB  >= k.AMFB)
 // //wont veruify     && (forall k <- mK.m.Keys   :: mK.m[k].AMFO  >= mK.m[k].AMFB  >= mK.o.AMFB >= k.AMFB)    ///change made then backed out  10JKul 2025 - why wo why oh why ?
@@ -623,7 +600,7 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 //                    // && (forall k <- m.Keys :: //;this is s"gettingThere" so why twice?
 //                    //      (var v := m[k];
 //                    //         && (k.Ready())
-//                    //         && (objectInKlown(k))
+//                    //         && (objectInKlon(k))
 //                    //         && (v.Ready())
 //                    //         && (v in hns())))
 //
@@ -655,9 +632,9 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
     && klonCalid(this)
 
     && k.Ready() //&& k.Valid() // should context go in here too?   probasbly?
-    && ownersInKlown(k)   //be nice to get rid of this...
+    && ownersInKlon(k)   //be nice to get rid of this...
     && o.Ready() //&& o.Valid()
-    && objectInKlown(o)
+    && objectInKlon(o)
 
     && CalidCanKey(k)
 
@@ -689,20 +666,20 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
     //  note this doesn't seem to deal with ougoing field values, but that will get
     //  caught eventually via  HeapContextReady() &  ValueContextReady()
     //doesn't seem to require Calid????
-    //isn't this more eor less ownersInKlown>?>
+    //isn't this more eor less ownersInKlon>?>
     //izn't thgs being replaced ie. tis dead
     requires k.Ready() //&& k.Valid() // should context go in here too? probasbly?
-    //requires ownersInKlown(k) ///hmm, req or jsut in body?  Just In BODY!!! 31 Aug 2025
+    //requires ownersInKlon(k) ///hmm, req or jsut in body?  Just In BODY!!! 31 Aug 2025
 
     //pretty sure I want thewe two here to match CalidCanValue
     requires o.Ready() //&& o.Valid()
-//    requires objectInKlown(o)  //THAT is clearly FUCKEDy
+//    requires objectInKlon(o)  //THAT is clearly FUCKEDy
 
     reads {}
   {
     && (k in oHeap)
     && (k !in m.Keys)
-    && ownersInKlown(k)
+    && ownersInKlon(k)
   }
 
 //HACK
@@ -714,9 +691,9 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 //     //doesn't seem to require Calid????
 //     requires k.Ready() //&& k.Valid() // should context go in here too? probasbly?
 //     requires v.Ready() //&& v.Valid()
-//     requires ownersInKlown(k)
+//     requires ownersInKlon(k)
 //     requires o.Ready() //&& o.Valid()
-//     requires objectInKlown(o)
+//     requires objectInKlon(o)
 //
 //     requires CalidCanKey(k)
 //
@@ -724,7 +701,7 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 //     requires k.owner <= m.Keys <= oHeap
 //     requires m.Values <= hns()
 //     requires o.Ready()
-//     requires objectInKlown(o)
+//     requires objectInKlon(o)
 //     requires HeapOwnersReady()
 //     requires c_amfx <= oHeap
 //
@@ -740,9 +717,9 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 //   ghost predicate calidCanKV(k : Object, v : Object)
 //     requires k.Ready() //&& k.Valid() // should context go in here too? probasbly?
 //     requires v.Ready() //&& v.Valid()
-//     requires ownersInKlown(k)
+//     requires ownersInKlon(k)
 //     requires o.Ready() //&& o.Valid()
-//     requires objectInKlown(o)
+//     requires objectInKlon(o)
 //
 //
 //     reads oHeap, m.Values
@@ -784,10 +761,10 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 
     //generic?
     requires k.Ready()
-    requires ownersInKlown(k)
+    requires ownersInKlon(k)
     requires v.Ready()
      ensures o.Ready()
-     ensures objectInKlown(o)
+     ensures objectInKlon(o)
 
    //       ensures forall x <- m.Keys :: outside(x,o) ==> (m[x] == x)
 
@@ -802,7 +779,7 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 
     ensures  checkOwnershipOfClone(k, v, this)
     ensures  checkBoundOfClone(k, v, this)
-    ensures  mappingOwnersThruKlownKV(k,v,this)
+    ensures  mappingOwnersThruKlonKV(k,v,this)
     ensures  CalidLineKV(k, v)
   {
   // assert klonReady(this);
@@ -819,14 +796,14 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 
 
 //Need to WORK The FUCK out wwhat to do about THIS
-   predicate   preOwners() : (r : bool)
+   predicate  preOwners() : (r : bool)
     reads oHeap, m.Values
   {
     klonReady(this)
     // // && HeapOwnersReady()    ///hmm
     // // && ValuesOwnersReady()
     // && (o.Ready() && (o in oHeap))
-    // && (objectInKlown(o))  //progFUCK  do i want this in here? really?   ///Can U do without it??
+    // && (objectInKlon(o))  //progFUCK  do i want this in here? really?   ///Can U do without it??
     // && (o.AMFX == o_amfx)
     // && (flatten(clbound) >= o.AMFB)
     // && (o.AMFO == o_amfx+{o})
@@ -869,7 +846,7 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
     // && preOwners()
     // && preOwners2()
     // && (m.Keys <= oHeap)
-    // && objectInKlown(o)
+    // && objectInKlon(o)
     // && (forall k <- m.Keys :: OwnersLineKV(k, m[k]))
   }
 
@@ -882,8 +859,8 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
      ensures klonReady(this)
       reads hns(), k, v
     { klonLine(k, v, this) }
-// //  && (k.Ready() && (objectInKlown(k)) && k in oHeap)   28 Oct 2025
-//     && (k.Ready() && (ownersInKlown(k)) && k in oHeap)
+// //  && (k.Ready() && (objectInKlon(k)) && k in oHeap)   28 Oct 2025
+//     && (k.Ready() && (ownersInKlon(k)) && k in oHeap)
 //     && (v.Ready() && (v in hns({v})))
 //
 //  //   && (v.AMFO  >= v.AMFB  >= k.AMFB)  //GREENLAND
@@ -893,25 +870,25 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 //     && (   (inside(k,o)) ==> ((v !in oHeap)) )
 //
 //   //MAPPING - progFEARSATAN
-//     && (mappingOwnersThruKlownKV(k,v,this)
+//     && (mappingOwnersThruKlonKV(k,v,this)
 
 
 //FROM DAHLIA
 
-lemma {:timeLimit 30} directOwnerInKlownIsEnough(o : Object)
+lemma {:timeLimit 30} directOwnerInKlonIsEnough(o : Object)
   requires o.Ready()
   requires klonCalid(this)
   requires o.owner <= m.Keys //note just direct owner
-   ensures ownersInKlown(o)
+   ensures ownersInKlon(o)
 {
-  assert forall x <- m.Keys :: objectInKlown(x);
+  assert forall x <- m.Keys :: objectInKlon(x);
   assert o.owner <= m.Keys;
   assert forall oo <- o.owner :: oo in m.Keys;
-  assert forall oo <- o.owner :: objectInKlown(oo);
-  assert ownersInKlown(o);
+  assert forall oo <- o.owner :: objectInKlon(oo);
+  assert ownersInKlon(o);
 }
 
-  lemma  FieldFromHeapContext(o : Object, n : string, v : Object)
+  lemma FieldFromHeapContext(o : Object, n : string, v : Object)
     //assert a bunch of stuff about a field - could become a function later
     requires HeapContextReady()
     requires o in oHeap
@@ -958,13 +935,13 @@ lemma {:timeLimit 30} directOwnerInKlownIsEnough(o : Object)
 
 
 
-predicate  checkOwnershipOfClone(k : Object, v : Object, m : Klon)
+predicate checkOwnershipOfClone(k : Object, v : Object, m : Klon)
   //to work, this needs m.o and m.c to be set up
   //but does NOT need k in Keys, or v in values!
   //
   // apparently doesn't even need Caliud or precalid let alone supercalid.  HMMM
   requires k.Ready()
-  requires m.ownersInKlown(k)
+  requires m.ownersInKlon(k)
   requires v.Ready()
   requires m.apoCalidse()
 
@@ -972,7 +949,7 @@ predicate  checkOwnershipOfClone(k : Object, v : Object, m : Klon)
   requires k.owner <= m.m.Keys <= m.oHeap
   requires m.m.Values <= flatten( m.hns() )
   requires m.o.Ready()
-  ///requires m.objectInKlown(m.o) //// NO NO NO NO NO NO NO NO NO
+  ///requires m.objectInKlon(m.o) //// NO NO NO NO NO NO NO NO NO
   requires m.HeapOwnersReady()
   requires m.c_amfx <= m.oHeap
 
@@ -981,13 +958,13 @@ predicate  checkOwnershipOfClone(k : Object, v : Object, m : Klon)
   reads m.hns(), k, v
 {
   klonLine(k,v,m)
-  // mappingOwnersThruKlownKV(k,v,m)
+  // mappingOwnersThruKlonKV(k,v,m)
 }
 
 
 
 
-  predicate mappingOwnersThruKlownKV(k : Object, v : Object, m : Klon) : (r : bool)
+  predicate mappingOwnersThruKlonKV(k : Object, v : Object, m : Klon) : (r : bool)
     //prog FEAR SATAN
     //this vrsion currently matches CalidLineKV, i.e. k and v don't have to be in the klon
     //but that means we can't mapp intl and AMFO  //um,,
@@ -996,7 +973,7 @@ predicate  checkOwnershipOfClone(k : Object, v : Object, m : Klon)
 
    decreases k.AMFO
     requires m.apoCalidse()
-    requires m.ownersReadyInKlown(k)
+    requires m.ownersInKlon(k)
 //    reads m.oHeap, m.m.Values
   requires klonReady(m)
   reads m.hns(), k, v
@@ -1015,8 +992,8 @@ predicate  checkOwnershipOfClone(k : Object, v : Object, m : Klon)
 //           assert strictlyInside(k, m.o);
 //               // && (v.bound == mapThruKlon(k.bound, m))
 //               // && (v.owner == mapThruKlon(k.owner, m))
-//               && mappingOWNRsThruKlownKV(k.bound, v.bound, m)
-//               && mappingOWNRsThruKlownKV(k.owner, v.owner, m)
+//               && mappingOWNRsThruKlonKV(k.bound, v.bound, m)
+//               && mappingOWNRsThruKlonKV(k.owner, v.owner, m)
 //         )
 //     }
 
@@ -1024,12 +1001,12 @@ predicate  checkOwnershipOfClone(k : Object, v : Object, m : Klon)
 
     //our shold this be MAPPING Owners?????
     //note that this is called ONLY strictly wihin the pivot - see the JDVANCE note
-    predicate mappingOWNRsThruKlownKV(kk : OWNR, vv : OWNR, m : Klon) : (r : bool)
+    predicate mappingOWNRsThruKlonKV(kk : OWNR, vv : OWNR, m : Klon) : (r : bool)
     //
     //this probably should be just deleted for good..
     //
     //
-      //actual OWNR version of mappingOwnersThruKlownKV
+      //actual OWNR version of mappingOwnersThruKlonKV
       //within the pivot anyway!
       //prog FEAR SATAN
           //OK so wher doe this asy "inside the pivot"?   - it DO#ESNT
@@ -1069,7 +1046,7 @@ lemma FLATTEN_IN_KLON(oo : Owner, m : Klon)
    ensures flatten(oo) <= m.m.Keys
 
    {
-    assert forall k <- m.m.Keys :: m.objectInKlown(k);
+    assert forall k <- m.m.Keys :: m.objectInKlon(k);
     assert forall k <- m.m.Keys :: flatten({k}) <= m.m.Keys;
    }
 
@@ -1097,7 +1074,7 @@ function computeOwnerForClone(oo : Owner, m : Klon) : (nuowner : Owner)
    ensures m.m.Values <= m.hns()
    ensures nuowner <= m.m.Values <= m.hns()
    ensures flatten(oo) <= m.oHeap //so this MUST be preexisting.
-   ensures mappingOWNRsThruKlownKV(oo, nuowner, m)   //rather important
+   ensures mappingOWNRsThruKlonKV(oo, nuowner, m)   //rather important
 
        //yes 'rathr imoportant" infdeed,
    // ensures flatten(nuowner) <= m.hns() // I have no idea weather this is or should be correct or not
@@ -1260,7 +1237,7 @@ predicate klonVMapOK(m : vmap<Object,Object>, ks : set<Object> := m.Keys)
 //
 //   assert klonVMapOK(m'.m);
 //   assert klonCanKV(m', k, v);
-//     assert m'.ownersInKlown(k);
+//     assert m'.ownersInKlon(k);
 //
 //    assert forall x <- m'.m.Keys, y <- m'.m.Values :: (y == v) ==> (x == k);
 //     // var m'fmodes := map z <- m'.m.Keys :: z := z.fieldModes;
@@ -1278,11 +1255,11 @@ predicate klonVMapOK(m : vmap<Object,Object>, ks : set<Object> := m.Keys)
 //
 //   haventFuckedFieldModes(m',k,v,r1);
 //
-//  assert forall x <- m'.m.Keys :: m'.ownersInKlown(k);
+//  assert forall x <- m'.m.Keys :: m'.ownersInKlon(k);
 //     assert k in r1.m.Keys;
-//     assert r1.objectInKlown(k);
+//     assert r1.objectInKlon(k);
 //     assert r1.m.Keys == m'.m.Keys + {k};
-//  assert forall x <- r1.m.Keys :: r1.ownersInKlown(k);
+//  assert forall x <- r1.m.Keys :: r1.ownersInKlon(k);
 //
 // //  assert forall z <- m'.m.Keys :: z.fieldModes == r1.m[z].fieldModes;
 //   r1
@@ -1346,7 +1323,7 @@ predicate klonCanKV(m' : Klon, k : Object, v : Object)
   && v.Ready() && v.Valid() && v.Context(m'.hns({v}))
 
   //  && k.Context(m'.m.Keys+{k})  ///what IS this?
-  &&  m'.ownersInKlown(k)
+  &&  m'.ownersInKlon(k)
   && (k.fieldModes == v.fieldModes)//hhhmm see anbove
 
   //  && (v.AMFX >= v.AMFB >= k.AMFB) //is this right?   really?
@@ -1388,7 +1365,7 @@ function objThruKlon(o : Object, m : Klon) : Object    requires o in m.m.Keys {m
 
 predicate istKlonnyKlon(os : Owner, ks : set<Object>, m : Klon)
     requires m.o.Ready()
-    requires m.objectInKlown(m.o)
+    requires m.objectInKlon(m.o)
     requires os <=  m.m.Keys <= m.oHeap
     requires m.c_amfx <= m.oHeap
     requires m.apoCalidse()
@@ -1468,11 +1445,11 @@ predicate checkBoundOfClone(k : Object, v : Object, m : Klon)
   requires k.Ready()
   requires v.Ready()
   requires klonReady(m)
-  requires m.ownersInKlown(k)
+  requires m.ownersInKlon(k)
   reads m.hns(), k, v
  { klonIdentity(k,v,m) }
   // NO NO NO NO NO NO NO NO!!!
-  // { && nuBoundsOK(k.owner, k.bound)
+  // { && boundsOK(k.owner, k.bound)
   //   && (mapThruKlon(k.owner, m) == v.owner)
   //   && (mapThruKlon(k.bound, m) == v.bound)
-  //   && nuBoundsOK(v.owner, v.bound) }
+  //   && boundsOK(v.owner, v.bound) }

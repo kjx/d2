@@ -76,16 +76,16 @@ function proposeOwnerAndBound(kowner : Owner, kbound : Bound, m : Klon) : (r : (
   requires AllReady(kbound)
   requires m.m.Keys >= kowner
   requires m.m.Keys >= kbound
-  requires myBoundsOK(kowner, kbound)
+  requires boundsOK(kowner, kbound)
   requires klonReady(m)
   requires klonCalid(m)
-   ensures myBoundsOK(r.0, r.1)
+   ensures boundsOK(r.0, r.1)
      reads m.hns()
  {
    var rowner := mapThruKlon(kowner, m);
    var rbound := mapThruKlon(kbound, m);
    //ici c'est la problème
-   assume myBoundsOK(rowner, rbound);
+   assume boundsOK(rowner, rbound);
    (rowner, rbound)
  }
 
@@ -934,7 +934,7 @@ lemma {:timeLimit 30} ThereIsALightThatNeverGoesOut(part : Object, whole : Objec
 }
 
 
-ghost function {:isolate_assertions} YouCan'tGetThereFromHereBut(part : Object, whole : Object) : (next : Object)
+ghost function YouCan'tGetThereFromHereBut(part : Object, whole : Object) : (next : Object)
   //return next - a "direct owner" of part that is on the way up to "whole"
   decreases part.AMFO
 

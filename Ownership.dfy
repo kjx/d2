@@ -50,7 +50,7 @@ predicate colinear<T>(a : set<T>, b : set<T>) { (a > b) || (a == b) || (a < b) }
 
 predicate offside(part : Object, whole : Object) reads {} { not(colinear(part.AMFO,whole.AMFO)) }
 
-function  allInside(soup : set<Object>, whole : Object) : (rv : set<Object>) reads {}  { set o <- soup | inside(o,whole) }
+function allInside(soup : set<Object>, whole : Object) : (rv : set<Object>) reads {}  { set o <- soup | inside(o,whole) }
 function allOutside(soup : set<Object>, whole : Object) : (rv : set<Object>) reads {}  { set o <- soup | outside(o,whole) }
 function allOffside(soup : set<Object>, whole : Object) : (rv : set<Object>) reads {}  { set o <- soup | offside(o,whole) }
 
@@ -212,7 +212,7 @@ predicate r_efOI(f : Object, t : Object) {f.AMFO >= t.AMFX}
 predicate r_efOO(f : Object, t : Object) {(f==t) || r_efOI(f,t) || refDI(f,t)}
 
 //
-// lemma {:isolate_assertions} PaperVersions(f : Object, t : Object)
+// lemma PaperVersions(f : Object, t : Object)
 //  requires f.Ready() && t.Ready()
 //   ensures ownerEquals(f.self, t.owner)  == refDI(f,t)
 //   ensures ownerInside(f.self, t.owner)  == refOI(f,t)
@@ -220,7 +220,7 @@ predicate r_efOO(f : Object, t : Object) {(f==t) || r_efOI(f,t) || refDI(f,t)}
 //  { }
 
 
-lemma {:isolate_assertions} RefOKvsOO(f : Object, t : Object)
+lemma RefOKvsOO(f : Object, t : Object)
   requires f.Ready()
   requires t.Ready()
     ensures refOK(f,t)  ==> r_efOO(f,t)
@@ -837,29 +837,17 @@ function collectBounds(os : Owner) : Owner    //TODO old should delete  //THULE
   //  requires isFlat(os)
   reads {}    {set o <- os, oo <- o.AMFB :: oo}
 
-predicate nuBoundsOK(oo : Owner, mb : Owner) {
-//arguments are local fields, unflattened...
-//&& (flatten(mb) <= flatten(oo))  //bound is a subset of owner
-//  && (flatten(oo) >= flatten(mb)) //aka effectiveowner is INSIDE effectivebound
-  //  && (forall o <- oo :: ((o.AMFB) >= flatten(mb)))
 
-  && (myBoundsOK(oo,mb))
-
-//  && (forall o <- oo :: ((o.AMFB + {o} ) >= flatten(mb)))
-
-//  && (flatten(mb) <= (set ooo <- oo, omb <- ooo.AMFB :: omb) + oo)
-        //AKA (I think) effectivebound is subseteq/surroundingeq the union of owners' bounds.
-  }
 //
 // lemma {:verify false}  OldPolonium(oo : Owner, mb : Owner, m : Klon)
 //   requires m.apoCalidse()
 //   requires m.SuperCalidFragilistic()
 //   requires oo <= m.m.Keys
 //   requires mb <= m.m.Keys
-//   requires nuBoundsOK(oo, mb)
+//   requires boundsOK(oo, mb)
 //   requires flatten(oo) > m.o.AMFO
 //   requires flatten(mb) > m.o.AMFO
-// //   ensures nuBoundsOK(computeOwnerForClone(oo,m), computeOwnerForClone(mb,m))
+// //   ensures boundsOK(computeOwnerForClone(oo,m), computeOwnerForClone(mb,m))
 //  {
 //   assert (flatten(oo) >= flatten(mb));
 //   assert (forall o <- oo ::( (o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(mb))));
@@ -880,7 +868,7 @@ predicate nuBoundsOK(oo : Owner, mb : Owner) {
 //
 // gratuitious stuff for converting allAMFOs vs Flatten //LILLE
 
-lemma {:isolate_assertions}  FLATTEN_ALLAMFOS(oo : Owner)
+lemma  FLATTEN_ALLAMFOS(oo : Owner)
    requires AllReady(oo)
     ensures flatten(oo) == allAMFOs(oo)
 {}
@@ -899,7 +887,7 @@ lemma ALLAMFOZZ(oo : Owner, o : Object)
    ensures allAMFOs(oo - {o}) + allAMFOs({o}) == allAMFOs(oo)
   {}
 
-lemma {:isolate_assertions} ALLAMFOX(oo : Owner)
+lemma ALLAMFOX(oo : Owner)
   requires AllReady(oo)
    ensures allAMFOs(oo) == allAMFXs(oo) + oo
   {

@@ -3,12 +3,12 @@
 
 ///this file isn't acutally used anuywhere.
 
-lemma {:isolate_assertions} KindaStupid(k : Object, v : Object, m : Klon)
+lemma KindaStupid(k : Object, v : Object, m : Klon)
  //if we're OwnersCalid, and k is in m, then we get stuff
   requires m.CalidOwners()
   requires m.HeapOwnersReady() //grrr
-  requires k.Ready() && m.objectInKlown(k)
-  requires v.Ready() && m.objectInKlown(v)
+  requires k.Ready() && m.objectInKlon(k)
+  requires v.Ready() && m.objectInKlon(v)
   requires m.m[k] == v
    ensures m.OwnersLineKV(k,v)
    ensures mapThruKlon({k},m) == {v}
@@ -20,10 +20,10 @@ lemma {:isolate_assertions} KindaStupid(k : Object, v : Object, m : Klon)
 }
 
 
-lemma  {:isolate_assertions} {:timeLimit 20} MapThruKlonOutsideOwner(k : Object, m : Klon)
+lemma {:timeLimit 20} MapThruKlonOutsideOwner(k : Object, m : Klon)
   requires m.CalidOwners()
   requires m.HeapOwnersReady() //grrr
-  requires k.Ready() && m.objectInKlown(k)
+  requires k.Ready() && m.objectInKlon(k)
   requires outside(k, m.o)
    ensures mapThruKlon(k.owner, m) == k.owner
    ensures mapThruKlon(k.bound, m) == k.bound
@@ -47,10 +47,10 @@ lemma  {:isolate_assertions} {:timeLimit 20} MapThruKlonOutsideOwner(k : Object,
 }
 
 
-lemma  {:isolate_assertions} {:timeLimit 20} MapFlatOutside(k : Object, m : Klon)
+lemma {:timeLimit 20} MapFlatOutside(k : Object, m : Klon)
   requires klonReady(m)
   requires klonCalid(m)
-  requires k.Ready() && m.objectInKlown(k)
+  requires k.Ready() && m.objectInKlon(k)
   requires outside(k, m.o)
    ensures mapThruKlon(k.owner, m) == k.owner
    ensures mapThruKlon(k.bound, m) == k.bound
@@ -74,11 +74,11 @@ lemma  {:isolate_assertions} {:timeLimit 20} MapFlatOutside(k : Object, m : Klon
 }
 
 
-lemma {:isolate_assertions} NotFromAJedi(k : Object, v : Object, m : Klon)
+lemma NotFromAJedi(k : Object, v : Object, m : Klon)
   requires m.CalidOwners()
   requires m.HeapOwnersReady() //grrr
-  requires k.Ready() && m.objectInKlown(k)
-  requires v.Ready() && m.objectInKlown(v)
+  requires k.Ready() && m.objectInKlon(k)
+  requires v.Ready() && m.objectInKlon(v)
   requires m.m[k] == v
 
   requires mapThruKlon(k.owner, m) == v.owner
@@ -94,10 +94,10 @@ lemma {:isolate_assertions} NotFromAJedi(k : Object, v : Object, m : Klon)
    }
 
 
-lemma {:isolate_assertions} {:timeLimit 20} OnlyOneThereIs(k : Object, v : Object, m : Klon)
+lemma {:timeLimit 20} OnlyOneThereIs(k : Object, v : Object, m : Klon)
   requires klonReady(m)
   requires klonCalid(m)
-  requires k.Ready() && m.objectInKlown(k)
+  requires k.Ready() && m.objectInKlon(k)
   requires m.m[k] == v
    ensures klonLine(k,v,m)
    ensures mapThruKlon({k},m) == {v}
@@ -107,14 +107,14 @@ lemma {:isolate_assertions} {:timeLimit 20} OnlyOneThereIs(k : Object, v : Objec
       assert (set kk <- {k} :: m.m[kk]) == {v};
    }
 
-lemma {:isolate_assertions} OnlyAMasterOfEvilDarth(k : Object, v : Object, m : Klon)
+lemma OnlyAMasterOfEvilDarth(k : Object, v : Object, m : Klon)
   //showing how this was previous fucked up
 //BUT YOU FUCKED IT UP -- IT CAN'T!!!!!!!!
 //NOT WHEN k == mn.o at least?
   requires klonReady(m)
   requires klonCalid(m)
-  requires k.Ready() && m.objectInKlown(k)
-  requires v.Ready() && m.objectInKlown(v) //WTF?? - this FUCKS EVERYTHING, only vadlid if k outside m.o
+  requires k.Ready() && m.objectInKlon(k)
+  requires v.Ready() && m.objectInKlon(v) //WTF?? - this FUCKS EVERYTHING, only vadlid if k outside m.o
   requires m.m[k] == v
    ensures klonLine(k,v,m)
    ensures mapThruKlon({k},m) == {v}
@@ -124,7 +124,7 @@ lemma {:isolate_assertions} OnlyAMasterOfEvilDarth(k : Object, v : Object, m : K
     OnlyOneThereIs(k,v,m);
    }
 
-lemma {:isolate_assertions} IS_BROKEN_OnlyNowAtTheEndDoYouUnderstand(k : Object, v : Object, m : Klon)
+lemma IS_BROKEN_OnlyNowAtTheEndDoYouUnderstand(k : Object, v : Object, m : Klon)
   //wpeoves mapTHruKlon works in all cases of original being inside,outside, eq m.o
 //BUT YOU FUCKED IT UP -- IT CAN'T!!!!!!!!
 //NOT WHEN k == mn.o at least? --
@@ -135,8 +135,8 @@ lemma {:isolate_assertions} IS_BROKEN_OnlyNowAtTheEndDoYouUnderstand(k : Object,
   requires m.apoCalidse()
   requires m.CalidOwners()
   requires m.HeapOwnersReady() //grrr
-  requires k.Ready() && m.objectInKlown(k)
-  requires v.Ready() //&& m.objectInKlown(v) //WTF?? - this FUCKS EVERYTHING, only vadlid if k outside m.o
+  requires k.Ready() && m.objectInKlon(k)
+  requires v.Ready() //&& m.objectInKlon(v) //WTF?? - this FUCKS EVERYTHING, only vadlid if k outside m.o
   requires m.m[k] == v
    ensures m.OwnersLineKV(k,v)
    ensures mapThruKlon({k},m) == {v}
@@ -147,7 +147,7 @@ lemma {:isolate_assertions} IS_BROKEN_OnlyNowAtTheEndDoYouUnderstand(k : Object,
     assert m.apoCalidse();
     assert(forall z <- m.m.Keys :: m. OwnersLineKV(z, m.m[z]));
     assert m.OwnersLineKV(k,v);
-    assert mappingOwnersThruKlownKV(k, v, m);
+    assert mappingOwnersThruKlonKV(k, v, m);
 
     assert (k == m.o) || (outside(k, m.o)) || strictlyInside(k, m.o);
 
@@ -175,8 +175,8 @@ lemma {:isolate_assertions} IS_BROKEN_OnlyNowAtTheEndDoYouUnderstand(k : Object,
         assert k.bound == m.m[k].bound == v.bound;
 
         //this now goess to the straiughtfoward mapping, so it shoudl work!
-        // assert not( mappingOWNRsThruKlownKV(k.owner, v.owner, m) );
-        // assert not( mappingOWNRsThruKlownKV(k.bound, v.bound, m) );
+        // assert not( mappingOWNRsThruKlonKV(k.owner, v.owner, m) );
+        // assert not( mappingOWNRsThruKlonKV(k.bound, v.bound, m) );
 
         MapThruKlonOutsideOwner(k, m);
         assert  mapThruKlon(k.owner, m) == k.owner == v.owner;
@@ -189,8 +189,8 @@ lemma {:isolate_assertions} IS_BROKEN_OnlyNowAtTheEndDoYouUnderstand(k : Object,
         assert m.m[k].owner == v.owner;
         assert m.m[k].bound == v.bound;
 
-        assert mappingOWNRsThruKlownKV(k.owner, v.owner, m);
-        assert mappingOWNRsThruKlownKV(k.bound, v.bound, m);
+        assert mappingOWNRsThruKlonKV(k.owner, v.owner, m);
+        assert mappingOWNRsThruKlonKV(k.bound, v.bound, m);
         assert mapThruKlon(k.owner, m) == v.owner;
         assert mapThruKlon(k.bound, m) == v.bound;
     }
@@ -216,13 +216,13 @@ lemma {:isolate_assertions} IS_BROKEN_OnlyNowAtTheEndDoYouUnderstand(k : Object,
 
 
 
-predicate {:isolate_assertions} OLDcheckBoundOfClone(k : Object, v : Object, m : Klon)
+predicate OLDcheckBoundOfClone(k : Object, v : Object, m : Klon)
   //to work, this needs m.o and m.m[m.o] to be set up
   //but does NOT need k in Keys, or v in values!
   //
   // apparently doesn't even need Caliud or precalid let alone supercalid.  HMMM
   requires k.Ready()
-  requires m.ownersInKlown(k)
+  requires m.ownersInKlon(k)
   requires v.Ready()
 
 
@@ -230,7 +230,7 @@ predicate {:isolate_assertions} OLDcheckBoundOfClone(k : Object, v : Object, m :
   requires k.owner <= m.m.Keys <= m.oHeap
   requires m.m.Values <= flatten( m.hns() )
   requires m.o.Ready()
-  requires m.objectInKlown(m.o)
+  requires m.objectInKlon(m.o)
   requires m.HeapOwnersReady()
   requires m.c_amfx <= m.oHeap
   reads {}

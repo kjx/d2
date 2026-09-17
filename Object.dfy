@@ -50,7 +50,7 @@ class Object {
 
 
 //LILLE constructor arguments
-  constructor {:isolate_assertions} {:timeLimit 20} make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := aroposeBounds(oo))
+  constructor {:timeLimit 20} make(ks : map<string,Mode>, oo : Owner, context : set<Object>, name : string, mb : Owner := aroposeBounds(oo))
     //make an object.  owner & (opt) bound should be local owners, not flattened OWNRS
 
 //refactored 30 Jan 2026!! //bunch of commented-out-stuff excised
@@ -58,12 +58,12 @@ class Object {
     requires AllReady(mb)     //because of this? who knows!
     //NOCONTEXT  requires /* context >= */ flatten(oo) >= flatten(mb)   //FUCK_CONTEXT!!!
     requires flatten(oo) >= flatten(mb)
-    requires nuBoundsOK(oo, mb)   ///attempting to get verification times down
+    requires boundsOK(oo, mb)   ///attempting to get verification times down
 
 //"rephrase" precondtions
     ensures /* context >= */  AMFX >= AMFB
     ensures forall o <- AMFX :: o.Ready()
-    ensures nuBoundsOK(owner, bound)
+    ensures boundsOK(owner, bound)
 
 //export main variable values
     ensures bound == mb
@@ -109,7 +109,7 @@ class Object {
   }
 
 
-predicate {:isolate_assertions} Ready()
+predicate Ready()
     //well-formdness of ownership
     reads {}
     decreases AMFO, 20
@@ -126,9 +126,9 @@ predicate {:isolate_assertions} Ready()
     && (forall oo <- AMFX  :: (AMFO > oo.AMFO) && oo.Ready())
 //    && (forall oo <- owner :: AMFB <= oo.AMFB)  //Beady2()
     //NUBOUND
-  //  && (nuBoundsOK(owner, bound))
+  //  && (boundsOK(owner, bound))
 
-    && (myBoundsOK(owner, bound))
+    && (boundsOK(owner, bound))
 
     && (this !in AMFX) && (this !in owner) &&  (this !in bound)
   }
@@ -138,7 +138,7 @@ lemma RettyBetty(os : set<Object>)
   ensures AllReady(flatten(os))
   {}
 
-lemma {:isolate_assertions} ExtraReady()
+lemma ExtraReady()
    //consequences of well-formedness (Ready) that dafny cant always find easily
   decreases AMFO
     requires Ready()
@@ -192,8 +192,8 @@ lemma {:isolate_assertions} ExtraReady()
 
 //bounds
 
-ensures nuBoundsOK(owner, bound)
-ensures forall o <- owner :: nuBoundsOK(o.owner, o.bound)
+ensures boundsOK(owner, bound)
+ensures forall o <- owner :: boundsOK(o.owner, o.bound)
 
 //outside
     ensures  (forall x : Object | outside(this,x)     :: forall oo : Object <- AMFO  :: outside(oo,x))
@@ -259,7 +259,7 @@ lemma MakeOwnerOwners(oo : Owner, mb : Owner)
   //helper to make
   requires flatten(oo) >= flatten(mb)
   requires AllReady(oo)
-  requires nuBoundsOK(oo, mb)
+  requires boundsOK(oo, mb)
 
   requires owner == oo
   requires bound == mb
@@ -273,7 +273,7 @@ lemma MakeOwnerOwners(oo : Owner, mb : Owner)
    ensures forall oo <- AMFX :: oo.Ready()
    ensures AMFO > AMFX >= AMFB
    ensures forall oo <- AMFX :: AMFO > oo.AMFO
-   ensures nuBoundsOK(oo, mb)
+   ensures boundsOK(oo, mb)
   {}
 
 
@@ -282,7 +282,7 @@ lemma MakeOwnerSelfies(oo : Owner, mb : Owner)
 
   requires flatten(oo) >= flatten(mb)
   requires forall o <- flatten(oo) :: o.Ready()
-  requires nuBoundsOK(oo, mb)
+  requires boundsOK(oo, mb)
 
   requires owner == oo
   requires bound == mb
@@ -295,7 +295,7 @@ lemma MakeOwnerSelfies(oo : Owner, mb : Owner)
 
    ensures AMFO  == flatten(oo)+{this}
    ensures AMFO  == flatten(self)
-   ensures nuBoundsOK(oo, mb)
+   ensures boundsOK(oo, mb)
     {
         MakeOwnerOwners(oo, mb);
         assert self == owner + {this};
@@ -307,7 +307,7 @@ lemma MakeOwnerSelfies(oo : Owner, mb : Owner)
 
   }
 
-  lemma {:isolate_assertions} MakeInContext(context : set<Object>)
+  lemma MakeInContext(context : set<Object>)
   //helper to make
    requires Ready()
 //NOCONTEXT   requires context >= flatten(owner)
@@ -446,7 +446,7 @@ lemma ValidMeansAllFieldsValid()
 //////////////////////
 ////  I think most of this can go?
 /////////////////////
-// lemma {:isolate_assertions} I_HATE_BOUNDS()
+// lemma I_HATE_BOUNDS()
 //   requires Ready()
 //    ensures ( (set ooo : Object <- {this}, omb : Object <-  ooo.AMFB :: omb) + {this} ) == (AMFB + {this})
 //    ensures (forall oo <- owner :: oo.AMFB >= AMFB)
@@ -479,10 +479,10 @@ function collectOwnersBounds() : set<set<Object>>  { set o <- owner :: o.AMFB }
 
 function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds() ) }
 //
-// lemma {:isolate_assertions} {:timeLimit 20} Bounds_Reflexive(oo : Owner)
+// lemma {:timeLimit 20} Bounds_Reflexive(oo : Owner)
 //    requires forall o <- oo :: o.bound == o.owner
 //    requires AllReady(oo)
-//   //  ensures nuBoundsOK(oo, oo)
+//   //  ensures boundsOK(oo, oo)
 //     ensures intersetion({oo}) == oo
 //
 //   {
@@ -529,7 +529,7 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
        reads `fields, `fieldModes
        { fields[n] }
 
-  method {:isolate_assertions} setf(n : string, v : Object)
+  method setf(n : string, v : Object)
    ///set field maintains validity
     requires Ready()
     requires Valid()
@@ -574,7 +574,7 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
        }
 
 
-  method {:isolate_assertions} usetn(n : string, v : nat)
+  method usetn(n : string, v : nat)
      //unchecked set nat
     requires Ready()
     requires Valid()
@@ -610,7 +610,7 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
 
 
 
-  method {:isolate_assertions} uincrn(n : string)
+  method uincrn(n : string)
        //unchecked incr nat
     requires Ready()
     requires Valid()
@@ -629,7 +629,7 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
        }
 
 
-  method {:isolate_assertions} setn(n : string, v : nat)
+  method setn(n : string, v : nat)
     //set nat maitains validity
     requires Ready()
     requires Valid()
@@ -653,7 +653,7 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
     assume Valid();  // //NO_FIELDMODES ??
        }
 
-  method {:isolate_assertions} incrn(n : string)
+  method incrn(n : string)
       //incr nat maitains validity
     requires Ready()
     requires Valid()
@@ -697,7 +697,7 @@ function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds(
 
  function fields(fs : set<string> ) : map<string,Mode>  { map f <- fs :: f := Evil }
 
-  lemma {:isolate_assertions} FieldInFields(o : Object, n : string, v : Object)
+  lemma FieldInFields(o : Object, n : string, v : Object)
     requires o.Ready()
     requires o.Valid()
     requires n in o.fields.Keys
@@ -712,7 +712,7 @@ function intersetion<T>(intersets : set<set<T>>) : set<T>
   set s : set<T> <- intersets, e : T <- s | (forall t : set<T> <- intersets :: e in t ) :: e
  }
 
-// lemma {:isolate_assertions} {:timeLimt 0} AllForOneAndOneForALl(oo : Owner, mb : Owner)
+// lemma {:timeLimt 0} AllForOneAndOneForALl(oo : Owner, mb : Owner)
 //   requires AllReady(oo)
 //   requires  mb == intersetion( set o <- oo :: o.AMFB )
 //    ensures forall x <- mb, t <- oo :: x in t.AMFB

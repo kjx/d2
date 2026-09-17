@@ -4,7 +4,7 @@ include "Xlone.dfy"
 
 
 //{:resource_limit 75_000_000}   {:timeLimit 30}
-method {:isolate_assertions}  {:timeLimit 30} {:verify true} Xlone_Set_Field(k : Object, v : Object, n : string,
+method  {:timeLimit 30} {:verify true} Xlone_Set_Field(k : Object, v : Object, n : string,
                  t : Object, u : Object, m' : Klon)
   //with k.n := t,  Klon mappings including k->v, t->u,  set v.n := u
   //requires v !in m'.oHeap   //clone will ONLY need to fields into new objects...
@@ -24,10 +24,10 @@ method {:isolate_assertions}  {:timeLimit 30} {:verify true} Xlone_Set_Field(k :
   requires m'.SuperCalidFragilistic()
   requires m'.SuperCalidOwners()
   requires m'.CalidOwners()
-  requires m'.objectInKlown(k)  //note that doing this *requires* objects to be in the Klon
+  requires m'.objectInKlon(k)  //note that doing this *requires* objects to be in the Klon
   requires m'.m[k] == v         //BEFORE they are setup in the fields. is this the right way around?
   requires t.Ready()            //
-  requires m'.objectInKlown(t)  //ditto
+  requires m'.objectInKlon(t)  //ditto
   requires m'.m[t] == u         //ditto ditto
 
   requires k in m'.m.Keys
@@ -228,7 +228,7 @@ forall x <- m'.oHeap | x != v ensures (x.Ready() && x.Valid() && x.Context(m'.oH
     assert m'.preOwners();
     assert m'.preOwners2();
     assert m'.m.Keys <= m'.oHeap;
-    assert m'.objectInKlown(m'.o);
+    assert m'.objectInKlon(m'.o);
 
 forall x <- m'.m.Keys ensures  m'.OwnersLineKV(x, m'.m[x])
   {

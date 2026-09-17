@@ -10,7 +10,7 @@ include "Bound.dfy"  //shouild this be Ownerhsip=Bound?
 ////////////////////////////////////////////
 //core definitions of klonLine
 
-predicate  klonReady(m : Klon) : (b : bool) ///like Ready, should be built in to the type
+predicate klonReady(m : Klon) : (b : bool) ///like Ready, should be built in to the type
   //constant true facts about all Klons!
   reads {}
   ensures (m.m.Values <= m.hns())
@@ -19,7 +19,7 @@ predicate  klonReady(m : Klon) : (b : bool) ///like Ready, should be built in to
   {
     && (m.o in m.oHeap)    //need so we don't need a reads clause about m.o
     && (m.o.Ready())  // do we want Valid too?
-    && (m.objectInKlown(m.o))
+    && (m.objectInKlon(m.o))
     && (m.m[m.o] == m.c)
     && (m.o.AMFX == m.o_amfx)
     && (m.o.AMFO == m.o_amfx+{m.o})
@@ -27,16 +27,16 @@ predicate  klonReady(m : Klon) : (b : bool) ///like Ready, should be built in to
     && (m.clbound == m.c.bound)
     && ((m.c.AMFX  == m.c_amfx))
     && ((m.c.AMFB  == m.c_amfb))
-    && myBoundsOK(m.o.owner, m.o.bound) ///note - direct implementation is lurking below!?!
+    && boundsOK(m.o.owner, m.o.bound) ///note - direct implementation is lurking below!?!
     // && (flatten(m.clbound) >= m.o.AMFB)  //WHAT THE FUCK?              ///      |
     && (m.oHeap >= m.c_amfx >= flatten(m.clbound) >= flatten(m.o.bound))  /// <----+
 
 //following added in from the old apoCalidse()...
     && (m.m.Keys <= m.oHeap)
     && (m.m.Values <= m.hns())
-    // && (m.objectReadyInKlown(o))   //this was originally two predicates
+    // && (m.objectInKlon(o))   //this was originally two predicates
     && (forall x <- m.hns() :: x.Ready()) //whatt bno value owners ready??
-    && (forall x <- m.m.Keys :: m.objectInKlown(x) && m.m[x].Ready())
+    && (forall x <- m.m.Keys :: m.objectInKlon(x) && m.m[x].Ready())
     && (m.c_amfx <= m.oHeap)
   }
 
@@ -116,16 +116,16 @@ predicate OLD_klonPivot(m : Klon)
   requires klonReady(m)
   reads m.hns()
 {
-  && (m.o.Ready() && m.o.Valid() && m.o.Context(m.oHeap) && m.objectInKlown(m.o))
+  && (m.o.Ready() && m.o.Valid() && m.o.Context(m.oHeap) && m.objectInKlon(m.o))
   && (m.m[m.o] == m.c) && m.c.Valid() && m.c.Context(m.hns({m.c}))
-  && nuBoundsOK(m.o.owner, m.o.bound)     // isn't tbis in READY
+  && boundsOK(m.o.owner, m.o.bound)     // isn't tbis in READY
   && (m.o.AMFX == m.o_amfx)
   && (m.o.AMFO == m.o_amfx+{m.o})
   && (m.clowner == m.c.owner)
   && (m.clbound == m.c.bound)
   &&((m.c.AMFX  == m.c_amfx))
   &&((m.c.AMFB  == m.c_amfb))
-  && myBoundsOK(m.o.owner, m.o.bound) ///note - direct implementation is lurking below!?!
+  && boundsOK(m.o.owner, m.o.bound) ///note - direct implementation is lurking below!?!
   // && (flatten(m.clbound) >= m.o.AMFB)  //WHAT THE FUCK?              ///      |
   && (m.oHeap >= m.c_amfx >= flatten(m.clbound) >= flatten(m.o.bound))  /// <----+
 }
@@ -164,7 +164,7 @@ predicate klonGeometry(k : Object, v : Object, m : Klon)
   // reads m.hns(), k, v   //cos ownership is constant RIGHT
 {
   && (m.o.Ready())           //precond?
-  && (m.objectInKlown(m.o))  //precond?
+  && (m.objectInKlon(m.o))  //precond?
 
   && ( (k == m.o)       <==>  (v == m.c)  )
   && ((inside(k, m.o))   ==> (k.AMFB  <= m.o.AMFB)) //hmmmm //GREENLAND
@@ -184,8 +184,8 @@ predicate klonIdentity(k : Object, v : Object, m : Klon) : (r : bool)
   requires klonReady(m)
 //  reads m.hns(), k, v
   {
-  && (m.ownersInKlown(k))
-  && (m.objectInKlown(m.o))
+  && (m.ownersInKlon(k))
+  && (m.objectInKlon(m.o))
 
   && (if (k == m.o) then (
                            && (k != v)
@@ -212,15 +212,15 @@ lemma KlonIdentityFrom(k : Object, v : Object, m : Klon, m' : Klon)
     requires k.Ready()
     requires v.Ready()
 
-    requires m'.ownersInKlown(k)
-    requires m'.objectInKlown(m.o)
+    requires m'.ownersInKlon(k)
+    requires m'.objectInKlon(m.o)
     requires klonIdentity(k,v,m')
 
     requires klonReady(m)
     requires m.from(m')
 
-     ensures m.ownersInKlown(k)
-     ensures m.objectInKlown(m.o)
+     ensures m.ownersInKlon(k)
+     ensures m.objectInKlon(m.o)
      ensures klonIdentity(k,v,m)
    {
     assert m.m.Keys >= m'.m.Keys;
@@ -249,14 +249,14 @@ lemma {:timeLimit 20} EXTRA_KLON_LINE(k : Object, v : Object, m : Klon)
    ensures forall o <- k.owner :: klonLine(o, m.m[o], m)
    ensures forall o <- k.AMFX  :: klonLine(o, m.m[o], m)
 {
-  assert m.ownersInKlown(k);
+  assert m.ownersInKlon(k);
   forall o <- k.owner ensures (klonLine(o, m.m[o], m)) //by
   {
     assert o in m.m.Keys;
     assert klonLine(o, m.m[o], m);
   }
 
-  assert m.ownersInKlown(k);
+  assert m.ownersInKlon(k);
   forall o <- k.AMFX ensures (klonLine(o, m.m[o], m)) //by
   {
     assert o in m.m.Keys;
@@ -281,7 +281,7 @@ lemma KlonReadyFromKV(m : Klon, m' : Klon, k : Object, v : Object)
 
    ensures (m.m.Keys - m'.m.Keys) == {k}
    ensures k in m'.oHeap
-   ensures m.objectInKlown(k)
+   ensures m.objectInKlon(k)
 
    ensures m.m.Values == m'.m.Values + {v}
    ensures m.hns() >= m'.hns() + {k, v}
@@ -298,14 +298,14 @@ lemma KlonReadyFrom(m : Klon, m' : Klon)
 
   requires (m.m.Keys - m'.m.Keys) <= m'.oHeap
   requires forall x : Object <- (m.hns() - m'.hns())   :: x.Ready()
-  requires forall x : Object <- (m.m.Keys - m'.m.Keys) :: m.objectInKlown(x)
+  requires forall x : Object <- (m.m.Keys - m'.m.Keys) :: m.objectInKlon(x)
 
    ensures klonReady(m)
   {
     assert
     && (m.o in m.oHeap)
     && (m.o.Ready())
-    && (m.objectInKlown(m.o))
+    && (m.objectInKlon(m.o))
     && (m.m[m.o] == m.c)
     && (m.o.AMFX == m.o_amfx)
     && (m.o.AMFO == m.o_amfx+{m.o})
@@ -313,7 +313,7 @@ lemma KlonReadyFrom(m : Klon, m' : Klon)
     && (m.clbound == m.c.bound)
     && ((m.c.AMFX  == m.c_amfx))
     && ((m.c.AMFB  == m.c_amfb))
-    && myBoundsOK(m.o.owner, m.o.bound) ///note - direct implementation is lurking below!?!
+    && boundsOK(m.o.owner, m.o.bound) ///note - direct implementation is lurking below!?!
     // && (flatten(m.clbound) >= m.o.AMFB)  //WHAT THE FUCK?              ///      |
     && (m.oHeap >= m.c_amfx >= flatten(m.clbound) >= flatten(m.o.bound))  /// <----+
     && (m.c_amfx <= m.oHeap)
@@ -322,13 +322,13 @@ lemma KlonReadyFrom(m : Klon, m' : Klon)
     assert m.oHeap == m'.oHeap; //from from
     assert (m.m.Keys - m'.m.Keys) <= m'.oHeap;
     assert forall x : Object <- (m.hns() - m'.hns())   :: x.Ready();
-    assert forall x : Object <- (m.m.Keys - m'.m.Keys) :: m.objectInKlown(x);
+    assert forall x : Object <- (m.m.Keys - m'.m.Keys) :: m.objectInKlon(x);
 
     assert
     && (m.m.Keys <= m.oHeap)
     && (m.m.Values <= m.hns())
     && (forall x <- m.hns() :: x.Ready())
-    && (forall x <- m.m.Keys :: m.objectInKlown(x))
+    && (forall x <- m.m.Keys :: m.objectInKlon(x))
      ;
   }
 
@@ -362,7 +362,7 @@ lemma KlonLineFrom(k : Object, v : Object, m : Klon, m' : Klon)
 //
 //   requires (m.m.Keys - m'.m.Keys) <= m'.oHeap
 //   requires forall x : Object <- (m.hns() - m'.hns())       :: x.Ready()
-//   requires forall x : Object <- (m.m.Keys   - m'.m.Keys)   :: m.objectInKlown(x)
+//   requires forall x : Object <- (m.m.Keys   - m'.m.Keys)   :: m.objectInKlon(x)
 //   requires forall x : Object <- (m.m.Keys   - m'.m.Keys)   :: klonLine(x,m.m[x],m')
 //   requires forall x : Object <- (m.m.Values - m'.m.Values) :: x.Context(m.hns())
 //
@@ -371,18 +371,18 @@ lemma KlonLineFrom(k : Object, v : Object, m : Klon, m' : Klon)
 //      ensures klonAllLines(m)
 // {
 //
-//   forall x <- m.m.Keys ensures m.objectInKlown(x) //by
+//   forall x <- m.m.Keys ensures m.objectInKlon(x) //by
 //   {
 //     if (x in m'.m.Keys) {
-//         assert m'.objectInKlown(x);
-//         assert m'.bjectInKlown(x);
+//         assert m'.objectInKlon(x);
+//         assert m'.bjectInKlon(x);
 //         assert klonLine(x,m'.m[x],m');
 //
 //     } else {
 //        assert x !in m'.m.Keys;
 //        assert x  in  m.m.Keys;
 //        assert x  in (m.m.Keys - m'.m.Keys);
-//        assert m.objectInKlown(x);
+//        assert m.objectInKlon(x);
 //     }
 //   }
 // }
@@ -396,7 +396,7 @@ lemma KlonCalidFrom(m : Klon, m' : Klon)
 
   requires (m.m.Keys - m'.m.Keys) <= m'.oHeap
   requires forall x : Object <- (m.hns() - m'.hns())       :: x.Ready()
-  requires forall x : Object <- (m.m.Keys   - m'.m.Keys)   :: m.objectInKlown(x)
+  requires forall x : Object <- (m.m.Keys   - m'.m.Keys)   :: m.objectInKlon(x)
   requires forall x : Object <- (m.m.Keys   - m'.m.Keys)   :: klonLine(x,m.m[x],m')
   requires forall x : Object <- (m.m.Values - m'.m.Values) :: x.Context(m.hns())
 

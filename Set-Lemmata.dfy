@@ -3,7 +3,7 @@ include "Library.dfy"
 // //////////////////////////////////////////////////////////////////////////////
 
 //
-// lemma {:isolate_assertions}  SetNothing<T>(a : set<T>, b : set<T>)
+// lemma  SetNothing<T>(a : set<T>, b : set<T>)
 //   requires (a - b) == {}
 //    ensures  a <= b
 // {}
@@ -14,7 +14,7 @@ lemma SetLtGtEq<T>(a : set<T>, b : set<T>)
    ensures a == b
 {}
 
-lemma {:isolate_assertions}  SetMinus0<T>(a : set<T>, b : set<T>)
+lemma  SetMinus0<T>(a : set<T>, b : set<T>)
   requires (a - b) == {}
    ensures  a <= b
 {
@@ -28,7 +28,7 @@ lemma {:isolate_assertions}  SetMinus0<T>(a : set<T>, b : set<T>)
 }
 
 
-lemma {:isolate_assertions}  SetMinus3<T>(a : set<T>, b : set<T>, c : set<T>)
+lemma  SetMinus3<T>(a : set<T>, b : set<T>, c : set<T>)
  //a is split between b !! c
   requires a - b == c
   requires a >= b
@@ -39,20 +39,20 @@ lemma {:isolate_assertions}  SetMinus3<T>(a : set<T>, b : set<T>, c : set<T>)
 {}
 
 
-lemma {:isolate_assertions}  SetMinus4<T>(a : set<T>, b : set<T>, c : set<T>, d : set<T>)
+lemma  SetMinus4<T>(a : set<T>, b : set<T>, c : set<T>, d : set<T>)
   requires a == c
   requires b == d
   ensures (a - b) == (c - d)
 {}
 
-lemma {:isolate_assertions}  SetMinus6<T>(a : set<T>, b : set<T>, c : set<T>, d : set<T>, e : set<T>, f : set<T>)
+lemma  SetMinus6<T>(a : set<T>, b : set<T>, c : set<T>, d : set<T>, e : set<T>, f : set<T>)
   requires a == d
   requires b == e
   requires c == f
   ensures (a - b - c) == (d - e - f)
 {}
 
-lemma  Set3Eq3<T>(a : set<T>, b : set<T>, c : set<T>, d : set<T>, e : set<T>, f : set<T>)
+lemma Set3Eq3<T>(a : set<T>, b : set<T>, c : set<T>, d : set<T>, e : set<T>, f : set<T>)
   requires a == d
   requires b == e
   requires c == f

@@ -40,7 +40,7 @@ method {:verify false} XloneMain(s : seq<string>)
 
 
 //{:verify false} //{:only} {:timeLimit 120} -- spent FAR TOO LONG on this- Sat 18 APril
-  method {:isolate_assertions} {:verify false}   makeDemo() returns (t : Object, a : Object, b : Object, os : set<Object>)
+  method {:verify false}   makeDemo() returns (t : Object, a : Object, b : Object, os : set<Object>)
   ensures t in os
   ensures a in os
   ensures b in os
@@ -85,7 +85,7 @@ assert t.Ready();
 // print "proposed bounds {t} == ", ffmtnickset(proposeBounds({t})),"\n";
 
 assert proposeBounds({t}) == {t};
-assert myBoundsOK({t},{});  assert myBoundsOK({t},{t});
+assert boundsOK({t},{});  assert boundsOK({t},{t});
 
 assert t.AMFB >= flatten({});
 
@@ -356,7 +356,7 @@ var gops := GraphOptions("",    "OF",  "",    "");
 
 
 assert m.Calid();
-assert m.ownersInKlown(a);
+assert m.ownersInKlon(a);
 
 print "+++++++++++++\n";
 print "original store (orig)\n";
@@ -410,12 +410,12 @@ printmapping(m.m);
 //                 printown( mapThruKlon(oo, rm));
 //                 print "\n   calc      ==";
 //                 // printown( calculateClownership(oo, rm));
-//                 // print "\n   mTKlown   ==";
-//                 // printown( mapThruKlown(oo, rm));
-//                 // print "\n   mTKlownII ==";
-//                 // printown( mapThruKlownIfInside(oo, rm));
+//                 // print "\n   mTKlon   ==";
+//                 // printown( mapThruKlon(oo, rm));
+//                 // print "\n   mTKlonII ==";
+//                 // printown( mapThruKlonIfInside(oo, rm));
 //                 // print "\n   OLDmapTKl ==";
-//                 // printown( OLDmapThruKlown(oo, rm));
+//                 // printown( OLDmapThruKlon(oo, rm));
 //               }
 //              else
 //              {
@@ -610,7 +610,7 @@ var gops := GraphOptions("",    "OF",  "",    "");
 // assert a in rm.m.Keys;
 // assert rm.from(m);
 // assert m.Calid();
-// assert m.ownersInKlown(a);
+// assert m.ownersInKlon(a);
 //
 // print "+++++++++++++\n";
 // print "original store (orig)\n";
@@ -666,12 +666,12 @@ var gops := GraphOptions("",    "OF",  "",    "");
 //                 printown( mapThruKlon(oo, rm));
 //                 print "\n   calc      ==";
 //                 // printown( calculateClownership(oo, rm));
-//                 // print "\n   mTKlown   ==";
-//                 // printown( mapThruKlown(oo, rm));
-//                 // print "\n   mTKlownII ==";
-//                 // printown( mapThruKlownIfInside(oo, rm));
+//                 // print "\n   mTKlon   ==";
+//                 // printown( mapThruKlon(oo, rm));
+//                 // print "\n   mTKlonII ==";
+//                 // printown( mapThruKlonIfInside(oo, rm));
 //                 // print "\n   OLDmapTKl ==";
-//                 // printown( OLDmapThruKlown(oo, rm));
+//                 // printown( OLDmapThruKlon(oo, rm));
 //               }
 //              else
 //              {
@@ -868,7 +868,7 @@ if ((b in m.m.Keys) && (m.m[b].nick == "clone_of_b")) {
 // assert a in rm.m.Keys;
 // assert rm.from(m);
 // assert m.Calid();
-// assert m.ownersInKlown(a);
+// assert m.ownersInKlon(a);
 //
 // print "+++++++++++++\n";
 // print "original store (orig)\n";
@@ -924,12 +924,12 @@ if ((b in m.m.Keys) && (m.m[b].nick == "clone_of_b")) {
 //                 printown( mapThruKlon(oo, rm));
 //                 print "\n   calc      ==";
 //                 // printown( calculateClownership(oo, rm));
-//                 // print "\n   mTKlown   ==";
-//                 // printown( mapThruKlown(oo, rm));
-//                 // print "\n   mTKlownII ==";
-//                 // printown( mapThruKlownIfInside(oo, rm));
+//                 // print "\n   mTKlon   ==";
+//                 // printown( mapThruKlon(oo, rm));
+//                 // print "\n   mTKlonII ==";
+//                 // printown( mapThruKlonIfInside(oo, rm));
 //                 // print "\n   OLDmapTKl ==";
-//                 // printown( OLDmapThruKlown(oo, rm));
+//                 // printown( OLDmapThruKlon(oo, rm));
 //               }
 //              else
 //              {

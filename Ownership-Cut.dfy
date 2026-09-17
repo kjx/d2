@@ -119,7 +119,7 @@ lemma {:vcs_split_on_every_assert} {:timeLimit 15} CutIsCut2(cut : Object, tree 
    }
 }
 
-lemma {:isolate_assertions} SeperationOfPowers(cut : Object, tree : set<Object>, trunk : set<Object>, branch : set<Object>, f : Object, t : Object)
+lemma SeperationOfPowers(cut : Object, tree : set<Object>, trunk : set<Object>, branch : set<Object>, f : Object, t : Object)
   requires f.Ready() && cut.Ready() && t.Ready()
 
   requires forall o <- tree :: o.Ready() && o.Valid()

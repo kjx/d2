@@ -16,7 +16,7 @@ include "Printing.dfy"
 
 type SSO = set<set<Object>>
 
-function      ownr2sso(o : OWNR) : SSO                           { set x : Object <- o :: x.AMFO }
+function     ownr2sso(o : OWNR) : SSO                           { set x : Object <- o :: x.AMFO }
 function obj2sso(o : Object) : SSO      requires o.Ready()  { ownr2sso(o.AMFO) } // requires o.Ready() ?
 function concensso(sso : SSO) : OWNR { set so : set<Object> <- sso, o : Object <- so :: o }
 
@@ -33,8 +33,8 @@ predicate fromsso(oo : SSO, p : SSO)  { concensso(oo) > concensso(p) }  //not th
 
 
 
-  function {:isolate_assertions} {:timeLimit 20} mapfo(oo : OWNR, m : Klon) : SSO
-   requires forall o <- oo :: m.objectReadyInKlown(o)
+  function {:timeLimit 20} mapfo(oo : OWNR, m : Klon) : SSO
+   requires forall o <- oo :: m.objectInKlon(o)
    requires oo <= m.m.Keys
    requires m.SuperCalidFragilistic()
     ensures                 m.o.AMFO <= m.m.Keys
@@ -46,8 +46,8 @@ predicate fromsso(oo : SSO, p : SSO)  { concensso(oo) > concensso(p) }  //not th
       else (mapfo_INNER(oo,m) + obj2sso(m.m[m.o]))
  }
 
- function {:isolate_assertions} mapfo_INNER_NEW(oo : OWNR, m : Klon) : SSO
-   requires forall o <- oo :: m.objectReadyInKlown(o)
+ function mapfo_INNER_NEW(oo : OWNR, m : Klon) : SSO
+   requires forall o <- oo :: m.objectInKlon(o)
    requires oo <= m.m.Keys
    requires m.SuperCalidFragilistic()
       reads oo, m.m.Keys, m.m.Values, m.oHeap
@@ -59,8 +59,8 @@ predicate fromsso(oo : SSO, p : SSO)  { concensso(oo) > concensso(p) }  //not th
    }
 
 
- function {:isolate_assertions} mapfo_INNER(oo : OWNR, m : Klon) : SSO
-   requires forall o <- oo :: m.objectReadyInKlown(o)
+ function mapfo_INNER(oo : OWNR, m : Klon) : SSO
+   requires forall o <- oo :: m.objectInKlon(o)
    requires oo <= m.m.Keys
    requires m.SuperCalidFragilistic()
       reads oo, m.m.Keys, m.m.Values, m.oHeap
@@ -72,8 +72,8 @@ predicate fromsso(oo : SSO, p : SSO)  { concensso(oo) > concensso(p) }  //not th
         ) else ( y.AMFO )
    }
 
- function {:isolate_assertions}  mapfo_SIDEWAYS(o : Object, m : Klon) : OWNR
-   requires m.objectReadyInKlown(o)
+ function  mapfo_SIDEWAYS(o : Object, m : Klon) : OWNR
+   requires m.objectInKlon(o)
    requires o in m.m.Keys
    requires m.SuperCalidFragilistic()
    requires o !in m.o.AMFO
@@ -83,7 +83,7 @@ predicate fromsso(oo : SSO, p : SSO)  { concensso(oo) > concensso(p) }  //not th
 
 
 
- function {:isolate_assertions} mapfoSide(kk : Owner, m : Klon) : Owner
+ function mapfoSide(kk : Owner, m : Klon) : Owner
    requires AllReady(kk)
    requires kk <= m.m.Keys
    requires m.SuperCalidFragilistic()
@@ -102,7 +102,7 @@ predicate fromsso(oo : SSO, p : SSO)  { concensso(oo) > concensso(p) }  //not th
 
 function sso2setstr(sso: SSO) : set<string>  reads concensso(sso)`nick  { set so <- sso :: "‹"+fmtnickset(so)+"›" }
 
-function  fmtsso(sso: SSO) : string reads concensso(sso)`nick { fmtsetstr(sso2setstr(sso)) }
+function fmtsso(sso: SSO) : string reads concensso(sso)`nick { fmtsetstr(sso2setstr(sso)) }
 function ffmtsso(sso: SSO) : string reads concensso(sso)`nick { "«"+fmtsetstr(sso2setstr(sso))+"»" }
 
 

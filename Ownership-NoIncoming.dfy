@@ -1,6 +1,6 @@
   include "Ownership-Lemmata.dfy"
 
-lemma {:isolate_assertions} NoIncomingPointers(f : Object, o : Object, t : Object)
+lemma NoIncomingPointers(f : Object, o : Object, t : Object)
   requires f.Ready() && o.Ready() && t.Ready()
 
   requires strictlyInside(t,o)
@@ -12,7 +12,7 @@ lemma {:isolate_assertions} NoIncomingPointers(f : Object, o : Object, t : Objec
 
 
 
-lemma {:isolate_assertions} NoOutgoingPointers(f : Object, o : Object, t : Object)
+lemma NoOutgoingPointers(f : Object, o : Object, t : Object)
   requires f.Ready() && o.Ready() && t.Ready()
 
   requires o.owner != o.bound
@@ -37,7 +37,7 @@ lemma {:isolate_assertions} NoOutgoingPointers(f : Object, o : Object, t : Objec
 
 
 
-lemma {:isolate_assertions} MovingOnUp(f : Object, o : Object, oo  : Object, t : Object)
+lemma MovingOnUp(f : Object, o : Object, oo  : Object, t : Object)
   requires f.Ready() && o.Ready() && t.Ready() && oo.Ready()
 
   requires refOK(o,t)
@@ -53,7 +53,7 @@ lemma {:isolate_assertions} MovingOnUp(f : Object, o : Object, oo  : Object, t :
 
 
 
-lemma {:isolate_assertions} MovingOnDown(f : Object, o : Object, t : Object)
+lemma MovingOnDown(f : Object, o : Object, t : Object)
   requires f.Ready() && o.Ready() && t.Ready()
 
   requires refOK(o,t)
@@ -72,7 +72,7 @@ lemma Goop(f : Object, t : Object)
    ensures t.AMFX  == f.AMFO
    {}
 
-lemma {:isolate_assertions} NIP(f : Object, whole : Object, part : Object)
+lemma NIP(f : Object, whole : Object, part : Object)
   requires f.Ready() && whole.Ready() && part.Ready()
 
  //same as no incomeing pointers but variables somewhat renamed...
@@ -85,7 +85,7 @@ lemma {:isolate_assertions} NIP(f : Object, whole : Object, part : Object)
 {}
 
 
-lemma {:isolate_assertions} ShorterNoIncomingPointers(f : Object, o : Object, t : Object)
+lemma ShorterNoIncomingPointers(f : Object, o : Object, t : Object)
   requires f.Ready() && o.Ready() && t.Ready()
 //  requires f != t
 
@@ -128,7 +128,7 @@ assert not(refOK(f,t));
 
 
 
-lemma {:isolate_assertions} LongerNoIncomingPointers(f : Object, o : Object, t : Object)
+lemma LongerNoIncomingPointers(f : Object, o : Object, t : Object)
   requires f.Ready()
   requires o.Ready()
   requires t.Ready()

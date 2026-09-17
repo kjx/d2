@@ -10,13 +10,13 @@ include "Klon-Lemmata.dfy"
 //now importnated from Ownership-Trilemma most likely via Luxon...
 //
 // function proposeOwnerAndBound(kowner : Owner, kbound : Bound, m : Klon) : (r : (Owner, Bound))
-//   requires myBoundsOK(kowner, kbound)
-//    ensures myBoundsOK(r.0, r.1)
+//   requires boundsOK(kowner, kbound)
+//    ensures boundsOK(r.0, r.1)
 //  {
 //    var rowner := mapThruKlon(kowner, m);
 //    var rbound := mapThruKlon(kbound, m);
 //    //ici c'est la problème
-//    assume myBoundsOK(rowner, rbound);
+//    assume boundsOK(rowner, rbound);
 //    (rowner, rbound)
 //  }
 
@@ -40,7 +40,7 @@ method Xlone_Clone_Clone(k : Object, m' : Klon)
   //////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
   //random shit May 5 2026
-  requires m'.ownersInKlown(k)     ///OS THIS RIOGJT OR NOT???  (july 2026)  FUCK IF I KNOW TERENCE?
+  requires m'.ownersInKlon(k)     ///OS THIS RIOGJT OR NOT???  (july 2026)  FUCK IF I KNOW TERENCE?
   /////////////////////////////////////////////////////////////////////
 
 //FIELD MODEs-ISM HACK -- shouod go into calid or at laets supercalid!
@@ -55,7 +55,7 @@ method Xlone_Clone_Clone(k : Object, m' : Klon)
    ensures klonReady(m)
    ensures klonCalid(m)
    ensures m.from(m')
-   ensures m.objectInKlown(k)
+   ensures m.objectInKlon(k)
    ensures m.m[k] == v
    ensures v.Context(m.hns())
    ensures klonLine(k,v,m)
@@ -64,7 +64,7 @@ method Xlone_Clone_Clone(k : Object, m' : Klon)
 //NOENSURES     ensures HighCalidFragilistic(m)
 //NOENSURES
 //NOENSURES     ensures m.from(m')
-//NOENSURES     ensures m.objectInKlown(k)
+//NOENSURES     ensures m.objectInKlon(k)
 //NOENSURES     ensures m.m[k] == v
 //NOENSURES //NO_FIELDMODES   ensures k.fieldModes  == v.fieldModes   //hmm shouldbe some kind of map.  mapping modes?
 //NOENSURES     ensures v.Ready() && v.Valid()
@@ -113,13 +113,13 @@ assert klonCalid(rm);
 
 //////////////////////////////////////////////////////////////
   print "Clone_Clone_Clone ", fmtobj(k), " back from CAO ", fmtown(k.owner) ,"\n";
-  print "CCC rm.owersInKlown ", fmtobj(k), " = ", rm.ownersInKlown(k), "\n";
+  print "CCC rm.owersInKlon ", fmtobj(k), " = ", rm.ownersInKlon(k), "\n";
   print "CCC k in rm.m.Keys ", fmtobj(k), " = ", (k in rm.m.Keys), "\n";
 
 
   assert klonReady(rm);
   assert klonCalid(rm);
-  assert rm.ownersInKlown(k);
+  assert rm.ownersInKlon(k);
 
   if (k in rm.m.Keys) {
      print "CCC we got it\n";
@@ -143,7 +143,7 @@ print "CCC 1001 HERE! WEESA HERE!\n";
 //    assert COK(k, rm.oHeap) by { reveal COKA; }
 //    assert klonReady(rm);
 //    assert klonCalid(rm);
-//    assert rm.ownersInKlown(k);
+//    assert rm.ownersInKlon(k);
 //    assert rm.from(m');
 
 
@@ -215,7 +215,7 @@ print "CCC 1001 HERE! WEESA HERE!\n";
 //  //
 //
 //
-//   assert rm.ownersInKlown(k);  //luxon
+//   assert rm.ownersInKlon(k);  //luxon
 //
 //   assert k.owner <= rm.m.Keys;
 //   assert k.bound <= rm.m.Keys;
@@ -230,7 +230,7 @@ print "CCC 1001 HERE! WEESA HERE!\n";
 //
 //   assert k.AMFX >= k.AMFB;
 //   assert flatten(k.owner) >= flatten(k.bound);
-//   assert nuBoundsOK(k.owner, k.bound);
+//   assert boundsOK(k.owner, k.bound);
 // //  assert k.AMFB >= collectBounds(k.AMFX);
   //  // assert flatten(k.bound) >= collectBounds(flatten(k.owner));
 //
@@ -238,7 +238,7 @@ print "CCC 1001 HERE! WEESA HERE!\n";
 
 //     print (rm.m.Keys <= rm.oHeap);
 //     print (rm.m.Values <= rm.hns());
-//     print (rm.objectReadyInKlown(rm.o));
+//     print (rm.objectInKlon(rm.o));
 // ///    print (rm.HeapOwnersReady());
 // ///    print (rm.c_amfx <= rm.oHeap);
 // ///  print rm.apoCalidse();
@@ -261,10 +261,10 @@ print "CCC 1001 HERE! WEESA HERE!\n";
 //   assert m.SuperCalidFragilistic();
 // }
 
-  // assert myBoundsOK(k.owner, k.bound);
+  // assert boundsOK(k.owner, k.bound);
   // assert (flatten(k.owner) >= flatten(k.bound));
   // assert (forall o <- k.owner :: flatten(o.ownerBound()) >= flatten(k.bound));
-  // assert myBoundsOK(k.owner,k.bound);
+  // assert boundsOK(k.owner,k.bound);
 
   var rowner := mapThruKlon(k.owner, rm); ///dunno when I wrote it but...
 //var rowner := computeOwnerForClone(k.owner, rm); ///dunno when I wrote it but...
@@ -279,8 +279,8 @@ var rbound := mapThruKlon(k.bound, rm);
   //Ici m'siur Napoleon!
   assume (flatten(rowner) >= flatten(rbound));  //!!!ERR
   assume (forall o <- rowner :: flatten(o.ownerBound()) >= flatten(rbound)); //!!!ERR
-  assert myBoundsOK(rowner,rbound);
-  assert nuBoundsOK(rowner,rbound);
+  assert boundsOK(rowner,rbound);
+  assert boundsOK(rowner,rbound);
 
 //
 //   && (flatten(oo) >= flatten(mb))
@@ -294,8 +294,8 @@ var rbound := mapThruKlon(k.bound, rm);
 
 
 //
-// assert mappingOWNRsThruKlownKV(k.owner, rowner, rm);
-// assert mappingOWNRsThruKlownKV(k.bound, rbound, rm);
+// assert mappingOWNRsThruKlonKV(k.owner, rowner, rm);
+// assert mappingOWNRsThruKlonKV(k.bound, rbound, rm);
 //
 // assert context >= flatten(rbound);
 // //assert flatten(rbound) >= collectBounds(flatten(rowner));///JDVANCE
@@ -308,7 +308,7 @@ var rbound := mapThruKlon(k.bound, rm);
 //   var r_AMFX := flatten(rowner);
 //   var r_AMFB := flatten(rbound);
 //
-//   assert nuBoundsOK(rowner, rbound);
+//   assert boundsOK(rowner, rbound);
 //
 //    if (k.owner == k.bound) {
 //        assert rowner == rbound;
@@ -337,8 +337,8 @@ var rbound := mapThruKlon(k.bound, rm);
 //           assert m.ValuesOwnersReady();
 //           assert p  <= m.m.Keys;
 //           assert w  <= m.m.Keys;
-//             // assert mappingOWNRsThruKlownKV(p,mp,m);
-//             // assert mappingOWNRsThruKlownKV(w,mw,m);
+//             // assert mappingOWNRsThruKlonKV(p,mp,m);
+//             // assert mappingOWNRsThruKlonKV(w,mw,m);
 //      }
 //
 //
@@ -354,8 +354,8 @@ var rbound := mapThruKlon(k.bound, rm);
 //             assert m.ValuesOwnersReady();
 //             assert p  <= m.m.Keys;
 //             assert w  <= m.m.Keys;
-//             //TRUMP assert mappingOWNRsThruKlownKV(p,mp,m);
-//             //TRUMP assert mappingOWNRsThruKlownKV(w,mw,m);
+//             //TRUMP assert mappingOWNRsThruKlonKV(p,mp,m);
+//             //TRUMP assert mappingOWNRsThruKlonKV(w,mw,m);
 //
 //             // requires AllReady(mp)  // we can't be sure they'll all be ready…
 //             // requires AllReady(mw)
@@ -585,7 +585,7 @@ print "Clone_Clone_Clone ", fmtobj(k), " boodle boodle boodle\n";
 // assert flatten(rowner) >= flatten(rbound);   ///JDVANCE
 // //TRUMP assume context >= flatten(rowner) >= flatten(rbound);
 //
-   assert nuBoundsOK(rowner, rbound);  ///TRUMP TRUMPP TRUMPPP  //ERR
+   assert boundsOK(rowner, rbound);  ///TRUMP TRUMPP TRUMPPP  //ERR
 //
   //  assert klonReady(rm);
   //  assert klonCalid(rm);
@@ -596,7 +596,7 @@ print "Clone_Clone_Clone ", fmtobj(k), " boodle boodle boodle\n";
     // assert AllReady(rbound);     //because of this? who knows!
     // //NOCONTEXT  requires /* context >= */ flatten(rowner) >= flatten(rbound)   //FUCK_CONTEXT!!!
     // assert flatten(rowner) >= flatten(rbound);
-    // assert nuBoundsOK(rowner, rbound);   ///attempting to get verification times down
+    // assert boundsOK(rowner, rbound);   ///attempting to get verification times down
 
 // //// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// ///
 // /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// ///
@@ -609,7 +609,7 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 
 
     // assert k.Ready();
-    // assert m.ownersInKlown(k);
+    // assert m.ownersInKlon(k);
     // assert klonReady(rm);
     // assert strictlyInside(k, rm.o);
     // assert (v.owner == (mapThruKlon(k.owner, rm)));
@@ -621,7 +621,7 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 ///// hmm...
   //  assert klonReady(rm);
   //  assert klonCalid(rm);
-  //  assert m.ownersReadyInKlown(k);
+  //  assert m.ownersInKlon(k);
   //  assert k in rm.oHeap by { reveal COKA; }
   //  assert k !in rm.m.Keys;
   //  assert fresh(v);
@@ -642,7 +642,7 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 // ;
 //
 // assert  && (m.o.Ready())           //precond?
-//   && (m.objectInKlown(m.o))  //precond?
+//   && (m.objectInKlon(m.o))  //precond?
 //
 //   && ( (k == m.o)       <==>  (v == m.c)  )
 //   && ((inside(k, m.o))   ==> (k.AMFB  <= m.o.AMFB)) //hmmmm //GREENLAND
@@ -654,8 +654,8 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 //
 //
 // assert
-//   && (m.ownersReadyInKlown(k))
-//   && (m.objectReadyInKlown(m.o))
+//   && (m.ownersInKlon(k))
+//   && (m.objectInKlon(m.o))
 //
 //   && (if (k == m.o) then (
 //                            && (k != v)
@@ -703,7 +703,7 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 //
 //
 //     assert (k.Ready());
-//     assert (rrm.ownersInKlown(k));
+//     assert (rrm.ownersInKlon(k));
 //     assert (k in rrm.oHeap);
 //     assert (v.Ready());
 //     assert (v in rrm.hns({v}));
@@ -713,7 +713,7 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 //     assert (   (inside(k,rrm.o)) ==> (k.AMFB  >= rrm.o.AMFB));
 //     assert (not(inside(k,rrm.o)) ==> (v == k));
 //     assert (   (inside(k,rrm.o)) ==> ((v !in rrm.oHeap)) );
-//     assert (mappingOwnersThruKlownKV(k,v,rrm));     ///JDVANCE
+//     assert (mappingOwnersThruKlonKV(k,v,rrm));     ///JDVANCE
 //
 //
 //   assert ( inside(k,rrm.o) );
@@ -806,9 +806,9 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 //     //  CKV_preconditions
 //         assert rm.SuperCalidFragilistic();
 //         assert k.Ready();
-//         assert rm.ownersInKlown(k);
+//         assert rm.ownersInKlon(k);
 //         assert rm.o.Ready();
-//         assert rm.objectInKlown(rm.o);
+//         assert rm.objectInKlon(rm.o);
 //
 //            assert k in rm.oHeap;   //CalidCanKey
 //            assert k !in rm.m.Keys;
@@ -826,13 +826,13 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 //            assert (if (v==k) then (v in rm.oHeap) else (v !in rm.oHeap));
 //            assert k.Ready() && k.Valid() && k.Context(rm.oHeap);
 //            assert v.Ready() && v.Valid() && v.Context(rm.hns({v}));
-//            assert rm.ownersInKlown(k);
+//            assert rm.ownersInKlon(k);
 // //NO_FIELDMODES              assert unchanged( m'.oHeap`fieldModes, m'.m.Values`fieldModes );
 // //NO_FIELDMODES              assert v.fieldModes == k.fieldModes;
 //         assert klonCanKV(rm, k, v);
 //
 //         assert k.Ready();    //CalidLineKV preconditions
-//         assert rm.ownersInKlown(k);
+//         assert rm.ownersInKlon(k);
 //         assert v.Ready();
 //         assert m.apoCalidse();
 //
@@ -842,30 +842,30 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 //            assert (   (inside(k,rm.o)) ==> (v !in rm.oHeap));
 //            assert (k.AMFX <= rm.m.Keys);
 //            assert (k.AMFB <= rm.m.Keys);
-//            assert rm.ownersInKlown(k);
+//            assert rm.ownersInKlon(k);
 //            assert (checkOwnershipOfClone(k,v,rm));
 //
 //                 //checkBoundOfClone precondition
 //                 assert k.Ready();
-//                 assert rm.ownersInKlown(k);
+//                 assert rm.ownersInKlon(k);
 //                 assert v.Ready();
 //                 assert k.owner <= rm.m.Keys <= rm.oHeap;
 //                 assert rm.m.Values <= flatten( rm.hns() );
 //                 assert rm.o.Ready();
-//                 assert rm.objectInKlown(m.o);
+//                 assert rm.objectInKlon(m.o);
 //                 assert rm.HeapOwnersReady();
 //  //DAFWONT               assert rm.c_amfx <= rm.oHeap;
 //                 //checkBoundOfClone body
 //                 assert  ((v == k) || (v.AMFB >=  k.AMFB));
 //  .            assert (checkBoundOfClone(k,v,rm));
-//            assert (mappingOwnersThruKlownKV(k,v,rm));
+//            assert (mappingOwnersThruKlonKV(k,v,rm));
 //         assert rm.CalidLineKV(k,v);
 //         assert rm.OwnersLineKV(k,v);
 //
 //                 //HighLineKV precondition
 //                 assert m.apoCalidse();
 //                 //HighLineKV body
-//                 assert (k.Ready() && (rm.ownersInKlown(k)) && k in rm.oHeap);
+//                 assert (k.Ready() && (rm.ownersInKlon(k)) && k in rm.oHeap);
 //                 assert (v.Ready() && (v in rm.hns({v})));
 //                 assert (v.AMFO  >= v.AMFB  >= k.AMFB);
 //                 assert ((inside(k, rm.o)) ==> (k.AMFB  <= rm.o.AMFB));
@@ -875,7 +875,7 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 //                 assert ( inside(k, rm.o) <==> (v !in rm.oHeap));
 //                 assert (outside(k, rm.m[rm.o]));
 // //NO_FIELDMODES                   assert (k.fieldModes   == v.fieldModes);
-//                 assert (mappingOwnersThruKlownKV(k,v,rm));
+//                 assert (mappingOwnersThruKlonKV(k,v,rm));
 //
 //     assert klonReady(m');
 //     assert klonCalid(m');
@@ -923,12 +923,12 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 //     //
 //     //CalidLineKV preconditions
 //         assert k.Ready();
-//         assert rm.ownersInKlown(k);
+//         assert rm.ownersInKlon(k);
 //         assert v.Ready();
 //         assert k.owner <= rm.m.Keys <= rm.oHeap;
 //         assert rm.m.Values <= rm.hns();
 //         assert rm.o.Ready();
-//         assert rm.objectInKlown(rm.o);
+//         assert rm.objectInKlon(rm.o);
 //         assert rm.HeapOwnersReady();
 //         assert rm.c_amfx <= rm.oHeap;
 //
@@ -947,7 +947,7 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 //         assert (k.AMFX <= rm.m.Keys);
 //         assert (k.AMFB <= rm.m.Keys);
 //     //    assert (k.bound <= k.owner <= rm.m.Keys);  //backasswards
-//         assert (rm.ownersInKlown(k));
+//         assert (rm.ownersInKlon(k));
 // //TRUMP        assert (checkOwnershipOfClone(k,v,rm));
 //         assert (checkBoundOfClone(k,v,rm));
 //
@@ -992,7 +992,7 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 //    assert m.SuperCalidFragilistic();
 //    assert HighCalidFragilistic(m);
 //    assert m.from(m');
-//    assert m.ownersInKlown(k);
+//    assert m.ownersInKlon(k);
 // // assert m.m[k] == v;
 // //NO_FIELDMODES      assert k.fieldModes  == v.fieldModes;
 //    assert v.Ready() && v.Valid();
@@ -1021,7 +1021,7 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 
   // assert klonReady(rm);
   // assert klonCalid(rm);
-  // assert rm.ownersReadyInKlown(k);
+  // assert rm.ownersInKlon(k);
   // assert k  in rm.oHeap;
   // assert COK(k,rm.oHeap);
   // assert k !in rm.m.Keys;
@@ -1064,7 +1064,7 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 //    assert m.SuperCalidFragilistic();
 //    assert HighCalidFragilistic(m);
 //    assert m.from(m');
-//    assert m.objectInKlown(k);
+//    assert m.objectInKlon(k);
 //    assert m.m[k] == v;
 // //NO_FIELDMODES      assert k.fieldModes  == v.fieldModes;
 //    assert v.Ready() && v.Valid();
@@ -1104,7 +1104,7 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 // //////////////////////////////////////////////////////////////////////
   // assert klonReady(xm);
   // assert klonCalid(xm);
-  // assert xm.objectInKlown(k);
+  // assert xm.objectInKlon(k);
   // assert COK(k,xm.oHeap);
   // assert v.Context(xm.hns({v}));
   // assert inside(k, xm.o);
@@ -1164,7 +1164,7 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 //    assert m.SuperCalidFragilistic();
 //    assert HighCalidFragilistic(m);
 //    assert m.from(m');
-//    assert m.objectInKlown(k);
+//    assert m.objectInKlon(k);
 //    assert m.m[k] == v;
 // //NO_FIELDMODES      assert k.fieldModes  == v.fieldModes;
 //    assert v.Ready() && v.Valid();
@@ -1204,7 +1204,7 @@ assert klonCalid(m);
 lemma IncorporateNewObject(rowner : Owner, rbound : Owner, k : Object, v : Object, m : Klon)
    requires klonReady(m)
    requires klonCalid(m)
-   requires m.ownersReadyInKlown(k)
+   requires m.ownersInKlon(k)
    requires COK(k, m.oHeap)
    requires k in m.oHeap
    requires k !in m.m.Keys
@@ -1224,7 +1224,7 @@ lemma BoundsOfCloneOK(k : Object, v : Object, m : Klon)
   //suprious lemma, just use MappedBounds in Klon-Lemmata which does all the work
    requires klonReady(m)
    requires klonCalid(m)
-   requires m.ownersReadyInKlown(k)
+   requires m.ownersInKlon(k)
    requires COK(k, m.oHeap)
    requires COKA: COK(k, m.oHeap)
    requires k in m.oHeap
@@ -1233,8 +1233,8 @@ lemma BoundsOfCloneOK(k : Object, v : Object, m : Klon)
    requires v.owner == mapThruKlon(k.owner, m)
    requires v.bound == mapThruKlon(k.bound, m)
 
-   ensures myBoundsOK(v.owner, v.bound)
-   ensures nuBoundsOK(v.owner, v.bound)
+   ensures boundsOK(v.owner, v.bound)
+   ensures boundsOK(v.owner, v.bound)
    //ensures klonLine(k,v,m)
 
   {
@@ -1243,7 +1243,7 @@ lemma BoundsOfCloneOK(k : Object, v : Object, m : Klon)
     assert k.Ready();
     assert k.Valid();
 
-assert myBoundsOK(k.owner, k.bound);
+assert boundsOK(k.owner, k.bound);
 assert (flatten(k.owner) >= flatten(k.bound));
 assert (forall o <- k.owner :: flatten(o.ownerBound()) >= flatten(k.bound));
 
@@ -1252,5 +1252,5 @@ assert (forall o <- k.owner :: flatten(o.ownerBound()) >= flatten(k.bound));
 
 assume (flatten(v.owner) >= flatten(v.bound));
 assume (forall o <- v.owner :: flatten(o.ownerBound()) >= flatten(v.bound));
-assert myBoundsOK(v.owner, v.bound);
+assert boundsOK(v.owner, v.bound);
   }

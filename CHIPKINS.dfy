@@ -534,7 +534,7 @@ lemma IN_N_OUT_LEMMER(oo : Owner, m : Klon)
 
     assert forall o <- oo :: klonLine(o,m.m[o],m);
     assert forall o <- oo :: klonGeometry(o,m.m[o],m);
-    assert forall o <- oo :: m.objectReadyInKlown(o);
+    assert forall o <- oo :: m.objectInKlon(o);
     assert forall o <- flatten(oo) :: klonGeometry(o,m.m[o],m);
 }
   // {
@@ -542,7 +542,7 @@ lemma IN_N_OUT_LEMMER(oo : Owner, m : Klon)
 
 
 
-function  fOutside(ownrs : OWNR, pivot : Object) : (rv : Owner)
+function fOutside(ownrs : OWNR, pivot : Object) : (rv : Owner)
 //rename to allLOutside???
 //KJX FUCK FUCK FUCK FUCK FUCK FUCK
 //returns all flatatnened owners that are outside the pivot...

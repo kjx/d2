@@ -894,7 +894,7 @@ lemma UME1<K,V>(m : map<K,V>, k : K)
    assert forall i <- mmk.Keys :: i != k && m[i] != m[k];
  }
 
-lemma  UME2<K,V>(m : map<K,V>, k : K)
+lemma UME2<K,V>(m : map<K,V>, k : K)
  requires k in m
  requires UniqueMapEntry(m,k)
   ensures  UniqueMapEntry2(m,k)
@@ -905,7 +905,7 @@ lemma  UME2<K,V>(m : map<K,V>, k : K)
 
 
 
-lemma  BothSidesNow<K,V>(m : map<K,V>)
+lemma BothSidesNow<K,V>(m : map<K,V>)
   requires AllMapEntriesAreUnique(m)
    ensures  forall i <- m.Keys, k <- m.Keys :: (m[i] != m[k]) ==> (i != k)
    ensures  forall i <- m.Keys, k <- m.Keys :: (m[i] == m[k]) ==> (i == k)
@@ -972,7 +972,7 @@ function mapThruVMap<K,V>(ks : set<K>, m : vmap<K,V>) : (vs : set<V>)
     reads {}
   { set k <- ks :: m[k] }
 
-function  mapBackVMap<K,V>(vs : set<V>, m : vmap<K,V>) : (ks : set<K>)
+function mapBackVMap<K,V>(vs : set<V>, m : vmap<K,V>) : (ks : set<K>)
     requires vs <= m.Values
      ensures  ks <= m.Keys
     reads {}
