@@ -19,7 +19,7 @@ scroll down to a recent release such as nightly-2026-03-17-b262447
 install the zip file
 run the "allow on a mac" script if you're on a mac
 
-files should at least resolve with dafny resolve --general-newtypes=false  --type-system-refresh=false  foo.dfy
+files should at least resolve with dafny resolve foo.dfy
 
 many will verify. some will not.   there are a few "assumes" scattered
 around. they are mostly either in debugging code, or covering up for
@@ -27,8 +27,7 @@ persistent Dafny bugs. (eg the one in the Library.dfy)
 
 Individual files can easily 10+ minutes to verify on my machine at least.
 
-
-
+```
                                           .,     .'....d...... . ......... ..'......                         
                                          ...     ........'......''''''':;.'','......                         
               ''... ..              .    ....      ......',',,;;,:l:,;:;,,,,'.....'..                        
@@ -61,3 +60,4 @@ Individual files can easily 10+ minutes to verify on my machine at least.
         0:                              .x0xoxxxkxddxdlll:,'          .Okxkkkkko..',x:                       
        xo.                              lkc:dddolooodl:cc,l;          ,oodxddddc....:.                       
      .:K;.                         '.,  .kx.;:c:cllloc;::,lc            ::olldxc... ., .'     ...............
+```
