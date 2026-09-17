@@ -1,5 +1,5 @@
 //include "Ownership.dfy"
-include "Klon.dfy"
+//include "Klon.dfy"
 include "Ownership-Lemmata.dfy"
 include "Ownership-Recursive.dfy"
 

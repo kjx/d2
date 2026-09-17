@@ -239,6 +239,16 @@ lemma {:isolate_assertions} RefOKvsOO(f : Object, t : Object)
 //flatness
 //
 
+
+function argh(o : Object) : (rv : Owner)
+//clean recursive  alternative definition of AMFO (recAmfo?) // recAllOwners
+//but with a really really shitty name!
+  decreases o.AMFO
+  // requires o.Ready()
+ { assume o.Ready();
+   {o} + (set oo <- o.owner, ooo <- argh(oo) :: ooo) }
+
+
 function flatten(os : Owner) : (fs : Owner)
      reads {}
    ensures os <= fs

@@ -284,13 +284,6 @@ lemma OWNER_OUTSIDE_ALWAYS_OUTSIDE(o : Object, pivot : Object)
 
 
 
-function argh(o : Object) : (rv : Owner)
-//clean recursive alter alternative definition of AMFO (recAmfo?) // recAllOwners
-  decreases o.AMFO
-  // requires o.Ready()
- { assume o.Ready();
-   {o} + (set oo <- o.owner, ooo <- argh(oo) :: ooo) }
-
 function amfoStrictlyInside(o : Object, pivot : Object) : Owner
   decreases o.AMFO
    requires o.Ready()

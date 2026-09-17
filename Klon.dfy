@@ -76,22 +76,22 @@ datatype Klon = Klon
    { klonReady(this) && klonHeap(this) }
 
 
-  predicate {:isolate_assertions} preCalid() : (r : bool)   //HACK
+  predicate preCalid() : (r : bool)   //HACK
 //    requires klonReady(this)
     reads hns()
   { klonCalid(this) }
 
-  predicate {:isolate_assertions} preCalid2() : (r : bool)  //HACK
+  predicate preCalid2() : (r : bool)  //HACK
 //    requires klonReady(this)
     reads hns()
   { klonCalid(this) }
 
-  predicate {:isolate_assertions} SuperCalidFragilistic() : (r : bool)  //HACK
+  predicate SuperCalidFragilistic() : (r : bool)  //HACK
 //    requires klonReady(this)
     reads hns()
   { klonCalid(this) }
 
-  predicate {:isolate_assertions} Calid() : (r : bool)  //HACK
+  predicate Calid() : (r : bool)  //HACK
 //    requires klonReady(this)
     reads hns()
   { klonCalid(this) }
@@ -101,38 +101,36 @@ datatype Klon = Klon
     reads hns()
   { klonCalid(this) }
 
-  predicate {:isolate_assertions} AllLinesCalid()  //HACK
+  predicate AllLinesCalid()  //HACK
 //    requires klonReady(this)
     reads hns()
   { klonReady(this) && klonAllLines(this) }   // or klonCalid??
 
 
-  lemma {:isolate_assertions} {:timeLimit 20} CalidLineKVTo(k : Object, v : Object, m1 : Klon)
-    requires apoCalidse()
-    requires k.Ready()
-    requires ownersInKlown(k)
-    requires v.Ready()
-    requires CalidLineKV(k,v)
+  lemma CalidLineKVTo(k : Object, v : Object, m1 : Klon)
+    requires klonReady(this)
+    requires klonLine(k,v,this)
     requires m1.from(this)
-    requires m1.apoCalidse()
-     ensures m1.CalidLineKV(k,v)
-{}
+    requires klonReady(m1)
+     ensures klonLine(k,v,m1)
+{
+    KlonIdentityFrom(k,v,m1,this);
+}
 
 
-  lemma {:isolate_assertions} {:timeLimit 20} CalidLineKVFrom(k : Object, v : Object, prev : Klon)
-    requires prev.apoCalidse()
-    requires k.Ready()// && k.Valid() // should context go in here too? probasbly?
-    requires prev.ownersInKlown(k)
-    requires v.Ready()
-    requires prev.CalidLineKV(k,v)
+  lemma CalidLineKVFrom(k : Object, v : Object, prev : Klon)
+    requires klonReady(prev)
+    requires klonLine(k,v,prev)
     requires from(prev)
-    requires apoCalidse()
-     ensures CalidLineKV(k,v)
-{}
+    requires klonReady(this)
+     ensures klonLine(k,v,this)
+{
+    KlonIdentityFrom(k,v,this,prev);
+}
 
 
 
-  predicate {:isolate_assertions} CalidLineKV(k : Object, v : Object)
+  predicate CalidLineKV(k : Object, v : Object)
     requires apoCalidse()
      ensures klonReady(this)
       reads hns(), k, v
@@ -178,8 +176,8 @@ lemma MOVIN_ON_MAP(os: Owner, left : vmap<Object,Object>, right : vmap<Object,Ob
     ensures rv ==> (o.owner <= m.Keys)
     ensures rv ==> (o.Ready())
 
-    ensures (o.Ready() && rv) ==> ownersInKlown(o)
-    ensures  o.Ready() ==> (rv == ownersInKlown(o))
+    // ensures (o.Ready() && rv) ==> ownersInKlown(o)
+    // ensures  o.Ready() ==> (rv == ownersInKlown(o))
     reads {}
     {
       o.Ready() && (o.AMFX <= m.Keys)
@@ -246,80 +244,48 @@ lemma APOCAKLON()
 
 
 
-//{:timeLimit 60}  {:timeLimit 30}
 function {:timeLimit 30} CalidKV(k : Object, v : Object) : (mK : Klon)
    //shojld be calidKV, shouldn't it. GRRRR
     //givne a Calid Klon, add in k:=v to the mapping and get a  Calid result.
     //the heart of the heart of the klon
+
     requires klonReady(this)
     requires klonCalid(this)
-
     requires CKV_preconditions(k,v)
- // requires CalidLineKV(k,v)
     requires klonLine(k,v,this)
 
-     ensures mK == klonKV(this, k, v)
-     ensures mK.from(this)
-    //  ensures mK.HeapContextReady()
-    //  ensures mK.ValuesContextReady()
-    //  ensures mK.m.Keys <= mK.oHeap
-     // ensures  unchanged(oHeap`fieldModes)
-     // ensures  unchanged(m.Values`fieldModes)
-      // ensures forall z <- m.Keys :: m[z].fieldModes == mK.m[z].fieldModes
+    ensures mK == klonKV(this, k, v)
+    ensures mK.from(this)
 
-ensures klonReady(mK)
-ensures klonCalid(mK)
+    ensures klonReady(mK)
+    ensures klonCalid(mK)
+    ensures klonLine(k,v,mK)
+    ensures v.Context(mK.hns({}))
 
-// Inside klonHeap(m)
-// Could not prove: forall x <- m.m.Values :: x.Context(m.hns())
-// This is the only assertion in batch #1227 of 1227 in function CalidKV
-// Batch #1227 resource usage: 36.8M RU
-//
-// Error: a postcondition could not be proved on this return path
-// Inside klonCalid(mK)
-// Inside klonAllLines(m)
-// Could not prove: forall k <- m.m.Keys :: klonLine(k, m.m[k], m)
-// This is the only assertion in batch #1225 of 1227 in function CalidKV
-// Batch #1225 resource usage: 32.8M RU
-//
-
-
-     reads hns(), k, v
-     reads m.Keys, m.Values
+      reads hns(), k, v
+      reads m.Keys, m.Values
 {
   var mK := klonKV(this, k, v);
   assert mK.from(this);
   KlonReadyFromKV(mK,this,k,v);
   assert klonReady(mK);
 
-//  assert forall x : Object <- (mK.m.Values - this.m.Values) :: x.Context(mK.hns());
-
-
-
-
-var newValues := (mK.m.Values - this.m.Values);
-assert NVV: newValues == {v};
-assert DRK:forall x : Object <- {v}   :: x == v;
-assert forall x : Object <- newValues :: x == v by {
-       reveal NVV, DRK;
-       assert forall x : Object <- {v} :: x == v;
-       assert newValues == {v};
-       FORALL_SINGLETON(v,{v});
-       assert forall x : Object <- newValues :: x == v;
-       }
-
-
-assert v.Context(this.hns({v}));
-assert this.hns({v}) == mK.hns({});
-assert v.Context(mK.hns());
-assert forall x : Object <- newValues :: x.Context(mK.hns());
-assert forall x : Object <- (mK.m.Values - this.m.Values) :: x.Context(mK.hns());
-
+  assert v.Context(mK.hns()) by {
+      assert v.Context(this.hns({v}));
+      assert this.hns({v}) == ((oHeap+m.Values)+{v});
+      assert mK == klonKV(this, k, v);
+      assert mK.m.Values == (m.Values+{v});
+      assert mK.hns() == (oHeap+(m.Values+{v}));
+      assert mK.hns() == this.hns({v});
+      assert v.Context(mK.hns());
+    }
 
   KlonCalidFrom(mK,this);
+
+  assert klonLine(k,v,mK);
   assert klonCalid(mK);
   mK
-}
+  }
 
 
 lemma FORALL_SINGLETON( v : Object, vs : Owner )
@@ -329,8 +295,7 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
    ensures forall x : Object <- vs :: x == v
 {}
 
-//{:timeLimit 60} {:timeLimit 30}
-  function {:isolate_assertions} {:verify false} OLDCalidKV(k : Object, v : Object) : (mK : Klon)
+  function {:verify false} OLDCalidKV(k : Object, v : Object) : (mK : Klon)
     //givne a Calid Klon, add in k:=v to the mapping and get a  Calid result.
     //the heart of the heart of the klon
 
@@ -679,7 +644,7 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 
 
 
-   predicate {:isolate_assertions} CKV_preconditions(k : Object, v : Object)
+   predicate {:timeLimit 30} CKV_preconditions(k : Object, v : Object)
     //attempt to capture the common preconditions for CalidKV
 
     reads oHeap, m.Values, k, v
@@ -719,7 +684,7 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 
 
 
-  predicate {:isolate_assertions} CalidCanKey(k : Object)
+  predicate CalidCanKey(k : Object)
     //conditions an object to be added as a Key into the Klon map
     //  note this doesn't seem to deal with ougoing field values, but that will get
     //  caught eventually via  HeapContextReady() &  ValueContextReady()
@@ -741,7 +706,7 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
   }
 
 //HACK
-//   predicate {:isolate_assertions} CalidCanValue(k : Object, v : Object)
+//   predicate CalidCanValue(k : Object, v : Object)
 //     //conditions an object to be added as a Value into the Klon map
 //     // dunno if I really need this but wrote it anyway as an extenion of CanCalidKey above
 //     //  note this doesn't seem to deal with ougoing field values, but that will get
@@ -772,7 +737,7 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 
 
 //HACK
-//   ghost predicate {:isolate_assertions} calidCanKV(k : Object, v : Object)
+//   ghost predicate calidCanKV(k : Object, v : Object)
 //     requires k.Ready() //&& k.Valid() // should context go in here too? probasbly?
 //     requires v.Ready() //&& v.Valid()
 //     requires ownersInKlown(k)
@@ -800,7 +765,7 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 
 
 
-    lemma {:isolate_assertions} CalidLineKVReflexive(k : Object, v : Object)
+    lemma CalidLineKVReflexive(k : Object, v : Object)
     //ensures that we can insert k:=k into the Klon
     requires klonReady(this)
 
@@ -854,7 +819,7 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 
 
 //Need to WORK The FUCK out wwhat to do about THIS
-   predicate {:isolate_assertions}   preOwners() : (r : bool)
+   predicate   preOwners() : (r : bool)
     reads oHeap, m.Values
   {
     klonReady(this)
@@ -870,7 +835,7 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 
 
 
-   predicate {:isolate_assertions} preOwners2() : (r : bool)
+   predicate preOwners2() : (r : bool)
     reads {}
   {
     klonReady(this)
@@ -883,7 +848,7 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
     //    ))
   }
 
-   predicate {:isolate_assertions} SuperCalidOwners() : (r : bool)
+   predicate SuperCalidOwners() : (r : bool)
     reads oHeap, m.Values
   {
     klonCalid(this)
@@ -892,7 +857,7 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
     // && CalidOwners()
   }
 
-   predicate {:isolate_assertions} CalidOwners() : (r : bool)
+   predicate CalidOwners() : (r : bool)
     // requires  HeapOwnersReady()
     // requires  ValuesOwnersReady()
     reads oHeap, m.Values
@@ -912,7 +877,7 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 //with objectInKnown(k) this says it MUST ne in,. doesn;t it?
 //FUCK FUCK FUCK compare CalidLineKV!!!
 //ditto (v in hns({v}))) from earlier plain (v in hns())
- predicate {:isolate_assertions} OwnersLineKV(k : Object, v : Object)
+ predicate OwnersLineKV(k : Object, v : Object)
     requires apoCalidse()
      ensures klonReady(this)
       reads hns(), k, v
@@ -933,22 +898,20 @@ lemma FORALL_SINGLETON( v : Object, vs : Owner )
 
 //FROM DAHLIA
 
-lemma {:isolate_assertions} directOwnerInKlownIsEnough(o : Object)
+lemma {:timeLimit 30} directOwnerInKlownIsEnough(o : Object)
   requires o.Ready()
-  requires SuperCalidFragilistic()
+  requires klonCalid(this)
   requires o.owner <= m.Keys //note just direct owner
    ensures ownersInKlown(o)
 {
   assert forall x <- m.Keys :: objectInKlown(x);
-  assert flatten(o.owner) == o.AMFX <= m.Keys;
-  assert forall oo <- o.owner :: o.AMFX <= m.Keys;
+  assert o.owner <= m.Keys;
+  assert forall oo <- o.owner :: oo in m.Keys;
+  assert forall oo <- o.owner :: objectInKlown(oo);
   assert ownersInKlown(o);
 }
 
-
-
-
-  lemma {:isolate_assertions}  FieldFromHeapContext(o : Object, n : string, v : Object)
+  lemma  FieldFromHeapContext(o : Object, n : string, v : Object)
     //assert a bunch of stuff about a field - could become a function later
     requires HeapContextReady()
     requires o in oHeap
@@ -995,7 +958,7 @@ lemma {:isolate_assertions} directOwnerInKlownIsEnough(o : Object)
 
 
 
-predicate {:isolate_assertions}  checkOwnershipOfClone(k : Object, v : Object, m : Klon)
+predicate  checkOwnershipOfClone(k : Object, v : Object, m : Klon)
   //to work, this needs m.o and m.c to be set up
   //but does NOT need k in Keys, or v in values!
   //
@@ -1024,7 +987,7 @@ predicate {:isolate_assertions}  checkOwnershipOfClone(k : Object, v : Object, m
 
 
 
-  predicate {:isolate_assertions} mappingOwnersThruKlownKV(k : Object, v : Object, m : Klon) : (r : bool)
+  predicate mappingOwnersThruKlownKV(k : Object, v : Object, m : Klon) : (r : bool)
     //prog FEAR SATAN
     //this vrsion currently matches CalidLineKV, i.e. k and v don't have to be in the klon
     //but that means we can't mapp intl and AMFO  //um,,
@@ -1061,7 +1024,7 @@ predicate {:isolate_assertions}  checkOwnershipOfClone(k : Object, v : Object, m
 
     //our shold this be MAPPING Owners?????
     //note that this is called ONLY strictly wihin the pivot - see the JDVANCE note
-    predicate {:isolate_assertions} mappingOWNRsThruKlownKV(kk : OWNR, vv : OWNR, m : Klon) : (r : bool)
+    predicate mappingOWNRsThruKlownKV(kk : OWNR, vv : OWNR, m : Klon) : (r : bool)
     //
     //this probably should be just deleted for good..
     //
@@ -1110,7 +1073,7 @@ lemma FLATTEN_IN_KLON(oo : Owner, m : Klon)
     assert forall k <- m.m.Keys :: flatten({k}) <= m.m.Keys;
    }
 
-function {:isolate_assertions} computeOwnerForClone(oo : Owner, m : Klon) : (nuowner : Owner)
+function computeOwnerForClone(oo : Owner, m : Klon) : (nuowner : Owner)
   //given some flattened Owner oo, calculate the mapped / cloned version
   //EXCEPT OWNERS SHOULDNT BE FLATTENNED!!!
 ///TODO//Libertarian  //requires (flatten(oo) >= m.o.AMFO)   //should this be there or not?
@@ -1257,7 +1220,7 @@ predicate klonVMapOK(m : vmap<Object,Object>, ks : set<Object> := m.Keys)
 
 
 
-  function {:isolate_assertions} {:timeLimit 60} klonKV(m' : Klon, k : Object, v : Object) : (m : Klon)   //TIME-3-OCT
+  function {:timeLimit 60} klonKV(m' : Klon, k : Object, v : Object) : (m : Klon)   //TIME-3-OCT
     //aux function for adding k v to a m' giving m
 //Klon.CalidKV does all the real work!
 //KJX Sun 19 April - so WHAT THE FUCK does this one do then?
@@ -1333,7 +1296,7 @@ predicate modesEQ(a : map<string,Mode>, b : map<string,Mode>)
  { (a.Keys == b.Keys) && (forall n <- a.Keys :: a[n] == b[n]) }
 
 
-  lemma {:isolate_assertions} {:timeLimit 30} haventFuckedFieldModes(m' : Klon, k : Object, v : Object, m : Klon)
+  lemma {:timeLimit 30} haventFuckedFieldModes(m' : Klon, k : Object, v : Object, m : Klon)
     requires k !in m'.m.Keys
     requires v !in m'.m.Values
     requires klonVMapOK(m'.m)
@@ -1396,7 +1359,7 @@ predicate klonCanKV(m' : Klon, k : Object, v : Object)
 // basic mappings
 
 
-function {:isolate_assertions} mapThruKlon(os: set<Object>, m : Klon) : (r : set<Object>)
+function mapThruKlon(os: set<Object>, m : Klon) : (r : set<Object>)
   //image of os under klon mapping m
   // reads m.m.Keys`fields, m.m.Keys`fieldModes
   // reads m.m.Values`fields, m.m.Values`fieldModes
@@ -1423,7 +1386,7 @@ function objThruKlon(o : Object, m : Klon) : Object    requires o in m.m.Keys {m
 
 
 
-predicate {:isolate_assertions} istKlonnyKlon(os : Owner, ks : set<Object>, m : Klon)
+predicate istKlonnyKlon(os : Owner, ks : set<Object>, m : Klon)
     requires m.o.Ready()
     requires m.objectInKlown(m.o)
     requires os <=  m.m.Keys <= m.oHeap
@@ -1467,7 +1430,7 @@ function local(o : OWNR, m : Klon) : (r : OWNR)
    // { o - m.o.AMFO  }   //shit shit shit
    { o - m.o.AMFO  }
 
-function {:isolate_assertions} global(oo : set<Object>, m : Klon) : (rs : set<Object>)
+function global(oo : set<Object>, m : Klon) : (rs : set<Object>)
  //take a "local" OWNR to a global one in the clone (should this be local2global)
    requires m.apoCalidse()
   //  requires forall o <- oo :: inside(o,m.c)
@@ -1501,7 +1464,7 @@ function sideways(oo : set<Object>, m : Klon) : (r : set<Object>)
 
 
 
-predicate {:isolate_assertions} checkBoundOfClone(k : Object, v : Object, m : Klon)
+predicate checkBoundOfClone(k : Object, v : Object, m : Klon)
   requires k.Ready()
   requires v.Ready()
   requires klonReady(m)

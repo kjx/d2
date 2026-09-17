@@ -40,9 +40,9 @@ predicate  klonReady(m : Klon) : (b : bool) ///like Ready, should be built in to
     && (m.c_amfx <= m.oHeap)
   }
 
-predicate klonCalid(m : Klon)
+predicate {:timeLimit 30} klonCalid(m : Klon)
 //  requires klonReady(m)  //?
-//  reads m.hns()
+  reads m.hns()
 {
   && klonReady(m)
   && klonPivot(m)
@@ -184,8 +184,8 @@ predicate klonIdentity(k : Object, v : Object, m : Klon) : (r : bool)
   requires klonReady(m)
 //  reads m.hns(), k, v
   {
-  && (m.ownersReadyInKlown(k))
-  && (m.objectReadyInKlown(m.o))
+  && (m.ownersInKlown(k))
+  && (m.objectInKlown(m.o))
 
   && (if (k == m.o) then (
                            && (k != v)
@@ -207,7 +207,42 @@ predicate klonIdentity(k : Object, v : Object, m : Klon) : (r : bool)
 }
 
 
-lemma EXTRA_KLON_LINE(k : Object, v : Object, m : Klon)
+lemma KlonIdentityFrom(k : Object, v : Object, m : Klon, m' : Klon)
+    requires klonReady(m')
+    requires k.Ready()
+    requires v.Ready()
+
+    requires m'.ownersInKlown(k)
+    requires m'.objectInKlown(m.o)
+    requires klonIdentity(k,v,m')
+
+    requires klonReady(m)
+    requires m.from(m')
+
+     ensures m.ownersInKlown(k)
+     ensures m.objectInKlown(m.o)
+     ensures klonIdentity(k,v,m)
+   {
+    assert m.m.Keys >= m'.m.Keys;
+
+    assert klonIdentity(k,v,m');
+
+    if (k == m.o) { assert klonIdentity(k,v,m); }
+      else if (outside(k, m.o) ) { assert klonIdentity(k,v,m); }
+      else
+      {
+          assert mapThruKlon(k.bound, m) == mapThruKlon(k.bound, m');
+          assert mapThruKlon(k.owner, m) == mapThruKlon(k.owner, m');
+          assert klonIdentity(k,v,m);
+      }
+
+    assert klonIdentity(k,v,m);
+
+   }
+
+
+
+lemma {:timeLimit 20} EXTRA_KLON_LINE(k : Object, v : Object, m : Klon)
   requires klonReady(m)
   requires klonCalid(m)
   requires klonLine(k,v,m)
@@ -314,15 +349,6 @@ lemma KlonLineFrom(k : Object, v : Object, m : Klon, m' : Klon)
   KlonIdentityFrom(k,v,m,m');
   assert klonIdentity(k,v,m')  ==> klonIdentity(k,v,m);
 }
-
-
-lemma KlonIdentityFrom(k : Object, v : Object, m : Klon, m' : Klon)
-  requires klonReady(m')
-  requires klonIdentity(k,v,m')
-  requires m.from(m')
-  requires klonReady(m)
-   ensures klonIdentity(k,v,m)
-{ }
 
 
 
@@ -447,46 +473,6 @@ lemma KlonCalidFrom(m : Klon, m' : Klon)
 //====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//====//
 
 //
-// lemma InternalOwnersWithinPivot(oo : Owner, bb : Bound, co : Owner, cb : Bound, m : Klon)
-//   requires klonReady(m)
-//   requires klonCalid(m)
-//   requires AllReady(oo)
-//   requires AllReady(bb)
-//   requires AllReady(co)
-//   requires AllReady(cb)
-//
-//   requires {} < oo <= m.m.Keys
-//   requires bb <= m.m.Keys
-//   requires co == mapThruKlon(oo, m)
-//   requires cb == mapThruKlon(bb, m)
-//
-//   requires oo != bb
-//   requires flatten(oo) >= flatten(bb)
-//    ensures flatten(co) >= flatten(cb)
-//    {
-//    }
-
-
-
-
-function InternalOwnersWithinPivot(o : Object, m : Klon) : Owner
-  ///JUNK DELETE
-  //recursivelylooks at all of o's owners that are inside m.o, classifying them as either
-  requires klonReady(m)
-  requires klonCalid(m)
-  requires o.Ready()
-  requires o in m.m.Keys
-//     reads m.hns()
-{
-  {}
-  //  if (inside(o,m.o))
-  //    then (
-  //     if (o == m.o) then ({},{},{o}) else
-  //        o
-  //    )
-  //    else ({},{},{})
-}
-
 
 
 lemma ComeTheFuckOn(o : Object)
@@ -542,24 +528,3 @@ function {:timeLimit 20} internalFlatten(oo : Owner, m : Klon) : Owner
     }
 
 //
-
-
-
-function UNFINISHED_classifyOwnersWithin(o : Object, m : Klon) : (Owner, Owner, Owner)
-  //looks at all of o's owners that are inside m.o, classifying them as either
-   //- internal ---
-   //- external --- outsife
-  requires klonReady(m)
-  requires klonCalid(m)
-  requires o.Ready()
-  requires o in m.m.Keys
-//     reads m.hns()
-{
-   ( {}, {}, {} )
-  //  if (inside(o,m.o))
-  //    then (
-  //     if (o == m.o) then ({},{},{o}) else
-  //        o
-  //    )
-  //    else ({},{},{})
-}
