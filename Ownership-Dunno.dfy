@@ -1,4 +1,5 @@
 include "Ownership.dfy"
+include "Ownership-Trilemma.dfy"
 
 function nuke(soup : Owner) : OWNR {assume forall s <- soup :: s.Ready(); (set o <- soup, oo <- o.AMFO :: oo)}
 
@@ -840,8 +841,8 @@ lemma FLOWER_POWER_V(ox : Owner, cx : Owner, m : Klon)
   requires klonCalid(m)
   requires m.m.Keys >= ox
   requires cx == mapThruKlon(ox, m)
-//HERE   ensures forall i <- flownerStrictlyInside(ox,m.o) :: m.m[i] in flownerStrictlyInside(cx,m.c)
-// ensures forall o <- flownerFullyOutside(ox,m.o)   :: (o == m.m[o]) && (m.m[o] in flownerFullyOutside(cx,m.c))
+//   ensures forall i <- flownerStrictlyInside(ox,m.o) :: m.m[i] in flownerStrictlyInside(cx,m.c)
+//   ensures forall o <- flownerFullyOutside(ox,m.o)   :: (o == m.m[o]) && (m.m[o] in flownerFullyOutside(cx,m.c))
 
   {
     assert forall i <- flownerStrictlyInside(ox,m.o) :: (i in flownerAll(ox));
@@ -850,9 +851,110 @@ lemma FLOWER_POWER_V(ox : Owner, cx : Owner, m : Klon)
     assert forall i <- flownerStrictlyInside(ox,m.o) :: i in m.m.Keys;
     assert forall i <- flownerStrictlyInside(ox,m.o) :: klonLine(i,m.m[i],m);
 
-    //HERE assert mapThruKlon(flownerStrictlyInside(ox,m.o),m) == flownerStrictlyInside(cx,m.c);
+    forall part <- ox, owner <- part.AMFO | ownerStrictlyInside(part,m.o,owner)
+        ensures (true) //by
+///        ensures (ownerStrictlyInside(m.m[part],m.c,m.m[owner])) //by
+     {
+        assert strictlyInside(part,m.o);
+        assert strictlyInside(owner,m.o);
+        var cart := m.m[part];
+        var cowner := m.m[owner];
+
+        assert klonLine(part,cart,m);
+        assert klonGeometry(part,cart,m);
+        assert klonIdentity(part,cart,m);
+        assert (part != m.o) && (not(outside(part,m.o)));
+        assert strictlyInside(cart,m.c);
+        assert (part != m.o) && (part != cart);
+        assert (cart.owner == mapThruKlon(part.owner, m));
+        assert (cart.bound == mapThruKlon(part.bound, m));
+
+        assert klonLine(owner,cowner,m);
+        assert klonGeometry(owner,cowner,m);
+        assert klonIdentity(owner,cowner,m);
+        assert (owner != m.o) && (not(outside(owner,m.o)));
+        assert strictlyInside(cowner,m.c);
+        assert (owner != m.o) && (owner != cowner);
+        assert (cowner.owner == mapThruKlon(owner.owner, m));
+        assert (cowner.bound == mapThruKlon(owner.bound, m));
+
+        INSIDE_PARALLEL(part,owner,cart,cowner,m);
+
+        assert inside(cart, cowner);
+        assert ownerStrictlyInside(cart,m.c,cowner);
+        assert m.m[part] == cart; assert m.m[owner] == cowner;
+        assert ownerStrictlyInside(m.m[part],m.c,m.m[owner]);
+     }
+
+    // assert forall part <- ox, owner <- part.AMFO ::
+    //     ownerStrictlyInside(part,m.o,owner) ==> ownerStrictlyInside(m.m[part],m.m[m.o],m.m[owner]);
+    // assert forall part <- ox, owner <- part.AMFO ::
+    //     ownerStrictlyInside(part,m.o,owner) ==> ownerStrictlyInside(m.m[part],m.c,m.m[owner]);
+
+
+
+//    assert mapThruKlon(flownerStrictlyInside(ox,m.o),m) == flownerStrictlyInside(cx,m.c);
 
   }
+
+
+
+lemma INSIDE_PARALLEL(o0 : Object, o1 : Object, c0 : Object, c1 : Object, m : Klon)
+ decreases o0.AMFO
+  requires o0.Ready()
+  requires o1.Ready()
+  requires c0.Ready()
+  requires c1.Ready()
+  requires o0 in m.m.Keys
+  requires o1 in m.m.Keys
+  requires klonCalid(m)
+  requires c0 == m.m[o0]
+  requires c1 == m.m[o1]
+
+  requires strictlyInside(o0,m.o)
+  requires strictlyInside(o1,m.o)
+  requires inside(o0,o1)
+
+   ensures strictlyInside(c0,m.c)
+   ensures strictlyInside(c1,m.c)
+   ensures inside(c0,c1)
+
+  {
+    if (o0 == o1) { assert o0 == o1;           assert inside(o0,o1);
+                    assert m.m[o0] == m.m[o1]; assert inside(c0,c1);
+                    return;  }
+
+    assert o0 != o1;     assert c0 != c1;
+
+    assert klonLine(o0,c0,m);
+    assert klonIdentity(o0,c0,m);
+    assert (o0 != m.o) && (not(outside(o0,m.o)));
+    assert strictlyInside(c0,m.c);
+    assert (o0 != m.o) && (o0 != c0);
+    assert c0.owner == mapThruKlon(o0.owner,m);
+
+    if (o1 in o0.owner)
+      {
+        assert c1 in c0.owner;
+        assert inside(c0,c1);
+        return;
+      }
+
+    assert inside(o0,o1);
+    ThereIsALightThatNeverGoesOut(o0,o1);
+    var oo := YouCan'tGetThereFromHereBut(o0,o1);
+    INSIDE_PARALLEL(oo,o1,m.m[oo],c1,m);
+  }
+
+
+
+
+
+
+
+
+
+
 
 
 
