@@ -242,7 +242,7 @@ method  opposeBounds(os : set<Object>) returns (b : Bound)
  }
 
  function  proposeBounds(os : set<Object>) : (b : Bound)
- //propose boubnsf but it;'s a function
+ //propose bounds but it;'s a function
   requires AllReady(os)
    ensures boundsOK(os, b)
    ensures flatten(os) >= flatten(b)
@@ -272,7 +272,7 @@ method  opposeBounds(os : set<Object>) returns (b : Bound)
 
  function aroposeBounds(os : set<Object>) : (b : Bound)
  //os - prooposed owners for an object
- //propose boubnsf but it;'s a function withtout READY as a precondition.
+ //propose bounds but it;'s a function withtout READY as a precondition.
  //which mean it can be used to set default argument values (ege in make())
  //but it's got an *assume* in it...
    ensures boundsOK(os, b)
@@ -288,7 +288,7 @@ method  opposeBounds(os : set<Object>) returns (b : Bound)
 
  function froposeBounds(os : set<Object>) : (b : Bound)
  //os - prooposed owners for an object
- //propose boubnsf but it;'s a function withtout READY as a precondition.
+ //propose bounds but it;'s a function withtout READY as a precondition.
  //which mean it can be used to set default argument values (ege in make())
  //but can't guarantee anything
  //  ensures boundsOK(os, b)
@@ -506,7 +506,8 @@ predicate SingleOwnership(o : Object)
 
 
 
-lemma {:verify false} BOUNDS_SHOULD_BE_OK(oo : Owner, mb : Owner, m : Klon)
+lemma {:verify false} miore (oo : Owner, mb : Owner, m : Klon)
+ //what is this?  FUCKED IF I KNOW.  scheduled fotr deletion?
   requires klonReady(m)
   requires klonCalid(m)
   requires oo <= m.m.Keys

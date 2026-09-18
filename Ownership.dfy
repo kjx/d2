@@ -469,6 +469,57 @@ lemma nukeEmAll3(soup : OWNR, pivot : Object, nOut : OWNR, nSIn : OWNR, nSPv : O
 
 
 
+lemma nukeEmAll3F(soup : OWNR, pivot : Object, nOut : OWNR, nSIn : OWNR, nSPv : OWNR, foup : OWNR)
+ //verifies on the comnmand line subn 13 sep
+   requires forall s <- soup :: s.Ready()
+   requires pivot.Ready()
+   requires nOut == nukeOutside(soup, pivot)
+   requires nSIn == nukeStrictlyInside(soup, pivot)
+   requires nSPv == nukeStrictlyPivot(soup, pivot)
+   requires foup == flatten( soup )
+    ensures nOut + nSIn + nSPv == foup
+{
+   assert forall s <- soup :: outside(s,pivot) != inside(s,pivot);
+   assert forall s <- soup | inside(s,pivot) :: strictlyInside(s,pivot) != (s == pivot);
+
+   var sOut := (set s <- soup | outside(s,pivot) );
+   var sSIn := (set s <- soup | strictlyInside(s,pivot) );
+   var sSPv := (set s <- soup | s == pivot );
+   var sIn  := (set s <- soup | inside(s,pivot) );
+
+   nukeEmAll2(soup, pivot, sOut, sIn, sSIn, sSPv);
+   assert sIn == sSIn + sSPv;
+   assert soup == sIn + sOut;
+   assert soup == sOut + sSIn + sSPv;
+
+   assert nOut == flatten( sOut );
+   assert nSIn == flatten( sSIn );
+   assert nSPv == flatten( sSPv );
+
+   FLATTEN_SUM4(sOut, sSIn, sSPv, soup);
+
+   assert flatten(soup) == foup;
+   assert flatten(sOut + sSIn + sSPv) == foup;
+   assert flatten(sOut) + flatten(sSIn) + flatten(sSPv) == foup;
+   assert nOut + nSIn + nSPv == foup;
+}
+
+
+
+lemma nukeEmAll4F(soup : OWNR, pivot : Object, nOut : OWNR, nSIn : OWNR, nSPv : OWNR, foup : OWNR)
+ //verifies on the comnmand line subn 13 sep
+   requires forall s <- soup :: s.Ready()
+   requires pivot.Ready()
+   requires nOut == nukeOutside(soup, pivot)
+   requires nSIn == nukeStrictlyInside(soup, pivot)
+   requires nSPv == nukeStrictlyPivot(soup, pivot)
+   requires foup == flatten( soup )
+//    ensures (nOut + nSPv) !! nSIn
+    {
+
+    }
+
+
 ///Oh SHIT 0 most of the these are WRONG.
  function flattenInside(soup : OWNR, pivot : Object) : (rv : Owner)
   ensures forall r <- rv :: inside(r,pivot)
@@ -527,8 +578,6 @@ function flattenOnlyPivot(soup : OWNR, pivot : Object)  : (rv : Owner)
 
 function flattenExceptPivot(soup : OWNR, pivot : Object) : (rv : Owner)
  {set s <- soup, oo <- s.AMFO | exceptPivot(s,pivot,oo) :: oo}
-
-
 
 function flattenInsidePivotAndOwner(soup : OWNR, pivot : Object) : (rv : Owner)
  {set s <- soup, oo <- s.AMFO | insidePivotAndOwner(s,pivot,oo) :: oo}
@@ -786,6 +835,293 @@ lemma NUKE_DICHOTOMY_TRICHOTOMY(soup : Owner, pivot : Object, left0 : Owner, lef
   ensures left0 + left1 >= right
   ensures left0 + left1 == right
 {}
+
+
+
+
+
+
+
+
+
+
+
+
+lemma NUKE_MAPPED_GEQ(oo : Owner, ob : Bound, co : Owner, cb : Bound, m : Klon)
+  requires AllReady(oo)
+  requires AllReady(ob)
+  requires AllReady(co)
+  requires AllReady(cb)
+  requires klonCalid(m)
+  requires m.m.Keys >= oo
+  requires m.m.Keys >= ob
+
+//requires boundsOK(oo,ob)
+  requires flatten(oo) >= flatten(ob)
+//requires forall o <- oo :: flatten(o.ownerBound()) >= flatten(ob)
+
+  requires co == mapThruKlon(oo, m)
+  requires cb == mapThruKlon(ob, m)
+
+// ensures boundsOK(co,cb)
+// ensures flatten(co) >= flatten(cb)
+// ensures forall o <- co :: flatten(o.ownerBound()) >= flatten(cb)
+{
+  var pivot  := m.o;
+  var blivet := m.c;
+
+  assert flatten(oo) >= flatten(ob);
+//  assert forall o <- oo :: flatten(o.ownerBound()) >= flatten(ob);
+
+  var noo := nuke(oo);
+  var nob := nuke(ob);
+  var nco := nuke(co);
+  var ncb := nuke(cb);
+
+  FLATTEN_NUKE(oo);
+  assert noo == nuke(oo) == flatten(oo);
+  FLATTEN_NUKE(ob);
+  assert nob == nuke(ob) == flatten(ob);
+
+
+  var out_oo := nukeOutside(oo,pivot);
+  var sin_oo := nukeStrictlyInside(oo,pivot);
+  var pvt_oo := nukeStrictlyPivot(oo,pivot);
+  nukeEmAll3(oo,pivot,out_oo,sin_oo,pvt_oo,noo);
+  assert out_oo + sin_oo + pvt_oo == noo;
+
+//assert (out_oo + pvt_oo) !! sin_oo;
+
+
+  var out_ob := nukeOutside(ob,pivot);
+  var sin_ob := nukeStrictlyInside(ob,pivot);
+  var pvt_ob := nukeStrictlyPivot(ob,pivot);
+  nukeEmAll3(ob,pivot,out_ob,sin_ob,pvt_ob,nob);
+  assert out_ob + sin_ob + pvt_ob == nob;
+
+
+
+
+
+  FLATTEN_NUKE(co);
+  assert nco == nuke(co) == flatten(co);
+  FLATTEN_NUKE(cb);
+  assert ncb == nuke(cb) == flatten(cb);
+
+  // assert flatten(co) >= flatten(cb);
+  // assert forall o <- co :: flatten(o.ownerBound()) >= flatten(cb);
+
+}
+
+
+lemma INSIDE_VS_OUTSIDE(part : Object, whole : Object)
+  requires part.Ready()
+  requires whole.Ready()
+  requires inside(part, whole)
+  requires whole != part
+   ensures outside(whole,part)
+{}
+
+
+lemma AFMO_ALWAYS_INSIDE(part : Object, whole : Object)
+  requires part.Ready()
+  requires whole.Ready()
+
+  requires whole in part.AMFO
+   ensures inside(part, whole)
+{}
+
+
+
+
+  // onlyPibot   --  inside(part, pivot) &&  inside(pivot, owner)
+  // exceptPivot  -- inside(part, pivot) && outside(pivot, owner)
+
+  //
+
+
+
+lemma EXCEPT_EXCEPT_PIVOT(part : Object, pivot : Object, owner : Object)
+  requires part.Ready()
+  requires owner.Ready()
+  requires pivot.Ready()
+
+  requires owner in part.AMFO
+   ensures inside(part, owner)
+   ensures ( ||  ( inside(part,pivot) &&  inside(owner,pivot))
+             ||  ( inside(part,pivot) && outside(owner,pivot))
+             ||  (outside(part,pivot) && outside(owner,pivot)) )
+
+   ensures  not( (outside(part,pivot) &&  inside(owner,pivot)) )
+
+   ensures inside(owner,pivot) <==> (strictlyInside(owner,pivot) || (owner == pivot))
+
+   ensures pivotlyOutside(owner,pivot) <==> (outside(owner,pivot) || (owner == pivot))
+
+   ensures inside(pivot, owner) != outside(pivot, owner)
+          //onlyPivot (inside) || exceptPivot (outside)
+
+   ensures       ( inside(part,pivot) &&  inside(owner,pivot) ) <==>
+           ( ||  ( inside(part,pivot) && strictlyInside(owner,pivot))
+             ||  ( inside(part,pivot) && (owner == pivot) ) )
+
+
+   ensures ( ||  ( inside(part,pivot) && strictlyInside(owner,pivot))  //fully inside
+             ||  ( inside(part,pivot) && pivotlyOutside(owner,pivot))
+             ||  (outside(part,pivot) && outside(owner,pivot)) )       //fully outside
+
+   ensures ( ||  (     inside(part,pivot)       && strictlyInside(owner,pivot))  //fully inside
+             ||  (  onlyPivot(part,pivot,owner) && pivotlyOutside(owner,pivot))  //is the pivot
+             ||  (exceptPivot(part,pivot,owner) && pivotlyOutside(owner,pivot))  //insife from outside not via pivot
+             ||  (    outside(part,pivot)       && outside(owner,pivot)) )       //fully outside
+
+
+ensures (onlyPivot(part,pivot,owner) || exceptPivot(part,pivot,owner)) ==> inside(part,pivot)
+ensures outside(part,pivot) != (inside(part,pivot) || onlyPivot(part,pivot,owner) || exceptPivot(part,pivot,owner))
+ensures strictlyInside(owner,pivot) != pivotlyOutside(owner,pivot)
+
+
+
+
+   ensures  (inside(part,pivot) && pivotlyOutside(owner,pivot)) ==>
+                     (onlyPivot(part,pivot,owner) != exceptPivot(part,pivot,owner))
+
+   ensures  (inside(part,pivot) && strictlyInside(owner,pivot)) ==>
+                     (onlyPivot(part,pivot,owner) != exceptPivot(part,pivot,owner))
+
+   ensures (inside(part, pivot)) <==>
+                     (onlyPivot(part,pivot,owner) || exceptPivot(part,pivot,owner))
+
+///ensures (inside(part, pivot) && strictlyInside(owner,pivot))  ?
+
+
+///ensures strictlyInside(owner,pivot)  ==>  inside(pivot, owner)
+///ensures strictlyInside(owner,pivot) <==   inside(pivot, owner)
+
+   ensures strictlyInside(owner,pivot)  ==>  not(inside(pivot, owner))
+///ensures strictlyInside(owner,pivot) <==   not(inside(pivot, owner))
+
+   ensures strictlyInside(owner,pivot)  ==> outside(pivot, owner)
+///   ensures strictlyInside(owner,pivot) <==  outside(pivot, owner)
+
+///ensures strictlyInside(owner,pivot)  ==> not(outside(pivot, owner))
+///ensures strictlyInside(owner,pivot) <==  not(outside(pivot, owner))
+
+
+
+
+
+///ensures pivotlyOutside(owner,pivot)  ==>  inside(pivot, owner)
+   ensures pivotlyOutside(owner,pivot) <==   inside(pivot, owner)
+
+///ensures pivotlyOutside(owner,pivot)  ==>  not(inside(pivot, owner))
+///ensures pivotlyOutside(owner,pivot) <==   not(inside(pivot, owner))
+
+///ensures pivotlyOutside(owner,pivot)  ==> outside(pivot, owner)
+///ensures pivotlyOutside(owner,pivot) <==  outside(pivot, owner)
+
+///ensures pivotlyOutside(owner,pivot)  ==> not(outside(pivot, owner))
+   ensures pivotlyOutside(owner,pivot) <==  not(outside(pivot, owner))
+
+
+
+ensures (inside(part,pivot) && pivotlyOutside(owner,pivot) &&  inside(pivot, owner)) ==> onlyPivot(part,pivot,owner)
+ensures (inside(part,pivot) && pivotlyOutside(owner,pivot) && outside(pivot, owner)) ==> exceptPivot(part,pivot,owner)
+
+ensures (inside(part,pivot) && strictlyInside(owner,pivot) &&  inside(pivot, owner)) ==> onlyPivot(part,pivot,owner)
+ensures (inside(part,pivot) && strictlyInside(owner,pivot) && outside(pivot, owner)) ==> exceptPivot(part,pivot,owner)
+
+
+ensures (inside(part,pivot)                                &&  inside(pivot, owner)) ==> onlyPivot(part,pivot,owner)
+ensures (inside(part,pivot)                                && outside(pivot, owner)) ==> exceptPivot(part,pivot,owner)
+
+
+
+ensures  strictlyInside(owner,pivot) ==> inside(part,pivot)
+ensures  strictlyInside(owner,pivot) ==> strictlyInside(part,pivot)
+
+
+////ensures ( inside(part, pivot) && pivotlyOutside(owner,pivot))  ==>  inside(pivot, owner)
+//
+////ensures (outside(part, pivot) && pivotlyOutside(owner,pivot))  ==>  outside(pivot, owner)
+
+////ensures (onlyPivot(part,pivot,owner) || exceptPivot(part,pivot,owner)) ==> (pivotlyOutside(owner,pivot))
+
+
+   ensures  inside(part,pivot)  != outside(part,pivot)
+   ensures  inside(owner,pivot) != outside(owner,pivot)
+{}
+
+lemma FORALL_AMFO_PART_OWNER(soup : OWNR, sludge : Owner, pivot : Object)
+  requires AllReady(soup)
+  requires pivot.Ready()
+
+   ensures forall part <- soup, owner <- part.AMFO :: (
+    && inside(part,owner)
+   // && ((inside(part, pivot) &&  inside(pivot, owner))  ==> outside(owner, pivot) )
+
+    )
+
+   ensures nuke(soup) == (set part <- soup,  owner <- part.AMFO :: owner)
+{}
+
+
+  //  ensures ( ||  (     inside(part,pivot)       && strictlyInside(owner,pivot))  //ownerStrictlyInside
+  //            ||  (  onlyPivot(part,pivot,owner) && pivotlyOutside(owner,pivot))  //owner
+  //            ||  (exceptPivot(part,pivot,owner) && pivotlyOutside(owner,pivot))  //insife from outside not via pivot
+  //            ||  (    outside(part,pivot)       && outside(owner,pivot)) )       //fully outside
+
+predicate ownerStrictlyInside(part : Object, pivot : Object, owner : Object) : (rv : bool)
+  requires part.Ready() && pivot.Ready() && owner.Ready()  requires inside(part, owner)  reads {}
+    {strictlyInside(owner,pivot)}
+
+predicate ownerOnlyPivot(part : Object, pivot : Object, owner : Object) : (rv : bool)
+  requires part.Ready() && pivot.Ready() && owner.Ready()  requires inside(part, owner)  reads {}
+    {pivotlyOutside(owner,pivot) && onlyPivot(part,pivot,owner)}
+
+predicate ownerExceptPivot(part : Object, pivot : Object, owner : Object) : (rv : bool)
+  requires part.Ready() && pivot.Ready() && owner.Ready()  requires inside(part, owner)  reads {}
+    {pivotlyOutside(owner,pivot) && exceptPivot(part,pivot,owner)}
+
+predicate ownerFullyOutside(part : Object, pivot : Object, owner : Object) : (rv : bool)
+  requires part.Ready() && pivot.Ready() && owner.Ready()  requires inside(part, owner)  reads {}
+    {outside(owner,pivot) &&  outside(part,pivot)}
+
+lemma PART_INSIDE_OWNER(soup : OWNR, pivot : Object)
+  requires AllReady(soup) && pivot.Ready()
+  ensures forall part <- soup, owner <- part.AMFO :: inside(part, owner)
+  ensures forall part <- soup :: part.Ready()
+{}
+
+lemma PART_PIVOT_OBJECT(part : Object, pivot : Object, owner : Object)
+  ensures part.Ready() && pivot.Ready() && owner.Ready()  //HERE
+//and other transgressions...
+
+
+
+function flownerStrictlyInside(soup : OWNR, pivot : Object)  : (rv : Owner)
+  requires AllReady(soup) && pivot.Ready()
+ {set part <- soup, owner <- part.AMFO | PART_INSIDE_OWNER(soup,pivot); ownerStrictlyInside(part,pivot,owner) :: owner}
+function flownerOnlyPivot(soup : OWNR, pivot : Object)  : (rv : Owner)
+  requires AllReady(soup) && pivot.Ready()
+ {set part <- soup, owner <- part.AMFO | PART_INSIDE_OWNER(soup,pivot); ownerOnlyPivot(part,pivot,owner) :: owner}
+function flownerExceptPivot(soup : OWNR, pivot : Object)  : (rv : Owner)
+  requires AllReady(soup) && pivot.Ready()
+ {set part <- soup, owner <- part.AMFO | PART_INSIDE_OWNER(soup,pivot); ownerExceptPivot(part,pivot,owner) :: owner}
+function flownerFullyOutside(soup : OWNR, pivot : Object)  : (rv : Owner)
+  requires AllReady(soup) && pivot.Ready()
+ {set part <- soup, owner <- part.AMFO | PART_INSIDE_OWNER(soup,pivot); ownerFullyOutside(part,pivot,owner) :: owner}
+
+lemma FLOWNER_DISJOINT(soup : OWNR, pivot : Object)
+  requires AllReady(soup) && pivot.Ready()
+   ensures flownerStrictlyInside(soup,pivot) !! flownerOnlyPivot(soup,pivot)
+   ensures flownerStrictlyInside(soup,pivot) !! flownerExceptPivot(soup,pivot)
+   ensures flownerStrictlyInside(soup,pivot) !! flownerFullyOutside(soup,pivot)
+   ensures flownerStrictlyInside(soup,pivot) !! (flownerOnlyPivot(soup,pivot) + flownerExceptPivot(soup,pivot) + flownerFullyOutside(soup,pivot))
+   ensures (flownerOnlyPivot(soup,pivot) !! flownerExceptPivot(soup,pivot))
+{}
+
+
 
 
 
