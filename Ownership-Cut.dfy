@@ -1,8 +1,8 @@
-          //imported from dafny/dahlia=-11.dfy
+//imported from dafny/dahlia=-11.dfy
 
 include "Klon.dfy"
-include "Edges.dfy" //Edges
-include "Incoming.dfy" //
+include "Edges.dfy"
+include "Incoming.dfy"
 include "Predicates.dfy"
 include "Ownership-NoIncoming.dfy"
 

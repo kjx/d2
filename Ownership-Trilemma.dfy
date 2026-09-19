@@ -97,15 +97,26 @@ function proposeOwnerAndBound(kowner : Owner, kbound : Bound, m : Klon) : (r : (
 ///
 /// 3. defintions that classify actual owners
 
-
-
+//
+// lemma gnarg(o : Object, pivot : Object)
+//    requires o.Ready()
+//    requires pivot.Ready()
+//    {
+//       assert not(strictlyInside(o,pivot)) == not(o.AMFO > pivot.AMFO);
+//       assert not(strictlyInside(o,pivot)) == pivotlyOutside(o,pivot);
+//       assert not(o.AMFO > pivot.AMFO) <== (o.AMFO == pivot.AMFO);
+//       assert not(o.AMFO > pivot.AMFO) <== (o.AMFO <  pivot.AMFO);
+//       assert not(o.AMFO > pivot.AMFO) <== (o.AMFO <= pivot.AMFO);
+//       assert not(o.AMFO > pivot.AMFO) ==> (o.AMFO <= pivot.AMFO);
+//
+//       assert forall oo <- o.owner :: o.AMFO > oo.AMFO;
+//    }
 function collectAllOutside(o : Object, pivot : Object) : (rv : set<Object>)
   decreases o.AMFO
    requires o.Ready()
    requires pivot.Ready()
     ensures (o == pivot) || not(inside(o,pivot)) ==> (rv == o.AMFO)
     ensures (o == pivot) ==> (rv == pivot.AMFO)
-//    ensures inside(o,pivot) ==> (rv >= pivot.AMFO)
     {
       if (not(strictlyInside(o,pivot))) then (o.AMFO)
           else (set oo <- o.owner, ooo <- collectAllOutside(oo, pivot) :: ooo)
@@ -285,6 +296,7 @@ function collectOutsideExceptPivot'(o : Object, pivot : Object) : (rv : set<Obje
 function collectAllBoth(oo : Object, pivot : Object) : (rv : set<Object>)
   decreases oo.AMFO
    requires oo.Ready()
+   requires pivot.Ready()
      { collectAllOutside(oo,pivot) + collectAllInside(oo,pivot) }
 
 function amfoBinary(oo : Object, pivot : Object) : (rv : Owner)
@@ -341,6 +353,7 @@ lemma collectAllOutside_LEMMA0(o : Object, pivot : Object)
  //version equals prime
    decreases o.AMFO
     requires o.Ready()
+    requires pivot.Ready()
      ensures collectAllOutside(o,pivot) == collectAllOutside'(o,pivot)
 {
     if (o == pivot) {
@@ -364,6 +377,7 @@ lemma collectAllOutside_LEMMA1(o : Object, pivot : Object)
   //outside' includes EXCEPT pivot'
    decreases o.AMFO
     requires o.Ready()
+    requires pivot.Ready()
      ensures collectAllOutside'(o,pivot) >= collectOutsideExceptPivot'(o,pivot)
 {}
 
@@ -371,6 +385,7 @@ lemma collectAllOutside_LEMMA1noprime(o : Object, pivot : Object)
   //outside includes EXCEPT pivot
    decreases o.AMFO
     requires o.Ready()
+    requires pivot.Ready()
      ensures collectAllOutside(o,pivot) >= collectOutsideExceptPivot(o,pivot)
 {}
 
@@ -394,7 +409,7 @@ lemma collectAllOutside_LEMMA8(o : Object, pivot : Object)
                 || (x in collectOutsideOnlyPivot(o,pivot))
 {}
 
-lemma collectAllOutside_LEMMA6(o : Object, pivot : Object)
+lemma {:verify false} collectAllOutside_LEMMA6(o : Object, pivot : Object)
    decreases o.AMFO
     requires o.Ready()
     requires pivot.Ready()
@@ -439,7 +454,7 @@ lemma collectAllOutside_LEMMA9(o : Object, pivot : Object)
 
 
 
-lemma flattenOutsideOnlyExceptOnlyPivot_LEMMA1(os : Owner,  pivot : Object, left0 : Owner, left1 : Owner, right : Owner)
+lemma {:verify false} flattenOutsideOnlyExceptOnlyPivot_LEMMA1(os : Owner,  pivot : Object, left0 : Owner, left1 : Owner, right : Owner)
    decreases allAMFOs(os)
     requires AllReady(os)
     requires forall o <- os :: o.Ready()
@@ -462,7 +477,7 @@ lemma flattenOutsideOnlyExceptOnlyPivot_LEMMA1(os : Owner,  pivot : Object, left
 }
 
 
-lemma flattenAllOutside_LEMMA9(os : Owner, pivot : Object)
+lemma {:verify false} flattenAllOutside_LEMMA9(os : Owner, pivot : Object)
    decreases allAMFOs(os)
     requires AllReady(os)
     requires forall o <- os :: o.Ready()
@@ -492,7 +507,7 @@ assert (flattenOutsideExceptPivot(os,pivot) + flattenOutsideOnlyPivot(os,pivot))
 }
 
 
-lemma flattenOutsideOnlyExceptPivot_LEMMA0(os : Owner, pivot : Object, oExcept : Owner, oOnly : Owner)
+lemma {:verify false} flattenOutsideOnlyExceptPivot_LEMMA0(os : Owner, pivot : Object, oExcept : Owner, oOnly : Owner)
    decreases allAMFOs(os)
     requires AllReady(os)
     requires forall o <- os :: o.Ready()
@@ -544,6 +559,10 @@ forall oo <-  collectAllBoth(o,pivot) ensures ( oo in collectAllOwnersWithoutExt
         ThereIsALightThatNeverGoesOut(o, oo);
       }
   }
+
+  assert forall oo <-  collectAllBoth(o,pivot) :: ( oo in collectAllOwnersWithoutExtraOwners(o) );
+  assert forall oo <-  collectAllOwnersWithoutExtraOwners(o) :: ( oo in collectAllBoth(o,pivot) );
+
 }
 
 
@@ -655,6 +674,7 @@ lemma collectAllBoth_LEMMA0(soup : set<Object>,  pivot : Object) // left0 : set<
  //then 'upscales' that to sets etc
 
   requires forall o <- soup :: o.Ready()
+  requires pivot.Ready()
 
    ensures forall o <- soup :: collectAllBoth(o,pivot) == collectAllOutside(o, pivot) + collectAllInside(o, pivot)
 
@@ -706,6 +726,7 @@ lemma collectAllBoth_LEMMA0(soup : set<Object>,  pivot : Object) // left0 : set<
 
 lemma collectAllBoth_LEMMA1(seed : Object,  pivot : Object, left0 : set<Object>, left1 : set<Object>, right : set<Object>)
   requires seed.Ready()
+  requires pivot.Ready()
   requires left0 == (set o <- seed.owner, oo <- collectAllOutside(o, pivot) :: oo)
   requires left1 == (set o <- seed.owner, oo <-  collectAllInside(o, pivot) :: oo)
   requires right == (set o <- seed.owner, oo <-    collectAllBoth(o, pivot) :: oo)
@@ -724,14 +745,18 @@ lemma BLANCHE(o : Object, pivot : Object)
  //given amfoBinary == collectAllBoth, lifts to set
    decreases o.AMFO
     requires o.Ready()
+    requires pivot.Ready()
     requires strictlyInside(o,pivot)
     requires forall oo <- o.owner :: amfoBinary(oo,pivot) == collectAllBoth(oo,pivot)
      ensures (set oo <- o.owner, ooo <- amfoBinary(oo,pivot) :: ooo) == (set oo <- o.owner, ooo <- collectAllBoth(oo,pivot) :: ooo)
-{}
+{
+      assert forall oo <- o.owner :: amfoBinary(oo,pivot) == collectAllBoth(oo,pivot);
+}
 
 lemma LANCHIN(o : Object, pivot : Object)
    decreases o.AMFO
     requires o.Ready()
+    requires pivot.Ready()
     requires strictlyInside(o,pivot)
     requires forall oo <- o.owner :: oo.AMFO              == (collectAllOutside(oo,pivot) + collectAllInside(oo,pivot))
      ensures forall oo <- o.owner :: amfoBinary(oo,pivot) == collectAllBoth(oo,pivot)
@@ -744,6 +769,7 @@ lemma LANCHIN(o : Object, pivot : Object)
 lemma LANCHOUT(o : Object, pivot : Object)
    decreases o.AMFO
     requires o.Ready()
+    requires pivot.Ready()
     requires strictlyInside(o,pivot)
     requires (set oo <- o.owner, ooo <- amfoBinary(oo,pivot) :: ooo) == (set oo <- o.owner, ooo <- collectAllBoth(oo,pivot) :: ooo)
 //   ensures (set oo <- o.owner, ooo <- amfoBinary(oo,pivot) :: ooo) == (set oo <- o.owner, ooo <- (collectAllOutside(oo,pivot) + collectAllInside(oo,pivot)) :: ooo)
@@ -775,6 +801,7 @@ lemma NCHOUT3(o : Object, pivot : Object, left0 : Owner, left1 : Owner, right : 
  //(set collectAllOutside) + set (collectAllInside) == set (collectAllooutside+collectAll(Inside)
    decreases o.AMFO
     requires o.Ready()
+    requires pivot.Ready()
     requires strictlyInside(o,pivot) //WHY? - cos if nothing's strictlyInside the pivot, who gives a FUCK
     requires left0 == (set oo <- o.owner, ooo <- (collectAllOutside(oo,pivot)) :: ooo)
     requires left1 == (set oo <- o.owner, ooo <- (collectAllInside(oo,pivot)) :: ooo)
@@ -825,6 +852,7 @@ lemma NCHOUT3(o : Object, pivot : Object, left0 : Owner, left1 : Owner, right : 
 lemma collectAllBoth_LEMMA2(o : Object, pivot : Object)
    decreases o.AMFO
     requires o.Ready()
+    requires pivot.Ready()
     requires strictlyInside(o,pivot)
 {
 

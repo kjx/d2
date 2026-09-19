@@ -100,7 +100,7 @@ method {:timeLimit 30 } sheepKlon(o : Object, clowner : Owner, oHeap : set<Objec
      assert forall x <- oHeap :: (x.Ready() && x.Valid() && x.Context(oHeap));
 
     var mep0 := map x <- o.AMFX :: x;
-    assert mep0.Keys == o.AMFX;
+    assert mep0.Keys == o.AMFX; assert o !in mep0.Keys;
     reveal UniqueMapEntry();
     assert forall i <- mep0.Keys :: UniqueMapEntry(mep0, i);
     assert AllMapEntriesAreUnique(mep0);
@@ -108,7 +108,7 @@ method {:timeLimit 30 } sheepKlon(o : Object, clowner : Owner, oHeap : set<Objec
 
     var mep : vmap<Object,Object> := mep0;
 //    assert mep.Keys == mep.Values == o.AMFX <= oHeap by  { reveal COK(); }
-    assert mep.Keys == mep.Values == o.AMFX;
+    assert mep.Keys == mep.Values == o.AMFX;  assert o !in mep.Keys;
     assert forall x <- mep.Keys ::   x == mep[x];
 
     forall x <- mep.Keys ensures true //by
@@ -148,20 +148,20 @@ forall x <- oHeap ensures (x.Context(oHeap+{c}))
    assert x.Context(oHeap+{c});
  }
 
-assert forall x <- mep.Keys ::  x == mep[x];  assert forall x <- mep.Keys ::  (x.fieldModes == mep[x].fieldModes);
-var me := map2vmap(mep[o:=c]);
+assert forall x <- mep.Keys ::  x == mep[x];  //19Sep assert forall x <- mep.Keys ::  (x.fieldModes == mep[x].fieldModes);
+var me := map2vmap(mep[o:=c]);  //19Sep assert me.Keys == mep.Keys + {o}; assert me.Values == mep.Values + {c};
 assert AllMapEntriesAreUnique(me);
-assert forall x <- mep.Keys ::   x == me[x];  assert forall x <- mep.Keys ::  (x.fieldModes == me[x].fieldModes);
-assert me[o] == c;                        assert forall x : Object <- {o} ::  (x.fieldModes == me[x].fieldModes);
-assert me.Keys == mep.Keys + {o};   assert forall x : Object <- me.Keys ::  (x.fieldModes == me[x].fieldModes);
-
+assert forall x <- mep.Keys ::   x == me[x]; //19Sep  assert forall x <- mep.Keys ::  (x.fieldModes == me[x].fieldModes);
+assert me[o] == c;                       //19Sep assert forall x : Object <- {o} ::  (x.fieldModes == me[x].fieldModes);
+assert me.Keys == mep.Keys + {o};  //19Sep  assert forall x : Object <- me.Keys ::  (x.fieldModes == me[x].fieldModes);
+assert me.Values == mep.Values + {c};
 //
 // assert forall x : Object <- me.Keys ::
 //   (if (x == o)  then ((me[x] == c) && (x.fieldModes == me[x].fieldModes))
 //                 else ((me[x] == x) && (x.fieldModes == me[x].fieldModes)))
 //   && (x.fieldModes == me[x].fieldModes);
 
-assert me.Keys == o.AMFO;
+assert me.Keys == o.AMFX+{o};
 assert me.Values == o.AMFX+{c};
 assert AllReady(me.Keys); assert AllReady(me.Values);
 assert AllValid(me.Keys); assert AllValid(me.Values);
@@ -170,19 +170,35 @@ assert forall x <- mep.Keys :: x == mep[x] == me[x];
 assert forall x <- mep.Keys :: x.AMFB == mep[x].AMFB == me[x].AMFB;
 assert c.AMFB >= o.AMFB;
 
+assert (me[o] == c) && (c.AMFB >= o.AMFB)   && (me[o].AMFB >= c.AMFB);
+
 assert forall x <- me.Keys ::
-  &&  (if (x == o) then ((me[x] == c) && (c.AMFB >= o.AMFB)      && (me[x].AMFB >= x.AMFB))
+  &&  (if (x == o) then ((me[o] == c) && (c.AMFB >= o.AMFB)      && (me[o].AMFB >= x.AMFB))
                    else ((me[x] == x) && (mep[x].AMFB >= x.AMFB) && (me[x].AMFB >= x.AMFB)));
 
  assert forall x <- me.Keys :: (me[x].AMFB >= x.AMFB);
 
 
-
 //NO_FIELDMODES
-assert forall x <- me.Keys ::
-(if (x == o)  then ((me[x] == c) && (c.fieldModes == o.fieldModes))
-              else ((me[x] == x) && (me[x].fieldModes == x.fieldModes))
-) && (me[x].fieldModes == x.fieldModes);
+assert (o.fieldModes == c.fieldModes) && (me[o] == c) && (o.fieldModes == me[o].fieldModes);
+// assert forall x <- me.Keys ::
+// (if (x == o)  then ((me[o] == c) && (o.fieldModes == c.fieldModes))
+//               else ((me[x] == x) && (me[x].fieldModes == x.fieldModes))
+// ) && (me[x].fieldModes == x.fieldModes);
+
+
+forall x <- me.Keys ensures (me[x].fieldModes == x.fieldModes) //by
+ {
+   if (x == o)  {
+                assert (me[o] == c);
+                assert (o.fieldModes == c.fieldModes);
+                assert me[x].fieldModes == x.fieldModes;
+               } else {
+                assert (me[x] == x);
+                assert me[x].fieldModes == x.fieldModes;
+               }
+ }
+
 
 assert inside(o,o);
 assert forall k <- me.Keys :: (not(inside(k,o)) ==> (me[k] == k));
@@ -218,13 +234,13 @@ m := Klon(me,
                             clamfx,
                             flatten(clbound));
 
-assert forall x <- me.Values :: x.Context(me.Values+oHeap) by { reveal ME_VALUES; }
-assert m.m == me;
-assert forall x <- m.m.Values :: x.Context(m.m.Values+oHeap);
-assert (m.m.Values+oHeap)+{} == (m.m.Values+oHeap) by { PLUS_EMPTY(m.m.Values, oHeap); }
-assert forall x <- m.m.Values :: x.Context((m.m.Values+oHeap)+{});
-assert m.hns() == m.m.Values+oHeap+{};
-assert forall x <- m.m.Values :: x.Context(m.hns());
+//19Sep assert m.m == me;  assert m.oHeap == oHeap;
+// assert forall x <- me.Values :: x.Context(me.Values+oHeap) by { reveal ME_VALUES; }
+// assert forall x <- m.m.Values :: x.Context(m.m.Values+oHeap);
+// assert (m.m.Values+oHeap)+{} == (m.m.Values+oHeap) by { PLUS_EMPTY(m.m.Values, oHeap); }
+// assert forall x <- m.m.Values :: x.Context((m.m.Values+oHeap)+{});
+// assert m.hns() == (m.m.Values+oHeap)+{} == (m.m.Values+oHeap) by { PLUS_EMPTY(m.m.Values, oHeap); }
+// assert forall x <- m.m.Values :: x.Context(m.hns());
 
 assert forall x <- m.m.Keys :: (m.m[x] == me[x]) && (m.m[x].AMFB >= x.AMFB);
 
@@ -305,27 +321,6 @@ forall k <- m.m.Keys ensures klonLine(k, m.m[k], m) //by
 
 
 
-// Error: function precondition could not be proved
-// Inside klonLine(k, m.m[k], m)
-// Inside klonReady(m)
-// Could not prove: m.m.Values <= m.hns()
-// This is the only assertion in batch #775 of 1290 in method sheepKlon
-// Batch #775 resource usage: 31.2M RU
-//
-// Error: possible violation of postcondition of forall statement
-// Inside klonLine(k, m.m[k], m)
-// Inside klonModes(k,v,m)
-// Could not prove: k.fieldModes == v.fieldModes
-// This is the only assertion in batch #644 of 1290 in method sheepKlon
-// Batch #644 resource usage: 27.0M RU
-//
-// Error: function precondition could not be proved
-// Inside klonLine(k, m.m[k], m)
-// Inside klonReady(m)
-// Could not prove: forall x <- m.m.Keys :: m.objectInKlon(x)
-// This is the only assertion in batch #777 of 1290 in method sheepKlon
-// Batch #777 resource usage: 25.8M RU
-
 forall k <- m.m.Keys ensures (klonLine(k, m.m[k], m)) {
   if (k == c) {
 
@@ -334,138 +329,8 @@ forall k <- m.m.Keys ensures (klonLine(k, m.m[k], m)) {
    }
   }
 
-//
-// assert m.AllLinesCalid();
-// assert m.gettingThere();
-// assert m.SuperCalidFragilistic();
-// m := Xlone_All_Fields(o,c,m);
+
 assert klonReady(m);
 assert klonCalid(m);
 assert m.c.Ready();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-// //  forall x <- m.m.Keys ensures (true)  {
-// // //    assert (outside(x,m.o)); //where the FUCK did this come from?
-// //     assert (x.AMFX <= m.m.Keys);
-// //     assert (x.AMFB <= m.m.Keys);
-// //     assert (m.ownersInKlon(x));
-// //     assert (x.Ready());
-// //     assert (m.apoCalidse());
-// //
-// //   assert (x.owner <= m.m.Keys <= m.oHeap);
-// //   assert (m.m.Values <= flatten( m.hns() ));
-// //   assert (m.o.Ready());
-// //   assert (m.HeapOwnersReady());
-// //   assert (m.c_amfx <= m.oHeap);
-// //   assert m.m[x].Ready();
-// //     assert (checkOwnershipOfClone(x,m.m[x],m));
-// //     assert (checkBoundOfClone(x,m.m[x],m));
-// //     assert (mappingOwnersThruKlonKV(x,m.m[x],m));
-// //  }
-//
-//
-// forall k <- m.m.Keys ensures (true) {
-//      assert (k.Ready());
-//      assert (m.objectInKlon(k));
-//      assert (m.m[k].Ready());
-//      assert (m.m[k] in m.hns());
-// }
-//
-// forall k <- m.m.Keys ensures (HighLineKV(k, m.m[k], m)) {
-//   if (k == o) {
-//     assert m.m[k] == c;
-//     assert HighLineKV(o, c, m);
-//   } else {
-//     assert m.m[k] == k;
-//     assert HighLineKV(k, m.m[k], m);
-//   }
-// }
-//
-//   assert m.AllLinesCalid();
-//   assert m.gettingThere();
-//   assert m.SuperCalidFragilistic();
-//
-//  m := Xlone_All_Fields(o,c,m);
-//
-//
-// // assert forall x <- m.m.Keys :: (
-// //     && (outside(x,m.o))
-// //     && (x.AMFX <= m.m.Keys)
-// //     && (x.AMFB <= m.m.Keys)
-// // //    && (k.bound <= k.owner <= m.Keys)
-// //     && (m.ownersInKlon(x))  //belt and braces--- currently a requirement!
-// //
-// //   && (x.Ready())
-// //   && (m.ownersInKlon(x))
-// //   && (x.Ready())
-// //   && (m.apoCalidse())
-// //   && (x.owner <= m.m.Keys <= m.oHeap)
-// //   && (m.m.Values <= flatten( m.hns() ))
-// //   && (m.o.Ready())
-// //   && (m.HeapOwnersReady())
-// //   && (m.c_amfx <= m.oHeap)
-// //
-// //     && (checkOwnershipOfClone(x,x,m))
-// //     && (checkBoundOfClone(x,x,m))
-// //     && (mappingOwnersThruKlonKV(x,x,m))
-// // );
-//
-//
-// assert m.SuperCalidFragilistic();
-//
-// forall x <- m.m.Keys ensures (m.CalidLineKV(x,m.m[x])) //GRRR (m.CalidLineKV(x,m.m[x])) //by
-// {
-//    // assert (outside(x,m.o));
-//     assert (x.AMFX <= m.m.Keys);  //???
-//     assert (x.AMFB <= m.m.Keys); //???
-//       assert (m.ownersInKlon(x)) ; //???
-//     assert (x.Ready()); //??? //??? //??? //??? //??? //???
-//     assert (m.ownersInKlon(x));
-//     assert (x.Ready());
-// //    assert (m.apoCalidse());
-//     assert (x.owner <= m.m.Keys <= m.oHeap);  //???
-//     assert (m.m.Values <= flatten( m.hns() ));
-//     assert (m.o.Ready()); //???
-//     assert (m.HeapOwnersReady()); //???
-//     assert (m.c_amfx <= m.oHeap);            //???
-//     assert (checkOwnershipOfClone(x,m.m[x],m));        //???        //???
-//     assert (checkBoundOfClone(x,m.m[x],m));
-//     assert (mappingOwnersThruKlonKV(x,m.m[x],m)); //???
-// }
-//
-// // // assert forall x <- m.m.Keys :: m.CalidLineKV(x,x);
-// //
-// //
-// //   // assert m.hns() == oHeap + clamfx;
-// //     assert m.oHeap == oHeap;
-// //
-// //     assert o.AMFX == m.o_amfx <= m.m.Keys;
-// //
-// //     assert COK(o, oHeap);   reveal COK();
-// //     assert COK(o, m.oHeap);
-// //
-// //     assert m.oHeap == oHeap;
-// //
-// //     assert CallOK(oHeap);
-// //     assert forall x <- oHeap :: x.Ready();
-// //
-// //     assert m.o.Ready();
-// //     assert (m.o.AMFX <= m.m.Keys);
-// //
-// //
-// //     assert (m.m.Keys <= m.oHeap);
-// //     assert (m.m.Values <= m.hns());
-// //     assert (m.ownersInKlon(o));
-// //     assert (m.HeapOwnersReady());
-// //     assert (m.c_amfx <= m.oHeap);

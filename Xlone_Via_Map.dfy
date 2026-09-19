@@ -279,6 +279,7 @@ lemma {:timeLimit 20} OUTSIDE_EQ_OK(k : Object, v : Object, m : Klon)
   ensures klonLine(k,v,m)
   {
     assert (m.m.Keys <= m.oHeap) by { assert klonReady(m); }
+    assert inside(k, m.o) <==> inside(v, m.c);
   }
 
 

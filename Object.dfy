@@ -1,6 +1,6 @@
 include "Library.dfy"
 //include "Mode.dfy"
-include "Ownership.dfy" //comes in via Mode anyway..
+include "Ownership.dfy"
 
 //TODOS when valid - precondition on comoputeWOwnerForClone - see JDVANCE
 //GREENLAND   - geting bound covariant over cloning

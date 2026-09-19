@@ -3,8 +3,7 @@
 ////
 
 include "Klon.dfy"
-include "Bound.dfy"  //shouild this be Ownerhsip=Bound?
-//
+include "Bound.dfy"
 
 
 ////////////////////////////////////////////

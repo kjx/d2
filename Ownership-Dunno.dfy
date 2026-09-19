@@ -1,5 +1,5 @@
 include "Ownership.dfy"
-include "Ownership-Trilemma.dfy"
+//include "Ownership-Trilemma.dfy"
 
 function nuke(soup : Owner) : OWNR {assume forall s <- soup :: s.Ready(); (set o <- soup, oo <- o.AMFO :: oo)}
 

@@ -1,4 +1,4 @@
-  include "Ownership-Lemmata.dfy"
+include "Ownership-Lemmata.dfy"
 
 lemma NoIncomingPointers(f : Object, o : Object, t : Object)
   requires f.Ready() && o.Ready() && t.Ready()
@@ -174,7 +174,7 @@ lemma LongerNoIncomingPointers(f : Object, o : Object, t : Object)
 
 
 
-lemma {:isolate_assertions } fint_refDI_outside(f : Object, t : Object)
+lemma fint_refDI_outside(f : Object, t : Object)
   requires f.Ready()
   requires t.Ready()
   requires t.owner == {f}

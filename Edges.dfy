@@ -1,4 +1,4 @@
-  include "Ownership.dfy"
+include "Ownership.dfy"
 include "Incoming.dfy"
 include "Printing.dfy"
 

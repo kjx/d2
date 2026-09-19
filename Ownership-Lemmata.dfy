@@ -72,7 +72,7 @@ lemma Flatten0(a : Object)
    ensures flatten(a.self) == a.AMFO
 {}
 
-// lemma Flatten1(a : Object)         //REVERT
+// lemma Flatten1(a : Object)         //REVERTx`
 //   ensures flatten({a})    == a.AMFO     //REVERT
 // {}     //REVERT
 
@@ -305,7 +305,20 @@ lemma abcd(a : Object, b : Object, c : Object, d : Object, m : Klon)
 
    ensures inside(b,a)
    ensures inside(d,c)
-  {}
+  {
+    assert klonLine(a,c,m);
+    assert klonIdentity(a,c,m);
+    assert strictlyInside(a, m.o);
+    assert (a != m.o) && (a != c);
+    assert c.owner == mapThruKlon(a.owner, m);
+
+    assert klonLine(b,d,m);
+    assert klonIdentity(b,d,m);
+    assert strictlyInside(b, m.o);
+    assert (b != m.o) && (b != d);
+    assert d.owner == mapThruKlon(b.owner, m);
+
+  }
 
 
 

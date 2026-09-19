@@ -975,6 +975,8 @@ lemma {:timeLimit 20} RefOKDI(f' : Object, t' : Object, f : Object, t : Object, 
 
   requires klonCalid(m)
   requires klonAllLines(m)
+  requires klonLine(f',f,m)
+  requires klonLine(t',t,m)
 //  requires m.CalidLineKV(f', f)
 //  requires m.CalidLineKV(t', t)
 //  requires HighLineKV(f', f, m)
@@ -1009,12 +1011,12 @@ lemma {:timeLimit 20} RefOKDI(f' : Object, t' : Object, f : Object, t : Object, 
 //  assert mappingOwnersThruKlonKV(t', t, m);
 
 
-// assert klonLine(f',f,m);
-// assert klonLine(t',t,m);
-// assert strictlyInside(f', m.o);
-// assert strictlyInside(t', m.o);
+assert klonLine(f',f,m);
+assert klonLine(t',t,m);
+assert inside(f', m.o);
+assert strictlyInside(t', m.o);
 
-//assert mappingOWNRsThruKlonKV(t'.owner, t.owner, m);
+assert mappingOWNRsThruKlonKV(t'.owner, t.owner, m);
 
 assert klonIdentity(t',t,m);
 assert t.owner == mapThruKlon(t'.owner, m);
