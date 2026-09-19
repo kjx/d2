@@ -4,7 +4,7 @@ include "Library.dfy"
 
 include "Klon-KlonLine.dfy"
 
-  predicate HighCalidFragilistic(m : Klon) : (r : bool)
+predicate HighCalidFragilistic(m : Klon) : (r : bool)
     requires m.apoCalidse()
     reads m.hns()
      {
@@ -16,7 +16,7 @@ include "Klon-KlonLine.dfy"
 
 
 
- predicate {:verify false} HighLineKV(k : Object, v : Object, m : Klon)
+predicate {:verify false} HighLineKV(k : Object, v : Object, m : Klon)
     requires m.apoCalidse()
     reads m.hns(), k, v
 {
@@ -24,7 +24,7 @@ include "Klon-KlonLine.dfy"
 }
 
 
- predicate {:verify false} OLDHighLineKV(k : Object, v : Object, m : Klon)
+predicate {:verify false} OLDHighLineKV(k : Object, v : Object, m : Klon)
     requires m.apoCalidse()
     reads m.hns(), k, v
   {
@@ -86,7 +86,7 @@ include "Klon-KlonLine.dfy"
 // {}
 
 
-lemma  HighLineFrom(m : Klon, m' : Klon)
+lemma HighLineFrom(m : Klon, m' : Klon)
 //original klonHighLine spec
   requires m.from(m')
   requires m'.apoCalidse()

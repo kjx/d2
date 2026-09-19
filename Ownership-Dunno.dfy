@@ -1,5 +1,5 @@
 include "Ownership.dfy"
-//include "Ownership-Trilemma.dfy"
+include "Ownership-Trilemma.dfy"
 
 function nuke(soup : Owner) : OWNR {assume forall s <- soup :: s.Ready(); (set o <- soup, oo <- o.AMFO :: oo)}
 
@@ -287,6 +287,7 @@ lemma LEMMA_flattenOnlyPivot2(soup : OWNR, pivot : Object, rv : Owner)
 
   forall r <- rv ensures (r in pivot.AMFO) //by
    {
+
       assert inside(pivot,r);
       AXIOMAMFOREVERSE(pivot, r);
    }
