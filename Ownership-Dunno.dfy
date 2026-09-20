@@ -738,11 +738,16 @@ function flownerInsidePivot(soup : OWNR, pivot : Object)  : (rv : Owner)
 
 lemma FLOWNER_DISJOINT(soup : OWNR, pivot : Object)
   requires AllReady(soup) && pivot.Ready()
+   ensures flownerOnlyPivot(soup,pivot) !! flownerExceptPivot(soup,pivot)
    ensures flownerStrictlyInside(soup,pivot) !! flownerOnlyPivot(soup,pivot)
    ensures flownerStrictlyInside(soup,pivot) !! flownerExceptPivot(soup,pivot)
+   ensures flownerStrictlyInside(soup,pivot) !! flownerOnlyPivot(soup,pivot) !! flownerExceptPivot(soup,pivot)
+   ensures flownerStrictlyInside(soup,pivot) !! flownerInsidePivot(soup,pivot)
    ensures flownerStrictlyInside(soup,pivot) !! flownerFullyOutside(soup,pivot)
    ensures flownerStrictlyInside(soup,pivot) !! (flownerOnlyPivot(soup,pivot) + flownerExceptPivot(soup,pivot) + flownerFullyOutside(soup,pivot))
-   ensures (flownerOnlyPivot(soup,pivot) !! flownerExceptPivot(soup,pivot))
+   ensures flownerStrictlyInside(soup,pivot) !! (flownerInsidePivot(soup,pivot) + flownerFullyOutside(soup,pivot))
+///ensures not(flownerInsidePivot(soup,pivot) !! flownerFullyOutside(soup,pivot))
+
 {}
 
 
@@ -788,7 +793,6 @@ lemma FLOWNER_CONJOINT(soup : OWNR, pivot : Object, FIO : Owner, FOP : Owner, FE
 
 
 
-
 lemma FLOWNER_JOINT(soup : OWNR, pivot : Object, FIO : Owner, FOP : Owner, FEP : Owner)
   requires AllReady(soup) && pivot.Ready()
   requires FIO == FOP + FEP
@@ -804,10 +808,23 @@ lemma FLOWNER_JOINT(soup : OWNR, pivot : Object, FIO : Owner, FOP : Owner, FEP :
 
 
 
+lemma FLOWNER_ALL_ALL(soup : OWNR, pivot : Object)
+ //verified 20 Sep 2026
+  requires AllReady(soup) && pivot.Ready()
+
+   ensures flownerAll(soup) == flownerStrictlyInside(soup,pivot) + flownerFullyOutside(soup,pivot) + flownerInsidePivot(soup,pivot)
+   ensures                     flownerStrictlyInside(soup,pivot) !! (flownerFullyOutside(soup,pivot) + flownerInsidePivot(soup,pivot))
+   ensures flownerInsidePivot(soup,pivot) == (flownerOnlyPivot(soup,pivot) + flownerExceptPivot(soup,pivot))
+{}
 
 
 
-lemma FLOWER_POWER_H(oo : Owner, ob : Bound, pivot : Object)
+
+
+
+
+lemma FLOWER_SPLIT_H(oo : Owner, ob : Bound, pivot : Object)
+ //given Foo >= Fob, then the vartious components are >=
  //should be xo & xb??
   requires AllReady(oo)
   requires AllReady(ob)
@@ -822,6 +839,9 @@ lemma FLOWER_POWER_H(oo : Owner, ob : Bound, pivot : Object)
    ensures (flownerInsidePivot(oo,pivot) + flownerStrictlyInside(oo,pivot) + flownerFullyOutside(oo,pivot))
       >= (flownerInsidePivot(ob,pivot) + flownerStrictlyInside(ob,pivot) + flownerFullyOutside(ob,pivot))
 
+   ensures (flownerInsidePivot(oo,pivot) + flownerFullyOutside(oo,pivot))
+      >= (flownerInsidePivot(ob,pivot) + flownerFullyOutside(ob,pivot))
+
   {
      FLOWNER_DISJOINT(oo, pivot);
      FLOWNER_DISJOINT(ob, pivot);
@@ -831,12 +851,97 @@ lemma FLOWER_POWER_H(oo : Owner, ob : Bound, pivot : Object)
   //  ensures flownerStrictlyInside(soup,pivot) !! flownerFullyOutside(soup,pivot)
   //  ensures flownerStrictlyInside(soup,pivot) !! (flownerOnlyPivot(soup,pivot) + flownerExceptPivot(soup,pivot) + flownerFullyOutside(soup,pivot))
   //  ensures (flownerOnlyPivot(soup,pivot) !! flownerExceptPivot(soup,pivot))
-
-
   }
 
 
-lemma FLOWER_POWER_V(ox : Owner, cx : Owner, m : Klon)
+
+lemma FLOWER_JOIN_InsidePivot(oo : Owner, ob : Bound, pivot : Object)
+  requires AllReady(oo)
+  requires AllReady(ob)
+  requires pivot.Ready()
+
+  requires flownerOnlyPivot(oo,pivot) >= flownerOnlyPivot(ob,pivot)
+  requires flownerExceptPivot(oo,pivot) >= flownerExceptPivot(ob,pivot)
+
+   ensures flownerInsidePivot(oo,pivot) == flownerOnlyPivot(oo,pivot) + flownerExceptPivot(oo,pivot)
+   ensures flownerInsidePivot(ob,pivot) == flownerOnlyPivot(ob,pivot) + flownerExceptPivot(ob,pivot)
+   ensures flownerInsidePivot(oo,pivot) >= flownerInsidePivot(ob,pivot)
+   {}
+
+
+lemma FUCKED(o0 : Owner, o1 : Owner, o2 : Owner, b0 : Owner, b1 : Owner, b2 : Owner)
+  requires o0 >= b0
+  requires (o1+o2) >= (b1+b2)
+  requires o0 !! (o1+o2)
+  requires b0 !! (b1+b2)
+   ensures (o0+o1+o2) >= (b0+b1+b2)
+   {}
+
+lemma FLOWER_JOIN_All(oo : Owner, ob : Bound, pivot : Object)
+ //given the vartious components are >=, conclude Foo >= Fob,
+ //just a nice? version of FLOWER_JOIN_H without the typo
+  requires AllReady(oo)
+  requires AllReady(ob)
+  requires pivot.Ready()
+
+  requires flownerStrictlyInside(oo,pivot) >= flownerStrictlyInside(ob,pivot)
+  requires (flownerInsidePivot(oo,pivot) + flownerFullyOutside(oo,pivot)) >= (flownerInsidePivot(ob,pivot) + flownerFullyOutside(ob,pivot))
+
+   ensures flownerStrictlyInside(oo,pivot) + (flownerInsidePivot(oo,pivot) + flownerFullyOutside(oo,pivot)) >=
+           flownerStrictlyInside(ob,pivot) + (flownerInsidePivot(ob,pivot) + flownerFullyOutside(ob,pivot))
+
+   ensures flownerAll(oo) == flownerStrictlyInside(oo,pivot) + (flownerInsidePivot(oo,pivot) + flownerFullyOutside(oo,pivot))
+   ensures flownerAll(ob) == flownerStrictlyInside(ob,pivot) + (flownerInsidePivot(ob,pivot) + flownerFullyOutside(ob,pivot))
+   ensures flownerAll(oo) >= flownerAll(ob)
+   {
+    FUCKED(flownerStrictlyInside(oo,pivot), flownerInsidePivot(oo,pivot), flownerFullyOutside(oo,pivot),
+           flownerStrictlyInside(ob,pivot), flownerInsidePivot(ob,pivot), flownerFullyOutside(ob,pivot)) ;
+    FLOWNER_DISJOINT(oo, pivot);
+    FLOWNER_DISJOINT(ob, pivot);
+    FLOWNER_ALL_ALL(oo,pivot);
+    FLOWNER_ALL_ALL(ob,pivot);
+   }
+
+lemma FLOWER_JOIN_H(oo : Owner, ob : Bound, pivot : Object)
+ //given the vartious components are >=, conclude Foo >= Fob,
+ //should be xo & xb??
+  requires AllReady(oo)
+  requires AllReady(ob)
+  requires pivot.Ready()
+
+  requires flownerStrictlyInside(oo,pivot) >= flownerStrictlyInside(ob,pivot)
+
+  requires flownerOnlyPivot(oo,pivot) >= flownerOnlyPivot(ob,pivot)
+  requires flownerExceptPivot(oo,pivot) >= flownerExceptPivot(ob,pivot)
+
+  requires flownerFullyOutside(oo,pivot) >= flownerFullyOutside(ob,pivot)
+
+  requires (flownerInsidePivot(oo,pivot) + flownerFullyOutside(oo,pivot)) >= (flownerInsidePivot(ob,pivot) + flownerFullyOutside(ob,pivot))
+
+   ensures flownerInsidePivot(oo,pivot) >= flownerInsidePivot(ob,pivot)
+
+
+  //  ensures (flownerInsidePivot(oo,pivot) + flownerFullyOutside(oo,pivot))
+  //     >= (flownerInsidePivot(ob,pivot) + flownerFullyOutside(ob,pivot))
+
+
+   ensures (flownerInsidePivot(oo,pivot) + flownerStrictlyInside(oo,pivot) + flownerFullyOutside(oo,pivot))
+      >= (flownerInsidePivot(ob,pivot) + flownerStrictlyInside(ob,pivot) + flownerFullyOutside(ob,pivot))
+
+   ensures flownerAll(oo) == flownerStrictlyInside(oo,pivot) + flownerFullyOutside(oo,pivot) + flownerInsidePivot(oo,pivot)
+   ensures flownerAll(ob) == flownerStrictlyInside(ob,pivot) + flownerFullyOutside(ob,pivot) + flownerInsidePivot(ob,pivot)
+   ensures flownerAll(oo) >= flownerAll(ob)
+  {
+        FUCKED(flownerStrictlyInside(oo,pivot), flownerInsidePivot(oo,pivot), flownerFullyOutside(oo,pivot),
+           flownerStrictlyInside(ob,pivot), flownerInsidePivot(ob,pivot), flownerFullyOutside(ob,pivot)) ;
+    FLOWNER_DISJOINT(oo, pivot);
+    FLOWNER_DISJOINT(ob, pivot);
+    FLOWNER_ALL_ALL(oo,pivot);
+    FLOWNER_ALL_ALL(ob,pivot);
+  }
+
+
+lemma FLOWER_POWER_V_strictlyInside(ox : Owner, cx : Owner, m : Klon)
   requires AllReady(ox)
   requires AllReady(cx)
   requires klonCalid(m)
@@ -901,6 +1006,8 @@ lemma FLOWER_POWER_V(ox : Owner, cx : Owner, m : Klon)
 
 
 lemma INSIDE_PARALLEL(o0 : Object, o1 : Object, c0 : Object, c1 : Object, m : Klon)
+ // o0 & o1 are inside the pivot; cloned to c0 and c1
+ // o0 is inside o1; ensures c0 inside c1...
  decreases o0.AMFO
   requires o0.Ready()
   requires o1.Ready()
