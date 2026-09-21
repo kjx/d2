@@ -981,6 +981,7 @@ predicate flownerSplitOK(soup : OWNR, pivot : Object, split : FlownerSplit)
 
      && fSin !! (fOut + fPvt + fXpt)
   }
+
 //  assert fAll == flownerAll(soup);
 //  assert fSin == flownerStrictlyInside(soup,pivot);
 //  assert fOut == flownerFullyOutside(soup,pivot);
@@ -1013,6 +1014,110 @@ function flownerSplit(os : Owner,pivot : Object) : (rv : FlownerSplit)
   assert fAll == fSin + fOut + fPvt + fXpt;
  (fAll, fSin, fOut, fPvt, fXpt)
  }
+
+lemma DOUBLE_SPLIT(os : Owner, cs : Owner, os_sp : FlownerSplit, cs_sp : FlownerSplit, m : Klon)
+  requires AllReady(os) && AllReady(cs)
+  requires klonCalid(m)
+  requires m.m.Keys >= os
+  requires cs == mapThruKlon(os,m)
+  requires flownerSplitOK(os, m.o, os_sp)
+  requires flownerSplitOK(cs, m.c, cs_sp)
+   ensures os_sp.0 == flownerAll(os)
+   ensures cs_sp.0 == flownerAll(cs)
+ {
+   assert os_sp.1 == flownerStrictlyInside(os,m.o);
+   assert cs_sp.1 == flownerStrictlyInside(cs,m.c);
+   //FOREST_FOOD(os_sp.1, cs_sp.1, m);
+ }
+
+
+lemma FLOWNER_FLATTEN_TODO_FOR_ALL(soup : OWNR, pivot : Object)
+ //verified 21 Sep 2026
+  requires AllReady(soup) && pivot.Ready()
+
+   ensures flattenOnlyPivot(soup, pivot) == flownerOnlyPivot(soup, pivot)
+{}
+
+
+lemma FLOWNER_FLATTEN_OnlyPivot(soup : OWNR, pivot : Object)
+ //verified 21 Sep 2026
+  requires AllReady(soup) && pivot.Ready()
+
+   ensures flattenOnlyPivot(soup, pivot) == flownerOnlyPivot(soup, pivot)
+{}
+
+lemma FLOWNER_SHORTCUT_OnlyPivot(soup : OWNR, pivot : Object, rv : Owner)
+ //verified 21 Sep 2026
+  requires AllReady(soup) && pivot.Ready()
+
+   requires (
+              || (rv == flattenOnlyPivot(soup, pivot))
+              || (rv == flownerOnlyPivot(soup, pivot))
+              || (rv == shortcutOnlyPivot(soup, pivot))
+           )
+
+    ensures rv == flattenOnlyPivot(soup, pivot)
+    ensures rv == flownerOnlyPivot(soup, pivot)
+    ensures rv == shortcutOnlyPivot(soup, pivot)
+{
+  FLOWNER_FLATTEN_OnlyPivot(soup, pivot);
+  LEMMA_shortcutVSflatten2(soup, pivot, shortcutOnlyPivot(soup, pivot), flattenOnlyPivot(soup, pivot));
+}
+
+
+lemma DOUBLE_SPLIT_OnlyPivot(os : Owner, cs : Owner, os_sp : FlownerSplit, cs_sp : FlownerSplit, m : Klon)
+ //verified 21Sep2026
+  requires AllReady(os) && AllReady(cs)
+  requires klonCalid(m)
+  requires m.m.Keys >= os
+  requires cs == mapThruKlon(os,m)
+  requires flownerSplitOK(os, m.o, os_sp)
+  requires flownerSplitOK(cs, m.c, cs_sp)
+   ensures os_sp.0 == flownerAll(os)
+   ensures cs_sp.0 == flownerAll(cs)
+   ensures os_sp.3 == flownerOnlyPivot(os, m.o)
+   ensures cs_sp.3 == flownerOnlyPivot(cs, m.c)
+
+   ensures (m.o  in os_sp.0) ==> (os_sp.3 == m.o.AMFO)
+   ensures (m.o !in os_sp.0) ==> (os_sp.3 == {})
+   ensures (m.o  in os_sp.0) ==> (cs_sp.3 == m.c.AMFO)
+   ensures (m.o !in os_sp.0) ==> (cs_sp.3 == {})
+
+//   ensures os_sp.3 == (if (m.o in os_sp.0) then (m.o.AMFO) else {})
+ {
+   assert os_sp.1 == flownerStrictlyInside(os,m.o);
+   assert cs_sp.1 == flownerStrictlyInside(cs,m.c);
+
+   assert os_sp.3 == flownerOnlyPivot(os, m.o);
+FLOWNER_SHORTCUT_OnlyPivot(os, m.o, os_sp.3);
+   assert os_sp.3 == shortcutOnlyPivot(os, m.o);
+ LEMMA_shortcutOnlyPivot1(os, m.o, os_sp.3);
+
+   assert (m.o  in os_sp.0) ==> (os_sp.3 == m.o.AMFO);
+   assert (m.o !in os_sp.0) ==> (os_sp.3 == {});
+   if (m.o in os_sp.0) { assert os_sp.3 == m.o.AMFO; } else { assert os_sp.3 == {}; }
+//   assert os_sp.3 == (if (m.o in os_sp.0) then (m.o.AMFO) else {});
+
+
+  assert (m.o in os_sp.0) ==> (m.c in cs_sp.0);
+
+   assert cs_sp.3 == flownerOnlyPivot(cs, m.c);
+FLOWNER_SHORTCUT_OnlyPivot(cs, m.c, cs_sp.3);
+   assert cs_sp.3 == shortcutOnlyPivot(cs, m.c);
+ LEMMA_shortcutOnlyPivot1(cs, m.c, cs_sp.3);
+
+ }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1332,9 +1437,13 @@ forall o <- os ensures (woodReal(o,m.m[o],m)) //by
  }
 }
 
-
+//DUNNO IF THERE FOREST STUFF is RIGHT
+//GRR. should it dwepend on :  cs == mapThruKlon(os,m)
+//***or is that what it needs to be finding??***
+//      WOOD_FOOD(o,m.m[o],m);
 
 lemma FOREST_FOOD(os : Owner, cs : Owner, m : Klon)
+    // arguments should really be: os_Sin, cs_Sin
    //lifts WOOD_FOOD to FOREST - verifies on lately with nothing in the body...? 38s
    requires AllReady(os)
    requires AllReady(cs)
@@ -1544,6 +1653,7 @@ lemma CLONING_PRESERVES_OWNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound
      assert flownerEverythingOutside(oo,m.o) >= flownerEverythingOutside(ob,m.o);
      assert (oo_Out + oo_Pvt + oo_Xpt) >= (ob_Out + ob_Pvt + ob_Xpt);
 
+     FLOWER_SPLIT_H(oo,ob,m.o);
      FOREST_FOOD(oo_Sin, co_Sin, m);
      FOREST_FOOD(ob_Sin, cb_Sin, m);
 
