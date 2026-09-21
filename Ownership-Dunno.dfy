@@ -1085,9 +1085,6 @@ lemma DOUBLE_SPLIT_OnlyPivot(os : Owner, cs : Owner, os_sp : FlownerSplit, cs_sp
 
 //   ensures os_sp.3 == (if (m.o in os_sp.0) then (m.o.AMFO) else {})
  {
-   assert os_sp.1 == flownerStrictlyInside(os,m.o);
-   assert cs_sp.1 == flownerStrictlyInside(cs,m.c);
-
    assert os_sp.3 == flownerOnlyPivot(os, m.o);
 FLOWNER_SHORTCUT_OnlyPivot(os, m.o, os_sp.3);
    assert os_sp.3 == shortcutOnlyPivot(os, m.o);
@@ -1097,7 +1094,6 @@ FLOWNER_SHORTCUT_OnlyPivot(os, m.o, os_sp.3);
    assert (m.o !in os_sp.0) ==> (os_sp.3 == {});
    if (m.o in os_sp.0) { assert os_sp.3 == m.o.AMFO; } else { assert os_sp.3 == {}; }
 //   assert os_sp.3 == (if (m.o in os_sp.0) then (m.o.AMFO) else {});
-
 
   assert (m.o in os_sp.0) ==> (m.c in cs_sp.0);
 
@@ -1110,12 +1106,162 @@ FLOWNER_SHORTCUT_OnlyPivot(cs, m.c, cs_sp.3);
 
 
 
+lemma SIDEWAYS_StrictlyInside(soup0 : Owner, soup1 : Owner, f0 : Owner, f1 : Owner, m : Klon)
+  requires AllReady(soup0) && AllReady(soup1)
+  requires klonCalid(m)
+  requires m.m.Keys >= soup0
+  requires soup1 == mapThruKlon(soup0, m)
+  requires f0 == flownerStrictlyInside(soup0, m.o)
+  requires f1 == flownerStrictlyInside(soup1, m.c)
+//   ensures forall f <- f0 :: m.m[f] in f1
+{
+  assert f1 <= flownerAll(soup1);
+  assert f1 == flownerStrictlyInside(soup1, m.c);
+  FLOWNER_FLATTEN_StrictlyInside(soup1,m.c);
+  assert f1 == flattenStrictlyInside(soup1, m.c);
+  assert f1 == (set x <- flatten(soup1) | strictlyInside(x,m.c));
+  assert forall f <- f1 :: strictlyInside(f,m.c);
+  assert f1 == (set x <- flatten(mapThruKlon(soup0, m)) | strictlyInside(x,m.c));
+  assert f1 == (set x <- flatten(set s <- soup0 :: m.m[s]) | strictlyInside(x,m.c));
+  assert m.c == m.m[m.o];
+  assert f1 == (set x <- flatten(set s <- soup0 | strictlyInside(s,m.o) :: m.m[s]));
+
+  assert forall f <- f0 :: strictlyInside(f,m.o) <==>  strictlyInside(m.m[f],m.m[m.o]);
+
+
+//   assert f0 == flownerStrictlyInside(soup0, m.o);
+//   FLOWNER_FLATTEN_StrictlyInside(soup0,m.o);
+//   assert f0 == flattenStrictlyInside(soup0, m.o);
+//   assert f0 == (set x <- flatten(soup0) | strictlyInside(x,m.o));
+//   assert forall f <- f0 :: strictlyInside(f,m.o);
+//
+//
+//   assert f1 == flattenStrictlyInside(mapThruKlon(soup0, m), m.c);
+
+}
+
+
+lemma MAP_THRU_KLON_FILTER(soup : Owner, m : Klon)
+  requires AllReady(soup)
+  requires klonCalid(m)
+  requires m.m.Keys >= soup
+  //  ensures (set c <- mapThruKlon(soup,m) | strictlyInside(c,m.c))
+  //    == mapThruKlon((set s <- soup | strictlyInside(s,m.o)),m)
+   {
+    var sf := (set s <- soup | strictlyInside(s,m.o) :: s);
+    var f  := mapThruKlon(sf,m);
+    assert f == (set s <- sf :: m.m[s]);
+    assert f == (set s <- (set s <- soup | strictlyInside(s,m.o) :: s) :: m.m[s]);
+    assert f == (set s <- soup | strictlyInside(s,m.o) :: m.m[s]);
+    assert f == (set s <- soup | strictlyInside(s,m.o) :: m.m[s]);
+    assert f == (set s <- (set s <- soup :: m.m[s]) | strictlyInside(s,m.o) :: s);
+
+    assert f == (set c <- (set s <- soup :: m.m[s]) | strictlyInside(c,m.m[m.o]) :: c);
+
+
+  //  assert f ==  mapThruKlon(  (set s <- soup | strictlyInside(s,m.o) :: s), m);
+
+//    assert f ==  (set s <- mapThruKlon(soup,m) | strictlyInside(s,m.m[m.o]) :: s);
+//    assert f ==  (set s <- mapThruKlon(soup,m) | strictlyInside(s,m.c) :: s);
+   }
+
+lemma FLOWNER_FLATTEN_StrictlyInside(soup : OWNR, pivot : Object)
+  requires AllReady(soup) && pivot.Ready()
+   ensures flattenStrictlyInside(soup, pivot) == flownerStrictlyInside(soup, pivot)
+   ensures flownerStrictlyInside(soup, pivot) <= flownerAll(soup)
+{}
+
+
+lemma DOUBLE_SPLIT_StrictlyInside(os : Owner, cs : Owner, os_sp : FlownerSplit, cs_sp : FlownerSplit, m : Klon)
+  requires AllReady(os) && AllReady(cs)
+  requires klonCalid(m)
+  requires m.m.Keys >= os
+  requires cs == mapThruKlon(os,m)
+  requires flownerSplitOK(os, m.o, os_sp)
+  requires flownerSplitOK(cs, m.c, cs_sp)
+   ensures os_sp.0 == flownerAll(os)
+   ensures cs_sp.0 == flownerAll(cs)
+   ensures os_sp.1 == flownerStrictlyInside(os, m.o)
+   ensures cs_sp.1 == flownerStrictlyInside(cs, m.c)
+
+  //  ensures forall o <- os_sp.1 :: (
+  //     && (o in m.m.Keys)
+  //     && (strictlyInside(o,m.o))
+  //     && (klonLine(o,m.m[o],m))
+  //     && (m.m[o] in cs_sp.1)
+  // )
+
+ {
+   assert os_sp.1 == flownerStrictlyInside(os,m.o);
+   assert cs_sp.1 == flownerStrictlyInside(cs,m.c);
+
+   assert m.m.Keys >= os_sp.1;
+
+   assert forall o <- os_sp.1 ::
+//    && (exists s <- os :: ownerStrictlyInside(s,m.o,o))
+    (var c := m.m[o];
+        && (strictlyInside(o,m.o))
+    );
+
+   assert forall o <- os_sp.1 ::
+    (var c := m.m[o];
+        && (klonLine(o,c,m))
+    );
+
+   assert forall o <- os_sp.1 ::
+    (var c := m.m[o];
+        && (klonIdentity(o,c,m))
+        && (o != c)
+        && (strictlyInside(c,m.c))
+   );
+
+  assert cs_sp.1 <= cs_sp.0;
+
+  //     assert forall o <- os_sp.1 ::
+  //   (var c := m.m[o];
+  //       && (c in cs_sp.0)
+  //  );
+
+      assert forall o <- os_sp.1 ::
+    (var c := m.m[o];
+        && (c in cs_sp.1)
+   );
+
+
+ }
 
 
 
 
 
 
+lemma DOUBLE_SPLIT_Outside(os : Owner, cs : Owner, os_sp : FlownerSplit, cs_sp : FlownerSplit, m : Klon)
+ //verified 21Sep2026
+  requires AllReady(os) && AllReady(cs)
+  requires klonCalid(m)
+  requires m.m.Keys >= os
+  requires cs == mapThruKlon(os,m)
+  requires flownerSplitOK(os, m.o, os_sp)
+  requires flownerSplitOK(cs, m.c, cs_sp)
+   ensures os_sp.0 == flownerAll(os)
+   ensures cs_sp.0 == flownerAll(cs)
+   ensures os_sp.2 == flownerFullyOutside(os, m.o)
+   ensures cs_sp.2 == flownerFullyOutside(cs, m.c)
+  //  ensures os_sp.4 == flownerExceptPivot(os, m.o)
+  //  ensures cs_sp.4 == flownerExceptPivot(cs, m.c)
+
+//   ensures os_sp.2 == cs_sp.2
+  //  ensures os_sp.4 == cs_sp.4
+{
+   assert m.m.Keys >= os_sp.2;
+  //  assert m.m.Keys >= os_sp.4;
+
+   assert forall k <- os_sp.2 :: klonLine(k,m.m[k],m);
+   assert forall k <- os_sp.2 :: outside(k,m.o);
+   assert forall k <- os_sp.2 :: outside(m.m[k],m.c);
+   assert forall k <- os_sp.2 :: k == m.m[k];
+
+}
 
 
 
