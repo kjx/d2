@@ -1654,10 +1654,19 @@ lemma CLONING_PRESERVES_OWNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound
      assert (oo_Out + oo_Pvt + oo_Xpt) >= (ob_Out + ob_Pvt + ob_Xpt);
 
      FLOWER_SPLIT_H(oo,ob,m.o);
-     FOREST_FOOD(oo_Sin, co_Sin, m);
-     FOREST_FOOD(ob_Sin, cb_Sin, m);
+    //  FOREST_FOOD(oo_Sin, co_Sin, m);
+    //  FOREST_FOOD(ob_Sin, cb_Sin, m);
 
-//      UNFUCK4D(oo_Sin,oo_Out,oo_Pvt,oo_Xpt,ob_Sin,ob_Out,ob_Pvt,ob_Xpt);
+     DOUBLE_SPLIT_OnlyPivot(oo, co, oo_sp, co_sp, m);
+     DOUBLE_SPLIT_OnlyPivot(ob, cb, ob_sp, cb_sp, m);
+
+     assert (m.o in oo_Pvt) <==> (m.c in co_Pvt);
+     assert (m.o in ob_Pvt) <==> (m.c in cb_Pvt);
+     assert (m.o in oo_Pvt) <==  (m.c in cb_Pvt);
+     assert co_Pvt >= cb_Pvt;
+
+
+
 //
 //      assert (oo_Sin + ob_Sin) !! ((oo_Out + oo_Pvt + oo_Xpt) + (ob_Out + ob_Pvt + ob_Xpt));
 
