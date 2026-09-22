@@ -997,6 +997,24 @@ lemma MapThruVMapKVVMapKV<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V)
   }
 
 
+// lemma MapThruBackVMap<K,V>(ks : set<K>, m : vmap<K,V>)
+//     requires ks <= m.Keys
+//      ensures mapBackVMap(mapThruVMap(ks,m),m) == ks
+// {
+//     assert mapThruVMap(ks,m) <= m.Values;
+//     assert forall k <- ks :: (
+//         assert k in m.Keys;
+//         var v := m[k];
+//         assert v in m.Values;
+//         assert {v} == mapThruVMap({k},m);
+//         assert forall i <- m.Keys, j <- m.Keys :: (m[i] == m[j]) ==> (i == j);
+//         assert exists i <- m.Keys | m[i] == v :: i == k;
+//         assert mapBackVMap({v},m) == {k};
+//         (exists kk <- m.Keys | m[kk] == v :: kk == k)
+//         );
+//     assert  mapBackVMap(mapThruVMap(ks,m),m) == ks;
+// }
+
 
 lemma IfImNotTheExtraKeyTheUnderlyingMapIsFine<K,V>(ks : set<K>, m' : vmap<K,V>, k : K, v : V)
     requires ks <= m'.Keys
