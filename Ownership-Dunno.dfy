@@ -1036,6 +1036,8 @@ lemma FLOWNER_FLATTEN_TODO_FOR_ALL(soup : OWNR, pivot : Object)
   requires AllReady(soup) && pivot.Ready()
 
    ensures flattenOnlyPivot(soup, pivot) == flownerOnlyPivot(soup, pivot)
+   ensures flattenPivotlyOutside(soup, pivot) == flownerPivotlyOutside(soup, pivot)
+
 {}
 
 
@@ -1233,6 +1235,121 @@ lemma DOUBLE_SPLIT_StrictlyInside(os : Owner, cs : Owner, os_sp : FlownerSplit, 
 
 
 
+lemma ORIGINAL_ALL_OBJECTS_OUTSIDE_MAP(os : Owner, m : Klon)
+  requires AllReady(os)
+  requires klonCalid(m)
+  requires os <= m.m.Keys
+  requires forall o <- os :: outside(o,m.o)
+
+   ensures outside(m.o,m.c)
+   ensures forall o <- os :: m.m[o] == o
+   ensures forall o <- os :: outside(o,m.c)
+   ensures mapThruKlon(os,m) == os
+   ensures flownerPivotlyOutside(os,m.o) == flownerAll(os)
+   ensures flownerPivotlyOutside(os,m.c) == flownerAll(os)
+   ensures flownerPivotlyOutside(mapThruKlon(os,m),m.c) == flownerAll(os)
+   {
+    var fPO := flownerPivotlyOutside(os,m.o);
+
+    FLOWNER_FLATTEN_TODO_FOR_ALL(os,m.o);
+    FLOWNER_FLATTEN_TODO_FOR_ALL(os,m.c);
+
+    assert flownerPivotlyOutside(os,m.o) == flownerAll(os);
+    assert flownerPivotlyOutside(os,m.c) == flownerAll(os);
+    assert flownerPivotlyOutside(mapThruKlon(os,m),m.c) == flownerAll(os);
+   }
+
+lemma MAP_OBJECTS_OUTSIDE(os : Owner, oos : Owner, m : Klon)
+  requires AllReady(os)
+  requires klonCalid(m)
+  requires os <= m.m.Keys
+  requires oos == (set o <- os | outside(o,m.o))  //<==BINARY VERSION
+
+//  HMM.  grr.
+//lthinkg about this through 
+//gblahy
+
+///MNOST LIKEKY this shouljd be tqeaked to take an input a soup (or two)
+//and then produce the sets of outsidee thingus
+//and then dio the analysis on them....
+//for flownerPivotlyOutside we can rediret through flowerAll()/flattenX
+//hmm. or perhaps that won't relaly work
+//in whcih case can we get at the ternary version of the binary version here
+//and yet get to the same place...?
+
+///ALSO look hard at FLOWER_SPLIT_H around line 1420
+//if I can get flownerFullyOutside going  --FLOWER_JOIN_All
+//whcih frankly should be more than enuf
+//then isn't that IT?
+//are we ALREADY FUCKING THERE?????
+
+
+   ensures outside(m.o,m.c)
+   ensures forall o <- oos :: m.m[o] == o
+   ensures mapThruKlon(oos,m) == oos
+   ensures flownerPivotlyOutside(oos,m.o) == flownerAll(oos)
+   ensures flownerPivotlyOutside(oos,m.c) == flownerAll(oos)
+   ensures flownerPivotlyOutside(mapThruKlon(oos,m),m.c) == flownerAll(oos)
+   {
+    var fPO := flownerPivotlyOutside(oos,m.o);
+
+    FLOWNER_FLATTEN_TODO_FOR_ALL(oos,m.o);
+    FLOWNER_FLATTEN_TODO_FOR_ALL(oos,m.c);
+
+    assert flownerPivotlyOutside(oos,m.o) == flownerAll(oos);
+    assert flownerPivotlyOutside(oos,m.c) == flownerAll(oos);
+    assert flownerPivotlyOutside(mapThruKlon(oos,m),m.c) == flownerAll(oos);
+   }
+
+// lemma FLOWNER_PIVOTLY_OUTSIDE(os : Owner, m : Klon)
+//   requires AllReady(os)
+//   requires klonCalid(m)
+//   requires os <= m.m.Keys
+//   requires forall o <- os :: outside(o,m.o)
+//    ensures flattenPivotlyOutside(os,m) == os
+//   {
+//     assert pivotlyOutside(os,m.o) <== outside(os,m.o);
+//     (set x <- flatten(soup) | pivotlyOutside(x,pivot));
+//     assert flattenPivotlyOutside(os,m) == (set x <- flatten(soup) | pivotlyOutside(x,pivot));
+//   }
+
+
+lemma ONE_OBJECT_OUTSIDE(o : Object, c : Object, m : Klon)
+  //verifies 21Sep2026
+  requires o.Ready() && c.Ready()
+  requires klonCalid(m)
+  requires o in m.m.Keys
+  requires m.m[o] == c
+  requires outside(o,m.o)
+
+   ensures {c} == mapThruKlon({o},m)
+   ensures outside(c,m.c)
+   ensures o == c
+{
+  assert klonLine(o,c,m);
+  assert klonIdentity(o,c,m);
+  assert outside(o,m.o);
+
+  MAPPEN_ONE(o,m);
+}
+
+
+lemma MAPPEN_ONE(o : Object, m : Klon)
+ //took at least an hour trying more sensile versions of the next 12 lines
+ //to just copy these ones in from an earlier file because they work.
+  requires o.Ready()
+  requires o in m.m.Keys
+  requires klonReady(m)
+  requires klonCalid(m)
+  ensures mapThruKlon({o},m) == {m.m[o]}
+{
+ FLATTEN_ONE(o);
+}
+lemma FLATTEN_ONE(o : Object)
+  requires o.Ready()
+  ensures flatten({o}) == {o} + flatten(o.owner) == o.AMFO
+{}
+
 
 
 lemma DOUBLE_SPLIT_Outside(os : Owner, cs : Owner, os_sp : FlownerSplit, cs_sp : FlownerSplit, m : Klon)
@@ -1250,20 +1367,56 @@ lemma DOUBLE_SPLIT_Outside(os : Owner, cs : Owner, os_sp : FlownerSplit, cs_sp :
   //  ensures os_sp.4 == flownerExceptPivot(os, m.o)
   //  ensures cs_sp.4 == flownerExceptPivot(cs, m.c)
 
-//   ensures os_sp.2 == cs_sp.2
+   ensures os_sp.2 == cs_sp.2
   //  ensures os_sp.4 == cs_sp.4
 {
    assert m.m.Keys >= os_sp.2;
   //  assert m.m.Keys >= os_sp.4;
+
+   assert cs == mapThruKlon(os,m);
+   assert os_sp.2 == flownerFullyOutside(os, m.o);
+   assert cs_sp.2 == flownerFullyOutside(cs, m.c);
+   assert cs_sp.2 == flownerFullyOutside(mapThruKlon(os,m), m.c);
+
+   var oos := (set o <- os | outside(o,m.o));
+   MAP_OBJECTS_OUTSIDE(os,oos,m);
+
+  //  ensures forall o <- os :: outside(o,m.c)
+  //  ensures mapThruKlon(os,m) == os
+  //  ensures flownerPivotlyOutside(os,m.o) == flownerAll(os)
+  //  ensures flownerPivotlyOutside(os,m.c) == flownerAll(os)
+  //  ensures flownerPivotlyOutside(mapThruKlon(os,m),m.c) == flownerAll(os)
+
 
    assert forall k <- os_sp.2 :: klonLine(k,m.m[k],m);
    assert forall k <- os_sp.2 :: outside(k,m.o);
    assert forall k <- os_sp.2 :: outside(m.m[k],m.c);
    assert forall k <- os_sp.2 :: k == m.m[k];
 
+   assert forall v <- cs_sp.2 :: klonLine(v,m.m[v],m);
+   assert forall v <- cs_sp.2 :: outside(v,m.c);
+   assert forall v <- cs_sp.2 :: outside(v,m.o);
+   assert forall v <- cs_sp.2 :: v == m.m[v];
+
+
+   assert forall k <- os_sp.2 :: k in m.m.Keys;
+   assert forall k <- os_sp.2 :: k in m.m.Values;
+
+   assert forall v <- cs_sp.2 :: v in m.m.Values;
+   assert forall v <- cs_sp.2 :: v in m.m.Keys;
+
+  //  assert os_sp.2 >= cs_sp.2;
+  //  assert forall v <- cs_sp.2 :: v in  os_sp.2;
+//    assert forall k <- os_sp.2 :: k in  cs_sp.2;
+//
+//    forall k <- os_sp.2 ensures (true) //by
+//     {
+//       ONE_OBJECT_OUTSIDE(k,m.m[k],m);
+//     //  assert k in cs_sp.2;
+//     }
+
+
 }
-
-
 
 
 

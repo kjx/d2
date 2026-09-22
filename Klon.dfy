@@ -1343,8 +1343,10 @@ function mapThruKlon(os: set<Object>, m : Klon) : (r : set<Object>)
   requires os <= m.m.Keys
    ensures r  <= m.m.Values
    ensures (os > {}) ==> (r > {})
+  //  ensures (os > {}) ==> (var o :| o in os; (os == {o}) ==> (r == {m.m[o]}) )
+  //  ensures (os > {}) ==> (exists o | o in os :: ((os == {o}) ==> (r == {m.m[o]})))
   reads {}
-    { assert (os > {}) ==> ( var x :| x in os; {m.m[x]} > {});  //THIS LINE IS OF SATAN. WASBN"T NEEDED PREVIOUSLY.,..
+    { assert (os > {}) ==> ( var o :| o in os; {m.m[o]} > {});  //THIS LINE IS OF SATAN. WASN'T NEEDED PREVIOUSLY.,..
       set o <- os :: m.m[o] }
 
 function mapBackKlon(os: set<Object>, m : Klon) : (r : set<Object>)

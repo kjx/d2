@@ -1926,7 +1926,6 @@ lemma MAPPEN_ONE(next : Object, m : Klon)
   requires klonReady(m)
   requires klonCalid(m)
   ensures mapThruKlon({next},m) == {m.m[next]}
-
 {
   FLATTEN_ONE(next);
 }
@@ -2014,7 +2013,7 @@ function fOutside(ownrs : OWNR, pivot : Object) : (rv : Owner)
 //KJX FUCK FUCK FUCK FUCK FUCK FUCK
 //returns all flatatnened owners that are outside the pivot...
 //YEAH I fear this is still the WRONG THING
-//shop;dln't it take in all the *direct* owners
+//shouldn't it take in all the *direct* owners
 //throw out all that are inside
 //and flatten the remainder (outside ONLY)
   // requires AllReady(flatten(ownrs))
