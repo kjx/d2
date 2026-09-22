@@ -1284,6 +1284,7 @@ lemma MAP_OBJECTS_OUTSIDE(os : Owner, oos : Owner, m : Klon)
 //are we ALREADY FUCKING THERE?????
 
 
+
    ensures outside(m.o,m.c)
    ensures forall o <- oos :: m.m[o] == o
    ensures mapThruKlon(oos,m) == oos
@@ -1439,6 +1440,8 @@ lemma FLOWER_SPLIT_H(oo : Owner, ob : Bound, pivot : Object)
    ensures (flownerInsidePivot(oo,pivot) + flownerFullyOutside(oo,pivot))
       >= (flownerInsidePivot(ob,pivot) + flownerFullyOutside(ob,pivot))
 
+   ensures flownerEverythingOutside(oo,pivot) >= flownerEverythingOutside(ob,pivot)
+
   {
      FLOWNER_DISJOINT(oo, pivot);
      FLOWNER_DISJOINT(ob, pivot);
@@ -1547,7 +1550,9 @@ lemma FLOWER_JOIN_H(oo : Owner, ob : Bound, pivot : Object)
 
   requires flownerFullyOutside(oo,pivot) >= flownerFullyOutside(ob,pivot)
 
-  requires (flownerInsidePivot(oo,pivot) + flownerFullyOutside(oo,pivot)) >= (flownerInsidePivot(ob,pivot) + flownerFullyOutside(ob,pivot))
+  requires flownerEverythingOutside(oo,pivot) >= flownerEverythingOutside(ob,pivot)
+
+   ensures (flownerInsidePivot(oo,pivot) + flownerFullyOutside(oo,pivot)) >= (flownerInsidePivot(ob,pivot) + flownerFullyOutside(ob,pivot))
 
    ensures flownerInsidePivot(oo,pivot) >= flownerInsidePivot(ob,pivot)
 
@@ -1558,6 +1563,9 @@ lemma FLOWER_JOIN_H(oo : Owner, ob : Bound, pivot : Object)
 
    ensures (flownerInsidePivot(oo,pivot) + flownerStrictlyInside(oo,pivot) + flownerFullyOutside(oo,pivot))
       >= (flownerInsidePivot(ob,pivot) + flownerStrictlyInside(ob,pivot) + flownerFullyOutside(ob,pivot))
+
+   ensures flownerAll(oo) == flownerStrictlyInside(oo,pivot) + flownerEverythingOutside(oo,pivot)
+   ensures flownerAll(ob) == flownerStrictlyInside(ob,pivot) + flownerEverythingOutside(ob,pivot)
 
    ensures flownerAll(oo) == flownerStrictlyInside(oo,pivot) + flownerFullyOutside(oo,pivot) + flownerInsidePivot(oo,pivot)
    ensures flownerAll(ob) == flownerStrictlyInside(ob,pivot) + flownerFullyOutside(ob,pivot) + flownerInsidePivot(ob,pivot)
