@@ -692,7 +692,9 @@ lemma FORALL_AMFO_PART_OWNER(soup : OWNR, sludge : Owner, pivot : Object)
 predicate ownerStrictlyInside(o : Object, pivot : Object, owner : Object) : (rv : bool)
   requires o.Ready() && pivot.Ready() && owner.Ready()  requires inside(o, owner)  reads {}
     {strictlyInside(owner,pivot)}
-
+predicate ownerInside(o : Object, pivot : Object, owner : Object) : (rv : bool)
+  requires o.Ready() && pivot.Ready() && owner.Ready()  requires inside(o, owner)  reads {}
+    {inside(owner,pivot)}
 predicate ownerPivotlyOutside(o : Object, pivot : Object, owner : Object) : (rv : bool)
   requires o.Ready() && pivot.Ready() && owner.Ready()  requires inside(o, owner)  reads {}
     {pivotlyOutside(owner,pivot)}
@@ -700,7 +702,9 @@ predicate ownerPivotlyOutside(o : Object, pivot : Object, owner : Object) : (rv 
 predicate ownerStrictlyOutside(o : Object, pivot : Object, owner : Object) : (rv : bool)
   requires o.Ready() && pivot.Ready() && owner.Ready()  requires inside(o, owner)  reads {}
     {outside(owner,pivot) &&  outside(o,pivot)}
-
+predicate ownerOutside(o : Object, pivot : Object, owner : Object) : (rv : bool)
+  requires o.Ready() && pivot.Ready() && owner.Ready()  requires inside(o, owner)  reads {}
+    {outside(owner,pivot)}
 predicate ownerOnlyPivot(o : Object, pivot : Object, owner : Object) : (rv : bool)
   requires o.Ready() && pivot.Ready() && owner.Ready()  requires inside(o, owner)  reads {}
     {pivotlyOutside(owner,pivot) && onlyPivot(o,pivot,owner)}
@@ -715,6 +719,15 @@ predicate ownerInsidePivot(o : Object, pivot : Object, owner : Object) : (rv : b
 
 
 lemma PART_INSIDE_OWNER(soup : OWNR, pivot : Object)
+//sort of an assertion that rememnbers parts are inside their owners
+//
+
+
+// when we iterate throught the "soup"  an the input list of stuff
+// we'll nested-co-iterate (or is that cosubiterate? or subcoiterater??)
+// therough all the owners of that part
+// well this makes it easy to say that in a way that seems to get reliably
+// into the middle or rhs of foralls or set comps.
   requires AllReady(soup) && pivot.Ready()
   ensures forall o <- soup, owner <- o.AMFO :: inside(o, owner)
   ensures forall o <- soup :: o.Ready()
@@ -732,6 +745,13 @@ function flownerStrictlyOutside(soup : OWNR, pivot : Object)  : (rv : Owner)
   requires AllReady(soup) && pivot.Ready()
  {set o <- soup, owner <- o.AMFO | PART_INSIDE_OWNER(soup,pivot); ownerStrictlyOutside(o,pivot,owner) :: owner}
 
+function flownerInside(soup : OWNR, pivot : Object)  : (rv : Owner)
+  requires AllReady(soup) && pivot.Ready()
+ {set o <- soup, owner <- o.AMFO | PART_INSIDE_OWNER(soup,pivot); ownerInside(o,pivot,owner) :: owner}
+function flownerOutside(soup : OWNR, pivot : Object)  : (rv : Owner)
+  requires AllReady(soup) && pivot.Ready()
+ {set o <- soup, owner <- o.AMFO | PART_INSIDE_OWNER(soup,pivot); ownerOutside(o,pivot,owner) :: owner}
+
 function flownerOnlyPivot(soup : OWNR, pivot : Object)  : (rv : Owner)
   requires AllReady(soup) && pivot.Ready()
  {set o <- soup, owner <- o.AMFO | PART_INSIDE_OWNER(soup,pivot); ownerOnlyPivot(o,pivot,owner) :: owner}
@@ -741,6 +761,32 @@ function flownerExceptPivot(soup : OWNR, pivot : Object)  : (rv : Owner)
 function flownerInsidePivot(soup : OWNR, pivot : Object)  : (rv : Owner)
   requires AllReady(soup) && pivot.Ready()
  {set o <- soup, owner <- o.AMFO | PART_INSIDE_OWNER(soup,pivot); ownerInsidePivot(o,pivot,owner) :: owner}
+
+
+
+ lemma FLOWNER_OUTSIDE_THRU_KLON(soup : Owner, left : Owner, rite : Owner, m : Klon)
+  requires AllReady(soup)
+  requires AllReady(left)
+  requires AllReady(rite)
+  requires klonCalid(m)
+  requires soup <= m.m.Keys
+  requires left == flownerOutside(soup, m.o)
+  requires rite == flownerOutside(mapThruKlon(soup, m), m.c)
+   ensures left == rite
+
+{
+  var pivot := m.o;
+  assert left == flownerOutside(soup, m.o);
+  assert left == (set o <- soup, owner <- o.AMFO | PART_INSIDE_OWNER(soup,pivot); ownerOutside(o,pivot,owner) :: owner);
+  assert left == (set o <- soup, owner <- o.AMFO | assert inside(o,owner); ownerOutside(o,pivot,owner) :: owner);
+  assert forall o <- soup, owner <- o.AMFO :: inside(o,owner);
+  assert left == (set o <- soup, owner <- o.AMFO | ownerOutside(o,pivot,owner) :: owner);
+
+
+
+
+}
+
 
  function flownerEverythingOutside(soup : OWNR, pivot : Object)  : (rv : Owner)
   requires AllReady(soup) && pivot.Ready()

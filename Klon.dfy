@@ -1360,9 +1360,7 @@ function mapBackKlon(os: set<Object>, m : Klon) : (r : set<Object>)
 
 function objThruKlon(o : Object, m : Klon) : Object    requires o in m.m.Keys {m.m[o]}
 
-
-
-lemma MAP_THRU_KLON_OUTSIDE(oo : Owner, m : Klon)
+lemma MAP_THRU_KLON_OUTSIDE_IDENTITY(oo : Owner, m : Klon)
     requires klonCalid(m)
     requires oo <= m.m.Keys
     requires forall o <- oo :: outside(o, m.o)
@@ -1371,6 +1369,18 @@ lemma MAP_THRU_KLON_OUTSIDE(oo : Owner, m : Klon)
  {
   MapThruIdentity(oo,m.m);
  }
+
+
+lemma MAP_THRU_KLON_OUTSIDE_PIVOT(oo : Owner, rv : Owner, m : Klon)
+   decreases allAMFOs(oo)
+    requires AllReady(oo) && AllReady(rv)
+    requires klonCalid(m)
+    requires oo <= m.m.Keys
+    requires rv == mapThruKlon(oo, m)
+
+     ensures forall o <- oo | outside(o,m.o) :: (o == m.m[o]) && outside(m.m[o],m.c)
+     ensures mapThruKlon((set o <- oo | outside(o,m.o)), m) <= rv
+ {}
 
 
 

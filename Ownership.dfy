@@ -37,7 +37,7 @@ predicate onlyInside(part : Object, whole : Object) : (rv : bool) { part.owner =
   //whole is the ONLY owner of part - part is only diretly inside whole
 
 predicate directlyBounded(part : Object, bound : Object) : (rv : bool) {  part.AMFB  == bound.AMFO }
-//nice idea but nor sure what it wouldu be (or do/)
+//nice idea but nor sure what it wouldu be (or do/)op
 //perhpas bound should bd an Owner not a Object.
 //?yeah - what if there are stack owners around?
 // or part.bound == bound ??
@@ -127,11 +127,9 @@ lemma HappyFamilies(soup : set<Object>, whole : Object, ins: set<Object>, outs: 
 //ARGH -- shioudl thse be "Owners" or rather AMFO (ik.e OWNRs) s???
 //answer - OWNR if this code doesnt' flatten - so shudl this flatten??? ARGH?
 
-predicate ownerInsideOwner(partO : Owner, wholeO : Owner) { partO >= wholeO }
-predicate ownerStrictlyInsideOwner(partO : Owner, wholeO : Owner) { partO > wholeO }
-
-predicate ownerEquals(partO : Owner, wholeO : Owner) { flatten(partO) == flatten(wholeO) }
-predicate ownerInside(partO : Owner, wholeO : Owner) { flatten(partO) >= flatten(wholeO) }
+predicate ownerEqualsOwner(partO : Owner, wholeO : Owner) { flatten(partO) == flatten(wholeO) }
+predicate ownerInsideOwner(partO : Owner, wholeO : Owner) { flatten(partO) >= flatten(wholeO) }
+predicate ownerStrictlyInsideOwner(partO : Owner, wholeO : Owner) { flatten(partO) > flatten(wholeO)  }
 
 lemma transitiveInsideOwners(a : Owner, b : Owner, c : Owner)
   requires ownerInsideOwner(a,b)

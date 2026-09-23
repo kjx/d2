@@ -594,7 +594,7 @@ lemma NonCachedDefinitionsForPaper1(f : Object, t : Object)
   requires f.Ready()
   requires t.Ready()
 
-   ensures (f==t)     == (ownerEquals(f.self, t.self))
+   ensures (f==t)     == (ownerEqualsOwner(f.self, t.self))
 
 //   ensures refDI(f,t) == (f in t.owner)
 //   ensures refDI(f,t) == (f.AMFO == t.AMFX)  //AMDI_FINT
@@ -613,8 +613,8 @@ lemma NonCachedDefinitionsForPaper1(f : Object, t : Object)
 predicate refBF(f : Object, t : Object) {if (f.AMFB > {}) then (f.AMFB >=  t.AMFX) else (false)}  //GREENLAND //AMFB_GEQ_GT  //AMFB-NOT-NULL
 predicate refB2(f : Object, t : Object) {(f.AMFB > {}) &&  (f.AMFB >=  t.AMFX)}  //GREENLAND //AMFB_GEQ_GT  //AMFB-NOT-NULL
 
-predicate refBW(f : Object, t : Object) {outgoingAllowed(f) && ownerInside(f.bound, t.owner)}
-predicate refBX(f : Object, t : Object) {if (outgoingAllowed(f)) then (ownerInside(f.bound, t.owner)) else (false)}
+predicate refBW(f : Object, t : Object) {outgoingAllowed(f) && ownerInsideOwner(f.bound, t.owner)}
+predicate refBX(f : Object, t : Object) {if (outgoingAllowed(f)) then (ownerInsideOwner(f.bound, t.owner)) else (false)}
 
 //{:timeLimit 30}
 lemma NonCachedDefinitionsForPaper2(f : Object, t : Object)

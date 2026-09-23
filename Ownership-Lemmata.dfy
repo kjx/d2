@@ -239,17 +239,17 @@ lemma FlattenInsideFlat(f : Object, fs : Owner)
 lemma ownerInsideSanity(part : Object, whole : Object)
   requires part.Ready()
   requires whole.Ready()
-   ensures inside(part, whole)        ==> ownerInside(part.owner, whole.owner)
-   ensures inside(part, whole)       <==> ownerInside(part.self , whole.self )
-   ensures (part.AMFB >= whole.AMFB) <==> ownerInside(part.bound, whole.bound)
+   ensures inside(part, whole)        ==> ownerInsideOwner(part.owner, whole.owner)
+   ensures inside(part, whole)       <==> ownerInsideOwner(part.self , whole.self )
+   ensures (part.AMFB >= whole.AMFB) <==> ownerInsideOwner(part.bound, whole.bound)
   {}
 
 
 
 
 lemma InsideObjectsInsideOwners0(part : Object, whole : Object)
-  //CULL requires part.Ready()
-  //CULL requires whole.Ready()
+   requires part.Ready()
+   requires whole.Ready()
    ensures inside(part,whole) == ownerInsideOwner(part.AMFO, whole.AMFO)
 {}
 
