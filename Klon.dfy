@@ -1362,6 +1362,17 @@ function objThruKlon(o : Object, m : Klon) : Object    requires o in m.m.Keys {m
 
 
 
+lemma MAP_THRU_KLON_OUTSIDE(oo : Owner, m : Klon)
+    requires klonCalid(m)
+    requires oo <= m.m.Keys
+    requires forall o <- oo :: outside(o, m.o)
+     ensures forall o <- oo :: m.m[o]  == o
+     ensures (set   o <- oo :: m.m[o]) == oo
+ {
+  MapThruIdentity(oo,m.m);
+ }
+
+
 
 
 
