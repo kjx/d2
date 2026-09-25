@@ -1360,7 +1360,8 @@ function mapBackKlon(os: set<Object>, m : Klon) : (r : set<Object>)
 
 function objThruKlon(o : Object, m : Klon) : Object    requires o in m.m.Keys {m.m[o]}
 
-lemma MAP_THRU_KLON_OUTSIDE_IDENTITY(oo : Owner, m : Klon)
+lemma MAP_THRU_KLON_OUTSIDE_ONLY(oo : Owner, m : Klon)
+ //verified 24 Sept 2026
     requires klonCalid(m)
     requires oo <= m.m.Keys
     requires forall o <- oo :: outside(o, m.o)
@@ -1372,6 +1373,7 @@ lemma MAP_THRU_KLON_OUTSIDE_IDENTITY(oo : Owner, m : Klon)
 
 
 lemma MAP_THRU_KLON_OUTSIDE_PIVOT(oo : Owner, rv : Owner, m : Klon)
+ //verified 24 Sept 2026ls lo
    decreases allAMFOs(oo)
     requires AllReady(oo) && AllReady(rv)
     requires klonCalid(m)
@@ -1380,8 +1382,153 @@ lemma MAP_THRU_KLON_OUTSIDE_PIVOT(oo : Owner, rv : Owner, m : Klon)
 
      ensures forall o <- oo | outside(o,m.o) :: (o == m.m[o]) && outside(m.m[o],m.c)
      ensures mapThruKlon((set o <- oo | outside(o,m.o)), m) <= rv
- {}
+//     ensures forall o <- rv | outside(o,m.o) :: (o == m.m[o])
+ {
+    assert forall o <- m.m.Keys | outside(o,m.o) :: (o == m.m[o]);
+    assert forall o <- oo | outside(o,m.o) :: o in rv;
+    assert forall r <- rv :: exists o <- oo :: m.m[o] == r;
+//    assert forall o <- rv | outside(o,m.o) :: o in oo;
+ }
 
+
+
+lemma I_CAN_MEMENTO(m : Klon)
+ //I can do elephunk
+  requires klonCalid(m)
+  //requires not(m.o.AMFO >= m.c.AMFO)
+  //ensures not(m.o.AMFO >= m.c.AMFO)   ==>  (m.o.AMFO < m.c.AMFO)
+    ensures not(m.o.AMFO >= m.c.AMFO)  <==   (m.o.AMFO < m.c.AMFO)
+   //ensures not(m.o.AMFO >= m.c.AMFO)  <==>  (m.o.AMFO < m.c.AMFO)
+
+   {
+    assert not(m.o.AMFO >= m.c.AMFO);
+   }
+
+
+
+lemma REVERSIBLE_PENIS(oo : Owner, rv : Owner, m : Klon)
+   decreases allAMFOs(oo)
+    requires AllReady(oo) && AllReady(rv)
+    requires klonCalid(m)
+    requires oo <= m.m.Keys
+    requires rv == mapThruKlon(oo, m)
+
+     ensures forall o <- oo | outside(o,m.o) :: (o == m.m[o]) && outside(m.m[o],m.c)
+     ensures mapThruKlon((set o <- oo | outside(o,m.o)), m) <= rv
+     //ensures mapThruKlon((set o <- oo | outside(o,m.o)), m) >= rv
+     //ensures mapThruKlon((set o <- oo | outside(o,m.o)), m) == rv
+ {
+    assert forall  o <- oo | outside(o,m.o) :: (o == m.m[o]);
+    assert (set o <- oo | o == m.m[o] :: (o)) == (set o <- oo | o == m.m[o] :: (m.m[o]));
+    assert (set o <- oo | outside(o,m.o) :: (o)) == (set o <- oo | outside(o,m.o) :: (m.m[o]));
+ }
+
+
+lemma HOOTS_MON(oo : Owner, rv : Owner, m : Klon)
+   decreases allAMFOs(oo)
+    requires AllReady(oo) && AllReady(rv)
+    requires klonCalid(m)
+//    requires oo <= m.m.Keys
+    requires oo <= rv <= m.m.Keys
+    requires forall o <- oo :: m.m[o] == o
+     ensures oo == mapThruKlon(oo, m)
+     {}
+
+lemma HOOTS_ALL(oo : Owner, rv : Owner, m : Klon)
+   decreases allAMFOs(oo)
+    requires AllReady(oo) && AllReady(rv)
+    requires klonCalid(m)
+    requires oo <= rv <= m.m.Keys
+    requires forall o <- m.m.Keys :: m.m[o] == o
+     ensures oo == mapThruKlon(oo, m)
+     {}
+
+
+lemma HOOTS_DIARY(oo : Owner, rv : Owner, m : Klon)
+   decreases allAMFOs(oo)
+    requires AllReady(oo) && AllReady(rv)
+    requires klonCalid(m)
+//    requires oo <= rv <= m.m.Keys
+    requires forall o <- m.m.Keys :: m.m[o] == o
+//    requires forall o <- m.m.Keys, ooo <- o.AMFO :: m.m[ooo] == ooo
+    requires rv == (set o <- oo, ooo <- o.AMFO :: ooo)
+     ensures oo <= (set o <- oo, ooo <- o.AMFO :: ooo)
+     ensures forall o <- oo :: m.m[o] == o
+     ensures oo == mapThruKlon(oo, m)
+     {}
+
+lemma HOOTS_LATER(oo : Owner, rv : Owner, m : Klon)
+   decreases allAMFOs(oo)
+    requires AllReady(oo) && AllReady(rv)
+    requires klonCalid(m)
+    requires oo <= rv <= m.m.Keys
+    requires rv == (set o <- oo, ooo <- o.AMFO :: ooo)
+//
+//   requires forall o <- m.m.Keys, ooo <- o.AMFO :: m.m[ooo] == ooo //WORKS
+//   requires forall o <- m.m.Keys :: m.m[o] == o  //WORKS
+
+   requires forall o <- rv :: m.m[o] == o
+    ensures forall o <- oo :: m.m[o] == o
+    ensures forall o <- oo, ooo <- o.AMFO :: m.m[ooo] == ooo
+
+
+    ensures oo <= (set o <- oo, ooo <- o.AMFO :: ooo)
+    ensures forall o <- oo :: m.m[o] == o
+
+    ensures rv == (set o <- oo, ooo <- o.AMFO :: ooo)
+
+    ensures oo == (set o <- oo :: o)
+    ensures rv == (set o <- rv :: o)
+
+    ensures oo == (set o <- oo :: m.m[o])
+    ensures rv == (set o <- rv :: m.m[o])
+    ensures oo == mtk(oo, m)
+    ensures rv == mtk(rv, m)
+    ensures oo == mtk2(oo, m)
+    ensures rv == mtk2(rv, m)
+    ensures oo == mtk3(oo, m)
+    ensures rv == mtk3(rv, m)
+    ensures oo == mtk4(oo, m) //mtk 4 doesnnt allow mapThruKlon to prove
+    ensures rv == mtk4(rv, m) //mtk 4 doesnnt allow mapThruKlon to prove
+    ensures oo == mtk5(oo, m) //mtk 5 doesnt work itself
+    ensures rv == mtk5(rv, m) //mtk 5 doesnt work itself
+    ensures oo == mtk6(oo, m) //allows mapThruKlon to verify....  //but  doesn't work itself??
+    ensures rv == mtk6(rv, m) //allows mapThruKlon to verify....  //but doesn't work itself??
+    ensures oo == mapThruKlon(oo, m)
+    ensures rv == mapThruKlon(rv, m)
+
+     ensures forall o <- oo, ooo <- o.AMFO :: m.m[ooo] == ooo
+     ensures rv == (set o <- oo, ooo <- o.AMFO :: m.m[ooo]) //Err
+
+     ensures rv == (set o <- oo, ooo <- o.AMFO :: ooo)
+
+     ensures rv == mapThruKlon((set o <- oo, ooo <- o.AMFO :: ooo), m)  //WORKS  commandline
+     ensures rv == (set o <- mapThruKlon(oo, m), ooo <- o.AMFO :: ooo)  //WORKS  commandline (with the above line?)
+     {
+      assert forall o <- oo, ooo <- o.AMFO :: m.m[ooo] == ooo;
+      assert rv == (set o <- oo, ooo <- o.AMFO ::     ooo);
+      forall o <- oo, ooo <- o.AMFO ensures (true) //by
+       {
+        assert m.m[ooo] == ooo;
+        assert {m.m[ooo]} == {ooo};
+        assert (set ooo <- o.AMFO :: ooo) == (set ooo <- o.AMFO :: m.m[ooo]);
+       }
+      assert rv == (set o <- oo, ooo <- o.AMFO :: m.m[ooo]);
+
+     }
+
+function mtk(os : Owner, m : Klon) :  Owner requires os <= m.m.Keys {set o <- os :: m.m[o]}
+
+lemma MTK_THRU_KLON(os : Owner, m : Klon)
+   requires os <= m.m.Keys
+    ensures mtk(os,m) == mapThruKlon(os,m)
+{}
+
+function mtk2(os : Owner, m : Klon) : (r : Owner) reads {} requires os <= m.m.Keys ensures r  <= m.m.Values   ensures (os > {}) ==> (r > {}) {set o <- os :: m.m[o]}  //DOES NOT PROVE - does work when used above
+function mtk3(os : Owner, m : Klon) : Owner requires os <= m.m.Keys {assert (os > {}) ==> ( var o :| o in os; {m.m[o]} > {}); set o <- os :: m.m[o]}
+function mtk4(os : Owner, m : Klon) : (r : Owner) reads {} requires os <= m.m.Keys ensures r  <= m.m.Values   ensures (os > {}) ==> (r > {}) requires os <= m.m.Keys {assert (os > {}) ==> ( var o :| o in os; {m.m[o]} > {}); set o <- os :: m.m[o]}
+function mtk5(os : Owner, m : Klon) : (r : Owner) reads {} requires os <= m.m.Keys ensures r  <= m.m.Values   ensures (os > {}) ==> ( var o :| o in os; {m.m[o]} > {})  ensures (os > {}) ==> (r > {}) requires os <= m.m.Keys {set o <- os :: m.m[o]}
+function mtk6(os : Owner, m : Klon) : (r : Owner) reads {} requires os <= m.m.Keys ensures r  <= m.m.Values   ensures (os > {}) ==> (r > {}) requires os <= m.m.Keys {assume (os > {}) ==> ( var o :| o in os; {m.m[o]} > {}); set o <- os :: m.m[o]}
 
 
 
