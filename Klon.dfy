@@ -1387,14 +1387,36 @@ lemma MAP_THRU_KLON_OUTSIDE_PIVOT(oo : Owner, rv : Owner, m : Klon)
      ensures forall r <- rv :: exists o <- oo :: m.m[o] == r
      ensures forall r <- rv :: var o :| (o in oo) && (m.m[o] == r); klonLine(o,r,m)
      ensures forall r <- rv | outside(r,m.c) :: (r == m.m[r]) && outside(r,m.o) && (m.m[r] in oo)
+     ensures forall r <- rv :: var o :| (o in oo)  && (m.m[o] == r);  strictlyInside(o,m.o) ==> (o != m.m[o])
 
      ensures mapThruKlon((set o <- oo | outside(o,m.o)), m) <= rv
      ensures forall o <- rv | outside(o,m.c) :: (o == m.m[o])
+
+     ensures (forall o <- oo :: outside(o,m.o)) ==> (oo == rv)
+//     ensures (forall r <- rv :: outside(r,m.c)) ==> (oo == rv)
  {
     assert forall o <- m.m.Keys | outside(o,m.o) :: (o == m.m[o]);
     assert forall o <- oo | outside(o,m.o) :: o in rv;
     assert forall r <- rv :: exists o <- oo :: m.m[o] == r;
-//    assert forall o <- rv | outside(o,m.o) :: o in oo;
+
+
+    assert forall o <- oo :: var r := m.m[o]; klonLine(o,r,m);
+    assert forall o <- oo | outside(o,m.o) :: (o == m.m[o]) && outside(m.m[o],m.c) && (m.m[o] in rv);
+    assert forall o <- oo | strictlyInside(o,m.o) :: (o != m.m[o]) && strictlyInside(m.m[o],m.c) && (m.m[o] in rv);
+
+    assert forall r <- rv :: exists o <- oo :: m.m[o] == r;
+    assert forall r <- rv :: var o :| (o in oo) && (m.m[o] == r); klonLine(o,r,m);
+    assert forall r <- rv | outside(r,m.c) :: (r == m.m[r]) && outside(r,m.o) && (m.m[r] in oo);
+
+    assert mapThruKlon((set o <- oo | outside(o,m.o)), m) <= rv;
+    assert forall o <- rv | outside(o,m.c) :: (o == m.m[o]);
+
+    assert (forall o <- oo :: outside(o,m.o) && (m.m[o] == o)) ==> (oo == rv);
+    assert forall r <- rv :: exists o <- oo :: m.m[o] == r;
+    assert forall r <- rv :: exists o <- oo :: m.m[o] == r;
+
+   assert (forall o <- oo :: outside(o,m.o)) ==> (oo == rv);
+    // assert (forall r <- rv :: outside(r,m.c)) ==> (oo == rv);
  }
 
 
