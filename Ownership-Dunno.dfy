@@ -228,13 +228,13 @@ function flattenPivotlyOutside(soup : OWNR, pivot : Object) : (rv : Owner)
 { set x <- flatten(soup) | pivotlyOutside(x,pivot) }
 
 
-predicate insidePivot(o : Object, pivot : Object, owner : Object) : (rv : bool)   reads {}   { inside(o, pivot) && inside(o,owner) }
+predicate outsidePivot(o : Object, pivot : Object, owner : Object) : (rv : bool)   reads {}   { inside(o, pivot) && inside(o,owner) }
   //o >= pivot is a selecwtion condition for this case
   //o >= owner should be fucken built the fuck in
 
-lemma LEMMA_insidePivot(o : Object, pivot : Object, owner : Object)
+lemma LEMMA_outsidePivot(o : Object, pivot : Object, owner : Object)
    requires inside(o,owner)
-    ensures insidePivot(o,pivot,owner) == inside(o,pivot)
+    ensures outsidePivot(o,pivot,owner) == inside(o,pivot)
 {}
 
 predicate onlyPivot(o : Object, pivot : Object, owner : Object) : (rv : bool)   reads {}   { inside(o, pivot) && inside(o,owner) &&  inside(pivot, owner) }
@@ -260,8 +260,8 @@ function flattenOnlyPivot(soup : OWNR, pivot : Object)  : (rv : Owner)
 function flattenExceptPivot(soup : OWNR, pivot : Object) : (rv : Owner)
  {set s <- soup, oo <- s.AMFO | exceptPivot(s,pivot,oo) :: oo}
 
-function flatteninsidePivot(soup : OWNR, pivot : Object) : (rv : Owner)
- {set s <- soup, oo <- s.AMFO | insidePivot(s,pivot,oo) :: oo}
+function flattenoutsidePivot(soup : OWNR, pivot : Object) : (rv : Owner)
+ {set s <- soup, oo <- s.AMFO | outsidePivot(s,pivot,oo) :: oo}
 
 
 lemma LEMMA_flattenOnlyPivot0(soup : OWNR, pivot : Object, rv : Owner)
@@ -509,7 +509,7 @@ lemma NUKE_DICHOTOMY_TRICHOTOMY(soup : Owner, pivot : Object, left0 : Owner, lef
  requires pivot.Ready()
  requires left0 == flattenExceptPivot(soup,pivot)
  requires left1 == flattenOnlyPivot(soup,pivot)
- requires right == flatteninsidePivot(soup,pivot)
+ requires right == flattenoutsidePivot(soup,pivot)
 
   ensures left0 <= right
   ensures left1 <= right
@@ -597,15 +597,15 @@ ensures strictlyInside(owner,pivot) != pivotlyOutside(owner,pivot)
    ensures  (inside(o,pivot) && strictlyInside(owner,pivot)) ==>
                      (onlyPivot(o,pivot,owner) != exceptPivot(o,pivot,owner))
 
-   ensures (insidePivot(o, pivot, owner)) <==>
+   ensures (outsidePivot(o, pivot, owner)) <==>
                      (onlyPivot(o,pivot,owner) || exceptPivot(o,pivot,owner))
 
    ensures (inside(o, pivot)) <==>
                      (onlyPivot(o,pivot,owner) || exceptPivot(o,pivot,owner))
 
-   ensures insidePivot(o,pivot,owner) == (onlyPivot(o,pivot,owner) || exceptPivot(o,pivot,owner))
+   ensures outsidePivot(o,pivot,owner) == (onlyPivot(o,pivot,owner) || exceptPivot(o,pivot,owner))
 
-   ensures ownerInsidePivot(o,pivot,owner) ==
+   ensures ownerOutsidePivot(o,pivot,owner) ==
                              (ownerOnlyPivot(o,pivot,owner) || ownerExceptPivot(o,pivot,owner))
 
 ///ensures (inside(o, pivot) && strictlyInside(owner,pivot))  ?
@@ -711,9 +711,9 @@ predicate ownerOnlyPivot(o : Object, pivot : Object, owner : Object) : (rv : boo
 predicate ownerExceptPivot(o : Object, pivot : Object, owner : Object) : (rv : bool)
   requires o.Ready() && pivot.Ready() && owner.Ready()  requires inside(o, owner)  reads {}
     {pivotlyOutside(owner,pivot) && exceptPivot(o,pivot,owner)}
-predicate ownerInsidePivot(o : Object, pivot : Object, owner : Object) : (rv : bool)
+predicate ownerOutsidePivot(o : Object, pivot : Object, owner : Object) : (rv : bool)
   requires o.Ready() && pivot.Ready() && owner.Ready()  requires inside(o, owner)  reads {}
-    {pivotlyOutside(owner,pivot) && insidePivot(o,owner,pivot)}
+    {pivotlyOutside(owner,pivot) && outsidePivot(o,owner,pivot)}
 
 
 
@@ -756,9 +756,9 @@ function flownerOnlyPivot(soup : OWNR, pivot : Object)  : (rv : Owner)
 function flownerExceptPivot(soup : OWNR, pivot : Object)  : (rv : Owner)
   requires AllReady(soup) && pivot.Ready()
  {set o <- soup, owner <- o.AMFO | PART_INSIDE_OWNER(soup,pivot); ownerExceptPivot(o,pivot,owner) :: owner}
-function flownerInsidePivot(soup : OWNR, pivot : Object)  : (rv : Owner)
+function flownerOutsidePivot(soup : OWNR, pivot : Object)  : (rv : Owner)
   requires AllReady(soup) && pivot.Ready()
- {set o <- soup, owner <- o.AMFO | PART_INSIDE_OWNER(soup,pivot); ownerInsidePivot(o,pivot,owner) :: owner}
+ {set o <- soup, owner <- o.AMFO | PART_INSIDE_OWNER(soup,pivot); ownerOutsidePivot(o,pivot,owner) :: owner}
 
 
 
@@ -815,7 +815,7 @@ lemma FLOWNER_OUTSIDE_THRU_KLON(soup : Owner, left : Owner, rite : Owner, m : Kl
 
  function flownerEverythingOutside(soup : OWNR, pivot : Object)  : (rv : Owner)
   requires AllReady(soup) && pivot.Ready()
- { flownerStrictlyOutside(soup,pivot) + flownerInsidePivot(soup,pivot) }
+ { flownerStrictlyOutside(soup,pivot) + flownerOutsidePivot(soup,pivot) }
  function flownerPivotlyOutside(soup : OWNR, pivot : Object)  : (rv : Owner)
   requires AllReady(soup) && pivot.Ready()
    {set o <- soup, owner <- o.AMFO | PART_INSIDE_OWNER(soup,pivot); ownerPivotlyOutside(o,pivot,owner) :: owner}
@@ -827,7 +827,7 @@ lemma FLOWNER_EVERYTHING_OUTSIDE(soup : OWNR, pivot : Object)
 //could merge these two, but thiss lets us be more specific when calling them,
 lemma FLOWNER_EVERYTHING_EVERYTHING(soup : OWNR, pivot : Object)
   requires AllReady(soup) && pivot.Ready()
-   ensures flownerEverythingOutside(soup,pivot) == flownerStrictlyOutside(soup,pivot) + flownerInsidePivot(soup,pivot)
+   ensures flownerEverythingOutside(soup,pivot) == flownerStrictlyOutside(soup,pivot) + flownerOutsidePivot(soup,pivot)
    ensures flownerEverythingOutside(soup,pivot) == flownerStrictlyOutside(soup,pivot) + (flownerOnlyPivot(soup,pivot) + flownerExceptPivot(soup,pivot))
 {}
 
@@ -861,21 +861,22 @@ lemma FLOWNER_DISJOINT(soup : OWNR, pivot : Object)
    ensures flownerStrictlyInside(soup,pivot) !! flownerOnlyPivot(soup,pivot)
    ensures flownerStrictlyInside(soup,pivot) !! flownerExceptPivot(soup,pivot)
    ensures flownerStrictlyInside(soup,pivot) !! flownerOnlyPivot(soup,pivot) !! flownerExceptPivot(soup,pivot)
-   ensures flownerStrictlyInside(soup,pivot) !! flownerInsidePivot(soup,pivot)
-   ensures flownerStrictlyInside(soup,pivot) !! flownerInsidePivot(soup,pivot)
+   ensures flownerStrictlyInside(soup,pivot) !! flownerOutsidePivot(soup,pivot)
+   ensures flownerStrictlyInside(soup,pivot) !! flownerOutsidePivot(soup,pivot)
    ensures flownerStrictlyInside(soup,pivot) !! flownerStrictlyOutside(soup,pivot)
    ensures flownerStrictlyInside(soup,pivot) !! (flownerOnlyPivot(soup,pivot) + flownerExceptPivot(soup,pivot) + flownerStrictlyOutside(soup,pivot))
-   ensures flownerStrictlyInside(soup,pivot) !! (flownerInsidePivot(soup,pivot) + flownerStrictlyOutside(soup,pivot))
+   ensures flownerStrictlyInside(soup,pivot) !! (flownerOutsidePivot(soup,pivot) + flownerStrictlyOutside(soup,pivot))
 {}
 
 
 lemma FLOWNER_CONJOINT(soup : OWNR, pivot : Object, FIO : Owner, FOP : Owner, FEP : Owner)
+ //seems to be doing a fuckload of work to get fOutP == fOnlyP + fExceptP
   requires AllReady(soup) && pivot.Ready()
   requires FOP == flownerOnlyPivot(soup,pivot)
   requires FEP == flownerExceptPivot(soup,pivot)
-  requires FIO == flownerInsidePivot(soup,pivot)
+  requires FIO == flownerOutsidePivot(soup,pivot)
    ensures FIO == FOP + FEP
-   ensures flownerInsidePivot(soup,pivot) == (flownerOnlyPivot(soup,pivot) + flownerExceptPivot(soup,pivot))
+   ensures flownerOutsidePivot(soup,pivot) == (flownerOnlyPivot(soup,pivot) + flownerExceptPivot(soup,pivot))
 {
    forall o <- soup, owner <- o.AMFO ensures (true) //by
      {
@@ -896,12 +897,12 @@ lemma FLOWNER_CONJOINT(soup : OWNR, pivot : Object, FIO : Owner, FOP : Owner, FE
       assert ownerOnlyPivot(o,pivot,owner)   <==> pivotlyOutside(owner,pivot) && onlyPivot(o,pivot,owner);
       assert ownerExceptPivot(o,pivot,owner) <==> pivotlyOutside(owner,pivot) && exceptPivot(o,pivot,owner);
 
-      assert flownerInsidePivot(soup,pivot) >= FIO;
-      assert flownerInsidePivot(soup,pivot) <= FIO;  //ERR
+      assert flownerOutsidePivot(soup,pivot) >= FIO;
+      assert flownerOutsidePivot(soup,pivot) <= FIO;  //ERR
 
-//      assert ownerInsidePivot(o,pivot,owner) == insidePivot(o,owner,pivot);
+//      assert ownerOutsidePivot(o,pivot,owner) == outsidePivot(o,owner,pivot);
 
-//      assert flownerInsidePivot(soup,pivot) >= FIO;
+//      assert flownerOutsidePivot(soup,pivot) >= FIO;
 
      }
 }
@@ -914,7 +915,7 @@ lemma FLOWNER_JOINT(soup : OWNR, pivot : Object, FIO : Owner, FOP : Owner, FEP :
   requires AllReady(soup) && pivot.Ready()
   requires FOP == flownerOnlyPivot(soup,pivot)
   requires FEP == flownerExceptPivot(soup,pivot)
-  requires FIO == flownerInsidePivot(soup,pivot)
+  requires FIO == flownerOutsidePivot(soup,pivot)
    ensures FIO == FOP + FEP
    ensures FOP !! FEP
 {}
@@ -951,10 +952,9 @@ lemma FLOWNER_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
   //  ensures flownerStrictlyOutside(soup0,pivot)      >= flownerStrictlyOutside(soup1,pivot)
 //   ensures flownerOnlyPivot(soup0,pivot)         >= flownerOnlyPivot(soup1,pivot)
 //   ensures flownerExceptPivot(soup0,pivot)       >= flownerExceptPivot(soup1,pivot)
-//   ensures flownerInsidePivot(soup0,pivot)       >= flownerInsidePivot(soup1,pivot)
+//   ensures flownerOutsidePivot(soup0,pivot)       >= flownerOutsidePivot(soup1,pivot)
 //   ensures flownerEverythingOutside(soup0,pivot) >= flownerEverythingOutside(soup1,pivot)
    ensures flownerPivotlyOutside(soup0,pivot)    >= flownerPivotlyOutside(soup1,pivot)
-
 {
  assert flownerPivotlyOutside(soup0,pivot)
    == (set o <- soup0, owner <- o.AMFO | PART_INSIDE_OWNER(soup0,pivot); ownerPivotlyOutside(o,pivot,owner) :: owner);
@@ -983,15 +983,30 @@ lemma flownerPivotlyOutside_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object
 //   ensures flownerStrictlyOutside(soup0,pivot)      >= flownerStrictlyOutside(soup1,pivot)
 //   ensures flownerOnlyPivot(soup0,pivot)         >= flownerOnlyPivot(soup1,pivot)
 //   ensures flownerExceptPivot(soup0,pivot)       >= flownerExceptPivot(soup1,pivot)
-//   ensures flownerInsidePivot(soup0,pivot)       >= flownerInsidePivot(soup1,pivot)
+//   ensures flownerOutsidePivot(soup0,pivot)       >= flownerOutsidePivot(soup1,pivot)
 //   ensures flownerEverythingOutside(soup0,pivot) >= flownerEverythingOutside(soup1,pivot)
    ensures flownerPivotlyOutside(soup0,pivot)    >= flownerPivotlyOutside(soup1,pivot)
 {
 FLOWNER_MONOTONIC(soup0,soup1,pivot);
 }
 
+lemma flownerStrictlyInside_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
+ //why is this here.  didn't have a body :-(
+ //verifié 24Sept2026
+  requires AllReady(soup0) && AllReady(soup1) && pivot.Ready()
+  requires flownerAll(soup0) >= flownerAll(soup1)
+   ensures flownerStrictlyInside(soup0,pivot)    >= flownerStrictlyInside(soup1,pivot)
+   {
+    FLOWNER_MONOTONIC(soup0,soup1,pivot);
+    assert flownerPivotlyOutside(soup0,pivot)    >= flownerPivotlyOutside(soup1,pivot);
 
+    FLOWNER_ALL_ALL(soup0, pivot);
+    assert flownerStrictlyInside(soup0,pivot) == flownerAll(soup0) - flownerPivotlyOutside(soup0,pivot);
+    FLOWNER_ALL_ALL(soup1, pivot);
+    assert flownerStrictlyInside(soup1,pivot) == flownerAll(soup1) - flownerPivotlyOutside(soup1,pivot);
 
+    assert flownerStrictlyInside(soup0,pivot)    >= flownerStrictlyInside(soup1,pivot);
+   }
 
 lemma flownerOnlyPivot_RESULT(soup : Owner, pivot : Object, rv : Owner)
 //verified 23Sep2026
@@ -1006,6 +1021,24 @@ FLOWNER_SHORTCUT_OnlyPivot(soup, pivot, rv);
  LEMMA_shortcutOnlyPivot1(soup, pivot, rv);
    }
 
+lemma flownerExceptPivot_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
+////verified 25Sep2026
+  requires AllReady(soup0) && AllReady(soup1) && pivot.Ready()
+  requires flatten(soup0) >= flatten(soup1)
+//requires flownerAll(soup0) >= flownerAll(soup1)
+   ensures flownerExceptPivot(soup0,pivot)  >= flownerExceptPivot(soup1,pivot)
+{
+  var rv0 := flownerExceptPivot(soup0,pivot);
+  var rv1 := flownerExceptPivot(soup1,pivot);
+  assert  flownerAll(soup0) >= flownerAll(soup1);
+  assert rv0 == (set o <- soup0, owner <- o.AMFO | PART_INSIDE_OWNER(soup0,pivot); ownerExceptPivot(o,pivot,owner) :: owner);
+  assert rv1 == (set o <- soup1, owner <- o.AMFO | PART_INSIDE_OWNER(soup1,pivot); ownerExceptPivot(o,pivot,owner) :: owner);
+  assert rv0 >= rv1;
+  assert flownerExceptPivot(soup0,pivot)     >= flownerExceptPivot(soup1,pivot);
+}
+
+
+
 lemma flownerOnlyPivot_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
 ////verified 23Sep2026
   requires AllReady(soup0) && AllReady(soup1) && pivot.Ready()
@@ -1018,6 +1051,30 @@ lemma flownerOnlyPivot_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
   flownerOnlyPivot_RESULT(soup1,pivot,rv1);
   assert flownerOnlyPivot(soup0,pivot)     >= flownerOnlyPivot(soup1,pivot);
 }
+
+
+lemma flownerOutsidePivot_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
+//feelin' proovie!
+  requires AllReady(soup0) && AllReady(soup1) && pivot.Ready()
+  requires flownerAll(soup0) >= flownerAll(soup1)
+   ensures flownerOutsidePivot(soup0,pivot)  >= flownerOutsidePivot(soup1,pivot)
+{
+  var rv0 := flownerOutsidePivot(soup0,pivot);
+  var rv1 := flownerOutsidePivot(soup1,pivot);
+  var op0 := flownerOnlyPivot(soup0,pivot);
+  var op1 := flownerOnlyPivot(soup1,pivot);
+  var ep0 := flownerExceptPivot(soup0,pivot);
+  var ep1 := flownerExceptPivot(soup1,pivot);
+
+  flownerOnlyPivot_MONOTONIC(soup0,soup1,pivot);
+  flownerExceptPivot_MONOTONIC(soup0,soup1,pivot);
+  FLOWNER_CONJOINT(soup0,pivot,rv0,op0,ep0);
+  FLOWNER_CONJOINT(soup1,pivot,rv1,op1,ep1);
+  assert rv0 >= rv1;
+  assert flownerOutsidePivot(soup0,pivot)     >= flownerOutsidePivot(soup1,pivot);
+}
+
+
 
 
 lemma flownerStrictlyOutside_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
@@ -1098,22 +1155,22 @@ lemma flownerStrictlyOutside_RESULT(soup : Owner, pivot : Object, rv : Owner)
 
 
 
-// forall o1 <- soup1, owner1 <- o1.AMFO | insidePivot(o1,pivot,owner1) ensures owner1 in flownerAll(soup0) {}
+// forall o1 <- soup1, owner1 <- o1.AMFO | outsidePivot(o1,pivot,owner1) ensures owner1 in flownerAll(soup0) {}
 
-// forall s1 <- soup1, owner1 <- s1.AMFO | insidePivot(s1,pivot,owner1) ensures owner1 in flownerInsidePivot(soup0,pivot) {}
+// forall s1 <- soup1, owner1 <- s1.AMFO | outsidePivot(s1,pivot,owner1) ensures owner1 in flownerOutsidePivot(soup0,pivot) {}
 
-// assert forall s1 <- soup1,5 owner1 <- s1.AMFO | insidePivot(s1,pivot,owner1) :: owner1 in flownerInsidePivot(soup0,pivot);
+// assert forall s1 <- soup1,5 owner1 <- s1.AMFO | outsidePivot(s1,pivot,owner1) :: owner1 in flownerOutsidePivot(soup0,pivot);
 
 // assert forall s1 <- soup1, owner1 <- s1.AMFO | ownerPivotlyOutside(s1,pivot,owner1) :: owner1 in flownerPivotlyOutside(soup0,pivot);
 //
 //
 // assert forall o1 <- soup1, owner1 <- o1.AMFO ::
 //    exists o0 <- soup0, owner0 <- o0.AMFO |
-//    insidePivot(o1,pivot,owner1) ::  owner1 in flownerAll(soup0);
+//    outsidePivot(o1,pivot,owner1) ::  owner1 in flownerAll(soup0);
 //
 
 // assert forall owner1 <- flownerAll(soup1) :: exists s0 <- soup0 | owner1 in s0.AMFO ::
-//        forall s1 <- soup1 :: (insidePivot(s1,pivot,owner1) ==> insidePivot(s0,pivot,owner1));
+//        forall s1 <- soup1 :: (outsidePivot(s1,pivot,owner1) ==> outsidePivot(s0,pivot,owner1));
 //
 // assert forall s1 <- soup1, owner1 <- s1.AMFO :: owner1 in flownerAll(soup0);
 //
@@ -1126,7 +1183,7 @@ lemma flownerStrictlyOutside_RESULT(soup : Owner, pivot : Object, rv : Owner)
 
 //    assert forall o <- flownerAll(soup1) :: (o in flownerOnlyPivot(soup1,pivot))         ==> (o in flownerOnlyPivot(soup0,pivot));
     // // assert forall o <- flownerAll(soup1) :: (o in flownerExceptPivot(soup1,pivot))       ==> (o in flownerExceptPivot(soup0,pivot));
-    // assert forall o <- flownerAll(soup1) :: (o in flownerInsidePivot(soup1,pivot))       ==> (o in flownerInsidePivot(soup0,pivot));
+    // assert forall o <- flownerAll(soup1) :: (o in flownerOutsidePivot(soup1,pivot))       ==> (o in flownerOutsidePivot(soup0,pivot));
     // assert forall o <- flownerAll(soup1) :: (o in flownerEverythingOutside(soup1,pivot)) ==> (o in flownerEverythingOutside(soup0,pivot));
     // assert forall o <- flownerAll(soup1) :: (o in flownerPivotlyOutside(soup1,pivot))    ==> (o in flownerPivotlyOutside(soup0,pivot));
 
@@ -1171,13 +1228,13 @@ lemma FLOWNER_ALL_ALL(soup : OWNR, pivot : Object)
  //verified 20 Sep 2026
   requires AllReady(soup) && pivot.Ready()
 
-   ensures flownerAll(soup) == flownerStrictlyInside(soup,pivot) + flownerStrictlyOutside(soup,pivot) + flownerInsidePivot(soup,pivot)
-   ensures flownerInsidePivot(soup,pivot) == (flownerOnlyPivot(soup,pivot) + flownerExceptPivot(soup,pivot))
+   ensures flownerAll(soup) == flownerStrictlyInside(soup,pivot) + flownerStrictlyOutside(soup,pivot) + flownerOutsidePivot(soup,pivot)
+   ensures flownerOutsidePivot(soup,pivot) == (flownerOnlyPivot(soup,pivot) + flownerExceptPivot(soup,pivot))
 
    ensures flownerAll(soup) == flownerStrictlyInside(soup,pivot) +  flownerStrictlyOutside(soup,pivot) + (flownerOnlyPivot(soup,pivot) + flownerExceptPivot(soup,pivot))
    ensures flownerAll(soup) == flownerStrictlyInside(soup,pivot) +  flownerPivotlyOutside(soup,pivot)
 
-   ensures                     flownerStrictlyInside(soup,pivot) !! (flownerStrictlyOutside(soup,pivot) + flownerInsidePivot(soup,pivot))
+   ensures                     flownerStrictlyInside(soup,pivot) !! (flownerStrictlyOutside(soup,pivot) + flownerOutsidePivot(soup,pivot))
    ensures                     flownerStrictlyInside(soup,pivot) !! flownerPivotlyOutside(soup,pivot)
 {}
 
@@ -1834,14 +1891,14 @@ lemma FLOWER_SPLIT_H(oo : Owner, ob : Bound, pivot : Object)
    ensures flownerStrictlyInside(oo,pivot) >= flownerStrictlyInside(ob,pivot)
    ensures flownerOnlyPivot(oo,pivot) >= flownerOnlyPivot(ob,pivot)
   //  ensures flownerExceptPivot(oo,pivot) >= flownerExceptPivot(ob,pivot)
-   ensures flownerInsidePivot(oo,pivot) >= flownerInsidePivot(ob,pivot)
+   ensures flownerOutsidePivot(oo,pivot) >= flownerOutsidePivot(ob,pivot)
 // ensures flownerStrictlyOutside(oo,pivot) >= flownerStrictlyOutside(ob,pivot)
 
-//    ensures (flownerInsidePivot(oo,pivot) + flownerStrictlyInside(oo,pivot) + flownerStrictlyOutside(oo,pivot))
-//       >= (flownerInsidePivot(ob,pivot) + flownerStrictlyInside(ob,pivot) + flownerStrictlyOutside(ob,pivot))
+//    ensures (flownerOutsidePivot(oo,pivot) + flownerStrictlyInside(oo,pivot) + flownerStrictlyOutside(oo,pivot))
+//       >= (flownerOutsidePivot(ob,pivot) + flownerStrictlyInside(ob,pivot) + flownerStrictlyOutside(ob,pivot))
 //
-//    ensures (flownerInsidePivot(oo,pivot) + flownerStrictlyOutside(oo,pivot))
-//       >= (flownerInsidePivot(ob,pivot) + flownerStrictlyOutside(ob,pivot))
+//    ensures (flownerOutsidePivot(oo,pivot) + flownerStrictlyOutside(oo,pivot))
+//       >= (flownerOutsidePivot(ob,pivot) + flownerStrictlyOutside(ob,pivot))
 
    ensures flownerEverythingOutside(oo,pivot) >= flownerEverythingOutside(ob,pivot)
 
@@ -1860,7 +1917,7 @@ lemma FLOWER_SPLIT_H(oo : Owner, ob : Bound, pivot : Object)
 
 
 
-lemma FLOWER_JOIN_InsidePivot(oo : Owner, ob : Bound, pivot : Object)
+lemma FLOWER_JOIN_OutsidePivot(oo : Owner, ob : Bound, pivot : Object)
   requires AllReady(oo)
   requires AllReady(ob)
   requires pivot.Ready()
@@ -1868,9 +1925,9 @@ lemma FLOWER_JOIN_InsidePivot(oo : Owner, ob : Bound, pivot : Object)
   requires flownerOnlyPivot(oo,pivot) >= flownerOnlyPivot(ob,pivot)
   requires flownerExceptPivot(oo,pivot) >= flownerExceptPivot(ob,pivot)
 
-   ensures flownerInsidePivot(oo,pivot) == flownerOnlyPivot(oo,pivot) + flownerExceptPivot(oo,pivot)
-   ensures flownerInsidePivot(ob,pivot) == flownerOnlyPivot(ob,pivot) + flownerExceptPivot(ob,pivot)
-   ensures flownerInsidePivot(oo,pivot) >= flownerInsidePivot(ob,pivot)
+   ensures flownerOutsidePivot(oo,pivot) == flownerOnlyPivot(oo,pivot) + flownerExceptPivot(oo,pivot)
+   ensures flownerOutsidePivot(ob,pivot) == flownerOnlyPivot(ob,pivot) + flownerExceptPivot(ob,pivot)
+   ensures flownerOutsidePivot(oo,pivot) >= flownerOutsidePivot(ob,pivot)
    {}
 
 
@@ -1924,17 +1981,17 @@ lemma FLOWER_JOIN_All(oo : Owner, ob : Bound, pivot : Object)
   requires pivot.Ready()
 
   requires flownerStrictlyInside(oo,pivot) >= flownerStrictlyInside(ob,pivot)
-  requires (flownerInsidePivot(oo,pivot) + flownerStrictlyOutside(oo,pivot)) >= (flownerInsidePivot(ob,pivot) + flownerStrictlyOutside(ob,pivot))
+  requires (flownerOutsidePivot(oo,pivot) + flownerStrictlyOutside(oo,pivot)) >= (flownerOutsidePivot(ob,pivot) + flownerStrictlyOutside(ob,pivot))
 
-   ensures flownerStrictlyInside(oo,pivot) + (flownerInsidePivot(oo,pivot) + flownerStrictlyOutside(oo,pivot)) >=
-           flownerStrictlyInside(ob,pivot) + (flownerInsidePivot(ob,pivot) + flownerStrictlyOutside(ob,pivot))
+   ensures flownerStrictlyInside(oo,pivot) + (flownerOutsidePivot(oo,pivot) + flownerStrictlyOutside(oo,pivot)) >=
+           flownerStrictlyInside(ob,pivot) + (flownerOutsidePivot(ob,pivot) + flownerStrictlyOutside(ob,pivot))
 
-   ensures flownerAll(oo) == flownerStrictlyInside(oo,pivot) + (flownerInsidePivot(oo,pivot) + flownerStrictlyOutside(oo,pivot))
-   ensures flownerAll(ob) == flownerStrictlyInside(ob,pivot) + (flownerInsidePivot(ob,pivot) + flownerStrictlyOutside(ob,pivot))
+   ensures flownerAll(oo) == flownerStrictlyInside(oo,pivot) + (flownerOutsidePivot(oo,pivot) + flownerStrictlyOutside(oo,pivot))
+   ensures flownerAll(ob) == flownerStrictlyInside(ob,pivot) + (flownerOutsidePivot(ob,pivot) + flownerStrictlyOutside(ob,pivot))
    ensures flownerAll(oo) >= flownerAll(ob)
    {
-    FUCKED(flownerStrictlyInside(oo,pivot), flownerInsidePivot(oo,pivot), flownerStrictlyOutside(oo,pivot),
-           flownerStrictlyInside(ob,pivot), flownerInsidePivot(ob,pivot), flownerStrictlyOutside(ob,pivot)) ;
+    FUCKED(flownerStrictlyInside(oo,pivot), flownerOutsidePivot(oo,pivot), flownerStrictlyOutside(oo,pivot),
+           flownerStrictlyInside(ob,pivot), flownerOutsidePivot(ob,pivot), flownerStrictlyOutside(ob,pivot)) ;
     FLOWNER_DISJOINT(oo, pivot);
     FLOWNER_DISJOINT(ob, pivot);
     FLOWNER_ALL_ALL(oo,pivot);
@@ -1957,27 +2014,27 @@ lemma FLOWER_JOIN_H(oo : Owner, ob : Bound, pivot : Object)
 
   requires flownerEverythingOutside(oo,pivot) >= flownerEverythingOutside(ob,pivot)
 
-   ensures (flownerInsidePivot(oo,pivot) + flownerStrictlyOutside(oo,pivot)) >= (flownerInsidePivot(ob,pivot) + flownerStrictlyOutside(ob,pivot))
+   ensures (flownerOutsidePivot(oo,pivot) + flownerStrictlyOutside(oo,pivot)) >= (flownerOutsidePivot(ob,pivot) + flownerStrictlyOutside(ob,pivot))
 
-   ensures flownerInsidePivot(oo,pivot) >= flownerInsidePivot(ob,pivot)
-
-
-  //  ensures (flownerInsidePivot(oo,pivot) + flownerStrictlyOutside(oo,pivot))
-  //     >= (flownerInsidePivot(ob,pivot) + flownerStrictlyOutside(ob,pivot))
+   ensures flownerOutsidePivot(oo,pivot) >= flownerOutsidePivot(ob,pivot)
 
 
-   ensures (flownerInsidePivot(oo,pivot) + flownerStrictlyInside(oo,pivot) + flownerStrictlyOutside(oo,pivot))
-      >= (flownerInsidePivot(ob,pivot) + flownerStrictlyInside(ob,pivot) + flownerStrictlyOutside(ob,pivot))
+  //  ensures (flownerOutsidePivot(oo,pivot) + flownerStrictlyOutside(oo,pivot))
+  //     >= (flownerOutsidePivot(ob,pivot) + flownerStrictlyOutside(ob,pivot))
+
+
+   ensures (flownerOutsidePivot(oo,pivot) + flownerStrictlyInside(oo,pivot) + flownerStrictlyOutside(oo,pivot))
+      >= (flownerOutsidePivot(ob,pivot) + flownerStrictlyInside(ob,pivot) + flownerStrictlyOutside(ob,pivot))
 
    ensures flownerAll(oo) == flownerStrictlyInside(oo,pivot) + flownerEverythingOutside(oo,pivot)
    ensures flownerAll(ob) == flownerStrictlyInside(ob,pivot) + flownerEverythingOutside(ob,pivot)
 
-   ensures flownerAll(oo) == flownerStrictlyInside(oo,pivot) + flownerStrictlyOutside(oo,pivot) + flownerInsidePivot(oo,pivot)
-   ensures flownerAll(ob) == flownerStrictlyInside(ob,pivot) + flownerStrictlyOutside(ob,pivot) + flownerInsidePivot(ob,pivot)
+   ensures flownerAll(oo) == flownerStrictlyInside(oo,pivot) + flownerStrictlyOutside(oo,pivot) + flownerOutsidePivot(oo,pivot)
+   ensures flownerAll(ob) == flownerStrictlyInside(ob,pivot) + flownerStrictlyOutside(ob,pivot) + flownerOutsidePivot(ob,pivot)
    ensures flownerAll(oo) >= flownerAll(ob)
   {
-        FUCKED(flownerStrictlyInside(oo,pivot), flownerInsidePivot(oo,pivot), flownerStrictlyOutside(oo,pivot),
-           flownerStrictlyInside(ob,pivot), flownerInsidePivot(ob,pivot), flownerStrictlyOutside(ob,pivot)) ;
+        FUCKED(flownerStrictlyInside(oo,pivot), flownerOutsidePivot(oo,pivot), flownerStrictlyOutside(oo,pivot),
+           flownerStrictlyInside(ob,pivot), flownerOutsidePivot(ob,pivot), flownerStrictlyOutside(ob,pivot)) ;
     FLOWNER_DISJOINT(oo, pivot);
     FLOWNER_DISJOINT(ob, pivot);
     FLOWNER_ALL_ALL(oo,pivot);
