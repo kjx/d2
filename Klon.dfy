@@ -1372,7 +1372,7 @@ lemma MAP_THRU_KLON_OUTSIDE_ONLY(oo : Owner, m : Klon)
  }
 
 
-lemma MAP_THRU_KLON_OUTSIDE_PIVOT(oo : Owner, rv : Owner, m : Klon)
+lemma MAP_THRU_KLON(oo : Owner, rv : Owner, m : Klon)
  //verified 24-26 Sept 2026
    decreases allAMFOs(oo)
     requires AllReady(oo) && AllReady(rv)
@@ -1382,9 +1382,11 @@ lemma MAP_THRU_KLON_OUTSIDE_PIVOT(oo : Owner, rv : Owner, m : Klon)
 
      ensures forall o <- oo :: var r := m.m[o]; klonLine(o,r,m)
      ensures forall o <- oo | outside(o,m.o) :: (o == m.m[o]) && outside(m.m[o],m.c) && (m.m[o] in rv)
+     ensures (m.o in oo) ==> ((m.m[m.o] == m.c) && (m.c in rv))
      ensures forall o <- oo | strictlyInside(o,m.o) :: (o != m.m[o]) && strictlyInside(m.m[o],m.c) && (m.m[o] in rv)
 
      ensures forall r <- rv :: exists o <- oo :: m.m[o] == r
+     ensures (m.c in rv) ==> ((m.m[m.o] == m.c) && (m.o in oo))
      ensures forall r <- rv :: var o :| (o in oo) && (m.m[o] == r); klonLine(o,r,m)
      ensures forall r <- rv | outside(r,m.c) :: (r == m.m[r]) && outside(r,m.o) && (m.m[r] in oo)
      ensures forall r <- rv :: var o :| (o in oo)  && (m.m[o] == r);  strictlyInside(o,m.o) ==> (o != m.m[o])
@@ -1418,7 +1420,6 @@ lemma MAP_THRU_KLON_OUTSIDE_PIVOT(oo : Owner, rv : Owner, m : Klon)
    assert (forall o <- oo :: outside(o,m.o)) ==> (oo == rv);
     // assert (forall r <- rv :: outside(r,m.c)) ==> (oo == rv);
  }
-
 
 
 lemma I_CAN_MEMENTO(m : Klon)
