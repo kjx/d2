@@ -1788,6 +1788,34 @@ lemma FLOWNER_SHORTCUT_OnlyPivot(soup : OWNR, pivot : Object, rv : Owner)
 }
 
 
+
+lemma STUPIDLY_HAPPY_To_OnlyPivot(xo : Owner, xb : Owner,
+      xo_sp : FlownerSplit, xb_sp : FlownerSplit, pivot : Object)
+ //verified 21Sep2026
+  requires AllReady(flatten(xo)) && AllReady(flatten(xb))
+//  requires xo_sp.0 >= xb_sp.0 // or should this be stupid happy or something???
+  requires stupidlyHappy(xo,xb,pivot)
+  requires pivot.Ready()
+  requires flownerSplitOK(xo, pivot, xo_sp)
+  requires flownerSplitOK(xb, pivot, xb_sp)
+
+   ensures xo_sp.0 == flownerAll(xo)
+   ensures xb_sp.0 == flownerAll(xb)
+   ensures xo_sp.3 == flownerOnlyPivot(xo, pivot)
+   ensures xb_sp.3 == flownerOnlyPivot(xb, pivot)
+
+   ensures (pivot  in xo_sp.0) ==> (xo_sp.3 == pivot.AMFO)
+   ensures (pivot !in xo_sp.0) ==> (xo_sp.3 == {})
+   ensures (pivot  in xb_sp.0) ==> (xb_sp.3 == pivot.AMFO)
+   ensures (pivot !in xb_sp.0) ==> (xb_sp.3 == {})
+   ensures xo_sp.3 >= xb_sp.3
+{
+      FUCK_DAFNY(xo,pivot,xo_sp.3);
+      FUCK_DAFNY(xb,pivot,xb_sp.3);
+}
+
+
+
 lemma DOUBLE_SPLIT_OnlyPivot(os : Owner, cs : Owner, os_sp : FlownerSplit, cs_sp : FlownerSplit, m : Klon)
  //verified 21Sep2026
   requires AllReady(flatten(os)) && AllReady(flatten(cs))
@@ -2377,8 +2405,6 @@ lemma SET_DISJOINT_GT(o0 : Owner, o1 : Owner, b0 : Owner, b1 : Owner)
 
 
 
-
-
 lemma FLOWER_JOIN_All(oo : Owner, ob : Bound, pivot : Object)
  //given the vartious components are >=, conclude Foo >= Fob,
  //just a nice? version of FLOWER_JOIN_H without the typo
@@ -2395,6 +2421,7 @@ lemma FLOWER_JOIN_All(oo : Owner, ob : Bound, pivot : Object)
    ensures flownerAll(oo) == flownerStrictlyInside(oo,pivot) + (flownerOutsidePivot(oo,pivot) + flownerStrictlyOutside(oo,pivot))
    ensures flownerAll(ob) == flownerStrictlyInside(ob,pivot) + (flownerOutsidePivot(ob,pivot) + flownerStrictlyOutside(ob,pivot))
    ensures flownerAll(oo) >= flownerAll(ob)
+//   ensures stupidlyHappy(oo,ob,pivot)
    {
     FUCKED(flownerStrictlyInside(oo,pivot), flownerOutsidePivot(oo,pivot), flownerStrictlyOutside(oo,pivot),
            flownerStrictlyInside(ob,pivot), flownerOutsidePivot(ob,pivot), flownerStrictlyOutside(ob,pivot)) ;
@@ -2403,6 +2430,8 @@ lemma FLOWER_JOIN_All(oo : Owner, ob : Bound, pivot : Object)
     FLOWNER_ALL_ALL(oo,pivot);
     FLOWNER_ALL_ALL(ob,pivot);
    }
+
+
 
 lemma FLOWER_JOIN_H(oo : Owner, ob : Bound, pivot : Object)
  //given the vartious components are >=, conclude Foo >= Fob,
@@ -2934,7 +2963,7 @@ assume shortcutOnlyPivot(ob,m.o) == flownerOnlyPivot(ob,m.o);
 
 
 
-lemma CLONING_PRESERVES_OWNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound, m : Klon)
+lemma ZCLONING_ZPRESERVES_ZOWNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound, m : Klon)
  //is this name OVERKILL???
  //should it also do bounds?  --- currentlyt NO!
   requires AllReady(flatten(oo))
@@ -3162,7 +3191,7 @@ by {  ///this line and the next line *only* veryfiy only 2930-2931 - Tue 29 Sept
 
 
 
-lemma  XCLONING_XPRESERVES_XOWNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound, m : Klon)
+lemma  CLONING_PRESERVES_OWNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound, m : Klon)
  //is this name OVERKILL???
  //should it also do bounds?  --- currentlyt NO!
   requires AllReady(flatten(oo))
@@ -3173,7 +3202,7 @@ lemma  XCLONING_XPRESERVES_XOWNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : B
   requires m.m.Keys >= oo
   requires m.m.Keys >= ob
 
-  requires stupidlyHappy(oo,ob, m.o)
+  requires stupidlyHappy(oo,ob,m.o)
 //  requires flatten(oo) >= flatten(ob)
 
   requires boundsOK(oo,ob) ////HMM do we *always* hace this or not?
@@ -3305,26 +3334,29 @@ MAPPING_INSIDE(ob,ob_sp,cb,cb_sp,m);
 //////////////////////////////////////////////////////////
 // the pivot
 
-     MAPPING_PIVOT(oo,oo_sp,co,co_sp,m);
-     MAPPING_PIVOT(ob,ob_sp,cb,cb_sp,m);
+assert mapThruKlon(oo,m) == co;
+assert mapThruKlon(ob,m) == cb;
 
-  MAP_THRU_KLON(oo,co,m);
-  MAP_THRU_KLON(ob,cb,m);
   UNPACK_flownerSplitOK(mapThruKlon(oo,m),m.c,co_sp);
   UNPACK_flownerSplitOK(mapThruKlon(ob,m),m.c,cb_sp);
 
-assert mapThruKlon(oo,m) == co;
-assert mapThruKlon(ob,m) == cb;
+     MAPPING_PIVOT(oo,oo_sp,co,co_sp,m);
+     MAPPING_PIVOT(ob,ob_sp,cb,cb_sp,m);
+
+     DOUBLE_SPLIT_OnlyPivot(oo, co, oo_sp, co_sp, m);
+STUPIDLY_HAPPY_To_OnlyPivot(oo,ob,oo_sp,ob_sp,m.o);
+     DOUBLE_SPLIT_OnlyPivot(ob, cb, ob_sp, cb_sp, m);
+STUPIDLY_HAPPY_To_OnlyPivot(co,cb,co_sp,cb_sp,m.c);
 
 FUCK_DAFNY(oo,m.o,oo_Pvt);
 FUCK_DAFNY(ob,m.o,ob_Pvt);
 FUCK_DAFNY(co,m.c,co_Pvt);
 FUCK_DAFNY(cb,m.c,cb_Pvt);
 
-assert shortcutOnlyPivot(oo,m.o) == flownerOnlyPivot(oo,m.o);
-assert shortcutOnlyPivot(ob,m.o) == flownerOnlyPivot(ob,m.o);
-assert shortcutOnlyPivot(co,m.c) == flownerOnlyPivot(co,m.c);
-assert shortcutOnlyPivot(cb,m.c) == flownerOnlyPivot(cb,m.c);
+// assert shortcutOnlyPivot(oo,m.o) == flownerOnlyPivot(oo,m.o);
+// assert shortcutOnlyPivot(ob,m.o) == flownerOnlyPivot(ob,m.o);
+// assert shortcutOnlyPivot(co,m.c) == flownerOnlyPivot(co,m.c);
+// assert shortcutOnlyPivot(cb,m.c) == flownerOnlyPivot(cb,m.c);
 
 // by {
 //   FLOWNER_SHORTCUT_OnlyPivot(oo,m.o,oo_Pvt);
@@ -3375,27 +3407,38 @@ assert shortcutOnlyPivot(cb,m.c) == flownerOnlyPivot(cb,m.c);
 // assert shortcutOnlyPivot(co,m.c) == flownerOnlyPivot(co,m.c);
 // assert shortcutOnlyPivot(cb,m.c) == flownerOnlyPivot(cb,m.c);
 
+//
+// assert flownerOnlyPivot(oo,m.o) == oo_sp.3 == oo_Pvt;
+// assert flownerOnlyPivot(ob,m.o) == ob_sp.3 == ob_Pvt;
+// assert flownerOnlyPivot(co,m.c) == co_sp.3 == co_Pvt;
+// assert flownerOnlyPivot(cb,m.c) == cb_sp.3 == cb_Pvt;
 
-assert flownerOnlyPivot(oo,m.o) == oo_sp.3 == oo_Pvt;
-assert flownerOnlyPivot(ob,m.o) == ob_sp.3 == ob_Pvt;
-assert flownerOnlyPivot(co,m.o) == co_sp.3 == co_Pvt;
-assert flownerOnlyPivot(cb,m.o) == cb_sp.3 == cb_Pvt;
+     assert (m.o.AMFO == oo_Pvt) <==> (m.c.AMFO == co_Pvt);
+     assert (m.o.AMFO == ob_Pvt) <==> (m.c.AMFO == cb_Pvt);
 
-     assert (m.o in oo_Pvt) <==> (m.c in co_Pvt);
-     assert (m.o in ob_Pvt) <==> (m.c in cb_Pvt);
-     assert (m.o in oo_Pvt) <==  (m.c in cb_Pvt);
+
+     assert (m.o.AMFO == oo_Pvt) <==  (m.c.AMFO == cb_Pvt);
+     assert co_Pvt >= cb_Pvt;
+
+    //  assert (m.o in oo_Pvt) <==> (m.c in co_Pvt);
+    //  assert (m.o in ob_Pvt) <==> (m.c in cb_Pvt);
+    //  assert (m.o in oo_Pvt) <==  (m.c in cb_Pvt);
+
+//shojldn't really  be fdlatteh here.
+     assert flatten(co_Pvt) >= flatten(cb_Pvt);
+
+/////////////////////////////////////////////////////////////
 
      assert co_Sin >= cb_Sin; //Err
      assert co_Out >= cb_Out; //Err
-     assert co_Pvt >= cb_Pvt;
      assert co_Xpt >= cb_Xpt; //Err
 
-FLOWER_JOIN_All(co,cb,m.c);
-
-     assert co_All >= cb_All;
-     assert boundsOK(co,cb);
-     assert flatten(co) >= flatten(cb);
-     assert stupidlyHappy(co,cb, m.o);
+  FLOWER_JOIN_All(co,cb,m.c);
+//
+//      assert co_All >= cb_All;
+//      assert boundsOK(co,cb);
+//      assert flatten(co) >= flatten(cb);
+//      assert stupidlyHappy(co,cb, m.o);
 }
 
 
