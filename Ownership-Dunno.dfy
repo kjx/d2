@@ -2909,8 +2909,6 @@ MAPPING_INSIDE(ob,ob_sp,cb,cb_sp,m);
   UNPACK_flownerSplitOK(mapThruKlon(oo,m),m.c,co_sp);
   UNPACK_flownerSplitOK(mapThruKlon(ob,m),m.c,cb_sp);
 
-assert 
-
      assert (m.o in oo_Pvt) <==> (m.c in co_Pvt);
      assert (m.o in ob_Pvt) <==> (m.c in cb_Pvt);
      assert (m.o in oo_Pvt) <==  (m.c in cb_Pvt);
