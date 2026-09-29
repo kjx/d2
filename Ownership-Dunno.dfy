@@ -1750,17 +1750,39 @@ lemma {:timeLimit 120} FLOWNER_FLATTEN_Outside_Klon_05(soup : OWNR, m : Klon, r 
    {}
 
 
+lemma FUCK_YOU_TORY_CUNT(soup : OWNR, pivot : Object)
+   requires AllReady(flatten(soup)) && pivot.Ready()
+    ensures shortcutOnlyPivot(soup, pivot) == flattenOnlyPivot(soup, pivot)
+ {
+   LEMMA_shortcutVSflatten2(soup, pivot, shortcutOnlyPivot(soup, pivot), flattenOnlyPivot(soup, pivot));
+}
 
 
+lemma FUCK_DAFNY(soup : OWNR, pivot : Object, rv : Owner)
+   //requires AllReady(flatten(soup)) && pivot.Ready()
 
+  requires || (flownerOnlyPivot(soup,pivot) == rv)
+           || (flattenOnlyPivot(soup,pivot) == rv)
+           || (shortcutOnlyPivot(soup,pivot) == rv)
 
+   ensures ((pivot  in flownerAll(soup)) || (pivot  in flatten(soup)))
+       ==> (rv == pivot.AMFO)
+   ensures ((pivot !in flownerAll(soup)) || (pivot !in flatten(soup)))
+       ==> (rv == {})
 
-
+    ensures shortcutOnlyPivot(soup, pivot) == flattenOnlyPivot(soup, pivot) == flownerOnlyPivot(soup,pivot) == rv
+ {
+   assume AllReady(flatten(soup));
+   assume pivot.Ready();
+   LEMMA_shortcutVSflatten2(soup, pivot, shortcutOnlyPivot(soup, pivot), flattenOnlyPivot(soup, pivot));
+}
 
 
 lemma FLOWNER_SHORTCUT_OnlyPivot(soup : OWNR, pivot : Object, rv : Owner)
  //verified 21 Sep 2026
   requires AllReady(flatten(soup)) && pivot.Ready()
+   ensures shortcutOnlyPivot(soup, pivot) == flattenOnlyPivot(soup, pivot)
+   ensures (shortcutOnlyPivot(soup, pivot) == flattenOnlyPivot(soup, pivot) == {}) || (shortcutOnlyPivot(soup, pivot) == flattenOnlyPivot(soup, pivot) == pivot.AMFO)
 {
   LEMMA_shortcutVSflatten2(soup, pivot, shortcutOnlyPivot(soup, pivot), flattenOnlyPivot(soup, pivot));
 }
@@ -2754,6 +2776,158 @@ lemma INSIDE_PARALLEL(o0 : Object, o1 : Object, c0 : Object, c1 : Object, m : Kl
 
 
 
+lemma {:timeLimit 90} CRAPING_PRESVES_CRAPNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound, m : Klon)
+ //is this name OVERKILL???
+ //should it also do bounds?  --- currentlyt NO!
+  requires AllReady(flatten(oo))
+  requires AllReady(flatten(ob))
+  // requires AllReady(flatten(co))
+  // requires AllReady(flatten(cb))
+  requires klonCalid(m)
+  requires m.m.Keys >= oo
+  requires m.m.Keys >= ob
+
+  requires stupidlyHappy(oo,ob, m.o)
+  requires flatten(oo) >= flatten(ob)
+
+  requires boundsOK(oo,ob) ////HMM do we *always* hace this or not?,f,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,f3,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,33ff3.........................................................................................................................
+                           ////I'm not sure we do, e.g. the below :-)
+                           ///our shoudl we unify this with stupidlyHappy??
+////  requires flownerAll(oo) >= flownerAll(ob) // i.e. flatten(oo) >= flatten(ob)
+////requires forall o <- oo :: flatten(o.ownerBound()) >= flatten(ob)
+
+  requires co == mapThruKlon(oo, m)
+  requires cb == mapThruKlon(ob, m)
+
+// ensures boundsOK(co,cb)
+// ensures flatten(co) >= flatten(cb)
+//  ensures stupidlyHappy(co,cb, m.o)
+
+{
+     var oo_sp := flownerSplit(oo, m.o);
+     var (oo_All, oo_Sin, oo_Out, oo_Pvt, oo_Xpt) := oo_sp;
+    //  assert flownerSplitOK(oo,m.o,oo_sp);
+
+     var ob_sp := flownerSplit(ob, m.o);
+     var (ob_All, ob_Sin, ob_Out, ob_Pvt, ob_Xpt) := ob_sp;
+     //  assert flownerSplitOK(ob,m.o,ob_sp);
+
+     var co_sp := flownerSplit(co, m.c);
+     var (co_All, co_Sin, co_Out, co_Pvt, co_Xpt) := co_sp;
+    //  assert flownerSplitOK(co,m.c,co_sp);
+
+     var cb_sp := flownerSplit(cb, m.c);
+     var (cb_All, cb_Sin, cb_Out, cb_Pvt, cb_Xpt) := cb_sp;
+    //  assert flownerSplitOK(cb,m.c,cb_sp);
+
+// ////////////////////////////////////////////////////////////
+// //inside
+//
+// MAPPING_INSIDE(oo,oo_sp,co,co_sp,m);
+// MAPPING_INSIDE(ob,ob_sp,cb,cb_sp,m);
+
+//
+//
+// ////////////////////////////////////////////////////////////
+// //outside
+//
+//      MAPPING_OUTSIDE(oo,oo_sp,co,co_sp,m);
+//       MAPPING_OUTSIDE(ob,ob_sp,cb,cb_sp,m);
+//
+//
+//////////////////////////////////////////////////////////
+// the pivot
+
+    MAPPING_PIVOT(oo,oo_sp,co,co_sp,m);
+    MAPPING_PIVOT(ob,ob_sp,cb,cb_sp,m);
+
+  MAP_THRU_KLON(oo,co,m);
+  MAP_THRU_KLON(ob,cb,m);
+  UNPACK_flownerSplitOK(mapThruKlon(oo,m),m.c,co_sp);
+  UNPACK_flownerSplitOK(mapThruKlon(ob,m),m.c,cb_sp);
+
+assert mapThruKlon(oo,m) == co;
+assert mapThruKlon(ob,m) == cb;
+
+
+
+assume shortcutOnlyPivot(oo,m.o) == flownerOnlyPivot(oo,m.o);
+//
+// by {  ///this line and the next line *only* veryfiy only 2930-2931 - Tue 29 Sept 2026  2930-2931 - 2930-2932
+//   FLOWNER_SHORTCUT_OnlyPivot(oo,m.o,oo_Pvt);
+//    assert shortcutOnlyPivot(oo,m.o) == flattenOnlyPivot(oo,m.o);
+//    assert (shortcutOnlyPivot(oo, m.o) == flattenOnlyPivot(oo, m.o) == {}) || (shortcutOnlyPivot(oo, m.o) == flattenOnlyPivot(oo, m.o) == m.o.AMFO);
+//  }
+ assume flownerOnlyPivot(oo,m.o) == oo_sp.3 == oo_Pvt;
+
+assume shortcutOnlyPivot(ob,m.o) == flownerOnlyPivot(ob,m.o);
+
+// by {
+//   FLOWNER_SHORTCUT_OnlyPivot(ob,m.o,ob_Pvt);
+//    assert shortcutOnlyPivot(ob,m.o) == flattenOnlyPivot(ob,m.o);
+//   assert (shortcutOnlyPivot(ob, m.o) == flattenOnlyPivot(ob, m.o) == {}) || (shortcutOnlyPivot(ob, m.o) == flattenOnlyPivot(ob, m.o) == m.o.AMFO);
+//  }
+ assume flownerOnlyPivot(ob,m.o) == ob_sp.3 == ob_Pvt;
+
+ assert (m.o in oo_Pvt) <== (m.o in ob_Pvt);
+
+
+/// assert (m.o in oo_Pvt) <==> (m.c in co_Pvt);
+
+
+
+
+// assert shortcutOnlyPivot(co,m.c) == flownerOnlyPivot (co,m.c)
+// by {
+//   FLOWNER_SHORTCUT_OnlyPivot(co,m.c,co_Pvt);
+//    assert shortcutOnlyPivot(co,m.c) == flattenOnlyPivot(co,m.c);
+//   // assert (shortcutOnlyPivot(co, m.c) == flattenOnlyPivot(co, m.c) == {}) || (shortcutOnlyPivot(co, m.c) == flattenOnlyPivot(co, m.c) == m.c.AMFO);
+//  }
+//
+// assert shortcutOnlyPivot(cb,m.c) == flownerOnlyPivot(cb,m.c)
+// by {
+//   FLOWNER_SHORTCUT_OnlyPivot(cb,m.c,cb_Pvt);
+//    assert shortcutOnlyPivot(cb,m.c) == flattenOnlyPivot(cb,m.c);
+//   // assert (shortcutOnlyPivot(cb, m.c) == flattenOnlyPivot(cb, m.c) == {}) || (shortcutOnlyPivot(cb, m.c) == flattenOnlyPivot(cb, m.c) == m.c.AMFO);
+//  }
+//
+//
+// // FLOWNER_SHORTCUT_OnlyPivot(co,m.o,co_Pvt);
+// // FLOWNER_SHORTCUT_OnlyPivot(cb,m.o,cb_Pvt);
+// // FLOWNER_SHORTCUT_OnlyPivot(ob,m.o,ob_Pvt);
+// // FLOWNER_SHORTCUT_OnlyPivot(oo,m.o,oo_Pvt);
+// //
+// //
+// // assert shortcutOnlyPivot(oo,m.o) == flownerOnlyPivot(oo,m.o);
+// // assert shortcutOnlyPivot(ob,m.o) == flownerOnlyPivot(ob,m.o);
+// // assert shortcutOnlyPivot(co,m.c) == flownerOnlyPivot(co,m.c);
+// // assert shortcutOnlyPivot(cb,m.c) == flownerOnlyPivot(cb,m.c);
+//
+//
+// assert flownerOnlyPivot(oo,m.o) == oo_sp.3 == oo_Pvt;
+// assert flownerOnlyPivot(ob,m.o) == ob_sp.3 == ob_Pvt;
+// assert flownerOnlyPivot(co,m.o) == co_sp.3 == co_Pvt;
+// assert flownerOnlyPivot(cb,m.o) == cb_sp.3 == cb_Pvt;
+//
+//      assert (m.o in oo_Pvt) <==> (m.c in co_Pvt);
+//      assert (m.o in ob_Pvt) <==> (m.c in cb_Pvt);
+//      assert (m.o in oo_Pvt) <==  (m.c in cb_Pvt);
+//
+//     //  assert co_Sin >= cb_Sin; //Err
+//     //  assert co_Out >= cb_Out; //Err
+//      assert co_Pvt >= cb_Pvt;
+//     //  assert co_Xpt >= cb_Xpt; //Err
+//
+// // FLOWER_JOIN_All(co,cb,m.c);
+// //
+// //      assert co_All >= cb_All;
+// //      assert boundsOK(co,cb);
+// //      assert flatten(co) >= flatten(cb);
+// //      assert stupidlyHappy(co,cb, m.o);
+}
+
+
+
 
 
 
@@ -2761,6 +2935,234 @@ lemma INSIDE_PARALLEL(o0 : Object, o1 : Object, c0 : Object, c1 : Object, m : Kl
 
 
 lemma CLONING_PRESERVES_OWNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound, m : Klon)
+ //is this name OVERKILL???
+ //should it also do bounds?  --- currentlyt NO!
+  requires AllReady(flatten(oo))
+  requires AllReady(flatten(ob))
+  requires AllReady(flatten(co))
+  requires AllReady(flatten(cb))
+  requires klonCalid(m)
+  requires m.m.Keys >= oo
+  requires m.m.Keys >= ob
+
+  requires stupidlyHappy(oo,ob, m.o)
+//  requires flatten(oo) >= flatten(ob)
+
+  requires boundsOK(oo,ob) ////HMM do we *always* hace this or not?
+                           ////I'm not sure we do, e.g. the below :-)
+                           ///our shoudl we unify this with stupidlyHappy??
+////  requires flownerAll(oo) >= flownerAll(ob) // i.e. flatten(oo) >= flatten(ob)
+////requires forall o <- oo :: flatten(o.ownerBound()) >= flatten(ob)
+
+  requires co == mapThruKlon(oo, m)
+  requires cb == mapThruKlon(ob, m)
+
+// ensures boundsOK(co,cb)
+// ensures flatten(co) >= flatten(cb)
+//  ensures stupidlyHappy(co,cb, m.o)
+
+{
+    // assert m.o.Ready();      assert m.c.Ready();
+
+     var oo_sp := flownerSplit(oo, m.o);
+     var (oo_All, oo_Sin, oo_Out, oo_Pvt, oo_Xpt) := oo_sp;
+    //  assert flownerSplitOK(oo,m.o,oo_sp);
+
+     var ob_sp := flownerSplit(ob, m.o);
+     var (ob_All, ob_Sin, ob_Out, ob_Pvt, ob_Xpt) := ob_sp;
+    //  assert flownerSplitOK(ob,m.o,ob_sp);
+
+     var co_sp := flownerSplit(co, m.c);
+     var (co_All, co_Sin, co_Out, co_Pvt, co_Xpt) := co_sp;
+    //  assert flownerSplitOK(co,m.c,co_sp);
+
+     var cb_sp := flownerSplit(cb, m.c);
+     var (cb_All, cb_Sin, cb_Out, cb_Pvt, cb_Xpt) := cb_sp;
+    //  assert flownerSplitOK(cb,m.c,cb_sp);
+
+//
+//
+// //      assert flownerSplitOK(oo,m.o,oo_sp);
+// //      assert flownerSplitOK(ob,m.o,ob_sp);
+// //      assert (oo_Sin) !! (oo_Out + oo_Pvt + oo_Xpt);
+// //      assert (ob_Sin) !! (ob_Out + ob_Pvt + ob_Xpt);
+// //
+// //      assert oo_All >= ob_All;
+// //      assert oo_Sin >= ob_Sin;
+// //      flownerPivotlyOutside_MONOTONIC(oo,ob,m.o);
+// //      assert flownerPivotlyOutside(oo,m.o) >= flownerPivotlyOutside(ob,m.o);
+// //      assert flownerEverythingOutside(oo,m.o) >= flownerEverythingOutside(ob,m.o);
+// //      assert (oo_Out + oo_Pvt + oo_Xpt) >= (ob_Out + ob_Pvt + ob_Xpt);
+// //
+//
+//
+// //      FLOWER_SPLIT_H(oo,ob,m.o);
+// //
+// //      DOUBLE_SPLIT_OnlyPivot(oo, co, oo_sp, co_sp, m);
+// //      DOUBLE_SPLIT_OnlyPivot(ob, cb, ob_sp, cb_sp, m);
+//
+//     //  assert co_sp == splitThruKlon(oo,oo_sp,m);
+//     //  assert cb_sp == splitThruKlon(ob,ob_sp,m);
+//
+//
+//   // assert AllReady(flatten(oo));
+//   // assert AllReady(flatten(ob));
+//   // assert m.o.Ready();
+//   // assert flatten(oo) >= flatten(ob);
+//   // assert stupidlyHappy(oo,ob,m.o);
+//
+//   flownerAll_MONOTONIC(oo,ob,m.o);
+//
+//     //  assert oo_All >= ob_All;
+//     //  assert oo_Sin >= ob_Sin;
+//     //  assert oo_Out >= ob_Out;
+//     //  assert oo_Pvt >= ob_Pvt;
+//     //  assert oo_Xpt >= ob_Xpt;
+//
+//
+// ////////////////////////////////////////////////////////////
+// //oo to co - inside
+// //      assert co_sp == splitThruKlon(oo,oo_sp,m);
+// //      MAP_THRU_KLON(oo,co,m);
+// //      UNPACK_flownerSplitOK(mapThruKlon(oo,m),m.c,co_sp);
+// //      assert oo_Sin == oo_sp.1;
+// //      assert oo_Sin == flownerStrictlyInside(oo,m.o);
+// //      assert co_Sin == co_sp.1;
+// //      assert co_Sin == flownerStrictlyInside(co,m.c);
+// //
+// //               //FOREST_FOOD preconditions
+// //     assert AllReady(oo_sp.0);
+// //     assert AllReady(co_sp.0);
+// //     assert klonCalid(m);
+// //     assert oo <= m.m.Keys;
+// //     assert forall o <- oo_sp.1 :: strictlyInside(o, m.o);
+// //     assert co == mapThruKlon(oo,m);
+// //     assert flownerSplitOK(oo,m.o,oo_sp);
+// //     assert flownerSplitOK(co,m.c,co_sp);
+// //
+// //      FOREST_FOOD(oo,oo_sp,co,co_sp,m);
+//
+// MAPPING_INSIDE(oo,oo_sp,co,co_sp,m);
+//
+// ////////////////////////////////////////////////////////////
+// //ob to cb inside
+// //      assert cb_sp == splitThruKlon(ob,ob_sp,m);
+// //      MAP_THRU_KLON(ob,cb,m);
+// //      UNPACK_flownerSplitOK(mapThruKlon(ob,m),m.c,cb_sp);
+// //      assert ob_Sin == ob_sp.1;
+// //      assert ob_Sin == flownerStrictlyInside(ob,m.o);
+// //      assert cb_Sin == cb_sp.1;
+// //      assert cb_Sin == flownerStrictlyInside(cb,m.c);
+// //
+// //
+// //               //FOREST_FOOD preconditions
+// //     assert AllReady(ob_sp.0);
+// //     assert AllReady(cb_sp.0);
+// //     assert klonCalid(m);
+// //     assert ob <= m.m.Keys;
+// //     assert forall o <- ob_sp.1 :: strictlyInside(o, m.o);
+// //     assert cb == mapThruKlon(ob,m);
+// //     assert flownerSplitOK(ob,m.o,ob_sp);
+// //     assert flownerSplitOK(cb,m.c,cb_sp);
+// //
+// //      FOREST_FOOD(ob,ob_sp,cb,cb_sp,m);
+//
+// MAPPING_INSIDE(ob,ob_sp,cb,cb_sp,m);
+//
+//
+// ////////////////////////////////////////////////////////////
+// //outside
+//
+//      MAPPING_OUTSIDE(oo,oo_sp,co,co_sp,m);
+//       MAPPING_OUTSIDE(ob,ob_sp,cb,cb_sp,m);
+
+
+
+
+
+
+//////////////////////////////////////////////////////////
+// the pivot
+
+     MAPPING_PIVOT(oo,oo_sp,co,co_sp,m);
+     MAPPING_PIVOT(ob,ob_sp,cb,cb_sp,m);
+
+  MAP_THRU_KLON(oo,co,m);
+  MAP_THRU_KLON(ob,cb,m);
+  UNPACK_flownerSplitOK(mapThruKlon(oo,m),m.c,co_sp);
+  UNPACK_flownerSplitOK(mapThruKlon(ob,m),m.c,cb_sp);
+
+assert mapThruKlon(oo,m) == co;
+assert mapThruKlon(ob,m) == cb;
+
+
+
+assert shortcutOnlyPivot(oo,m.o) == flownerOnlyPivot(oo,m.o)
+by {  ///this line and the next line *only* veryfiy only 2930-2931 - Tue 29 Sept 2026  2930-2931 - 2930-2932
+  FLOWNER_SHORTCUT_OnlyPivot(oo,m.o,oo_Pvt);
+   assert shortcutOnlyPivot(oo,m.o) == flattenOnlyPivot(oo,m.o);
+   assert (shortcutOnlyPivot(oo, m.o) == flattenOnlyPivot(oo, m.o) == {}) || (shortcutOnlyPivot(oo, m.o) == flattenOnlyPivot(oo, m.o) == m.o.AMFO);
+ }
+//
+// assert shortcutOnlyPivot(ob,m.o) == flownerOnlyPivot(ob,m.o)
+// by {
+//   FLOWNER_SHORTCUT_OnlyPivot(ob,m.o,ob_Pvt);
+//    assert shortcutOnlyPivot(ob,m.o) == flattenOnlyPivot(ob,m.o);
+//   // assert (shortcutOnlyPivot(ob, m.o) == flattenOnlyPivot(ob, m.o) == {}) || (shortcutOnlyPivot(ob, m.o) == flattenOnlyPivot(ob, m.o) == m.o.AMFO);
+//  }
+//
+// assert shortcutOnlyPivot(co,m.c) == flownerOnlyPivot (co,m.c)
+// by {
+//   FLOWNER_SHORTCUT_OnlyPivot(co,m.c,co_Pvt);
+//    assert shortcutOnlyPivot(co,m.c) == flattenOnlyPivot(co,m.c);
+//   // assert (shortcutOnlyPivot(co, m.c) == flattenOnlyPivot(co, m.c) == {}) || (shortcutOnlyPivot(co, m.c) == flattenOnlyPivot(co, m.c) == m.c.AMFO);
+//  }
+//
+// assert shortcutOnlyPivot(cb,m.c) == flownerOnlyPivot(cb,m.c)
+// by {
+//   FLOWNER_SHORTCUT_OnlyPivot(cb,m.c,cb_Pvt);
+//    assert shortcutOnlyPivot(cb,m.c) == flattenOnlyPivot(cb,m.c);
+//   // assert (shortcutOnlyPivot(cb, m.c) == flattenOnlyPivot(cb, m.c) == {}) || (shortcutOnlyPivot(cb, m.c) == flattenOnlyPivot(cb, m.c) == m.c.AMFO);
+//  }
+//
+//
+// // FLOWNER_SHORTCUT_OnlyPivot(co,m.o,co_Pvt);
+// // FLOWNER_SHORTCUT_OnlyPivot(cb,m.o,cb_Pvt);
+// // FLOWNER_SHORTCUT_OnlyPivot(ob,m.o,ob_Pvt);
+// // FLOWNER_SHORTCUT_OnlyPivot(oo,m.o,oo_Pvt);
+// //
+// //
+// // assert shortcutOnlyPivot(oo,m.o) == flownerOnlyPivot(oo,m.o);
+// // assert shortcutOnlyPivot(ob,m.o) == flownerOnlyPivot(ob,m.o);
+// // assert shortcutOnlyPivot(co,m.c) == flownerOnlyPivot(co,m.c);
+// // assert shortcutOnlyPivot(cb,m.c) == flownerOnlyPivot(cb,m.c);
+//
+//
+// assert flownerOnlyPivot(oo,m.o) == oo_sp.3 == oo_Pvt;
+// assert flownerOnlyPivot(ob,m.o) == ob_sp.3 == ob_Pvt;
+// assert flownerOnlyPivot(co,m.o) == co_sp.3 == co_Pvt;
+// assert flownerOnlyPivot(cb,m.o) == cb_sp.3 == cb_Pvt;
+//
+//      assert (m.o in oo_Pvt) <==> (m.c in co_Pvt);
+//      assert (m.o in ob_Pvt) <==> (m.c in cb_Pvt);
+//      assert (m.o in oo_Pvt) <==  (m.c in cb_Pvt);
+//
+//     //  assert co_Sin >= cb_Sin; //Err
+//     //  assert co_Out >= cb_Out; //Err
+//      assert co_Pvt >= cb_Pvt;
+//     //  assert co_Xpt >= cb_Xpt; //Err
+//
+// // FLOWER_JOIN_All(co,cb,m.c);
+// //
+// //      assert co_All >= cb_All;
+// //      assert boundsOK(co,cb);
+// //      assert flatten(co) >= flatten(cb);
+// //      assert stupidlyHappy(co,cb, m.o);
+}
+
+
+
+lemma  XCLONING_XPRESERVES_XOWNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound, m : Klon)
  //is this name OVERKILL???
  //should it also do bounds?  --- currentlyt NO!
   requires AllReady(flatten(oo))
@@ -2818,10 +3220,12 @@ ensures flatten(co) >= flatten(cb)
 //      assert flownerEverythingOutside(oo,m.o) >= flownerEverythingOutside(ob,m.o);
 //      assert (oo_Out + oo_Pvt + oo_Xpt) >= (ob_Out + ob_Pvt + ob_Xpt);
 //
-     FLOWER_SPLIT_H(oo,ob,m.o);
 
-     DOUBLE_SPLIT_OnlyPivot(oo, co, oo_sp, co_sp, m);
-     DOUBLE_SPLIT_OnlyPivot(ob, cb, ob_sp, cb_sp, m);
+
+//      FLOWER_SPLIT_H(oo,ob,m.o);
+//
+//      DOUBLE_SPLIT_OnlyPivot(oo, co, oo_sp, co_sp, m);
+//      DOUBLE_SPLIT_OnlyPivot(ob, cb, ob_sp, cb_sp, m);
 
     //  assert co_sp == splitThruKlon(oo,oo_sp,m);
     //  assert cb_sp == splitThruKlon(ob,ob_sp,m);
@@ -2909,6 +3313,74 @@ MAPPING_INSIDE(ob,ob_sp,cb,cb_sp,m);
   UNPACK_flownerSplitOK(mapThruKlon(oo,m),m.c,co_sp);
   UNPACK_flownerSplitOK(mapThruKlon(ob,m),m.c,cb_sp);
 
+assert mapThruKlon(oo,m) == co;
+assert mapThruKlon(ob,m) == cb;
+
+FUCK_DAFNY(oo,m.o,oo_Pvt);
+FUCK_DAFNY(ob,m.o,ob_Pvt);
+FUCK_DAFNY(co,m.c,co_Pvt);
+FUCK_DAFNY(cb,m.c,cb_Pvt);
+
+assert shortcutOnlyPivot(oo,m.o) == flownerOnlyPivot(oo,m.o);
+assert shortcutOnlyPivot(ob,m.o) == flownerOnlyPivot(ob,m.o);
+assert shortcutOnlyPivot(co,m.c) == flownerOnlyPivot(co,m.c);
+assert shortcutOnlyPivot(cb,m.c) == flownerOnlyPivot(cb,m.c);
+
+// by {
+//   FLOWNER_SHORTCUT_OnlyPivot(oo,m.o,oo_Pvt);
+//    assert shortcutOnlyPivot(oo,m.o) == flattenOnlyPivot(oo,m.o);
+//   // assert (shortcutOnlyPivot(oo, m.o) == flattenOnlyPivot(oo, m.o) == {}) || (shortcutOnlyPivot(oo, m.o) == flattenOnlyPivot(oo, m.o) == m.o.AMFO);
+//  }
+//
+// assert shortcutOnlyPivot(ob,m.o) == flownerOnlyPivot(ob,m.o)
+// by {
+//   FLOWNER_SHORTCUT_OnlyPivot(ob,m.o,ob_Pvt);
+//    assert shortcutOnlyPivot(ob,m.o) == flattenOnlyPivot(ob,m.o);
+//   // assert (shortcutOnlyPivot(ob, m.o) == flattenOnlyPivot(ob, m.o) == {}) || (shortcutOnlyPivot(ob, m.o) == flattenOnlyPivot(ob, m.o) == m.o.AMFO);
+//  }
+//
+// FLOWNER_FLATTEN_TODO_FOR_ALL(co,m.c);
+// var sop := shortcutOnlyPivot(co,m.c);
+// var fop := flattenOnlyPivot(co,m.c);
+// assert sop == fop
+// by {
+//   if (forall s <- co :: not(inside(s,m.c)))  { assert sop == fop == {}; }
+//     else {
+//      assert exists s <- co :: inside(s,m.c);
+//      assume AllReady(co); assume m.c.Ready();
+//      LEMMA_flattenOnlyPivot9(co,m.c,fop);
+//      assert sop == fop == m.c.AMFO;
+//      assert sop == fop;
+//   // assert (shortcutOnlyPivot(co, m.c) == flattenOnlyPivot(co, m.c) == {}) || (shortcutOnlyPivot(co, m.c) == flattenOnlyPivot(co, m.c) == m.c.AMFO);
+//  } }
+//
+// FUCK_DAFNY(cb,m.c,cb_Pvt);
+// assert shortcutOnlyPivot(cb,m.c) == flownerOnlyPivot(cb,m.c);
+
+// by {
+//   FLOWNER_SHORTCUT_OnlyPivot(cb,m.c,cb_Pvt);
+//    assert shortcutOnlyPivot(cb,m.c) == flattenOnlyPivot(cb,m.c);
+//   // assert (shortcutOnlyPivot(cb, m.c) == flattenOnlyPivot(cb, m.c) == {}) || (shortcutOnlyPivot(cb, m.c) == flattenOnlyPivot(cb, m.c) == m.c.AMFO);
+//  }
+//
+
+// FLOWNER_SHORTCUT_OnlyPivot(co,m.o,co_Pvt);
+// FLOWNER_SHORTCUT_OnlyPivot(cb,m.o,cb_Pvt);
+// FLOWNER_SHORTCUT_OnlyPivot(ob,m.o,ob_Pvt);
+// FLOWNER_SHORTCUT_OnlyPivot(oo,m.o,oo_Pvt);
+//
+//
+// assert shortcutOnlyPivot(oo,m.o) == flownerOnlyPivot(oo,m.o);
+// assert shortcutOnlyPivot(ob,m.o) == flownerOnlyPivot(ob,m.o);
+// assert shortcutOnlyPivot(co,m.c) == flownerOnlyPivot(co,m.c);
+// assert shortcutOnlyPivot(cb,m.c) == flownerOnlyPivot(cb,m.c);
+
+
+assert flownerOnlyPivot(oo,m.o) == oo_sp.3 == oo_Pvt;
+assert flownerOnlyPivot(ob,m.o) == ob_sp.3 == ob_Pvt;
+assert flownerOnlyPivot(co,m.o) == co_sp.3 == co_Pvt;
+assert flownerOnlyPivot(cb,m.o) == cb_sp.3 == cb_Pvt;
+
      assert (m.o in oo_Pvt) <==> (m.c in co_Pvt);
      assert (m.o in ob_Pvt) <==> (m.c in cb_Pvt);
      assert (m.o in oo_Pvt) <==  (m.c in cb_Pvt);
@@ -2925,7 +3397,6 @@ FLOWER_JOIN_All(co,cb,m.c);
      assert flatten(co) >= flatten(cb);
      assert stupidlyHappy(co,cb, m.o);
 }
-
 
 
 
