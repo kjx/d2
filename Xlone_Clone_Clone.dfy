@@ -272,7 +272,7 @@ print "CCC 1001 HERE! WEESA HERE!\n";
 assert AllReady(rowner);
 //  var rbound := proposeBounds(rowner);
 var rbound := mapThruKlon(k.bound, rm);
-
+assert flatten(k.bound) >= flatten(rbound);
 // ghost var XXX := insideThruKlon(k.owner, k.bound, rm);
 // assert XXX;
 
@@ -603,6 +603,10 @@ print "Clone_Clone_Clone ", fmtobj(k), " boodle boodle boodle\n";
 // // /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// ///
   v := new Object.make(k.fieldModes, rowner, context, "clone_of_" + k.nick, rbound);
 print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
+  assert v.Ready();   assert (v.AMFO > v.AMFX >= v.AMFB);
+
+  assert (v.AMFB >= k.AMFB);   assert DUMBO: (v.AMFB >= k.AMFB);
+
 // //// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// ///
 // /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// ///
 // // /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// ///
@@ -1019,16 +1023,41 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
 // /////////////////////////////////////////////////////////////// ///////
 
 
-  // assert klonReady(rm);
-  // assert klonCalid(rm);
-  // assert rm.ownersInKlon(k);
-  // assert k  in rm.oHeap;
-  // assert COK(k,rm.oHeap);
-  // assert k !in rm.m.Keys;
-  // assert v !in rm.m.Values;
-  // assert klonLine(k,v,rm);
-  // CKV_PRECONDS(k,v,rm);
-  // assert rm.CKV_preconditions(k,v);
+  assert klonReady(rm);
+  assert klonCalid(rm);
+  assert rm.ownersInKlon(k);
+  assert k  in rm.oHeap;
+  assert COK(k,rm.oHeap) by {reveal COK(); reveal COKA; }
+  assert k.Ready() by {reveal COK(); reveal COKA; }
+  assert (k.AMFO > k.AMFX >= k.AMFB);  assert IDIOT: (k.AMFO > k.AMFX >= k.AMFB);
+  assert k !in rm.m.Keys;
+  assert v !in rm.m.Values;
+
+
+          assert (k.Ready() && k in rm.oHeap    && k.Valid() && k.Context(rm.oHeap));
+          assert (v.Ready() && v in rm.hns({v}) && v.Valid() && v.Context(rm.hns({v})));
+          assert (rm.m.Keys >= k.AMFX);
+          assert (k.AMFO   >  k.AMFB) by { reveal IDIOT; }
+          assert (v.AMFO   >= v.AMFB);
+          assert (v.AMFB   >= k.AMFB) by { reveal DUMBO; }
+      assert klonBound(k,v,rm);
+
+      assert klonModes(k,v,rm);
+
+          assert (m.o.Ready());
+          assert (m.objectInKlon(m.o));
+          assert ( (k == m.o)       <==>  (v == m.c)  );
+          assert ((inside(k, m.o))   ==> (k.AMFB  <= m.o.AMFB));
+          assert (outside(k, m.o)   <==>  (v == k));
+          assert ( inside(k, m.o)   <==>  inside(v, m.c) );
+          assert (outside(k, m.c));
+          assert ((inside(k,m.o)) ==> (v !in m.oHeap));
+      assert klonGeometry(k,v,rm);
+      assert klonIdentity(k,v,rm);
+
+  assert klonLine(k,v,rm);
+  CKV_PRECONDS(k,v,rm);
+  assert rm.CKV_preconditions(k,v);
 
     assert klonReady(rm);
     assert klonCalid(rm);
@@ -1102,15 +1131,15 @@ print "BACK FROM MAKE with ",fmtobj(v)," owner=", fmtown(v.owner),"\n";
   XCC_decreases_to_XAF(k,v,xm);
 //
 // //////////////////////////////////////////////////////////////////////
-  // assert klonReady(xm);
-  // assert klonCalid(xm);
-  // assert xm.objectInKlon(k);
-  // assert COK(k,xm.oHeap);
-  // assert v.Context(xm.hns({v}));
-  // assert inside(k, xm.o);
-  // assert xm.m[k] == v;
+  assert klonReady(xm);
+  assert klonCalid(xm);
+  assert xm.objectInKlon(k);
+  assert COK(k,xm.oHeap);
+  assert v.Context(xm.hns({v}));
+  assert inside(k, xm.o);
+  assert xm.m[k] == v;
 // //////////////////////////////////////////////////////////////////////
-// assert COK(k, xm.oHeap);
+assert COK(k, xm.oHeap);
   m := /*FAKE_*/Xlone_All_Fields(k,v, xm); //this was deleted - who the fuck knows how long for?  . - likely can't called precondis...
 
 //

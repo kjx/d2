@@ -1386,7 +1386,7 @@ lemma MAP_THRU_KLON(oo : Owner, rv : Owner, m : Klon)
      ensures forall o <- oo | strictlyInside(o,m.o) :: (o != m.m[o]) && strictlyInside(m.m[o],m.c) && (m.m[o] in rv)
 
      ensures forall r <- rv :: exists o <- oo :: m.m[o] == r
-     ensures (m.c in rv) ==> ((m.m[m.o] == m.c) && (m.o in oo))
+     ensures (m.c in rv) <==> ((m.m[m.o] == m.c) && (m.o in oo))
      ensures forall r <- rv :: var o :| (o in oo) && (m.m[o] == r); klonLine(o,r,m)
      ensures forall r <- rv | outside(r,m.c) :: (r == m.m[r]) && outside(r,m.o) && (m.m[r] in oo)
      ensures forall r <- rv :: var o :| (o in oo)  && (m.m[o] == r);  strictlyInside(o,m.o) ==> (o != m.m[o])

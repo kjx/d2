@@ -1143,11 +1143,10 @@ lemma BUGGERY(soup0 : Owner, soup1 : Owner, owner : Object, pivot : Object)
    {}
 
 
-// function stupidlyHappy(soup0 : Owner, soup1 : Owner)
 
 function roots(soup0 : Owner, soup1 : Owner) : Owner {soup0 + soup1}
 
-predicate stupidlyHappy(soup0 : Owner, soup1 : Owner, pivot : Object)
+predicate stupidlyHappy(soup0 : Owner, soup1 : Owner, pivot : Object) : (rv : bool)
 // I'm stupidly happy
 // With idiot grin
 // I'm stupidly happy
@@ -1530,6 +1529,7 @@ predicate flownerSplitOK(soup : OWNR, pivot : Object, split : FlownerSplit)
   requires AllReady(flatten(soup)) && pivot.Ready()
   {
      var (fAll, fSin, fOut, fPvt, fXpt) := split;
+//perhaps needz the soup in this too - when we convert it to a datatype?
 
      && (fAll == flownerAll(soup))
      && (fSin == flownerStrictlyInside(soup,pivot))
@@ -1543,11 +1543,23 @@ predicate flownerSplitOK(soup : OWNR, pivot : Object, split : FlownerSplit)
      && fSin !! (fOut + fPvt + fXpt)
   }
 
-//  assert fAll == flownerAll(soup);
-//  assert fSin == flownerStrictlyInside(soup,pivot);
-//  assert fOut == flownerStrictlyOutside(soup,pivot);
-//  assert fPvt == flownerOnlyPivot(soup,pivot);
-//  assert fXpt == flownerExceptPivot(soup,pivot);
+
+lemma UNPACK_flownerSplitOK(soup : OWNR, pivot : Object, split : FlownerSplit)
+  requires AllReady(flatten(soup)) && pivot.Ready()
+  requires flownerSplitOK(soup,pivot,split)
+
+   ensures (split.0 == flownerAll(soup))
+   ensures (split.1 == flownerStrictlyInside(soup,pivot))
+   ensures (split.2 == flownerStrictlyOutside(soup,pivot))
+   ensures (split.3 == flownerOnlyPivot(soup,pivot))
+   ensures (split.4 == flownerExceptPivot(soup,pivot))
+   ensures ((split.2 + split.3 + split.4) == flownerEverythingOutside(soup,pivot))
+   ensures ((split.2 + split.3 + split.4) == flownerPivotlyOutside(soup,pivot))
+   ensures (split.0 == split.1 + split.2 + split.3 + split.4)
+   ensures split.1 !! (split.2 + split.3 + split.4)
+{}
+
+
 
 lemma FLOWNER_ALL_ALL(soup : OWNR, pivot : Object)
  //verified 20 Sep 2026
@@ -2553,27 +2565,34 @@ predicate woodReal(o : Object, c : Object, m : Klon)
 }
 
 
-lemma FOREST_REAL(os : Owner, cs : Owner, m : Klon)
+lemma FOREST_REAL(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : FlownerSplit, m : Klon)
     //wood_read --- outside
    //lifts WOOD_REAL to FOREST - verifies on lately with nothing in the body...? 38s
    requires AllReady(flatten(os))
    requires AllReady(flatten(cs))
    requires klonCalid(m)
 
-   requires os <= m.m.Keys
-   requires forall o <- os :: outside(o, m.o)
+   requires os      <= m.m.Keys
+   requires os_sp.2 <= m.m.Keys
+   requires os_sp.4 <= m.m.Keys
+   requires forall o <- os_sp.2 :: outside(o, m.o)
+   requires forall o <- os_sp.4 :: outside(o, m.o)
    requires cs == mapThruKlon(os,m)
 
     ensures forall o <- os :: klonLine(o,m.m[o],m)
     ensures forall o <- os :: klonGeometry(o,m.m[o],m)
     ensures forall o <- os :: klonIdentity(o,m.m[o],m)
-    ensures forall o <- os :: m.m[o] == o != m.o
-    ensures forall o <- os :: m.m[o].owner == o.owner
-    ensures forall o <- os :: m.m[o].bound == o.bound
+    ensures forall o <- os_sp.2 :: m.m[o] == o != m.o
+    ensures forall o <- os_sp.4 :: m.m[o] == o != m.o
 
-    ensures forall o <- os :: woodReal(o,m.m[o],m)
+    ensures forall o <- os_sp.2 :: woodReal(o,m.m[o],m)
+    ensures forall o <- os_sp.4 :: woodReal(o,m.m[o],m)
 {
-forall o <- os ensures (woodReal(o,m.m[o],m)) //by
+forall o <- os_sp.2 ensures (woodReal(o,m.m[o],m)) //by
+ {
+  WOOD_REAL(o,m.m[o],m);
+ }
+forall o <- os_sp.4 ensures (woodReal(o,m.m[o],m)) //by
  {
   WOOD_REAL(o,m.m[o],m);
  }
@@ -2584,28 +2603,29 @@ forall o <- os ensures (woodReal(o,m.m[o],m)) //by
 //***or is that what it needs to be finding??***
 //      WOOD_FOOD(o,m.m[o],m);
 
-lemma FOREST_FOOD(os : Owner, cs : Owner, m : Klon)
+lemma FOREST_FOOD(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : FlownerSplit, m : Klon)
     //wood_food - strictlyInside
-    // arguments should really be: os_Sin, cs_Sin
    //lifts WOOD_FOOD to FOREST - verifies on lately with nothing in the body...? 38s
-   requires AllReady(flatten(os))
-   requires AllReady(flatten(cs))
+   requires AllReady(os_sp.0)
+   requires AllReady(cs_sp.0)
    requires klonCalid(m)
 
    requires os <= m.m.Keys
-   requires forall o <- os :: strictlyInside(o, m.o)
+   requires forall o <- os_sp.1 :: strictlyInside(o, m.o)
    requires cs == mapThruKlon(os,m)
+   requires flownerSplitOK(os, m.o,os_sp)
+   requires flownerSplitOK(cs, m.c,cs_sp)
 
     ensures forall o <- os :: klonLine(o,m.m[o],m)
     ensures forall o <- os :: klonGeometry(o,m.m[o],m)
     ensures forall o <- os :: klonIdentity(o,m.m[o],m)
-    ensures forall o <- os :: strictlyInside(m.m[o],m.c) && (o != m.m[o])
-    ensures forall o <- os :: m.m[o].owner == mapThruKlon(o.owner, m)
-    ensures forall o <- os :: m.m[o].bound == mapThruKlon(o.bound, m)
+    ensures forall o <- os_sp.1 :: strictlyInside(m.m[o],m.c) && (o != m.m[o])
+    ensures forall o <- os_sp.1 :: m.m[o].owner == mapThruKlon(o.owner, m)
+    ensures forall o <- os_sp.1 :: m.m[o].bound == mapThruKlon(o.bound, m)
 
-    ensures forall o <- os :: woodFood(o,m.m[o],m)
+    ensures forall o <- os_sp.1 :: woodFood(o,m.m[o],m)
 {
-forall o <- os ensures (woodFood(o,m.m[o],m)) //by
+forall o <- os_sp.1 ensures (woodFood(o,m.m[o],m)) //by
  {
   WOOD_FOOD(o,m.m[o],m);
  }
@@ -2763,210 +2783,387 @@ lemma CLONING_PRESERVES_OWNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound
   requires co == mapThruKlon(oo, m)
   requires cb == mapThruKlon(ob, m)
 
-// ensures boundsOK(co,cb)
-//    ensures flatten(co) >= flatten(cb)
-//  ensures stupidlyHappy(co,cb, m.o)
+ensures boundsOK(co,cb)
+ensures flatten(co) >= flatten(cb)
+ ensures stupidlyHappy(co,cb, m.o)
 
 {
-    assert m.o.Ready();      assert m.c.Ready();
+    // assert m.o.Ready();      assert m.c.Ready();
 
      var oo_sp := flownerSplit(oo, m.o);
      var (oo_All, oo_Sin, oo_Out, oo_Pvt, oo_Xpt) := oo_sp;
-     assert flownerSplitOK(oo,m.o,oo_sp);
+    //  assert flownerSplitOK(oo,m.o,oo_sp);
 
      var ob_sp := flownerSplit(ob, m.o);
      var (ob_All, ob_Sin, ob_Out, ob_Pvt, ob_Xpt) := ob_sp;
-     assert flownerSplitOK(ob,m.o,ob_sp);
+    //  assert flownerSplitOK(ob,m.o,ob_sp);
 
      var co_sp := flownerSplit(co, m.c);
      var (co_All, co_Sin, co_Out, co_Pvt, co_Xpt) := co_sp;
-     assert flownerSplitOK(co,m.c,co_sp);
+    //  assert flownerSplitOK(co,m.c,co_sp);
 
      var cb_sp := flownerSplit(cb, m.c);
      var (cb_All, cb_Sin, cb_Out, cb_Pvt, cb_Xpt) := cb_sp;
-     assert flownerSplitOK(cb,m.c,cb_sp);
+    //  assert flownerSplitOK(cb,m.c,cb_sp);
 
-     assert flownerSplitOK(oo,m.o,oo_sp);
-     assert flownerSplitOK(ob,m.o,ob_sp);
-     assert (oo_Sin) !! (oo_Out + oo_Pvt + oo_Xpt);
-     assert (ob_Sin) !! (ob_Out + ob_Pvt + ob_Xpt);
-
-     assert oo_All >= ob_All;
-     assert oo_Sin >= ob_Sin;
-     flownerPivotlyOutside_MONOTONIC(oo,ob,m.o);
-     assert flownerPivotlyOutside(oo,m.o) >= flownerPivotlyOutside(ob,m.o);
-     assert flownerEverythingOutside(oo,m.o) >= flownerEverythingOutside(ob,m.o);
-     assert (oo_Out + oo_Pvt + oo_Xpt) >= (ob_Out + ob_Pvt + ob_Xpt);
-
+//      assert flownerSplitOK(oo,m.o,oo_sp);
+//      assert flownerSplitOK(ob,m.o,ob_sp);
+//      assert (oo_Sin) !! (oo_Out + oo_Pvt + oo_Xpt);
+//      assert (ob_Sin) !! (ob_Out + ob_Pvt + ob_Xpt);
+//
+//      assert oo_All >= ob_All;
+//      assert oo_Sin >= ob_Sin;
+//      flownerPivotlyOutside_MONOTONIC(oo,ob,m.o);
+//      assert flownerPivotlyOutside(oo,m.o) >= flownerPivotlyOutside(ob,m.o);
+//      assert flownerEverythingOutside(oo,m.o) >= flownerEverythingOutside(ob,m.o);
+//      assert (oo_Out + oo_Pvt + oo_Xpt) >= (ob_Out + ob_Pvt + ob_Xpt);
+//
      FLOWER_SPLIT_H(oo,ob,m.o);
 
      DOUBLE_SPLIT_OnlyPivot(oo, co, oo_sp, co_sp, m);
      DOUBLE_SPLIT_OnlyPivot(ob, cb, ob_sp, cb_sp, m);
 
-     assert (m.o in oo_Pvt) <==> (m.c in co_Pvt);
-     assert (m.o in ob_Pvt) <==> (m.c in cb_Pvt);
-     assert (m.o in oo_Pvt) <==  (m.c in cb_Pvt);
-     //assert co_Pvt >= cb_Pvt;
+    //  assert co_sp == splitThruKlon(oo,oo_sp,m);
+    //  assert cb_sp == splitThruKlon(ob,ob_sp,m);
 
 
-     assert co_sp == splitThruKlon(oo,oo_sp,m);
-     assert cb_sp == splitThruKlon(ob,ob_sp,m);
-
-
-  assert AllReady(flatten(oo));
-  assert AllReady(flatten(ob));
-  assert m.o.Ready();
-  assert flatten(oo) >= flatten(ob);
-  assert stupidlyHappy(oo,ob, m.o);
+  // assert AllReady(flatten(oo));
+  // assert AllReady(flatten(ob));
+  // assert m.o.Ready();
+  // assert flatten(oo) >= flatten(ob);
+  // assert stupidlyHappy(oo,ob,m.o);
 
   flownerAll_MONOTONIC(oo,ob,m.o);
 
-     assert oo_All >= ob_All;
-     assert oo_Sin >= ob_Sin;
-     assert oo_Out >= ob_Out;
-     assert oo_Pvt >= ob_Pvt;
-     assert oo_Xpt >= ob_Xpt;
-
-     assert co_sp == splitThruKlon(oo,oo_sp,m);
+    //  assert oo_All >= ob_All;
+    //  assert oo_Sin >= ob_Sin;
+    //  assert oo_Out >= ob_Out;
+    //  assert oo_Pvt >= ob_Pvt;
+    //  assert oo_Xpt >= ob_Xpt;
 
 
+////////////////////////////////////////////////////////////
+//oo to co - inside
+//      assert co_sp == splitThruKlon(oo,oo_sp,m);
+//      MAP_THRU_KLON(oo,co,m);
+//      UNPACK_flownerSplitOK(mapThruKlon(oo,m),m.c,co_sp);
+//      assert oo_Sin == oo_sp.1;
+//      assert oo_Sin == flownerStrictlyInside(oo,m.o);
+//      assert co_Sin == co_sp.1;
+//      assert co_Sin == flownerStrictlyInside(co,m.c);
+//
+//               //FOREST_FOOD preconditions
+//     assert AllReady(oo_sp.0);
+//     assert AllReady(co_sp.0);
+//     assert klonCalid(m);
+//     assert oo <= m.m.Keys;
+//     assert forall o <- oo_sp.1 :: strictlyInside(o, m.o);
+//     assert co == mapThruKlon(oo,m);
+//     assert flownerSplitOK(oo,m.o,oo_sp);
+//     assert flownerSplitOK(co,m.c,co_sp);
+//
+//      FOREST_FOOD(oo,oo_sp,co,co_sp,m);
 
-//FOREST_FOOD preconditions
-   assert AllReady(flatten(oo_Sin));
-   assert AllReady(flatten(co_Sin));
+MAPPING_INSIDE(oo,oo_sp,co,co_sp,m);
+
+////////////////////////////////////////////////////////////
+//ob to cb inside
+//      assert cb_sp == splitThruKlon(ob,ob_sp,m);
+//      MAP_THRU_KLON(ob,cb,m);
+//      UNPACK_flownerSplitOK(mapThruKlon(ob,m),m.c,cb_sp);
+//      assert ob_Sin == ob_sp.1;
+//      assert ob_Sin == flownerStrictlyInside(ob,m.o);
+//      assert cb_Sin == cb_sp.1;
+//      assert cb_Sin == flownerStrictlyInside(cb,m.c);
+//
+//
+//               //FOREST_FOOD preconditions
+//     assert AllReady(ob_sp.0);
+//     assert AllReady(cb_sp.0);
+//     assert klonCalid(m);
+//     assert ob <= m.m.Keys;
+//     assert forall o <- ob_sp.1 :: strictlyInside(o, m.o);
+//     assert cb == mapThruKlon(ob,m);
+//     assert flownerSplitOK(ob,m.o,ob_sp);
+//     assert flownerSplitOK(cb,m.c,cb_sp);
+//
+//      FOREST_FOOD(ob,ob_sp,cb,cb_sp,m);
+
+MAPPING_INSIDE(ob,ob_sp,cb,cb_sp,m);
+
+
+////////////////////////////////////////////////////////////
+//outside
+
+     MAPPING_OUTSIDE(oo,oo_sp,co,co_sp,m);
+     MAPPING_OUTSIDE(ob,ob_sp,cb,cb_sp,m);
+
+//////////////////////////////////////////////////////////
+// the pivot
+
+     MAPPING_PIVOT(oo,oo_sp,co,co_sp,m);
+     MAPPING_PIVOT(ob,ob_sp,cb,cb_sp,m);
+
+  MAP_THRU_KLON(oo,co,m);
+  MAP_THRU_KLON(ob,cb,m);
+  UNPACK_flownerSplitOK(mapThruKlon(oo,m),m.c,co_sp);
+  UNPACK_flownerSplitOK(mapThruKlon(ob,m),m.c,cb_sp);
+
+assert 
+
+     assert (m.o in oo_Pvt) <==> (m.c in co_Pvt);
+     assert (m.o in ob_Pvt) <==> (m.c in cb_Pvt);
+     assert (m.o in oo_Pvt) <==  (m.c in cb_Pvt);
+
+     assert co_Sin >= cb_Sin; //Err
+     assert co_Out >= cb_Out; //Err
+     assert co_Pvt >= cb_Pvt;
+     assert co_Xpt >= cb_Xpt; //Err
+
+FLOWER_JOIN_All(co,cb,m.c);
+
+     assert co_All >= cb_All;
+     assert boundsOK(co,cb);
+     assert flatten(co) >= flatten(cb);
+     assert stupidlyHappy(co,cb, m.o);
+}
+
+
+
+
+lemma MAPPING_INSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : FlownerSplit, m : Klon)
+   requires AllReady(os_sp.0)
+   requires AllReady(cs_sp.0)
+   requires klonCalid(m)
+
+   requires os <= m.m.Keys
+   requires forall o <- os_sp.1 :: strictlyInside(o, m.o)
+   requires cs == mapThruKlon(os,m)
+   requires flownerSplitOK(os, m.o,os_sp)
+   requires flownerSplitOK(cs, m.c,cs_sp)
+
+    ensures forall o <- os :: klonLine(o,m.m[o],m)
+    ensures forall o <- os :: klonGeometry(o,m.m[o],m)
+    ensures forall o <- os :: klonIdentity(o,m.m[o],m)
+    ensures forall o <- os_sp.1 :: strictlyInside(m.m[o],m.c) && (o != m.m[o])
+    ensures forall o <- os_sp.1 :: m.m[o].owner == mapThruKlon(o.owner, m)
+    ensures forall o <- os_sp.1 :: m.m[o].bound == mapThruKlon(o.bound, m)
+
+    ensures forall o <- os_sp.1 :: woodFood(o,m.m[o],m)
+{
+     assert cs_sp == splitThruKlon(os,os_sp,m);
+     MAP_THRU_KLON(os,cs,m);
+     UNPACK_flownerSplitOK(mapThruKlon(os,m),m.c,cs_sp);
+
+//      var os_Sin := os_sp.1;
+//      var cs_Sin := cs_sp.1;
+//      assert os_Sin == flownerStrictlyInside(os,m.o);
+//      assert cs_Sin == flownerStrictlyInside(cs,m.c);
+//
+//     assert AllReady(os_sp.0);
+//     assert AllReady(cs_sp.0);
+//     assert klonCalid(m);
+//     assert os <= m.m.Keys;
+//     assert forall o <- os_sp.1 :: strictlyInside(o, m.o);
+//     assert cs == mapThruKlon(os,m);
+//     assert flownerSplitOK(os,m.o,os_sp);
+//     assert flownerSplitOK(cs,m.c,cs_sp);
+
+     FOREST_FOOD(os,os_sp,cs,cs_sp,m);
+
+}
+
+
+
+lemma MAPPING_PIVOT(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : FlownerSplit, m : Klon)
+   requires AllReady(os_sp.0)
+   requires AllReady(cs_sp.0)
+   requires klonCalid(m)
+
+   requires os <= m.m.Keys
+   requires os_sp.3 == flownerOnlyPivot(os,m.o)
+   requires cs == mapThruKlon(os,m)
+   requires flownerSplitOK(os, m.o,os_sp)
+   requires flownerSplitOK(cs, m.c,cs_sp)
+
+    ensures forall o <- os_sp.3  :: klonLine(o,m.m[o],m)
+    ensures forall o <- os_sp.3  :: klonGeometry(o,m.m[o],m)
+    ensures forall o <- os_sp.3  :: klonIdentity(o,m.m[o],m)
+
+    ensures woodTrap(m.o,m.c,m)
+{
+     assert cs_sp == splitThruKlon(os,os_sp,m);
+     MAP_THRU_KLON(os,cs,m);
+     UNPACK_flownerSplitOK(mapThruKlon(os,m),m.c,cs_sp);
+     WOOD_TRAP(m.o,m.c,m);
+}
+
+
+lemma MAPPING_OUTSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : FlownerSplit, m : Klon)
+   requires AllReady(os_sp.0)
+   requires AllReady(cs_sp.0)
+   requires klonCalid(m)
+
+   requires os <= m.m.Keys
+   requires forall o <- os_sp.2 :: outside(o, m.o)
+   requires cs == mapThruKlon(os,m)
+   requires flownerSplitOK(os, m.o,os_sp)
+   requires flownerSplitOK(cs, m.c,cs_sp)
+
+    ensures forall o <- os :: klonLine(o,m.m[o],m)
+    ensures forall o <- os :: klonGeometry(o,m.m[o],m)
+    ensures forall o <- os :: klonIdentity(o,m.m[o],m)
+    ensures forall o : Object <- (os_sp.2) :: outside(o,m.o) && (o == m.m[o] != m.o)
+    // ensures forall o : Object <- (os_sp.2) :: o.owner == m.m[o].owner
+    // ensures forall o : Object <- (os_sp.2) :: o.bound == m.m[o].bound
+    ensures forall o : Object <- (os_sp.4) :: outside(o,m.o) && (o == m.m[o] != m.o)
+    // ensures forall o : Object <- (os_sp.4) :: o.owner == m.m[o].owner
+    // ensures forall o : Object <- (os_sp.4) :: o.bound == m.m[o].bound
+
+    ensures forall o <- (os_sp.2) :: woodReal(o,m.m[o],m)
+    ensures forall o <- (os_sp.4) :: woodReal(o,m.m[o],m)
+{
+     assert cs_sp == splitThruKlon(os,os_sp,m);
+     MAP_THRU_KLON(os,cs,m);
+     UNPACK_flownerSplitOK(mapThruKlon(os,m),m.c,cs_sp);
+//
+//     assert cs == mapThruKlon(os,m);
+//     assert flownerSplitOK(os,m.o,os_sp);
+//     assert flownerSplitOK(cs,m.c,cs_sp);
+
+     var os_Out := os_sp.2;
+     var cs_Out := cs_sp.2;
+     assert os_Out == flownerStrictlyOutside(os,m.o);
+     assert cs_Out == flownerStrictlyOutside(cs,m.c);
+
+     var os_Xpt := os_sp.4;
+     var cs_Xpt := cs_sp.4;
+     assert os_Xpt == flownerExceptPivot(os,m.o);
+     assert cs_Xpt == flownerExceptPivot(cs,m.c);
+
+    assert AllReady(os_sp.0);
+    assert AllReady(cs_sp.0);
+    assert klonCalid(m);
+    assert os <= m.m.Keys;
+    // assert forall o <- os_Out :: outside(o, m.o);
+    // assert forall o <- cs_Out :: outside(o, m.c);
+    // assert forall o <- os_Xpt :: exists s <- os_sp.0 :: exceptPivot(o, m.o, o);
+    // assert forall o <- cs_Xpt :: exists s <- cs_sp.0 :: exceptPivot(o, m.c, o);
+
+
+   assert AllReady(flatten(os));
+   assert AllReady(flatten(cs));
+   assert AllReady(flatten(os_sp.2));
+   assert AllReady(flatten(cs_sp.2));
+   assert AllReady(flatten(os_sp.4));
+   assert AllReady(flatten(cs_sp.4));
    assert klonCalid(m);
-   assert oo_Sin <= m.m.Keys;
-   assert forall o <- oo_Sin :: strictlyInside(o, m.o);
-   assert co_Sin == mapThruKlon(oo_Sin,m);
+   assert os      <= m.m.Keys;
+   assert os_sp.2 <= m.m.Keys;
+   assert os_sp.4 <= m.m.Keys;
 
-     FOREST_FOOD(oo_Sin,co_Sin,m);
+   assert forall o <- os_sp.2 :: outside(o, m.o);
+   assert forall o <- os_sp.4 :: outside(o, m.o);
+   assert cs == mapThruKlon(os,m);
+
+    FOREST_REAL(os, os_sp,cs,cs_sp,m);
+}
 
 
+//
+//
+// lemma COLDING_PRESERVES_OLDERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound, m : Klon)
+//  //is this name OVERKILL???
+//  //should it also do bounds?  --- currentlyt NO!
+//   requires AllReady(flatten(oo))
+//   requires AllReady(flatten(ob))
+//   requires AllReady(flatten(co))
+//   requires AllReady(flatten(cb))
+//   requires klonCalid(m)
+//   requires m.m.Keys >= oo
+//   requires m.m.Keys >= ob
+//
+//  requires boundsOK(oo,ob)
+// //  requires flownerAll(oo) >= flownerAll(ob) // i.e. flatten(oo) >= flatten(ob)
+//   requires flatten(oo) >= flatten(ob)
+// //requires forall o <- oo :: flatten(o.ownerBound()) >= flatten(ob)
+//
+//
+//   requires co == mapThruKlon(oo, m)
+//   requires cb == mapThruKlon(ob, m)
+//
+// // ensures boundsOK(co,cb)
+// //    ensures flatten(co) >= flatten(cb)
+// {
+//     assert m.o.Ready();      assert m.c.Ready();
+//
+//      var oo_sp := flownerSplit(oo, m.o);
+//      var (oo_All, oo_Sin, oo_Out, oo_Pvt, oo_Xpt) := oo_sp;
+//      assert flownerSplitOK(oo,m.o,oo_sp);
+//
+//      var ob_sp := flownerSplit(ob, m.o);
+//      var (ob_All, ob_Sin, ob_Out, ob_Pvt, ob_Xpt) := ob_sp;
+//      assert flownerSplitOK(ob,m.o,ob_sp);
+//
+//      var co_sp := flownerSplit(co, m.c);
+//      var (co_All, co_Sin, co_Out, co_Pvt, co_Xpt) := co_sp;
+//      assert flownerSplitOK(co,m.c,co_sp);
+//
+//      var cb_sp := flownerSplit(cb, m.c);
+//      var (cb_All, cb_Sin, cb_Out, cb_Pvt, cb_Xpt) := cb_sp;
+//      assert flownerSplitOK(cb,m.c,cb_sp);
+//
+//      assert flownerSplitOK(oo,m.o,oo_sp);
+//      assert flownerSplitOK(ob,m.o,ob_sp);
+//      assert (oo_Sin) !! (oo_Out + oo_Pvt + oo_Xpt);
+//      assert (ob_Sin) !! (ob_Out + ob_Pvt + ob_Xpt);
+//
+//      assert oo_All >= ob_All;
+//      assert oo_Sin >= ob_Sin;
+//      flownerPivotlyOutside_MONOTONIC(oo,ob,m.o);
+//      assert flownerPivotlyOutside(oo,m.o) >= flownerPivotlyOutside(ob,m.o);
+//      assert flownerEverythingOutside(oo,m.o) >= flownerEverythingOutside(ob,m.o);
+//      assert (oo_Out + oo_Pvt + oo_Xpt) >= (ob_Out + ob_Pvt + ob_Xpt);
+//
+//      FLOWER_SPLIT_H(oo,ob,m.o);
+//
+//      DOUBLE_SPLIT_OnlyPivot(oo, co, oo_sp, co_sp, m);
+//      DOUBLE_SPLIT_OnlyPivot(ob, cb, ob_sp, cb_sp, m);
+//
+//      assert (m.o in oo_Pvt) <==> (m.c in co_Pvt);
+//      assert (m.o in ob_Pvt) <==> (m.c in cb_Pvt);
+//      assert (m.o in oo_Pvt) <==  (m.c in cb_Pvt);
+//      //assert co_Pvt >= cb_Pvt;
+//
+//      assert co_sp == splitThruKlon(oo,oo_sp,m);
 //      assert cb_sp == splitThruKlon(ob,ob_sp,m);
 //
+//      assert oo_All >= ob_All;
 //
-//    assert AllReady(flatten(ob_Sin));
-//    assert AllReady(flatten(cb_Sin));
-//    assert klonCalid(m);
-//    assert ob_Sin <= m.m.Keys;
-//    assert forall o <- ob_Sin :: strictlyInside(o, m.o);
-//    assert cb_Sin == mapThruKlon(ob_Sin,m);
+//      assert oo_Sin >= ob_Sin;
+//      assert oo_Out >= ob_Out;
+//      assert oo_Pvt >= ob_Pvt;
+//      assert oo_Xpt >= ob_Xpt;
 //
+//      FOREST_FOOD(oo_Sin,co_Sin,m);
 //      FOREST_FOOD(ob_Sin,cb_Sin,m);
-
-
+//
 //      FOREST_REAL(oo_Out,co_Out,m);
 //      FOREST_REAL(ob_Out,cb_Out,m);
 //
 //      FOREST_REAL(oo_Xpt,co_Xpt,m);
 //      FOREST_REAL(ob_Xpt,cb_Xpt,m);
 //
-//
 //      assert co_Sin >= cb_Sin; //Err
 //      assert co_Out >= cb_Out; //Err
-//      assert co_Pvt >= cb_Pvt;
+//      assert co_Pvt >= cb_Pvt; //Err?
 //      assert co_Xpt >= cb_Xpt; //Err
 //
-// FLOWER_JOIN_All(co,cb,m.c);
-//
 //      assert co_All >= cb_All;
-}
-
-
-
-
-lemma COLDING_PRESERVES_OLDERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound, m : Klon)
- //is this name OVERKILL???
- //should it also do bounds?  --- currentlyt NO!
-  requires AllReady(flatten(oo))
-  requires AllReady(flatten(ob))
-  requires AllReady(flatten(co))
-  requires AllReady(flatten(cb))
-  requires klonCalid(m)
-  requires m.m.Keys >= oo
-  requires m.m.Keys >= ob
-
- requires boundsOK(oo,ob)
-//  requires flownerAll(oo) >= flownerAll(ob) // i.e. flatten(oo) >= flatten(ob)
-  requires flatten(oo) >= flatten(ob)
-//requires forall o <- oo :: flatten(o.ownerBound()) >= flatten(ob)
-
-
-  requires co == mapThruKlon(oo, m)
-  requires cb == mapThruKlon(ob, m)
-
-// ensures boundsOK(co,cb)
-//    ensures flatten(co) >= flatten(cb)
-{
-    assert m.o.Ready();      assert m.c.Ready();
-
-     var oo_sp := flownerSplit(oo, m.o);
-     var (oo_All, oo_Sin, oo_Out, oo_Pvt, oo_Xpt) := oo_sp;
-     assert flownerSplitOK(oo,m.o,oo_sp);
-
-     var ob_sp := flownerSplit(ob, m.o);
-     var (ob_All, ob_Sin, ob_Out, ob_Pvt, ob_Xpt) := ob_sp;
-     assert flownerSplitOK(ob,m.o,ob_sp);
-
-     var co_sp := flownerSplit(co, m.c);
-     var (co_All, co_Sin, co_Out, co_Pvt, co_Xpt) := co_sp;
-     assert flownerSplitOK(co,m.c,co_sp);
-
-     var cb_sp := flownerSplit(cb, m.c);
-     var (cb_All, cb_Sin, cb_Out, cb_Pvt, cb_Xpt) := cb_sp;
-     assert flownerSplitOK(cb,m.c,cb_sp);
-
-     assert flownerSplitOK(oo,m.o,oo_sp);
-     assert flownerSplitOK(ob,m.o,ob_sp);
-     assert (oo_Sin) !! (oo_Out + oo_Pvt + oo_Xpt);
-     assert (ob_Sin) !! (ob_Out + ob_Pvt + ob_Xpt);
-
-     assert oo_All >= ob_All;
-     assert oo_Sin >= ob_Sin;
-     flownerPivotlyOutside_MONOTONIC(oo,ob,m.o);
-     assert flownerPivotlyOutside(oo,m.o) >= flownerPivotlyOutside(ob,m.o);
-     assert flownerEverythingOutside(oo,m.o) >= flownerEverythingOutside(ob,m.o);
-     assert (oo_Out + oo_Pvt + oo_Xpt) >= (ob_Out + ob_Pvt + ob_Xpt);
-
-     FLOWER_SPLIT_H(oo,ob,m.o);
-
-     DOUBLE_SPLIT_OnlyPivot(oo, co, oo_sp, co_sp, m);
-     DOUBLE_SPLIT_OnlyPivot(ob, cb, ob_sp, cb_sp, m);
-
-     assert (m.o in oo_Pvt) <==> (m.c in co_Pvt);
-     assert (m.o in ob_Pvt) <==> (m.c in cb_Pvt);
-     assert (m.o in oo_Pvt) <==  (m.c in cb_Pvt);
-     //assert co_Pvt >= cb_Pvt;
-
-     assert co_sp == splitThruKlon(oo,oo_sp,m);
-     assert cb_sp == splitThruKlon(ob,ob_sp,m);
-
-     assert oo_All >= ob_All;
-
-     assert oo_Sin >= ob_Sin;
-     assert oo_Out >= ob_Out;
-     assert oo_Pvt >= ob_Pvt;
-     assert oo_Xpt >= ob_Xpt;
-
-     FOREST_FOOD(oo_Sin,co_Sin,m);
-     FOREST_FOOD(ob_Sin,cb_Sin,m);
-
-     FOREST_REAL(oo_Out,co_Out,m);
-     FOREST_REAL(ob_Out,cb_Out,m);
-
-     FOREST_REAL(oo_Xpt,co_Xpt,m);
-     FOREST_REAL(ob_Xpt,cb_Xpt,m);
-
-     assert co_Sin >= cb_Sin; //Err
-     assert co_Out >= cb_Out; //Err
-     assert co_Pvt >= cb_Pvt; //Err?
-     assert co_Xpt >= cb_Xpt; //Err
-
-     assert co_All >= cb_All;
-}
-
-
-
+// }
+//
+//
+//
 
 
 
