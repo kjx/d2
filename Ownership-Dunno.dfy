@@ -3339,7 +3339,6 @@ lemma CLONING_PRESERVES_OWNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound
   //  ensures boundsOK(oo,ob) ==> boundsOK(co,cb)
 {
   assert (forall o <- oo :: flatten(o.ownerBound()) >= flatten(ob));
-
       assert m.o.Ready();      assert m.c.Ready();
 
      var oo_sp := flownerSplit(oo, m.o);
@@ -3362,7 +3361,6 @@ lemma CLONING_PRESERVES_OWNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound
 
   flownerAll_MONOTONIC(oo,ob,m.o);
   flownerAll_SONOMONIC_AND_HAPPY_AND_BOUNDS(oo,oo_sp,ob,ob_sp,m.o);
-
 
 // ////////////////////////////////////////////////////////////
 // //oo to co - inside
