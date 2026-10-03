@@ -1435,7 +1435,6 @@ lemma I_CAN_MEMENTO(m : Klon)
    }
 
 
-
 lemma REVERSIBLE_PENIS(oo : Owner, rv : Owner, m : Klon)
    decreases allAMFOs(oo)
     requires AllReady(oo) && AllReady(rv)

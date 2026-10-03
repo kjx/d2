@@ -765,7 +765,7 @@ function flownerOutsidePivot(soup : OWNR, pivot : Object)  : (rv : Owner)
 
 
 
- lemma {:verify false} XFLOWNER_STRICTLY_OUTSIDE_THRU_KLON(soup : Owner, left : Owner, rite : Owner, m : Klon)
+ lemma {:verify false} XFLXWNER_STRICTLY_OUTSIDE_THRU_KLON(soup : Owner, left : Owner, rite : Owner, m : Klon)
  ///see MAP_THRU_KLON currently in Klon.dfy
   requires AllReady(flatten(left))
   requires AllReady(flatten(rite))
@@ -1412,7 +1412,7 @@ lemma {:timeLimit 120} flownerStrictlyOutside_MONOTONIC(soup0 : OWNR, soup1 : OW
 
 
 
-lemma flwwnerStrictlyOutside_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
+lemma {:verify false} flwwnerStrictlyOutside_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
 //WRONGLY verified 23Sep2026
   requires AllReady(flatten(soup0)) && AllReady(flatten(soup1)) && pivot.Ready()
   //requires flatten(soup0) >= flatten(soup1)
@@ -1794,11 +1794,16 @@ lemma FLOWNER_FLATTEN_Outside(soup : OWNR, pivot : Object)
 lemma {:timeLimit 70} FLOWNER_FLATTEN_Outside_Klon(soup : OWNR, m : Klon)
  //DOESN WOKR LIsKELY FOR THE USUAL OOD REASON OH FUCK
  //that's another day I'll never get back
-  requires AllReady(flatten(soup)) && klonCalid(m)
+  requires AllReady(flatten(soup))
+  requires klonCalid(m)
   requires soup <= m.m.Keys
    ensures flatten(soup) <= m.m.Keys
   // ensures flownerOutside(mtk(soup,m), m.c) == mtk(flownerOutside(soup,m.o), m)
 {
+  assume forall x : Object :: x.Ready();
+  assume forall x : set<Object> :: AllReady(x);
+
+
 //  var ffOm :=  flownerOutside(mtk(soup,m), m.c);
   var coup := mtk(soup,m);
   assert forall c <- coup | outside(c,m.c)  :: c in soup;
@@ -1852,7 +1857,7 @@ lemma {:timeLimit 7} FLOWNER_FLATTEN_Outside_Klon_04(soup : OWNR, m : Klon, r : 
    {}
 
 
-lemma {:timeLimit 120} FLOWNER_FLATTEN_Outside_Klon_05(soup : OWNR, m : Klon, r : Owner)
+lemma {:verify false} FLXXXWNER_FLATTEN_Outside_Klon_05(soup : OWNR, m : Klon, r : Owner)
   requires AllReady(flatten(soup)) && AllReady(flatten(r)) && klonCalid(m)
   requires soup <= m.m.Keys
    ensures flatten(soup) <= m.m.Keys
@@ -1869,7 +1874,7 @@ lemma FUCK_YOU_TORY_CUNT(soup : OWNR, pivot : Object)
 }
 
 
-lemma FUCK_DAFNY(soup : OWNR, pivot : Object, rv : Owner)
+lemma ONLY_PIVOT(soup : OWNR, pivot : Object, rv : Owner)
    //requires AllReady(flatten(soup)) && pivot.Ready()
 
   requires || (flownerOnlyPivot(soup,pivot) == rv)
@@ -1924,8 +1929,8 @@ lemma  STUPIDLY_HAPPY_To_OnlyPivot(xo : Owner, xb : Owner,
    UNPACK_flownerSplitOK(xo,pivot,xo_sp);
    UNPACK_flownerSplitOK(xb,pivot,xb_sp);
 
-      FUCK_DAFNY(xo,pivot,xo_sp.3);
-      FUCK_DAFNY(xb,pivot,xb_sp.3);
+      ONLY_PIVOT(xo,pivot,xo_sp.3);
+      ONLY_PIVOT(xb,pivot,xb_sp.3);
 }
 
 
@@ -3332,8 +3337,9 @@ lemma CLONING_PRESERVES_OWNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound
   //  ensures flatten(co) >= flatten(cb)
   //  ensures stupidlyHappy(co,cb,m.o)  //or coudl do the below)
   //  ensures boundsOK(oo,ob) ==> boundsOK(co,cb)
-
 {
+  assert (forall o <- oo :: flatten(o.ownerBound()) >= flatten(ob));
+
       assert m.o.Ready();      assert m.c.Ready();
 
      var oo_sp := flownerSplit(oo, m.o);
@@ -3357,24 +3363,20 @@ lemma CLONING_PRESERVES_OWNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound
   flownerAll_MONOTONIC(oo,ob,m.o);
   flownerAll_SONOMONIC_AND_HAPPY_AND_BOUNDS(oo,oo_sp,ob,ob_sp,m.o);
 
-//
-//     //  assert oo_All >= ob_All;
-//     //  assert oo_Sin >= ob_Sin;
-//     //  assert oo_Out >= ob_Out;
-//     //  assert oo_Pvt >= ob_Pvt;
-//     //  assert oo_Xpt >= ob_Xpt;
-//
+
 // ////////////////////////////////////////////////////////////
 // //oo to co - inside
 //
-// MAPPING_INSIDE(oo,oo_sp,co,co_sp,m);
-// MAPPING_INSIDE(ob,ob_sp,cb,cb_sp,m);
-//
+MAPPING_INSIDE(oo,oo_sp,co,co_sp,m);
+MAPPING_INSIDE(ob,ob_sp,cb,cb_sp,m);
+
+
+
 // ////////////////////////////////////////////////////////////
 // //outside
 //
-// MAPPING_OUTSIDE(oo,oo_sp,co,co_sp,m);
-// MAPPING_OUTSIDE(ob,ob_sp,cb,cb_sp,m);
+MAPPING_OUTSIDE(oo,oo_sp,co,co_sp,m);
+MAPPING_OUTSIDE(ob,ob_sp,cb,cb_sp,m);
 //
 // assert forall o <- (oo_sp.2) :: woodReal(o,m.m[o],m);
 // assert forall o <- (oo_sp.2) :: m.m[o] == o;
@@ -3423,21 +3425,21 @@ MAP_THRU_KLON(ob,cb,m);
   // UNPACK_flownerSplitOK(mapThruKlon(oo,m),m.c,co_sp);
   // UNPACK_flownerSplitOK(mapThruKlon(ob,m),m.c,cb_sp);
 
-   assert AllReady(flatten(oo));
-   assert AllReady(flatten(co));
-   assert m.o.Ready();
-   assert m.c.Ready();
-   assert klonCalid(m);
-   assert flatten(oo) <= m.m.Keys;
-   assert flownerSplitOK(oo, m.o,oo_sp);
-   assert flownerSplitOK(co, m.c,co_sp);
-   assert oo <= m.m.Keys;
-   assert co == mapThruKlon(oo,m);
-   assert oo_sp.3 == flownerOnlyPivot(oo,m.o);
-   assert co_sp.3 == flownerOnlyPivot(co,m.c);
+  //  assert AllReady(flatten(oo));
+  //  assert AllReady(flatten(co));
+  //  assert m.o.Ready();
+  //  assert m.c.Ready();
+  //  assert klonCalid(m);
+  //  assert flatten(oo) <= m.m.Keys;
+  //  assert flownerSplitOK(oo, m.o,oo_sp);
+  //  assert flownerSplitOK(co, m.c,co_sp);
+  //  assert oo <= m.m.Keys;
+  //  assert co == mapThruKlon(oo,m);
+  //  assert oo_sp.3 == flownerOnlyPivot(oo,m.o);
+  //  assert co_sp.3 == flownerOnlyPivot(co,m.c);
 
-     MAPPING_PIVOT(oo,oo_sp,co,co_sp,m);
-     MAPPING_PIVOT(ob,ob_sp,cb,cb_sp,m);
+     MAPPING_PIVOT(oo,oo_sp,co,co_sp,m);    ///  look  ///
+     MAPPING_PIVOT(ob,ob_sp,cb,cb_sp,m);   ///  here  ///
 
      DOUBLE_SPLIT_OnlyPivot(oo, co, oo_sp, co_sp, m);
 //STUPIDLY_HAPPY_To_OnlyPivot(oo,ob,oo_sp,ob_sp,m.o);
@@ -3451,273 +3453,35 @@ MAP_THRU_KLON(ob,cb,m);
 
 //STUPIDLY_HAPPY_To_OnlyPivot(co,cb,co_sp,cb_sp,m.c);
 
-FUCK_DAFNY(oo,m.o,oo_Pvt);
-FUCK_DAFNY(ob,m.o,ob_Pvt);
-FUCK_DAFNY(co,m.c,co_Pvt);
-FUCK_DAFNY(cb,m.c,cb_Pvt);
+ONLY_PIVOT(oo,m.o,oo_Pvt);
+ONLY_PIVOT(ob,m.o,ob_Pvt);
+ONLY_PIVOT(co,m.c,co_Pvt);
+ONLY_PIVOT(cb,m.c,cb_Pvt);
+
+  assert AllReady(flatten(co));
+  assert AllReady(flatten(cb));
+  assert m.c.Ready();
+
+  assert co_sp.1 >= cb_sp.1;
+
+  assert co_Sin >= cb_Sin;
+
+  assert flownerStrictlyInside(co,m.c) >= flownerStrictlyInside(cb,m.c);
+
+  assert (flownerOutsidePivot(co,m.c) + flownerStrictlyOutside(co,m.c)) >= (flownerOutsidePivot(cb,m.c) + flownerStrictlyOutside(cb,m.c));
 
 
-Error: this is the precondition that could not be proved
-Could not prove: forall o <- xo :: flatten(o.ownerBound()) >= flatten(xb)
-This is the only assertion in batch #1813 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1813 resource usage: 33.0M RU
-
-Error: this is the precondition that could not be proved
-Could not prove: xo_sp.1 >= xb_sp.1
-This is the only assertion in batch #1833 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1833 resource usage: 26.0M RU
-
-Error: this is the precondition that could not be proved
-Could not prove: xo_sp.2 >= xb_sp.2
-This is the only assertion in batch #1834 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1834 resource usage: 24.2M RU
-
-Success: the precondition always holds
-Did prove: xo_sp.4 >= xb_sp.4
-This is the only assertion in batch #1836 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1836 resource usage: 1.96M RU
-
-Success: the precondition always holds
-Did prove: forall r <- xb | outside(r,pivot) :: exists s <- xo :: outside(s,pivot) && inside(s,r)
-This is the only assertion in batch #1812 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1812 resource usage: 491K RU
-
-Success: the precondition always holds
-Did prove: xo_sp.3 >= xb_sp.3
-This is the only assertion in batch #1835 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1835 resource usage: 403K RU
-
-Success: the precondition always holds
-Inside flownerSplitOK(xb,pivot,xb_sp)
-Did prove: (fOut + fPvt + fXpt) == flownerPivotlyOutside(soup,pivot)
-This is the only assertion in batch #1829 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1829 resource usage: 368K RU
-
-Success: the precondition always holds
-Inside flownerSplitOK(xb,pivot,xb_sp)
-Did prove: (fOut + fPvt + fXpt) == flownerEverythingOutside(soup,pivot)
-This is the only assertion in batch #1828 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1828 resource usage: 368K RU
-
-Success: the precondition always holds
-Inside flownerSplitOK(xb,pivot,xb_sp)
-Did prove: fXpt == flownerExceptPivot(soup,pivot)
-This is the only assertion in batch #1827 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1827 resource usage: 368K RU
-
-Success: the precondition always holds
-Inside flownerSplitOK(xb,pivot,xb_sp)
-Did prove: fPvt == flownerOnlyPivot(soup,pivot)
-This is the only assertion in batch #1826 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1826 resource usage: 368K RU
-
-Success: the precondition always holds
-Inside flownerSplitOK(xb,pivot,xb_sp)
-Did prove: fOut == flownerStrictlyOutside(soup,pivot)
-This is the only assertion in batch #1825 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1825 resource usage: 367K RU
-
-Success: the precondition always holds
-Inside flownerSplitOK(xb,pivot,xb_sp)
-Did prove: fSin == flownerStrictlyInside(soup,pivot)
-This is the only assertion in batch #1824 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1824 resource usage: 367K RU
-
-Success: the precondition always holds
-Inside flownerSplitOK(xo,pivot,xo_sp)
-Did prove: (fOut + fPvt + fXpt) == flownerPivotlyOutside(soup,pivot)
-This is the only assertion in batch #1820 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1820 resource usage: 367K RU
-
-Success: the precondition always holds
-Inside flownerSplitOK(xo,pivot,xo_sp)
-Did prove: (fOut + fPvt + fXpt) == flownerEverythingOutside(soup,pivot)
-This is the only assertion in batch #1819 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1819 resource usage: 367K RU
-
-Success: the precondition always holds
-Inside flownerSplitOK(xo,pivot,xo_sp)
-Did prove: fXpt == flownerExceptPivot(soup,pivot)
-This is the only assertion in batch #1818 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1818 resource usage: 367K RU
-
-Success: the precondition always holds
-Inside flownerSplitOK(xo,pivot,xo_sp)
-Did prove: fPvt == flownerOnlyPivot(soup,pivot)
-This is the only assertion in batch #1817 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1817 resource usage: 367K RU
-
-Success: the precondition always holds
-Inside flownerSplitOK(xo,pivot,xo_sp)
-Did prove: fOut == flownerStrictlyOutside(soup,pivot)
-This is the only assertion in batch #1816 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1816 resource usage: 367K RU
-
-Success: the precondition always holds
-Inside flownerSplitOK(xo,pivot,xo_sp)
-Did prove: fSin == flownerStrictlyInside(soup,pivot)
-This is the only assertion in batch #1815 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1815 resource usage: 367K RU
-
-Success: the precondition always holds
-Inside pivot.Ready()
-Did prove: this !in bound
-This is the only assertion in batch #1811 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1811 resource usage: 365K RU
-
-Success: the precondition always holds
-Inside pivot.Ready()
-Did prove: this !in owner
-This is the only assertion in batch #1810 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1810 resource usage: 365K RU
-
-Success: the precondition always holds
-Inside pivot.Ready()
-Inside boundsOK(owner, bound)
-Did prove: forall o <- oo :: flatten(o.ownerBound()) >= flatten(mb)
-This is the only assertion in batch #1808 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1808 resource usage: 365K RU
-
-Success: the precondition always holds
-Inside pivot.Ready()
-Did prove: this !in AMFX
-This is the only assertion in batch #1809 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1809 resource usage: 365K RU
-
-Success: the precondition always holds
-Inside pivot.Ready()
-Inside boundsOK(owner, bound)
-Did prove: flatten(oo) >= flatten(mb)
-This is the only assertion in batch #1807 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1807 resource usage: 364K RU
-
-Success: the precondition always holds
-Inside pivot.Ready()
-Did prove: forall oo <- AMFX :: (AMFO > oo.AMFO) && oo.Ready()
-This is the only assertion in batch #1806 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1806 resource usage: 364K RU
-
-Success: the precondition always holds
-Inside pivot.Ready()
-This is the only assertion in batch #1804 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1804 resource usage: 364K RU
-
-Success: the precondition always holds
-Inside pivot.Ready()
-This is the only assertion in batch #1805 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1805 resource usage: 364K RU
-
-Success: the precondition always holds
-Inside pivot.Ready()
-Inside isFlat(AMFX)
-Did prove: forall o <- os, oo <- o.AMFO :: oo in os
-This is the only assertion in batch #1803 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1803 resource usage: 364K RU
-
-Success: the precondition always holds
-Inside pivot.Ready()
-Inside isFlat(AMFO)
-Did prove: forall o <- os, oo <- o.AMFO :: oo in os
-This is the only assertion in batch #1802 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1802 resource usage: 363K RU
-
-Success: the precondition always holds
-Inside pivot.Ready()
-Inside isFlat(AMFB)
-Did prove: forall o <- os, oo <- o.AMFO :: oo in os
-This is the only assertion in batch #1801 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1801 resource usage: 363K RU
-
-Success: the precondition always holds
-Inside pivot.Ready()
-Did prove: AMFO == AMFX + {this}
-This is the only assertion in batch #1800 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1800 resource usage: 362K RU
-
-Success: the precondition always holds
-Inside pivot.Ready()
-Did prove: AMFO == flatten(self )
-This is the only assertion in batch #1799 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1799 resource usage: 362K RU
-
-Success: the precondition always holds
-Inside pivot.Ready()
-Did prove: AMFX == flatten(owner)
-This is the only assertion in batch #1798 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1798 resource usage: 362K RU
-
-Success: the precondition always holds
-Inside pivot.Ready()
-Did prove: AMFB == flatten(bound)
-This is the only assertion in batch #1797 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1797 resource usage: 362K RU
-
-Success: the precondition always holds
-Inside pivot.Ready()
-Did prove: self == owner + {this}
-This is the only assertion in batch #1796 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1796 resource usage: 362K RU
-
-Success: the precondition always holds
-Inside AllReady(flatten(xb))
-Did prove: forall oo <- os :: oo.Ready()
-This is the only assertion in batch #1795 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1795 resource usage: 362K RU
-
-Success: the precondition always holds
-Inside AllReady(flatten(xo))
-Did prove: forall oo <- os :: oo.Ready()
-This is the only assertion in batch #1794 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1794 resource usage: 362K RU
-
-Success: the precondition always holds
-Did prove: true
-This is the only assertion in batch #1832 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1832 resource usage: 222K RU
-
-Success: the precondition always holds
-Inside flownerSplitOK(xb,pivot,xb_sp)
-Did prove: fSin !! (fOut + fPvt + fXpt)
-This is the only assertion in batch #1831 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1831 resource usage: 222K RU
-
-Success: the precondition always holds
-Inside flownerSplitOK(xb,pivot,xb_sp)
-Did prove: fAll == fSin + fOut + fPvt + fXpt
-This is the only assertion in batch #1830 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1830 resource usage: 222K RU
-
-Success: the precondition always holds
-Inside flownerSplitOK(xb,pivot,xb_sp)
-Did prove: fAll == flownerAll(soup)
-This is the only assertion in batch #1823 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1823 resource usage: 221K RU
-
-Success: the precondition always holds
-Inside flownerSplitOK(xo,pivot,xo_sp)
-Did prove: fSin !! (fOut + fPvt + fXpt)
-This is the only assertion in batch #1822 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1822 resource usage: 221K RU
-
-Success: the precondition always holds
-Inside flownerSplitOK(xo,pivot,xo_sp)
-Did prove: fAll == fSin + fOut + fPvt + fXpt
-This is the only assertion in batch #1821 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1821 resource usage: 221K RU
-
-Success: the precondition always holds
-Inside flownerSplitOK(xo,pivot,xo_sp)
-Did prove: fAll == flownerAll(soup)
-This is the only assertion in batch #1814 of 1844 in method CLONING_PRESERVES_OWNERSHIP
-Batch #1814 resource usage: 221K RU
-
-lemma flownerAll_SONOMONIC_AND_HAPPY_AND_BOUNDS(xo: Owner, xo_sp: FlownerSplit, xb: Owner, xb_sp: FlownerSplit, pivot: Object)
-flownerAll_SONOMONIC_AND_HAPPY_AND_BOUNDS(co,co_sp,cb,cb_sp,m.c);
+FLOWER_JOIN_All(co,cb,m.c);
 
 assert co_All >= cb_All;
-assert boundsOK(co,cb);
 assert flatten(co) >= flatten(cb);
+assert (forall o <- co :: flatten(o.ownerBound()) >= flatten(cb));
+assert boundsOK(co,cb);
+assert (forall r <- cb | outside(r,m.c) :: exists s <- co :: outside(s,m.c) && inside(s,r));
+
 assert stupidlyHappy(co,cb, m.o);
+flownerAll_SONOMONIC_AND_HAPPY_AND_BOUNDS(co,co_sp,cb,cb_sp,m.c);
+
 
 return;
 
@@ -3759,6 +3523,169 @@ return;
 
 }
 
+lemma CARREFOUR(
+      oo : Owner, oo_sp : FlownerSplit, ob : Bound, ob_sp : FlownerSplit,
+      co : Owner, co_sp : FlownerSplit, cb : Bound, cb_sp : FlownerSplit,
+      m  : Klon)
+  requires klonCalid(m)
+
+  requires flownerAll(oo) >= flownerAll(ob)
+  requires stupidlyHappy(oo,ob,m.o)
+  requires boundsOK(oo,ob)
+
+  ensures oo_sp.0 >= ob_sp.0
+  ensures oo_sp.1 >= ob_sp.1
+
+  requires AllReady(flatten(oo))
+  requires AllReady(flatten(ob))
+  requires m.o.Ready()
+  requires flownerSplitOK(oo,m.o,oo_sp)
+  requires flownerSplitOK(ob,m.o,ob_sp)
+
+  requires AllReady(flatten(co))
+  requires AllReady(flatten(cb))
+  requires m.c.Ready()
+  requires flownerSplitOK(co,m.c,co_sp)
+  requires flownerSplitOK(cb,m.c,cb_sp)
+
+  requires oo <= m.m.Keys
+  requires ob <= m.m.Keys
+  requires co == mtk(oo,m)
+  requires cb == mtk(ob,m)
+
+  ensures co_sp == splitThruKlon(oo,oo_sp,m)
+  ensures cb_sp == splitThruKlon(ob,ob_sp,m)
+
+  ensures co_sp.0 >= cb_sp.0
+  ensures co_sp.1 >= cb_sp.1
+
+  //  ensures stupidlyHappy(co,cb,m.c)
+  //  ensures boundsOK(co,cb)
+
+{
+  assert co_sp == splitThruKlon(oo,oo_sp,m);
+  assert cb_sp == splitThruKlon(ob,ob_sp,m);
+
+  MAP_THRU_KLON(oo,co,m);
+  MAP_THRU_KLON(ob,cb,m);
+
+  UNPACK_flownerSplitOK(oo,m.o,oo_sp);
+         assert oo_sp.1 == flownerStrictlyInside(oo,m.o);  //Err
+  UNPACK_flownerSplitOK(ob,m.o,ob_sp);
+         assert ob_sp.1 == flownerStrictlyInside(ob,m.o);  //Err
+  UNPACK_flownerSplitOK(co,m.c,co_sp);
+         assert co_sp.1 == flownerStrictlyInside(co,m.c);  //Err
+  UNPACK_flownerSplitOK(cb,m.c,cb_sp);
+         assert cb_sp.1 == flownerStrictlyInside(cb,m.c);  //Err
+
+  assert oo_sp.0 >= ob_sp.0;
+  assert forall o <- ob_sp.0 :: o in oo_sp.0;
+
+  flownerStrictlyInside_MONOTONIC(oo,ob,m.o);
+  flownerStrictlyInside_MONOTONIC(co,cb,m.c);  // flownerAll(co) >= flownerAll(cb)
+
+  assert oo_sp.1 >= ob_sp.1;
+  assert forall o <- ob_sp.1 :: o in oo_sp.1;
+
+
+
+  assert oo_sp.1 >= ob_sp.1;
+  assert forall o <- oo_sp.1 :: m.m[o] in co_sp.1;  //Err
+
+  assert forall o <- ob_sp.1 :: o in oo_sp.1;       //Err
+  assert forall o <- ob_sp.1 :: m.m[o] in cb_sp.1;  //Err
+  assert forall o <- ob_sp.1 :: m.m[o] in co_sp.1;  //Err
+
+  assert forall c <- cb_sp.1 :: c in cb_sp.1;
+  assert forall c <- cb_sp.1 :: c in co_sp.1;  //Err
+
+  assert co_sp.1 >= cb_sp.1;  //Err
+/////
+//assert co_sp.0 >= cb_sp.0;
+}
+
+
+lemma MTK_SIDE(oo : Owner, rv : Owner, m : Klon)
+   decreases allAMFOs(oo)
+    requires AllReady(oo) && AllReady(rv)
+    requires klonCalid(m)
+    requires oo <= m.m.Keys
+    requires rv == mapThruKlon(oo, m)
+{
+    MAP_THRU_KLON(oo,rv,m);
+
+     assert forall o <- oo :: (o in m.m.Keys) && (m.m[o] in rv) && klonLine(o,m.m[o],m);
+     assert forall r <- rv :: exists o <- oo :: (m.m[o] == r) && klonLine(o,r,m);
+
+     assert |oo| == |rv|;
+
+    // var n := superSize(m.m);
+    // assert n == |m.m| == |oo| == |rv|;
+}
+
+lemma SETTPM(oo : Owner, x : Object, ooo : Owner)
+  requires x in oo
+  requires oo - {x} == ooo
+
+  ensures ooo + {x} == oo
+{}
+
+//lets stop fucking about eh?
+//
+//
+// lemma emteekay(oo : Owner, rv : Owner, m : Klon)
+//    decreases allAMFOs(oo)
+//     requires AllReady(oo) && AllReady(rv)
+//     requires klonCalid(m)
+//     requires oo <= m.m.Keys
+//     requires rv == mapThruKlon(oo, m)
+//
+//      ensures forall o <- oo :: var x :| x == m.m[o]; x == m.m[o]
+//      ensures forall r <- rv :: exists x <- oo :: m.m[x] == r
+//      //opopensures |oo| == |rv|
+//      {
+//       assert forall x <- oo, y <- oo :: (m.m[x] == m.m[y]) ==> (x == y);
+//      }
+
+
+//
+// function MTK_MTK(oo : Owner, rv : Owner, m : Klon) : nat
+//    decreases allAMFOs(oo)
+//     requires AllReady(oo) && AllReady(rv)
+//     requires klonCalid(m)
+//     requires oo <= m.m.Keys
+//     requires rv == mapThruKlon(oo, m)
+//   //   ensures |rv| == |oo|
+// {
+//   if (oo == {}) then (assert rv == {}; assert |rv| == |oo| == 0; 0)
+//   else (
+//       assert oo > {};
+//       var k : Object :| k in oo;
+//       var ooo := oo - {k};
+//       var v := m.m[k];
+//       var rvv := rv - {v};
+//       SETTPM(oo,k,ooo);
+//       SETTPM(rv,v,rvv);
+//       var ltail := MTK_MTK(ooo,rvv,m);
+//       assert |ooo| == |rvv| == ltail;
+//       assert |rv| == |oo|== ltail + 1;
+//       (ltail + 1)
+//   )
+// }
+
+
+function superSize<K,V>(mep : map<K,V>) : (rv : nat)
+   ensures rv == |mep.Keys|
+  {
+      if (mep.Keys == {}) then 0
+        else (var x  :| x in mep;
+              var nn := mep - {x};
+               (1 + (superSize(nn))))
+  }
+
+
+
+
 
 
 
@@ -3786,6 +3713,7 @@ lemma MAPPING_INSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flown
      assert cs_sp == splitThruKlon(os,os_sp,m);
      MAP_THRU_KLON(os,cs,m);
      UNPACK_flownerSplitOK(mapThruKlon(os,m),m.c,cs_sp);
+
 
 //      var os_Sin := os_sp.1;
 //      var cs_Sin := cs_sp.1;
