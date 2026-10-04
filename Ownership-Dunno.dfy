@@ -732,6 +732,9 @@ lemma flownerAll_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
 }
 
 
+
+
+
 lemma flownerAll_SONOMONIC(xo : Owner, xo_sp : FlownerSplit, xb : Owner, xb_sp : FlownerSplit, pivot : Object)
   requires AllReady(flatten(xo))
   requires AllReady(flatten(xb))
@@ -2216,6 +2219,7 @@ forall o <- os_sp.fXpt ensures (woodReal(o,m.m[o],m)) //by
 lemma FOREST_FOOD(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : FlownerSplit, m : Klon)
     //wood_food - strictlyInside
    //lifts WOOD_FOOD to FOREST - verifies on lately with nothing in the body...? 38s
+   //as far as I can see (4 Oct) this just repeats the same as mapping inside...
    requires AllReady(os_sp.fAll)
    requires AllReady(cs_sp.fAll)
    requires klonCalid(m)
@@ -2362,6 +2366,8 @@ lemma INSIDE_PARALLEL(o0 : Object, o1 : Object, c0 : Object, c1 : Object, m : Kl
 
 
 
+
+
 lemma CLONING_PRESERVES_OWNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound, m : Klon)
  //is this name OVERKILL???
  //should it also do bounds?  --- currentlyt NO!
@@ -2393,10 +2399,8 @@ lemma CLONING_PRESERVES_OWNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound
      var ooSP := flownerSplit(oo, m.o);
   UNPACK_flownerSplitOK(oo,m.o,ooSP);
 
-
      var coSP := flownerSplit(co, m.c);
   UNPACK_flownerSplitOK(co,m.c,coSP);
-
 
      var obSP := flownerSplit(ob, m.o);
   UNPACK_flownerSplitOK(ob,m.o,obSP);
@@ -2505,7 +2509,31 @@ ONLY_PIVOT(cb,m.c,cbSP.fPvt);
   assert AllReady(flatten(cb));
   assert m.c.Ready();
 
+// / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / /
+
+  assert AllReady(ooSP.fSin);
+  assert AllReady(obSP.fSin);
+  assert AllReady(coSP.fSin);
+  assert AllReady(cbSP.fSin);
+
+  assert m.m.Keys >= ooSP.fSin;
+  assert m.m.Keys >= obSP.fSin;
+
+  klonThruMap(ooSP.fSin,coSP.fSin,m);
+  klonThruMap(obSP.fSin,cbSP.fSin,m);
+  assert coSP.fSin == mtk(ooSP.fSin,m);
+  assert cbSP.fSin == mtk(obSP.fSin,m);
+  assert ooSP.fSin >= obSP.fSin;
   assert coSP.fSin >= cbSP.fSin;
+
+
+// / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / /
+
+  M4K(ooSP.fSin, obSP.fSin, coSP.fSin, cbSP.fSin, m);
+  assert coSP.fSin >= cbSP.fSin;
+  assert coSP.fOut >= cbSP.fOut;
+  assert coSP.fPvt >= cbSP.fPvt;
+  assert coSP.fXpt >= cbSP.fXpt;
 
 
   assert flownerStrictlyInside(co,m.c) >= flownerStrictlyInside(cb,m.c);
@@ -2624,7 +2652,8 @@ lemma CARREFOUR(
   assert forall o <- ob_sp.fAll :: o in oo_sp.fAll;
 
   flownerStrictlyInside_MONOTONIC(oo,ob,m.o);
-  flownerStrictlyInside_MONOTONIC(co,cb,m.c);  // flownerAll(co) >= flownerAll(cb)
+//  flownerStrictlyInside_MONOTONIC(co,cb,m.c);  // flownerAll(co) >= flownerAll(cb)
+    //hat's very muc hthe wrong thing - tha's what we're trying to PROVE...
 
   assert oo_sp.fSin >= ob_sp.fSin;
   assert forall o <- ob_sp.fSin :: o in oo_sp.fSin;
@@ -2647,7 +2676,8 @@ lemma CARREFOUR(
 }
 
 
-lemma MTK_SIDE(oo : Owner, rv : Owner, m : Klon)
+lemma MTK_SIZE(oo : Owner, rv : Owner, m : Klon)
+///unfinished
    decreases allAMFOs(oo)
     requires AllReady(oo) && AllReady(rv)
     requires klonCalid(m)
@@ -2659,7 +2689,7 @@ lemma MTK_SIDE(oo : Owner, rv : Owner, m : Klon)
      assert forall o <- oo :: (o in m.m.Keys) && (m.m[o] in rv) && klonLine(o,m.m[o],m);
      assert forall r <- rv :: exists o <- oo :: (m.m[o] == r) && klonLine(o,r,m);
 
-     assert |oo| == |rv|;
+//     assert |oo| == |rv|;
 
     // var n := superSize(m.m);
     // assert n == |m.m| == |oo| == |rv|;
@@ -2727,9 +2757,80 @@ function superSize<K,V>(mep : map<K,V>) : (rv : nat)
 
 
 
+lemma M4K(os : Owner, ob : Owner, cs : Owner, cb : Owner, m : Klon)
+ // this is technically *wrong* or rather it's not the whole story
+ // you can't make the arguments just the whole lot and call it done!
+ // the mainline is flatten(os) >= flatten(ob) for starters
+ // but if we can't get this, we can't get the rest.
+ // this shoudl work on "inside" which is the one thing currently missing...
+ //
+ //in spite of that long long rant above - it ran first time 3 Oct 2026
+ //
+  // requires AllReady(os)  //actually
+  // requires AllReady(ob)
+  // requires AllReady(cs)
+  // requires AllReady(cb)
+
+  requires m.m.Keys >= os
+  requires m.m.Keys >= ob
+
+  requires os >= ob
+  requires cs == mtk(os,m)  // or should this be woodFood someting-or-othetr
+  requires cb == mtk(ob,m)
+
+   ensures cs >= cb
+{}
 
 
 
+
+lemma K4M(os : Owner, ob : Owner, cs : Owner, cb : Owner, m : Klon)
+  requires AllReady(os)
+  requires AllReady(ob)
+  requires AllReady(cs)
+  requires AllReady(cb)
+
+  requires m.m.Keys >= os
+  requires m.m.Keys >= ob
+
+  requires os >= ob
+  requires cs == mtk(os,m)  // or should this be woodFood someting-or-othetr
+  requires cb == mtk(ob,m)
+
+   ensures cs >= cb
+{}
+
+
+
+
+
+
+lemma klonThruMap(os : Owner, rv : Owner, m : Klon)
+  requires os <= m.m.Keys
+  requires forall o <- os :: exists r <- rv :: m.m[o] == r
+  requires forall r <- rv :: exists o <- os :: m.m[o] == r
+
+   ensures rv == mtk(os,m)
+   ensures rv == mapThruKlon(os,m)
+   {}
+
+//.predicate isoKlon(os : Owner, rv : Owner, m : Klon)
+
+lemma klonThruMapHacked(os : Owner, rv : Owner, m : Klon)
+  requires klonCalid(m)
+  requires forall o <- os :: o.Ready()
+  requires forall r <- rv :: r.Ready()
+
+  requires os <= m.m.Keys
+//  requires forall o <- os :: m.m[o] in rv
+
+  //requires forall o <- os :: exists r <- rv :: m.m[o] == r
+//  requires forall r <- rv :: exists o <- os :: m.m[o] == r
+
+    ensures rv == mtk(os,m)
+  //  ensures rv == mapThruKlon(os,m)
+//   ensures forall r <- rv :: r in mtk(os,m)
+   {}
 
 
 lemma MAPPING_INSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : FlownerSplit, m : Klon)
@@ -2743,19 +2844,39 @@ lemma MAPPING_INSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flown
    requires flownerSplitOK(os, m.o,os_sp)
    requires flownerSplitOK(cs, m.c,cs_sp)
 
-    ensures forall o <- os :: klonLine(o,m.m[o],m)
-    ensures forall o <- os :: klonGeometry(o,m.m[o],m)
-    ensures forall o <- os :: klonIdentity(o,m.m[o],m)
-    ensures forall o <- os_sp.fSin :: strictlyInside(m.m[o],m.c) && (o != m.m[o])
-    ensures forall o <- os_sp.fSin :: m.m[o].owner == mapThruKlon(o.owner, m)
-    ensures forall o <- os_sp.fSin :: m.m[o].bound == mapThruKlon(o.bound, m)
+//     ensures forall o <- os :: klonLine(o,m.m[o],m)
+//     ensures forall o <- os :: klonGeometry(o,m.m[o],m)
+//     ensures forall o <- os :: klonIdentity(o,m.m[o],m)
+//     ensures forall o <- os_sp.fSin :: strictlyInside(m.m[o],m.c) && (o != m.m[o])
+//     ensures forall o <- os_sp.fSin :: m.m[o].owner == mapThruKlon(o.owner, m)
+//     ensures forall o <- os_sp.fSin :: m.m[o].bound == mapThruKlon(o.bound, m)
+//
+//     ensures forall o <- os_sp.fSin :: woodFood(o,m.m[o],m)
 
-    ensures forall o <- os_sp.fSin :: woodFood(o,m.m[o],m)
+    // ensures forall o <- os_sp.fSin :: exists r <- cs_sp.fSin :: m.m[o] == r
+    // ensures forall r <- cs_sp.fSin :: exists o <- os_sp.fSin :: m.m[o] == r
+
+
 {
      assert cs_sp == splitThruKlon(os,os_sp,m);
      MAP_THRU_KLON(os,cs,m);
      UNPACK_flownerSplitOK(mapThruKlon(os,m),m.c,cs_sp);
 
+var rv := cs_sp.fSin;
+assert forall o <- os | strictlyInside(o,m.o) :: (o != m.m[o]) && strictlyInside(m.m[o],m.c) && (m.m[o] in rv);
+// assert forall o <- flatten(os) | strictlyInside(o,m.o) :: (o != m.m[o]) && strictlyInside(m.m[o],m.c) && (m.m[o] in rv);
+//assert forall o <- flownerStrictlyInside(os,m.o) :: (o != m.m[o]) && strictlyInside(m.m[o],m.c) && (m.m[o] in rv);
+
+
+assert os_sp.fSin <= os_sp.fAll;
+assert forall o <- os_sp.fSin :: o.Ready();
+assert os_sp.fSin <= m.m.Keys;
+assert forall o <- os_sp.fSin :: strictlyInside(o,m.o);
+assert forall o <- os_sp.fSin :: strictlyInside(m.m[o],m.c);
+//  os_sp.fSin == (set o <- os_sp.fAll | strictlyInside(o,m.o));
+//assert cs_sp.fSin == (set o <- cs_sp.fAll | strictlyInside(o,m.c));
+
+assert forall o <- os_sp.fSin :: woodFood(o,m.m[o],m); //doens't wokr. wjy not?
 
 //      var os_Sin := os_sp.fSin;
 //      var cs_Sin := cs_sp.fSin;
