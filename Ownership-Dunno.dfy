@@ -2519,17 +2519,17 @@ ONLY_PIVOT(cb,m.c,cbSP.fPvt);
   assert m.m.Keys >= ooSP.fSin;
   assert m.m.Keys >= obSP.fSin;
 
-  klonThruMap(ooSP.fSin,coSP.fSin,m);
-  klonThruMap(obSP.fSin,cbSP.fSin,m);
-  assert coSP.fSin == mtk(ooSP.fSin,m);
-  assert cbSP.fSin == mtk(obSP.fSin,m);
+  // klonThruMap(ooSP.fSin,coSP.fSin,m);
+  // klonThruMap(obSP.fSin,cbSP.fSin,m);
+  assert coSP.fSin == mapThruKlon(ooSP.fSin,m);
+  assert cbSP.fSin == mapThruKlon(obSP.fSin,m);
+  M4K(ooSP.fSin, obSP.fSin, coSP.fSin, cbSP.fSin, m);
   assert ooSP.fSin >= obSP.fSin;
   assert coSP.fSin >= cbSP.fSin;
 
 
 // / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / /
 
-  M4K(ooSP.fSin, obSP.fSin, coSP.fSin, cbSP.fSin, m);
   assert coSP.fSin >= cbSP.fSin;
   assert coSP.fOut >= cbSP.fOut;
   assert coSP.fPvt >= cbSP.fPvt;
@@ -2555,41 +2555,41 @@ flownerAll_SONOMONIC_AND_HAPPY_AND_BOUNDS(co,coSP,cb,cbSP,m.c);
 
 return;
 
-     assert (m.o.AMFO == ooSP.fPvt)  ==> (m.c.AMFO == coSP.fPvt);
-     assert (m.o.AMFO == ooSP.fPvt) <==  (m.c.AMFO == coSP.fPvt);
-     assert (m.o.AMFO == ooSP.fPvt) <==> (m.c.AMFO == coSP.fPvt);
-
-     assert (m.o.AMFO == obSP.fPvt)  ==> (m.c.AMFO == cbSP.fPvt);
-     assert (m.o.AMFO == obSP.fPvt) <==  (m.c.AMFO == cbSP.fPvt);
-     assert (m.o.AMFO == obSP.fPvt) <==> (m.c.AMFO == cbSP.fPvt);
-
-     assert (m.c.AMFO == coSP.fPvt) <==  (m.c.AMFO == cbSP.fPvt);
-     assert coSP.fPvt >= cbSP.fPvt;
-
- return;
-
-    //  assert (m.o in ooSP.fPvt) <==> (m.c in coSP.fPvt);
-    //  assert (m.o in obSP.fPvt) <==> (m.c in cbSP.fPvt);
-    //  assert (m.o in ooSP.fPvt) <==  (m.c in cbSP.fPvt);
-
-// //shojldn't really  be fdlatteh here.
-//      assert flatten(coSP.fPvt) >= flatten(cbSP.fPvt);
+//      assert (m.o.AMFO == ooSP.fPvt)  ==> (m.c.AMFO == coSP.fPvt);
+//      assert (m.o.AMFO == ooSP.fPvt) <==  (m.c.AMFO == coSP.fPvt);
+//      assert (m.o.AMFO == ooSP.fPvt) <==> (m.c.AMFO == coSP.fPvt);
 //
-// /////////////////////////////////////////////////////////////
-
-     assert coSP.fSin >= cbSP.fSin;
-     assert coSP.fOut >= cbSP.fOut;
-     assert coSP.fXpt >= cbSP.fXpt;
-
-  FLOWER_JOIN_All(co,cb,m.c);
-  flownerAll_SONOMONIC_AND_HAPPY_AND_BOUNDS(co,coSP,cb,cbSP,m.c);
-
-
-     assert coSP.fAll >= cbSP.fAll;
-     assert boundsOK(co,cb);
-     assert flatten(co) >= flatten(cb);
-     assert stupidlyHappy(co,cb, m.o);
-
+//      assert (m.o.AMFO == obSP.fPvt)  ==> (m.c.AMFO == cbSP.fPvt);
+//      assert (m.o.AMFO == obSP.fPvt) <==  (m.c.AMFO == cbSP.fPvt);
+//      assert (m.o.AMFO == obSP.fPvt) <==> (m.c.AMFO == cbSP.fPvt);
+//
+//      assert (m.c.AMFO == coSP.fPvt) <==  (m.c.AMFO == cbSP.fPvt);
+//      assert coSP.fPvt >= cbSP.fPvt;
+//
+//  return;
+//
+//     //  assert (m.o in ooSP.fPvt) <==> (m.c in coSP.fPvt);
+//     //  assert (m.o in obSP.fPvt) <==> (m.c in cbSP.fPvt);
+//     //  assert (m.o in ooSP.fPvt) <==  (m.c in cbSP.fPvt);
+//
+// // //shojldn't really  be fdlatteh here.
+// //      assert flatten(coSP.fPvt) >= flatten(cbSP.fPvt);
+// //
+// // /////////////////////////////////////////////////////////////
+//
+//      assert coSP.fSin >= cbSP.fSin;
+//      assert coSP.fOut >= cbSP.fOut;
+//      assert coSP.fXpt >= cbSP.fXpt;
+//
+//   FLOWER_JOIN_All(co,cb,m.c);
+//   flownerAll_SONOMONIC_AND_HAPPY_AND_BOUNDS(co,coSP,cb,cbSP,m.c);
+//
+//
+//      assert coSP.fAll >= cbSP.fAll;
+//      assert boundsOK(co,cb);
+//      assert flatten(co) >= flatten(cb);
+//      assert stupidlyHappy(co,cb, m.o);
+//
 
 }
 
@@ -2789,20 +2789,87 @@ lemma K4M(os : Owner, ob : Owner, cs : Owner, cb : Owner, m : Klon)
   requires AllReady(ob)
   requires AllReady(cs)
   requires AllReady(cb)
+  requires klonCalid(m)
 
   requires m.m.Keys >= os
   requires m.m.Keys >= ob
 
   requires os >= ob
-  requires cs == mtk(os,m)  // or should this be woodFood someting-or-othetr
-  requires cb == mtk(ob,m)
+  requires ktm(os,cs,m)
+  requires ktm(ob,cb,m)
 
    ensures cs >= cb
 {}
 
+lemma KTM_KTM(os : Owner, rv : Owner, m : Klon)
+ requires os <= m.m.Keys
+ requires klonCalid(m)
+ requires ktm(os,rv,m)
+//  ensures ktm1(os,rv,m)
+  {
+    assert AllMapEntriesAreUnique(m.m);
+           AMEAU1(m.m);
+    assert AllMapEntriesAreUnique2(m.m);
+    reveal UniqueMapEntry();
+    assert forall i <- m.m.Keys :: UniqueMapEntry(m.m, i, m.m[i]);
+    assert forall k <- m.m.Keys, i <- m.m.Keys :: m.m[i] == m.m[k] ==> (i == k);
+    assert forall k <- os,       i <- m.m.Keys :: m.m[i] == m.m[k] ==> (i == k);
+    assert ktm(os,rv,m);
+
+    assert (forall o <- os :: m.m[o] in rv)
+        && (forall r <- rv :: exists o <- m.m.Keys :: (m.m[o] == r) ==> (o in os));
+
+    assert forall o <- os :: m.m[o] in rv;
+//    assert forall r <- rv :: exists o <- m.m.Keys :: (m.m[o] == r);
+    assert forall r <- rv :: exists o <- m.m.Keys :: (m.m[o] == r) ==> (o in os);
+    assert forall o <- os :: o in m.m.Keys;
+    assert forall r <- rv :: forall o <- os :: o in m.m.Keys;
+
+//    assert forall r <- rv :: exists o <- m.m.Keys :: (m.m[o] == r) && (o in os);
+    assert forall r <- rv :: exists o <- os :: m.m[o] == r;
+  }
+
+predicate ktm(os : Owner, rv : Owner, m : Klon)
+ requires os <= m.m.Keys
+ requires klonCalid(m)
+   reads m.hns()
+  {(forall o <- os :: m.m[o] in rv) && (forall r <- rv :: exists o <- m.m.Keys :: (m.m[o] == r) ==> (o in os))}
 
 
+predicate ktm1(os : Owner, rv : Owner, m : Klon)
+ requires os <= m.m.Keys
+ requires klonCalid(m)
+   reads m.hns()
+  {(forall o <- os :: m.m[o] in rv) && (forall r <- rv :: exists o <- os :: m.m[o] == r)}
 
+
+// function mtk(os : Owner, m : Klon) :  Owner requires os <= m.m.Keys {set o <- os :: m.m[o]}
+
+// lemma INTO_THE_WEST(os : Owner, rv : Owner, m : Klon)
+
+lemma IN_IN(os : Owner, rv : Owner, m : Klon)
+ //gets us "ensures forall r <- rv :: exists o <- m.m.Keys :: m.m[o] == r"
+ //but it gets it from mapthruklon or the equocalent set compreshension
+ //which is alreyad there in mapThrouKlon now. so wghat;s the benefiit of this?
+
+ requires AllReady(os)
+ requires AllReady(rv)
+ requires os <= m.m.Keys
+ requires klonCalid(m)
+
+ //requires rv == mapThruKlon(os,m) /// did I mean to leave this out?
+   requires rv == (set o <- os :: m.m[o])  //why doese writing this feel slightly better than the above?
+ // requires forall o <- os :: m.m[o] in rv
+
+  ensures forall o <- os :: o in m.m.Keys
+  ensures forall o <- os :: klonLine(o,m.m[o],m)
+  ensures forall r <- rv :: exists o <- m.m.Keys :: klonLine(o,m.m[o],m)
+  ensures forall k <- m.m.Keys, j <- m.m.Keys :: (m.m[k] == m.m[j]) ==> (k == j)
+  ensures forall r <- rv :: exists o <- m.m.Keys :: m.m[o] == r
+{
+  assert forall k <- m.m.Keys, j <- m.m.Keys :: (m.m[k] == m.m[j]) ==> (k == j);
+
+}
 
 
 lemma klonThruMap(os : Owner, rv : Owner, m : Klon)
@@ -2844,18 +2911,17 @@ lemma MAPPING_INSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flown
    requires flownerSplitOK(os, m.o,os_sp)
    requires flownerSplitOK(cs, m.c,cs_sp)
 
-//     ensures forall o <- os :: klonLine(o,m.m[o],m)
-//     ensures forall o <- os :: klonGeometry(o,m.m[o],m)
-//     ensures forall o <- os :: klonIdentity(o,m.m[o],m)
-//     ensures forall o <- os_sp.fSin :: strictlyInside(m.m[o],m.c) && (o != m.m[o])
-//     ensures forall o <- os_sp.fSin :: m.m[o].owner == mapThruKlon(o.owner, m)
-//     ensures forall o <- os_sp.fSin :: m.m[o].bound == mapThruKlon(o.bound, m)
-//
-//     ensures forall o <- os_sp.fSin :: woodFood(o,m.m[o],m)
+    ensures forall o <- os :: klonLine(o,m.m[o],m)
+    ensures forall o <- os :: klonGeometry(o,m.m[o],m)
+    ensures forall o <- os :: klonIdentity(o,m.m[o],m)
+    ensures forall o <- os_sp.fSin :: strictlyInside(m.m[o],m.c) && (o != m.m[o])
+    ensures forall o <- os_sp.fSin :: m.m[o].owner == mapThruKlon(o.owner, m)
+    ensures forall o <- os_sp.fSin :: m.m[o].bound == mapThruKlon(o.bound, m)
 
-    // ensures forall o <- os_sp.fSin :: exists r <- cs_sp.fSin :: m.m[o] == r
-    // ensures forall r <- cs_sp.fSin :: exists o <- os_sp.fSin :: m.m[o] == r
+    ensures forall o <- os_sp.fSin :: woodFood(o,m.m[o],m)
 
+    ensures forall o <- os_sp.fSin :: exists r <- cs_sp.fSin :: m.m[o] == r
+    ensures forall r <- cs_sp.fSin :: exists o <- os_sp.fSin :: m.m[o] == r
 
 {
      assert cs_sp == splitThruKlon(os,os_sp,m);
@@ -2873,7 +2939,7 @@ assert forall o <- os_sp.fSin :: o.Ready();
 assert os_sp.fSin <= m.m.Keys;
 assert forall o <- os_sp.fSin :: strictlyInside(o,m.o);
 assert forall o <- os_sp.fSin :: strictlyInside(m.m[o],m.c);
-//  os_sp.fSin == (set o <- os_sp.fAll | strictlyInside(o,m.o));
+//  os_sp.fSi n == (set o <- os_sp.fAll | strictlyInside(o,m.o));
 //assert cs_sp.fSin == (set o <- cs_sp.fAll | strictlyInside(o,m.c));
 
 assert forall o <- os_sp.fSin :: woodFood(o,m.m[o],m); //doens't wokr. wjy not?

@@ -1336,13 +1336,18 @@ predicate klonCanKV(m' : Klon, k : Object, v : Object)
 // basic mappings
 
 
-function mapThruKlon(os: set<Object>, m : Klon) : (r : set<Object>)
+function mapThruKlon(os: set<Object>, m : Klon) : (rv : set<Object>)
   //image of os under klon mapping m
   // reads m.m.Keys`fields, m.m.Keys`fieldModes
   // reads m.m.Values`fields, m.m.Values`fieldModes
   requires os <= m.m.Keys
-   ensures r  <= m.m.Values
-   ensures (os > {}) ==> (r > {})
+   ensures rv  <= m.m.Values
+   ensures (os > {}) ==> (rv > {})
+   ensures forall o <- os :: m.m[o] in rv
+   ensures forall o <- os :: exists r <- rv :: m.m[o] == r
+   ensures forall r <- rv :: exists o <- os :: m.m[o] == r
+   ensures forall r <- rv :: exists o <- m.m.Keys :: (m.m[o] == r) ==> (o in os)
+   ensures forall r <- rv :: var o :| (o in m.m.Keys) && (m.m[o] == r); (o in os)
   //  ensures (os > {}) ==> (var o :| o in os; (os == {o}) ==> (r == {m.m[o]}) )
   //  ensures (os > {}) ==> (exists o | o in os :: ((os == {o}) ==> (r == {m.m[o]})))
   reads {}
@@ -1372,7 +1377,7 @@ lemma MAP_THRU_KLON_OUTSIDE_ONLY(oo : Owner, m : Klon)
  }
 
 
-lemma MAP_THRU_KLON(oo : Owner, rv : Owner, m : Klon)
+lemma {:timeLimit 30} MAP_THRU_KLON(oo : Owner, rv : Owner, m : Klon)
  //verified 24-26 Sept 2026
    decreases allAMFOs(oo)
     requires AllReady(oo) && AllReady(rv)

@@ -77,42 +77,42 @@ function uncollectAllPivotlyOutside(o : Object, pivot : Object) : (rv : set<Obje
 
 
 function uFE_body(o : Object, pivot : Object) : (rv : set<Object>)
-    decreases o.AMFO
+    decreases o.AMFO, 1
    requires o.Ready()
     requires pivot.Ready()
     { (set oo <- o.owner, ooo <- uncollectFcckingEverything(oo, pivot) :: ooo) }
+//
+// lemma LEMMA_uFE_body(o : Object, pivot : Object, rv : set<Object>)
+//     decreases o.AMFO
+//    requires o.Ready()
+//     requires pivot.Ready()
+//     requires rv ==  uFE_body(o,pivot)
+//      ensures rv == (set oo <- o.owner, ooo <- uncollectFcckingEverything(oo, pivot) :: ooo)
+//     {
+//       assert rv ==  uFE_body(o,pivot);
+//       assume rv == (set oo <- o.owner, ooo <- uncollectFcckingEverything(oo, pivot) :: ooo);
+//       assert rv == (set oo <- o.owner, ooo <- uncollectFcckingEverything(oo, pivot) :: ooo);
+//      }
 
-lemma LEMMA_uFE_body(o : Object, pivot : Object, rv : set<Object>)
-    decreases o.AMFO
-   requires o.Ready()
-    requires pivot.Ready()
-    requires rv ==  uFE_body(o,pivot)
-     ensures rv == (set oo <- o.owner, ooo <- uncollectFcckingEverything(oo, pivot) :: ooo)
-    {
-      assert rv ==  uFE_body(o,pivot);
-      assume rv == (set oo <- o.owner, ooo <- uncollectFcckingEverything(oo, pivot) :: ooo);
-      assert rv == (set oo <- o.owner, ooo <- uncollectFcckingEverything(oo, pivot) :: ooo);
-     }
 
-
-lemma {:timeLimit 30} LEMMA_uFE(o : Object, pivot : Object, rv : set<Object>)
-    decreases o.AMFO
-   requires o.Ready()
-    requires pivot.Ready()
-    requires rv ==  uncollectFcckingEverything(o,pivot)
-//     ensures rv ==  {o} + (set oo <- o.owner, ooo <- uncollectAllPivotlyOutside(oo, pivot) :: ooo)
-    {
-      assert rv == uncollectFcckingEverything(o,pivot);
-      assert rv == if (true) then ({o} + uFE_body(o,pivot)) else ({o} + uFE_body(o,pivot));
-      assert rv == {o} + uFE_body(o,pivot);
-      assert uFE_body(o,pivot) == (set oo <- o.owner, ooo <- uncollectFcckingEverything(oo, pivot) :: ooo);
-      assert rv == {o} + (set oo <- o.owner, ooo <- uncollectFcckingEverything(oo, pivot) :: ooo);
-    }
+// lemma {:timeLimit 30} LEMMA_uFE(o : Object, pivot : Object, rv : set<Object>)
+//     decreases o.AMFO
+//    requires o.Ready()
+//     requires pivot.Ready()
+//     requires rv ==  uncollectFcckingEverything(o,pivot)
+// //     ensures rv ==  {o} + (set oo <- o.owner, ooo <- uncollectAllPivotlyOutside(oo, pivot) :: ooo)
+//     {
+//       assert rv == uncollectFcckingEverything(o,pivot);
+//       assert rv == if (true) then ({o} + uFE_body(o,pivot)) else ({o} + uFE_body(o,pivot));
+//       assert rv == {o} + uFE_body(o,pivot);
+//       assert uFE_body(o,pivot) == (set oo <- o.owner, ooo <- uncollectFcckingEverything(oo, pivot) :: ooo);
+//       assert rv == {o} + (set oo <- o.owner, ooo <- uncollectFcckingEverything(oo, pivot) :: ooo);
+//     }
 
 
 function uncollectFcckingEverything(o : Object, pivot : Object) : (rv : set<Object>)
   // all o's transitive owners recursively.  so just collectAllOwners or some such thing
-    decreases o.AMFO
+    decreases o.AMFO, 2
    requires o.Ready()
     requires pivot.Ready()
   //  ensures rv == (set oo <- o.owner, ooo <- uncollectAllPivotlyOutside(oo, pivot) :: ooo)   //wont prove
@@ -124,35 +124,35 @@ function uncollectFcckingEverything(o : Object, pivot : Object) : (rv : set<Obje
           else  {o} + uFE_body(o,pivot)
     }
 
-function uncollectFcckingEverything0rig(o : Object, pivot : Object) : (rv : set<Object>)
-  // all o's transitive owners recursively.  so just collectAllOwners or some such thing
-    decreases o.AMFO
-   requires o.Ready()
-    requires pivot.Ready()
-     ensures rv == {o} + (set oo <- o.owner, ooo <- uncollectAllPivotlyOutside(oo, pivot) :: ooo)   //wont prove
-
-    {
-
-      if (true)
-          then  {o} + (set oo <- o.owner, ooo <- uncollectAllPivotlyOutside(oo, pivot) :: ooo)
-          else  {o} + (set oo <- o.owner, ooo <- uncollectAllPivotlyOutside(oo, pivot) :: ooo)
-    }
-
-
-lemma LAMME_uncollectFcckingEverything(o : Object, pivot : Object, rv : set<Object>)
-  // all o's transitive owners recursively.  so just collectAllOwners or some such thing
-    decreases o.AMFO
-   requires o.Ready()
-   requires rv == uncollectAllPivotlyOutside(o, pivot)
-    ensures rv == {o} + (set oo <- o.owner, ooo <- uncollectAllPivotlyOutside(oo, pivot) :: ooo)
-
-    {
-      if (true)
-         { assert rv == {o} + (set oo <- o.owner, ooo <- uncollectAllPivotlyOutside(oo, pivot) :: ooo); }
-      else
-         { assert rv == {o} + (set oo <- o.owner, ooo <- uncollectAllPivotlyOutside(oo, pivot) :: ooo); }
-    }
-
+// function uncollectFcckingEverything0rig(o : Object, pivot : Object) : (rv : set<Object>)
+//   // all o's transitive owners recursively.  so just collectAllOwners or some such thing
+//     decreases o.AMFO
+//    requires o.Ready()
+//     requires pivot.Ready()
+//      ensures rv == {o} + (set oo <- o.owner, ooo <- uncollectAllPivotlyOutside(oo, pivot) :: ooo)   //wont prove
+//
+//     {
+//
+//       if (true)
+//           then  {o} + (set oo <- o.owner, ooo <- uncollectAllPivotlyOutside(oo, pivot) :: ooo)
+//           else  {o} + (set oo <- o.owner, ooo <- uncollectAllPivotlyOutside(oo, pivot) :: ooo)
+//     }
+//
+//
+// lemma LAMME_uncollectFcckingEverything(o : Object, pivot : Object, rv : set<Object>)
+//   // all o's transitive owners recursively.  so just collectAllOwners or some such thing
+//     decreases o.AMFO
+//    requires o.Ready()
+//    requires rv == uncollectAllPivotlyOutside(o, pivot)
+//     ensures rv == {o} + (set oo <- o.owner, ooo <- uncollectAllPivotlyOutside(oo, pivot) :: ooo)
+//
+//     {
+//       if (true)
+//          { assert rv == {o} + (set oo <- o.owner, ooo <- uncollectAllPivotlyOutside(oo, pivot) :: ooo); }
+//       else
+//          { assert rv == {o} + (set oo <- o.owner, ooo <- uncollectAllPivotlyOutside(oo, pivot) :: ooo); }
+//     }
+//
 
 
 
@@ -353,28 +353,28 @@ lemma SETS_A_B(o : Object, pivot : Object)
 
 
 
-
-lemma UFE_ARGH_SETS(o : Object, pivot : Object)
-  decreases o.AMFO
-   requires o.Ready()
-   requires forall oo <- o.owner :: uncollectFcckingEverything(oo,pivot) == argh(oo)
-    ensures forall oo <- o.owner :: (set ooo <- uncollectFcckingEverything(oo,pivot) :: ooo) == (set ooo <- argh(oo) :: ooo)
-   // ensures (set oo <- o.owner, ooo <- (set x <- uncollectFcckingEverything(oo,pivot)) :: ooo) == (set oo <- o.owner, ooo <- argh(oo) :: ooo)
-    ensures (set oo <- o.owner, ooo <- uncollectFcckingEverything(oo,pivot) :: ooo) == (set oo <- o.owner, ooo <- argh(oo) :: ooo)
- {}
-
-
-lemma UFE_ARGH_SETS2(o : Object, pivot : Object, lset : Owner, rset : Owner)
-  decreases o.AMFO
-   requires o.Ready()
-   requires forall oo <- o.owner :: uncollectFcckingEverything(oo,pivot) == argh(oo)
-   requires lset == (set oo <- o.owner, ooo <- uncollectFcckingEverything(oo,pivot) :: ooo)
-   requires rset == (set oo <- o.owner, ooo <- argh(oo) :: ooo)
-    ensures forall oo <- o.owner :: (set ooo <- uncollectFcckingEverything(oo,pivot) :: ooo) == (set ooo <- argh(oo) :: ooo)
-   // ensures (set oo <- o.owner, ooo <- (set x <- uncollectFcckingEverything(oo,pivot)) :: ooo) == (set oo <- o.owner, ooo <- argh(oo) :: ooo)
-    ensures (set oo <- o.owner, ooo <- uncollectFcckingEverything(oo,pivot) :: ooo) == (set oo <- o.owner, ooo <- argh(oo) :: ooo)
-    ensures rset == lset
- {}
+//
+// lemma UFE_ARGH_SETS(o : Object, pivot : Object)
+//   decreases o.AMFO
+//    requires o.Ready()
+//    requires forall oo <- o.owner :: uncollectFcckingEverything(oo,pivot) == argh(oo)
+//     ensures forall oo <- o.owner :: (set ooo <- uncollectFcckingEverything(oo,pivot) :: ooo) == (set ooo <- argh(oo) :: ooo)
+//    // ensures (set oo <- o.owner, ooo <- (set x <- uncollectFcckingEverything(oo,pivot)) :: ooo) == (set oo <- o.owner, ooo <- argh(oo) :: ooo)
+//     ensures (set oo <- o.owner, ooo <- uncollectFcckingEverything(oo,pivot) :: ooo) == (set oo <- o.owner, ooo <- argh(oo) :: ooo)
+//  {}
+//
+//
+// lemma UFE_ARGH_SETS2(o : Object, pivot : Object, lset : Owner, rset : Owner)
+//   decreases o.AMFO
+//    requires o.Ready()
+//    requires forall oo <- o.owner :: uncollectFcckingEverything(oo,pivot) == argh(oo)
+//    requires lset == (set oo <- o.owner, ooo <- uncollectFcckingEverything(oo,pivot) :: ooo)
+//    requires rset == (set oo <- o.owner, ooo <- argh(oo) :: ooo)
+//     ensures forall oo <- o.owner :: (set ooo <- uncollectFcckingEverything(oo,pivot) :: ooo) == (set ooo <- argh(oo) :: ooo)
+//    // ensures (set oo <- o.owner, ooo <- (set x <- uncollectFcckingEverything(oo,pivot)) :: ooo) == (set oo <- o.owner, ooo <- argh(oo) :: ooo)
+//     ensures (set oo <- o.owner, ooo <- uncollectFcckingEverything(oo,pivot) :: ooo) == (set oo <- o.owner, ooo <- argh(oo) :: ooo)
+//     ensures rset == lset
+//  {}
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 
