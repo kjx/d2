@@ -176,6 +176,7 @@ lemma MOVIN_ON_MAP(os: Owner, left : vmap<Object,Object>, right : vmap<Object,Ob
     ensures rv ==> (o.AMFX <= m.Keys)
     ensures rv ==> (o.bound <= m.Keys)
     ensures rv ==> (o.owner <= m.Keys)
+
     ensures rv ==> (o.Ready())
 
     // ensures (o.Ready() && rv) ==> ownersInKlon(o)
@@ -184,6 +185,16 @@ lemma MOVIN_ON_MAP(os: Owner, left : vmap<Object,Object>, right : vmap<Object,Ob
     {
       o.Ready() && (o.AMFX <= m.Keys)
     }
+
+
+lemma UPSCALE_KLONISHMENT(oo : Owner)
+//if oo <= m.m.Keys, so is flatten(oo)
+ requires oo <= m.Keys
+ requires klonCalid(this)
+  ensures flatten(oo) <= m.Keys
+  {
+//    assert forall o <- oo :: objectInKlon(o);
+  }
 
 
 //29 Oct 2025
