@@ -57,7 +57,7 @@ predicate klonHeap(m : Klon)
   && (forall x <- m.m.Values :: x.Context(m.hns()))
 }
 
-lemma klonHeapValid(m : Klon)
+lemma KLON_HEAP_VALID(m : Klon)
   requires klonReady(m)
   requires klonHeap(m)
    ensures forall x <- m.oHeap    :: x.Ready()

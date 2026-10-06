@@ -272,7 +272,7 @@ assert c == m.c == m.m[m.o];
 
   assert (forall x <- m.oHeap :: x.Context(m.oHeap));
   assert (forall x <- m.m.Values :: x.Context(m.hns()));
-  assert klonHeap(m); klonHeapValid(m);
+  assert klonHeap(m); KLON_HEAP_VALID(m);
   assert forall  x <- m.m.Keys :: x.Valid() && m.m[x].Valid();
 forall k <- m.m.Keys ensures klonLine(k, m.m[k], m) //by
  {
