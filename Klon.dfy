@@ -1411,10 +1411,17 @@ lemma {:timeLimit 30} MAP_THRU_KLON(oo : Owner, rv : Owner, m : Klon)
      ensures forall o <- rv | outside(o,m.c) :: (o == m.m[o])
 
      ensures (forall o <- oo :: outside(o,m.o)) ==> (oo == rv)
-//     ensures (forall r <- rv :: outside(r,m.c)) ==> (oo == rv)
+
+     ensures forall o <- oo :: m.m[o] in rv
+     ensures forall o <- oo :: exists r <- rv :: m.m[o] == r
+     ensures forall r <- rv :: exists o <- oo :: m.m[o] == r
+
  {
     assert forall o <- m.m.Keys | outside(o,m.o) :: (o == m.m[o]);
     assert forall o <- oo | outside(o,m.o) :: o in rv;
+
+    assert forall o <- oo :: m.m[o] in rv;
+    assert forall o <- oo :: exists r <- rv :: m.m[o] == r;
     assert forall r <- rv :: exists o <- oo :: m.m[o] == r;
 
 
@@ -1435,6 +1442,10 @@ lemma {:timeLimit 30} MAP_THRU_KLON(oo : Owner, rv : Owner, m : Klon)
 
    assert (forall o <- oo :: outside(o,m.o)) ==> (oo == rv);
     // assert (forall r <- rv :: outside(r,m.c)) ==> (oo == rv);
+
+{}
+
+
  }
 
 
