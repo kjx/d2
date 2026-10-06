@@ -27,6 +27,145 @@ lemma LEMMA_INSIDE_OUTSIDE(oo : Owner, pivot : Object)
 {}
 
 
+function collectStrictlyInsideObject(o : Object, pivot : Object) : (rv : set<Object>)
+  decreases o.AMFO, 1
+   requires o.Ready()
+    ensures forall r <- rv :: strictlyInside(r,pivot)
+    ensures forall r <- rv :: r in argh(o)
+    { if (not(strictlyInside(o,pivot))) then ({}) else ({o}+collectStrictlyInside(o.owner,pivot)) }
+
+
+function collectStrictlyInside(soup : Owner, pivot : Object) : (rv : set<Object>)
+  decreases allAMFOs(soup), 2
+   requires forall o <- soup :: o.Ready()
+    ensures forall r <- rv :: strictlyInside(r,pivot)
+    ensures forall r <- rv :: r in flatten(soup)
+    {  all_fucked(soup);
+        (set o <- soup, ooo <- collectStrictlyInsideObject(o,pivot) :: ooo) }
+
+
+lemma all_fucked(soup : Owner)
+ requires forall o <- soup :: o.Ready()
+    // requires forall s <- soup :: s in argh(o)
+    //  ensures forall s <- soup :: s in flatten(soup)
+    // requires o in soup
+    //  ensures forall x <- argh(o) :: x in flatten(soup)
+ // ensures (exists s <- soup :: (o in argh(s))) ==> o in flatten(soup)
+
+ ensures forall o <- soup :: flatten({o}) <= flatten(soup)
+ ensures forall o <- soup :: argh(o) <= flatten(soup)
+
+{
+  forall o <- soup ensures (argh(o) <= flatten(soup))  { FLATTEN0(o); }
+}
+
+
+
+lemma COLLECT_STRICTLY_LEMMA0(o : Object, csio : Owner, casi : Owner, pivot : Object)
+decreases o.AMFO
+  requires o.Ready()
+  requires pivot.Ready()
+  requires csio == collectStrictlyInsideObject(o,pivot)
+  requires casi == collectAllStrictlyInside(o,pivot)
+   ensures csio == casi
+{
+  if (not(strictlyInside(o,pivot)))
+   {
+    assert csio == casi == {};
+     return;
+   }
+
+   assert strictlyInside(o,pivot);
+   assert o in casi;
+   assert o in csio;
+
+  forall oo <- o.owner ensures (collectStrictlyInsideObject(oo,pivot) == collectAllStrictlyInside(oo, pivot)) //by
+    {
+      COLLECT_STRICTLY_LEMMA0(oo, collectStrictlyInsideObject(oo,pivot),  collectAllStrictlyInside(oo, pivot), pivot);
+    }
+
+}
+
+
+lemma COLLECT_STRICTLY_LEMMA1(o : Object, csio : Owner, asio : Owner, pivot : Object)
+decreases o.AMFO
+  requires o.Ready()
+  requires pivot.Ready()
+  requires csio == collectStrictlyInsideObject(o,pivot)
+  requires asio == arghStrictlyInside(o,pivot)
+  ensures csio == asio
+{
+  if (not(strictlyInside(o,pivot)))
+   {
+    assert csio == {};
+
+    FLATTEN0(o);
+    assert argh(o) == o.AMFO;
+    assert forall a <- o.AMFO :: not(strictlyInside(a,o));
+    assert forall a <- o.AMFO :: not(strictlyInside(a,pivot));
+    assert asio == {};
+    return;
+   }
+
+   assert strictlyInside(o,pivot);
+   assert o in csio;
+   assert o in asio;
+
+  forall oo <- o.owner ensures (collectStrictlyInsideObject(oo,pivot) == arghStrictlyInside(oo, pivot)) //by
+    {
+      COLLECT_STRICTLY_LEMMA1(oo, collectStrictlyInsideObject(oo,pivot),  arghStrictlyInside(oo, pivot), pivot);
+    }
+
+  assert forall oo <- o.owner :: (collectStrictlyInsideObject(oo,pivot) == arghStrictlyInside(oo, pivot));
+fuckingMAGICLEMMA(o,pivot);
+assert (set oo <- o.owner, ooo <- arghStrictlyInside(oo,pivot) :: ooo) == (set oo <- o.owner, ooo <- collectStrictlyInsideObject(oo,pivot) :: ooo);
+
+  assert forall oo <- o.owner :: (set ooo <- arghStrictlyInside(oo,pivot) :: ooo) == (set ooo <- collectStrictlyInsideObject(oo,pivot) :: ooo);
+
+
+
+
+assert collectStrictlyInside(o.owner,pivot) == (set oo <- o.owner, ooo <- collectStrictlyInsideObject(oo,pivot) :: ooo);
+
+assert collectStrictlyInsideObject(o,pivot) == (if (not(strictlyInside(o,pivot))) then ({}) else ({o}+collectStrictlyInside(o.owner,pivot)));
+
+assert arghStrictlyInside(o,pivot) == allStrictlyInside(argh(o), pivot);
+
+assert csio == collectStrictlyInsideObject(o,pivot);
+assert asio == arghStrictlyInside(o,pivot);
+
+///assert forall x <- asio :: x in csio;
+
+// forall x <- asio ensures (x in csio) //by
+//  {
+//    assert strictlyInside(x,pivot);
+//    assert x in argh(o);
+//    if (x == o) { assert x in csio; }
+//    else {
+//     ThereIsALightThatNeverGoesOut(o,x);
+//     var next := YouCan'tGetThereFromHereBut(o,x);
+//     COLLECT_STRICTLY_LEMMA1(next, collectStrictlyInsideObject(next,pivot),  arghStrictlyInside(next, pivot), pivot);
+//     assert x in csio;
+//    }
+//  }
+
+//fails assert forall x <- argh(o) :: (strictlyInside(x,pivot) ==> (x in csio));
+//fails assert forall x <- argh(o) | strictlyInside(x,pivot) ::  (x in csio);
+
+assert forall x <- csio :: x in asio;
+
+assert csio >= asio; //fails
+assert csio <= asio;
+assert csio == asio;
+
+//  assert (set oo <- o.owner, ooo <- arghStrictlyInside(oo,pivot)) :: ooo) == (set oo <- o.owner, ooo <- collectStrictlyInsideObject(oo,pivot) :: ooo);
+  // assert (set oo <- o.owner, ooo <- arghStrictlyInside(oo,pivot) :: ooo) == (set oo <- o.owner, ooo <- collectStrictlyInsideObject(oo,pivot) :: ooo);
+
+
+  // assert (set oo <- o.owner, ooo <- collectStrictlyInsideObject(oo,pivot) :: ooo) ==
+  //    (set oo <- o.owner, ooo <- arghStrictlyInside(oo, pivot) :: ooo);
+}
+
 function collectAllStrictlyInside(o : Object, pivot : Object) : (rv : set<Object>)
   // all o's transitive owners that are strictly inside pivot
   // recursive, shortcutting analogue of allInside
@@ -445,6 +584,66 @@ lemma uncollectAllStrictlyInside_LEMMA0(o : Object, pivot : Object, skip : Owner
    }
 
 
+
+
+
+
+lemma uncollectAllStrictlyInside_LEMMA0_noall(o : Object, pivot : Object, skip : Owner, unskip : Owner)
+  //unskip equals skip
+  decreases o.AMFO
+   requires o.Ready()
+   requires skip   == collectStrictlyInsideObject(o, pivot)
+   requires unskip == uncollectAllStrictlyInside(o, pivot)
+    ensures unskip == skip
+   {
+      if (not(strictlyInside(o,pivot)))
+        {
+         assert   collectStrictlyInsideObject(o, pivot) == {};
+         uncollectAllStrictlyInside_LEMMA1(o,pivot);
+         assert uncollectAllStrictlyInside(o, pivot) == {};
+         assert unskip == skip;
+         return;
+        }
+
+      assert  strictlyInside(o,pivot);
+
+      assert o in skip;
+      assert o in unskip;
+
+      assert o.Ready(); assert AllReady(o.owner);
+      forall oo <- o.owner
+        ensures (uncollectAllStrictlyInside(oo, pivot) == collectStrictlyInsideObject(oo, pivot)) {
+            assert o.AMFO decreases to oo.AMFO;
+            var oo_skip   :=   collectStrictlyInsideObject(oo, pivot);
+            var oo_unskip := uncollectAllStrictlyInside(oo, pivot);
+            uncollectAllStrictlyInside_LEMMA0_noall(oo, pivot, oo_skip, oo_unskip);
+            assert oo_skip == oo_unskip;
+      }
+   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 lemma uncollectAllStrictlyInside_LEMMA1(o : Object, pivot : Object)
   //unskip outside pivot is always empty --- hmm??? (1i below is better...)
   decreases o.AMFO
@@ -507,8 +706,45 @@ lemma uncollectAllStrictlyInside_LEMMA1o(o : Object, pivot : Object, x : Object)
       assert exists oo <- o.owner :: x in uncollectAllStrictlyInside(oo, pivot);
     }
 
+lemma collectStrictlyInsideObject_LEMMA1o_noall(o : Object, pivot : Object, x : Object)
+  //if x is inside x should be in unskipaAllInsidestrictlyInside
+  decreases o.AMFO
+   requires o.Ready()
+   requires x in argh(o)
+   requires strictlyInside(x,pivot)
+    ensures x in collectStrictlyInsideObject(o, pivot)
+   {
+      if (x == o) {assert x in collectStrictlyInsideObject(o, pivot); return;}
+      assert x != o;
+      assert exists oo <- o.owner, xx <- argh(oo) :: x == xx;
+      assert exists oo <- o.owner :: x in collectStrictlyInsideObject(oo, pivot);
+    }
+
+
+
+
+lemma collectStrictlyInsideObject_LEMMA1o(o : Object, pivot : Object, x : Object)
+  decreases o.AMFO
+   requires o.Ready()
+   requires x in collectStrictlyInsideObject(o, pivot)
+    ensures strictlyInside(x,pivot)
+    // ensures x in o.AMFO
+    ensures x in flatten({o})
+    // ensures x in argh(o)
+   {
+      // if (x == o) {assert x in collectStrictlyInsideObject(o, pivot); return;}
+      // assert x != o;
+      // assert exists oo <- o.owner, xx <- argh(oo) :: x == xx;
+      // assert exists oo <- o.owner :: x in collectStrictlyInsideObject(oo, pivot);
+    }
+
+
+
 lemma uncollectAllStrictlyInside_LEMMA1z(o : Object, pivot : Object)
   //if I'm inside I should be in uncollectAllStrictlyInside
+  //given this one, why do I need all the other shit I'm doing
+  //to prove shit?
+  //see eg  argh_LEMMA13_noall
   decreases o.AMFO
    requires o.Ready()
     ensures forall oo <- argh(o) | strictlyInside(oo,pivot) :: oo in uncollectAllStrictlyInside(o, pivot)
@@ -531,6 +767,52 @@ lemma uncollectAllStrictlyInside_LEMMA1z(o : Object, pivot : Object)
        assert oo in uncollectAllStrictlyInside(o, pivot);
       }
     }
+
+
+
+lemma collectStrictlyInsideObject_LEMMA1z_noall(o : Object, pivot : Object)
+  //if I'm inside I should be in collectStrictlyInsideObject
+  //given this one, why do I need all the other shit I'm doing
+  //to prove shit?
+  //see eg  argh_LEMMA13_noall
+  decreases o.AMFO
+   requires o.Ready()
+   // ensures forall oo <- argh(o) | strictlyInside(oo,pivot) :: oo in collectStrictlyInsideObject(o, pivot)
+
+    ensures (set oo <- argh(o) | strictlyInside(oo,pivot)) <= collectStrictlyInsideObject(o, pivot)
+    ensures (set oo <- argh(o) | strictlyInside(oo,pivot)) >= collectStrictlyInsideObject(o, pivot)
+    ensures (set oo <- argh(o) | strictlyInside(oo,pivot)) == collectStrictlyInsideObject(o, pivot)
+
+    ensures (set oo <- argh(o) | strictlyInside(oo,pivot)) <= arghStrictlyInside(o, pivot)
+    ensures (set oo <- argh(o) | strictlyInside(oo,pivot)) >= arghStrictlyInside(o, pivot)
+    ensures (set oo <- argh(o) | strictlyInside(oo,pivot)) == arghStrictlyInside(o, pivot)
+
+    ensures arghStrictlyInside(o,pivot) == collectStrictlyInsideObject(o, pivot)
+   {
+    forall oo <- argh(o) | strictlyInside(oo,pivot) ensures ( oo in collectStrictlyInsideObject(o, pivot) )  {
+       assert o.Ready();
+       assert oo in argh(o);
+       assert strictlyInside(oo,pivot);
+       collectStrictlyInsideObject_LEMMA1o_noall(o,pivot,oo);
+       assert oo in collectStrictlyInsideObject(o, pivot);
+      }
+
+   forall  oo <- collectStrictlyInsideObject(o, pivot) ensures (oo in (set oo <- argh(o) | strictlyInside(oo,pivot))) {
+      assert o.Ready();
+      assume oo.Ready();
+      assert oo in argh(o);
+      assert strictlyInside(oo,pivot);
+      assert oo in (set oo <- argh(o) | strictlyInside(oo,pivot));
+
+      // collectStrictlyInsideObject_LEMMA1o(o,pivot,oo);
+      // assert oo in collectStrictlyInsideObject(o, pivot);
+
+      }
+
+    }
+
+
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -660,11 +942,11 @@ lemma uncollectAllStrictlyInside_LEMMA3(o : Object, pivot : Object)
    // these two doesn't work
    //   ensures forall oo <- o.owner :: ((set ooo <- uncollectAllStrictlyInside(oo, pivot) :: ooo) == (set ooo <- arghStrictlyInside(oo, pivot) :: ooo))
    //   ensures (set oo <- o.owner, ooo <- uncollectAllStrictlyInside(oo, pivot) :: ooo) == (set oo <- o.owner, ooo <- arghStrictlyInside(oo, pivot) :: ooo)
-
+//this is quite likely the magic lines:
      ensures forall oo <- o.owner :: (set ooo <- uncollectAllStrictlyInside(oo,pivot) :: ooo) == (set ooo <- arghStrictlyInside(oo,pivot) :: ooo)
      ensures (set oo <- o.owner, ooo <- (set x <- uncollectAllStrictlyInside(oo,pivot)) :: ooo) == (set oo <- o.owner, ooo <- arghStrictlyInside(oo,pivot) :: ooo)
      ensures (set oo <- o.owner, ooo <- uncollectAllStrictlyInside(oo,pivot) :: ooo) == (set oo <- o.owner, ooo <- arghStrictlyInside(oo,pivot) :: ooo)
-
+//end magic?
 {
    forall oo <- o.owner ensures ((set ooo <- uncollectAllStrictlyInside(oo, pivot) :: ooo) == (set ooo <- arghStrictlyInside(oo, pivot) :: ooo))
       {
@@ -726,12 +1008,34 @@ lemma arghStrictlyInside_LEMMA1(o : Object, pivot : Object)
    }
 
 
-lemma arghStrictlyInside_LEMMA1b(o : Object, pivot : Object)   //WORKS
- //lifts asI==sAi to sets
+
+
+lemma fuckingMAGICLEMMA(o : Object, pivot : Object)   //WORKS
+ //lifts asI==sAi to sets     //this may be the forall -> set magio!
    decreases o.AMFO
     requires o.Ready()
     requires pivot.Ready()
     requires strictlyInside(o,pivot)
+    requires forall oo <- o.owner :: arghStrictlyInside(oo,pivot) == collectStrictlyInsideObject(oo,pivot)
+     ensures forall oo <- o.owner :: (set ooo <- arghStrictlyInside(oo,pivot) :: ooo) == (set ooo <- collectStrictlyInsideObject(oo,pivot) :: ooo)
+     ensures (set oo <- o.owner, ooo <- (set x <- arghStrictlyInside(oo,pivot)) :: ooo) == (set oo <- o.owner, ooo <- collectStrictlyInsideObject(oo,pivot) :: ooo)
+     ensures (set oo <- o.owner, ooo <- arghStrictlyInside(oo,pivot) :: ooo) == (set oo <- o.owner, ooo <- collectStrictlyInsideObject(oo,pivot) :: ooo)
+{
+   // forall oo <- o.owner ensures (set ooo <- arghStrictlyInside(oo,pivot) :: ooo) == (set ooo <- collectStrictlyInsideObject(oo,pivot) :: ooo)
+   //    {
+   //       assert arghStrictlyInside(oo,pivot) == collectStrictlyInsideObject(oo,pivot);
+   //    }
+}
+
+
+
+
+lemma arghStrictlyInside_LEMMA1b(o : Object, pivot : Object)   //WORKS
+ //lifts asI==sAi to sets     //this may be the forall -> set magio!
+   decreases o.AMFO
+    requires o.Ready()
+    requires pivot.Ready()
+//    requires strictlyInside(o,pivot)
     requires forall oo <- o.owner :: arghStrictlyInside(oo,pivot) == collectAllStrictlyInside(oo,pivot)
      ensures forall oo <- o.owner :: (set ooo <- arghStrictlyInside(oo,pivot) :: ooo) == (set ooo <- collectAllStrictlyInside(oo,pivot) :: ooo)
      ensures (set oo <- o.owner, ooo <- (set x <- arghStrictlyInside(oo,pivot)) :: ooo) == (set oo <- o.owner, ooo <- collectAllStrictlyInside(oo,pivot) :: ooo)
@@ -961,6 +1265,22 @@ lemma argh_LEMMA13(o : Object, pivot : Object)
     assert arghStrictlyInside(o,pivot) == amfoStrictlyInside(o,pivot);
 }
 
+
+
+
+lemma argh_LEMMA13_noall(o : Object, pivot : Object)
+//is this worth the hassle?  or e.g. see eg uncollectAllStrictlyInside_LEMMA1z
+    requires o.Ready()
+    requires pivot.Ready()
+     ensures collectStrictlyInsideObject(o,pivot) == amfoStrictlyInside(o,pivot)
+{
+   uncollectAllStrictlyInside_LEMMA0_noall(o,pivot, collectStrictlyInsideObject(o, pivot), uncollectAllStrictlyInside(o, pivot));
+    assert collectStrictlyInsideObject(o,pivot) == uncollectAllStrictlyInside(o,pivot);
+   uncollectAllStrictlyInside_LEMMA1z(o, pivot);
+    assert uncollectAllStrictlyInside(o, pivot) == arghStrictlyInside(o,pivot);
+   arghStrictlyInside_LEMMA0(o,pivot);
+    assert arghStrictlyInside(o,pivot) == amfoStrictlyInside(o,pivot);
+}
 
 lemma {:verify false} argh_LEMMA13orig(o : Object, pivot : Object)  //doesn't work without assume
    decreases o.AMFO
