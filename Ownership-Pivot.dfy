@@ -5,6 +5,8 @@ include "Ownership.dfy"
 
 
 lemma K_P_Inside(oo : Object, ob : Object, co : Object, cb : Object, m : Klon)
+ //if oo >= ob then clonews co >= cb
+ //currently requires inside, but should generalse nicely I think! non urgent.
  decreases oo.AMFO
   requires klonReady(m)
   requires klonPivot(m)
@@ -12,6 +14,8 @@ lemma K_P_Inside(oo : Object, ob : Object, co : Object, cb : Object, m : Klon)
   requires oo.Ready() && ob.Ready() && co.Ready() && cb.Ready()
 
   requires strictlyInside(oo,m.o)
+  requires strictlyInside(ob,m.o)
+
   requires oo in m.m.Keys
   requires ob in m.m.Keys
   requires klonLine(oo,co,m)
@@ -44,14 +48,20 @@ if (next == ob) {
   assert inside(co,cb);
   return;
 }
+
+assert strictlyInside(ob,m.o);
+assert strictlyInside(next,m.o);
+
 //
-// var mext := m.m[next];
-// assert co.owner == mapThruKlon(oo.owner,m);
-// assert mext in co.owner;
+var mext := m.m[next];
 
-assume inside(co,cb);
+assert co.owner == mapThruKlon(oo.owner,m);
+assert mext in co.owner;
 
 
+K_P_Inside(next,ob,mext,cb,m);
+
+assert inside(co,cb);
 }
 
 
@@ -99,14 +109,37 @@ lemma MAPPING_INSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flown
 
 
 
-forall k <- os_sp.fSin ensures (true) {
+forall k <- os_sp.fSin ensures (m.m[k] in cs_sp.fSin) {
     assert k in m.m.Keys;
     var v := m.m[k];
     assert klonLine(k,v,m);
-    assert inside(k,os_sp.pivot);
-    assert inside(v,cs_sp.pivot);
+
+    assert k in os_sp.fAll;
+
+    assert exists s <- os_sp.soup :: inside(s,k) && strictlyInside(s,m.o);
+    var s :| s in os_sp.soup && inside(s,k) && strictlyInside(s,m.o);
+    assert cs_sp.soup == mapThruKlon(os_sp.soup,m);
+    var t :| t in cs_sp.soup && (m.m[s] == t);
+
+K_P_Inside(s,k,t,v,m);
+
+// Error: this is the precondition that could not be proved
+// Inside strictlyInside(oo,m.o)
+// Could not prove: part.AMFO > whole.AMFO
+
+        assert v in cs_sp.fAll;
+
+    // assert strictlyInside(k,os_sp.pivot);
+    // assert strictlyInside(v,cs_sp.pivot);
+
+        assert k in os_sp.fSin;
+        assert v in cs_sp.fSin;
+
     }
 
+
+assert mapThruKlon(os_sp.fSin, m) <= cs_sp.fSin;
+assert mapThruKlon(os_sp.fSin, m) >= cs_sp.fSin;
 
 }
 
