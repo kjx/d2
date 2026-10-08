@@ -1,6 +1,320 @@
 include "Ownership.dfy"
 //include "BROWNE.dfy"
 
+lemma KLONECT_ONE_MORE(done : Owner, y : Object, rv : Owner, ksio : Owner, pivot : Object)
+   requires forall o <- done :: o.Ready()
+   requires y.Ready()
+   requires rv   == collectStrictlyInside(done, pivot)
+   requires ksio == collectStrictlyInsideObject(y, pivot)
+    ensures collectStrictlyInside(done+{y}, pivot) == rv+ksio
+{}
+
+
+
+
+lemma klon2StrictlyInsideObject(o : Object, m : Klon) returns (rv : set<Object>)
+  decreases o.AMFO, 12
+   requires o.Ready()
+   requires klonCalid(m)
+   requires m.objectInKlon(o)
+    ensures rv == collectStrictlyInsideObject(o, m.o)
+    { rv := {};
+      if strictlyInside(o,m.o) {
+        var klect := klon2StrictlyInside(o.owner,m);
+        rv := {o} + klect;
+      }
+    }
+
+lemma klon2StrictlyInside(soup : Owner, m : Klon) returns (rv : set<Object>)
+  decreases allAMFOs(soup), 22
+   requires m.allInKlon(soup)
+   requires klonCalid(m)
+    ensures rv == collectStrictlyInside(soup, m.o)
+    {  assert klonCalid(m);  assert KCLD: klonCalid(m);
+       rv := {};
+      var done := {};
+      assert collectStrictlyInside(done, m.o) == rv;
+      var todo := soup;
+      while todo > {}
+        decreases todo
+        invariant forall o <- soup :: o.Ready()
+        invariant done <= soup
+        invariant collectStrictlyInside(done, m.o) == rv
+        invariant soup == (todo + done)
+        invariant todo !! done
+      {
+        assert soup >= todo > {};
+        todo, done, rv := LOOPY2LOOP(soup, todo, done, rv, m)  by { DOWNY_DOWN_DOWN(soup,todo,15); }
+        assert (collectStrictlyInside(done, m.o) == rv) by { DOWNY_DOWN_DOWN(soup,todo,20); }
+     }
+      assert done == soup;
+      assert collectStrictlyInside(soup, m.o) == rv;
+       }
+
+
+
+
+
+lemma LOOPY2LOOP(soup : Owner, todo' : Owner, done' : Owner, rv' : Owner, m: Klon)
+                      returns (todo : Owner,  done : Owner,  rv : Owner)
+  decreases allAMFOs(todo'), 15
+   requires todo' > {}
+   requires todo' !! done'
+   requires forall o <- soup :: o.Ready()
+   requires done' <= soup
+   requires collectStrictlyInside(done', m.o) == rv'
+   requires soup == (todo' + done')
+   requires m.allInKlon(soup)
+   requires klonCalid(m)
+   ensures done <= soup
+   ensures collectStrictlyInside(done, m.o) == rv
+   ensures soup == (todo + done)
+   ensures todo !! done
+   ensures todo < todo'
+      {
+        assert soup == (todo' + done');
+        todo := todo';
+        done := done';
+        assert soup == (todo + done);
+        rv := rv';
+        var y :| y in todo';
+        assert y in todo'; assert y in soup;
+        DOWNY_DOWN(todo',y);
+        var ksio := klon2StrictlyInsideObject(y,m);
+        assert ksio == collectStrictlyInsideObject(y,m.o);
+        assert collectStrictlyInside(done, m.o) == rv;
+        KLONECT_ONE_MORE(done,y,rv,ksio,m.o);
+        assert collectStrictlyInside(done+{y}, m.o) == rv+ksio;
+        assert soup == (todo' + done');
+        rv := rv + ksio;
+        todo, done := UPPY_UPP(soup, y, todo', done') by
+           {
+            assert allAMFOs(todo') == allAMFOs(todo');
+            assert allAMFOs(todo') nonincreases to allAMFOs(todo');
+            assert 15 > 5;
+            assert 15 decreases to 5;
+            assert (allAMFOs(todo'), 15 decreases to allAMFOs(todo'), 5 );
+           }
+
+        assert collectStrictlyInside(done, m.o) == rv;
+      }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+lemma klonectStrictlyInsideObject(o : Object, m : Klon) returns (rv : set<Object>)
+  decreases o.AMFO, 12
+   requires o.Ready()
+   requires klonCalid(m)
+   requires m.objectInKlon(o)
+    ensures rv == collectStrictlyInsideObject(o, m.o)
+    { rv := {};
+      if strictlyInside(o,m.o) {
+        var klect := klonectStrictlyInside(o.owner,m);
+        rv := {o} + klect;
+      }
+    }
+
+lemma klonectStrictlyInside(soup : Owner, m : Klon) returns (rv : set<Object>)
+  decreases allAMFOs(soup), 22
+   requires m.allInKlon(soup)
+   requires klonCalid(m)
+    ensures rv == collectStrictlyInside(soup, m.o)
+    {  assert klonCalid(m);  assert KCLD: klonCalid(m);
+       rv := {};
+      var done := {};
+      assert collectStrictlyInside(done, m.o) == rv;
+      var todo := soup;
+      while todo > {}
+        decreases todo
+        invariant forall o <- soup :: o.Ready()
+        invariant done <= soup
+        invariant collectStrictlyInside(done, m.o) == rv
+        invariant soup == (todo + done)
+        invariant todo !! done
+      {
+        assert soup >= todo > {};
+        todo, done, rv := LOOPY_LOOP(soup, todo, done, rv, m)  by { DOWNY_DOWN_DOWN(soup,todo,15); }
+        assert (collectStrictlyInside(done, m.o) == rv) by { DOWNY_DOWN_DOWN(soup,todo,20); }
+     }
+      assert done == soup;
+      assert collectStrictlyInside(soup, m.o) == rv;
+       }
+
+
+
+
+
+
+// lemma old klxnectStrictlyInside(soup : Owner, m : Klon) returns (rv : set<Object>)
+//   decreases allAMFOs(soup), 22
+//    requires m.allInKlon(soup)
+//    requires klonCalid(m)
+//     ensures rv == collectStrictlyInside(soup, m.o)
+//     {  assert klonCalid(m);  assert KCLD: klonCalid(m);
+//        rv := {};
+//       var done := {};
+//       assert collectStrictlyInside(done, m.o) == rv;
+//       var todo := soup;
+//       while todo != {}
+//         decreases todo
+//         invariant forall o <- soup :: o.Ready()
+//         invariant done <= soup
+//         invariant collectStrictlyInside(done, m.o) == rv
+//         invariant soup == (todo + done)
+//         invariant todo !! done
+//       {
+//         var y: Object;
+//         y :| y in todo;
+//         assert y in soup;  assert allAMFOs(soup) >= y.AMFO;
+//         DOWNY_DOWN(soup,y);
+//         var ksio := klonectStrictlyInsideObject(y,m) by { reveal KCLD; assume klonCalid(m);}
+//         assert ksio == collectStrictlyInsideObject(y,m.o);
+//         assert collectStrictlyInside(done, m.o) == rv;
+//         KLONECT_ONE_MORE(done,y,rv,ksio,m.o);
+//         assert collectStrictlyInside(done+{y}, m.o) == rv+ksio;
+//         assert soup == (todo + done);
+//         rv := rv + ksio;
+//         todo := todo - {y};
+//         done := done + {y};
+//         assert soup == (todo + done);
+//         assert collectStrictlyInside(done, m.o) == rv;
+//      }
+//       assert done == soup;
+//       assert collectStrictlyInside(soup, m.o) == rv;
+//        }
+//
+
+
+
+
+
+lemma DOWNY_DOWN(todo : Owner, y : Object)
+    requires todo > {}
+    requires y in todo
+     ensures allAMFOs(todo) >= y.AMFO
+     ensures allAMFOs(todo) nonincreases to y.AMFO
+     ensures 22 decreases to 12
+     ensures (allAMFOs(todo), 22 decreases to y.AMFO, 12)
+{}
+
+lemma DOWNY_DOWN_DOWN(soup : Owner, todo : Owner, other : nat)
+    requires soup >= todo
+    requires other < 22
+
+     ensures allAMFOs(soup) >= allAMFOs(todo)
+     ensures allAMFOs(soup) nonincreases to allAMFOs(todo)
+     ensures 22 >= other
+     ensures 22 decreases to other
+     ensures (allAMFOs(soup), 22 decreases to allAMFOs(todo), other)
+{}
+
+
+lemma UPPY_UPP(soup : Owner, y : Object, todo' : Owner, done' : Owner)
+      returns (todo : Owner, done : Owner)
+    decreases allAMFOs(todo'), 5
+    requires soup > {}
+    requires y in soup
+    requires y in todo'
+    requires todo' !! done'
+    requires soup == todo' + done'
+
+     ensures todo == todo' - {y}
+     ensures done == done' + {y}
+     ensures todo !! done
+     ensures soup == todo + done
+     ensures todo <  todo'
+{
+  todo := todo' - {y};
+  done := done' + {y};
+}
+
+
+lemma LOOPY_LOOP(soup : Owner, todo' : Owner, done' : Owner, rv' : Owner, m: Klon)
+                      returns (todo : Owner,  done : Owner,  rv : Owner)
+  decreases allAMFOs(todo'), 15
+   requires todo' > {}
+   requires todo' !! done'
+   requires forall o <- soup :: o.Ready()
+   requires done' <= soup
+   requires collectStrictlyInside(done', m.o) == rv'
+   requires soup == (todo' + done')
+   requires m.allInKlon(soup)
+   requires klonCalid(m)
+   ensures done <= soup
+   ensures collectStrictlyInside(done, m.o) == rv
+   ensures soup == (todo + done)
+   ensures todo !! done
+   ensures todo < todo'
+      {
+        assert soup == (todo' + done');
+        todo := todo';
+        done := done';
+        assert soup == (todo + done);
+        rv := rv';
+        var y :| y in todo';
+        assert y in todo'; assert y in soup;
+        DOWNY_DOWN(todo',y);
+        var ksio := klonectStrictlyInsideObject(y,m);
+        assert ksio == collectStrictlyInsideObject(y,m.o);
+        assert collectStrictlyInside(done, m.o) == rv;
+        KLONECT_ONE_MORE(done,y,rv,ksio,m.o);
+        assert collectStrictlyInside(done+{y}, m.o) == rv+ksio;
+        assert soup == (todo' + done');
+        rv := rv + ksio;
+        todo, done := UPPY_UPP(soup, y, todo', done') by
+           {
+            assert allAMFOs(todo') == allAMFOs(todo');
+            assert allAMFOs(todo') nonincreases to allAMFOs(todo');
+            assert 15 > 5;
+            assert 15 decreases to 5;
+            assert (allAMFOs(todo'), 15 decreases to allAMFOs(todo'), 5 );
+           }
+
+        assert collectStrictlyInside(done, m.o) == rv;
+      }
+
+
+
+lemma P_K_Inside(oo : Object, ob : Object, co : Object, cb : Object, m : Klon)
+ //if oo >= ob then clonews co >= cb
+ //currently requires inside, but should generalse nicely I think! non urgent.
+ decreases oo.AMFO
+  requires klonReady(m)
+  requires klonPivot(m)
+  requires klonAllLines(m)
+  requires oo.Ready() && ob.Ready() && co.Ready() && cb.Ready()
+
+  requires strictlyInside(co,m.o)
+  requires strictlyInside(cb,m.o)
+
+  requires oo in m.m.Keys
+  requires ob in m.m.Keys
+  requires klonLine(oo,co,m)
+  requires klonLine(ob,cb,m)
+  requires m.m[oo] == co
+//  requires m.m[ob] == cb
+
+   ensures m.m[ob] == cb
+   ensures inside(oo,ob)
+  requires inside(co,cb)
+{}
+
 
 
 
@@ -65,84 +379,264 @@ assert inside(co,cb);
 }
 
 
+
+
+
+
+predicate splitCalidOK(os_sp : FlownerSplit, cs_sp : FlownerSplit, m : Klon) : (rv : bool)
+  ensures rv ==> (AllReady(os_sp.fAll) && AllReady(cs_sp.fAll))
+    reads m.hns()
+    {
+   && AllReady(os_sp.soup)
+   && AllReady(cs_sp.soup)
+   && klonCalid(m)
+   && flownerSplitOK(os_sp.soup, m.o,os_sp)
+   && flownerSplitOK(cs_sp.soup, m.c,cs_sp)
+    }
+
+
+
+
+
+lemma TRUMPY_TRUMPFY(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : FlownerSplit, m : Klon)
+   requires AllReady(os_sp.fAll)
+   requires AllReady(cs_sp.fAll)
+   requires klonCalid(m)
+
+   requires os <= m.m.Keys
+   requires cs == mapThruKlon(os,m)
+   requires flownerSplitOK(os, m.o,os_sp)
+   requires flownerSplitOK(cs, m.c,cs_sp)
+
+//    ensures forall v <- cs_sp.fSin :: (exists k <- os_sp.fSin :: m.m[k] == v)
+   {
+    DRACULA_DRACULA(os,os_sp,cs,cs_sp,m);
+    assert forall k <- os_sp.fSin :: (m.m[k] in cs_sp.fSin);
+
+
+  flownerStrictlyInside_RESULT(os_sp.soup,os_sp.pivot,os_sp.fSin);
+      assert forall o <- os_sp.fAll | strictlyInside(o,os_sp.pivot) :: o in os_sp.fSin;
+      assert forall o <- os_sp.fSin :: o in os_sp.fAll;
+      assert forall o <- os_sp.fSin :: strictlyInside(o,os_sp.pivot);
+      assert forall o <- os_sp.fSin :: exists s <- os_sp.soup | o in s.AMFO :: (PART_INSIDE_OWNER(os_sp.soup,os_sp.pivot);  ownerStrictlyInside(s,os_sp.pivot,o));
+
+  flownerStrictlyInside_RESULT(cs_sp.soup,cs_sp.pivot,cs_sp.fSin);
+      assert forall o <- cs_sp.fAll | strictlyInside(o,cs_sp.pivot) :: o in cs_sp.fSin;
+      assert forall o <- cs_sp.fSin :: o in cs_sp.fAll;
+      assert forall o <- cs_sp.fSin :: strictlyInside(o,cs_sp.pivot);
+      assert forall o <- cs_sp.fSin :: exists s <- cs_sp.soup | o in s.AMFO :: (PART_INSIDE_OWNER(cs_sp.soup,cs_sp.pivot);  ownerStrictlyInside(s,cs_sp.pivot,o));
+
+
+    assert forall k <- os_sp.fSin :: exists v <- cs_sp.fSin :: m.m[k] == v;
+    assert forall k <- os_sp.fSin :: (m.m[k] in cs_sp.fSin) && klonLine(k, m.m[k], m);
+    assert os_sp.fAll <= m.m.Keys;
+
+//ERR    assert cs_sp.fAll <= m.m.Values;
+//ERR    assert forall v <- cs_sp.fSin :: exists k <- os_sp.fSin :: m.m[k] == v;
+//ERR    assert forall v <- cs_sp.fSin :: (var k :| k in os_sp.fSin && (m.m[k] == v); klonLine(k, m.m[k], m) );
+   }
+
+
+
+
+lemma ZOMBIE_ZOMBIE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : FlownerSplit, m : Klon)
+   requires AllReady(os_sp.fAll)
+   requires AllReady(cs_sp.fAll)
+   requires klonCalid(m)
+
+   requires os <= m.m.Keys
+   requires cs == mapThruKlon(os,m)
+   requires flownerSplitOK(os, m.o,os_sp)
+   requires flownerSplitOK(cs, m.c,cs_sp)
+
+    ensures forall v <- cs_sp.fSin :: (exists k <- os_sp.fSin :: m.m[k] == v)
+   {
+      forall v <- cs_sp.fSin ensures (true) {        //  forall v <- cs_sp.fSin ensures (exists k <- os_sp.fSin :: m.m[k] == v) {
+
+          assert exists t <- cs_sp.soup :: v in t.AMFO;
+          var t :| t in cs_sp.soup && v in t.AMFO;
+          transitiveStrictlyInside(t,v,cs_sp.pivot);
+
+          var s :| s in os_sp.soup && (m.m[s] == t);
+          assert m.objectInKlon(s);
+          m.UPSCALE_KLONISHMENT({s});
+          assert exists k <- s.AMFO :: (m.m[k] == v);
+
+
+
+          var k :| k in s.AMFO &&  (m.m[k] == v);  //    (inside(s,k) && strictlyInside(k,m.o))
+
+        }
+
+   }
+
+
+lemma DRACULA_DRACULA(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : FlownerSplit, m : Klon)
+   requires AllReady(os_sp.fAll)
+   requires AllReady(cs_sp.fAll)
+   requires klonCalid(m)
+
+   requires os <= m.m.Keys
+   requires cs == mapThruKlon(os,m)
+   requires flownerSplitOK(os, m.o,os_sp)
+   requires flownerSplitOK(cs, m.c,cs_sp)
+
+    ensures forall k <- os_sp.fSin :: (m.m[k] in cs_sp.fSin)
+  {
+    forall k <- os_sp.fSin ensures (m.m[k] in cs_sp.fSin) {
+
+      assert strictlyInside(k,m.o);
+      var v := m.m[k];
+      assert klonLine(k,v,m);
+
+      assert exists s <- os_sp.soup :: inside(s,k);
+      var s :| s in os_sp.soup && inside(s,k);
+      transitiveStrictlyInside(s,k,os_sp.pivot);
+      assert cs_sp.soup == mapThruKlon(os_sp.soup,m);
+      var t :| t in cs_sp.soup && (m.m[s] == t);
+
+      K_P_Inside(s,k,t,v,m);
+
+      assert v in cs_sp.fSin;
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 lemma MAPPING_INSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : FlownerSplit, m : Klon)
    requires AllReady(os_sp.fAll)
    requires AllReady(cs_sp.fAll)
    requires klonCalid(m)
 
    requires os <= m.m.Keys
-   requires forall o <- os_sp.fSin :: strictlyInside(o, m.o)
    requires cs == mapThruKlon(os,m)
    requires flownerSplitOK(os, m.o,os_sp)
    requires flownerSplitOK(cs, m.c,cs_sp)
-//
-//     ensures forall o <- os :: klonLine(o,m.m[o],m)
-//     ensures forall o <- os :: klonGeometry(o,m.m[o],m)
-//     ensures forall o <- os :: klonIdentity(o,m.m[o],m)
-//     ensures forall o <- os_sp.fSin :: strictlyInside(m.m[o],m.c) && (o != m.m[o])
-//  //   ensures forall o <- os_sp.fSin :: m.m[o].owner == mapThruKlon(o.owner, m)
-//  //   ensures forall o <- os_sp.fSin :: m.m[o].bound == mapThruKlon(o.bound, m)
-//
-//     // ensures forall o <- os_sp.fSin :: woodFood(o,m.m[o],m)
+//   requires forall o <- os_sp.fSin :: strictlyInside(o, m.o)
+
+
+//ensures mapThruKlon(os_sp.fSin, m) == cs_sp.fSin
 
   //love this beautiful symmetrical formulation
     // ensures forall o <- os_sp.fSin :: exists r <- cs_sp.fSin :: m.m[o] == r
     // ensures forall r <- cs_sp.fSin :: exists o <- os_sp.fSin :: m.m[o] == r
-
 {
-     assert cs_sp.fSin == flownerStrictlyInside(cs_sp.soup,cs_sp.pivot);
-     assert os_sp.fSin == flownerStrictlyInside(os_sp.soup,os_sp.pivot);
+      assert os_sp.fSin == flownerStrictlyInside(os_sp.soup,os_sp.pivot);
+      assert cs_sp.fSin == flownerStrictlyInside(cs_sp.soup,cs_sp.pivot);
 
- flownerStrictlyInside_RESULT(os_sp.soup,os_sp.pivot,os_sp.fSin);
-   assert forall o <- os_sp.fAll | strictlyInside(o,os_sp.pivot) :: o in os_sp.fSin;
-   assert forall o <- os_sp.fSin :: o in flatten(os_sp.soup);
-   assert forall o <- os_sp.fSin :: strictlyInside(o,os_sp.pivot);
-   assert forall o <- os_sp.fSin :: exists s <- os_sp.soup | o in s.AMFO :: (PART_INSIDE_OWNER(os_sp.soup,os_sp.pivot);  ownerStrictlyInside(s,os_sp.pivot,o));
+  flownerStrictlyInside_RESULT(os_sp.soup,os_sp.pivot,os_sp.fSin);
+      assert forall o <- os_sp.fAll | strictlyInside(o,os_sp.pivot) :: o in os_sp.fSin;
+      assert forall o <- os_sp.fSin :: o in os_sp.fAll;
+      assert forall o <- os_sp.fSin :: strictlyInside(o,os_sp.pivot);
+      assert forall o <- os_sp.fSin :: exists s <- os_sp.soup | o in s.AMFO :: (PART_INSIDE_OWNER(os_sp.soup,os_sp.pivot);  ownerStrictlyInside(s,os_sp.pivot,o));
+
+  flownerStrictlyInside_RESULT(cs_sp.soup,cs_sp.pivot,cs_sp.fSin);
+      assert forall o <- cs_sp.fAll | strictlyInside(o,cs_sp.pivot) :: o in cs_sp.fSin;
+      assert forall o <- cs_sp.fSin :: o in cs_sp.fAll;
+      assert forall o <- cs_sp.fSin :: strictlyInside(o,cs_sp.pivot);
+      assert forall o <- cs_sp.fSin :: exists s <- cs_sp.soup | o in s.AMFO :: (PART_INSIDE_OWNER(cs_sp.soup,cs_sp.pivot);  ownerStrictlyInside(s,cs_sp.pivot,o));
+
+  forall k <- os_sp.fSin ensures (m.m[k] in cs_sp.fSin) {
+
+      assert strictlyInside(k,m.o);
+      var v := m.m[k];
+      assert klonLine(k,v,m);
+
+      assert exists s <- os_sp.soup :: inside(s,k);
+      var s :| s in os_sp.soup && inside(s,k);
+      transitiveStrictlyInside(s,k,os_sp.pivot);
+      assert cs_sp.soup == mapThruKlon(os_sp.soup,m);
+      var t :| t in cs_sp.soup && (m.m[s] == t);
+
+      K_P_Inside(s,k,t,v,m);
+
+      assert v in cs_sp.fSin;
+   }
+assert os_sp.fSin <= m.m.Keys;          // assert forall o <- os_sp.fSin ::
+
+  forall v <- cs_sp.fSin ensures (true) {
+
+//  forall v <- cs_sp.fSin ensures (exists k <- os_sp.fSin :: m.m[k] == v) {
+
+      assert exists t <- cs_sp.soup :: v in t.AMFO;
+      var t :| t in cs_sp.soup && v in t.AMFO;
+      transitiveStrictlyInside(t,v,cs_sp.pivot);
+
+      var s :| s in os_sp.soup && (m.m[s] == t);
+//
+//       forall x <- t.AMFO ensures ( strictlyInside(x,cs_sp.pivot) <==> (x in cs_sp.fSin) )
+//         {
+//           assert strictlyInside(x,cs_sp.pivot)  ==> (x in cs_sp.fSin);
+//           assert strictlyInside(x,cs_sp.pivot) <==  (x in cs_sp.fSin);
+//           BOOLEAN_SPOOLEAN( strictlyInside(x,cs_sp.pivot) , (x in cs_sp.fSin) );
+//           assume strictlyInside(x,cs_sp.pivot) <==> (x in cs_sp.fSin);   ///cos assert doesnt work,
+//        }
+//
+//
+//       forall y <- s.AMFO ensures ( strictlyInside(y,os_sp.pivot) <==> (y in os_sp.fSin) )
+//         {
+//           assert strictlyInside(y,os_sp.pivot)  ==> (y in os_sp.fSin);
+//           assert strictlyInside(y,os_sp.pivot) <==  (y in os_sp.fSin);
+//           BOOLEAN_SPOOLEAN( strictlyInside(y,os_sp.pivot) , (y in os_sp.fSin) );
+//           assume strictlyInside(y,os_sp.pivot) <==> (y in os_sp.fSin);   ///cos assert doesnt work,
+//        }
+//
+
+
+      assert m.objectInKlon(s);
+      m.UPSCALE_KLONISHMENT({s});
+      assert exists k <- s.AMFO :: (m.m[k] == v);
+      var k :| k in s.AMFO &&  (m.m[k] == v);  //    (inside(s,k) && strictlyInside(k,m.o))
+
+
+      // assert forall x <- os_sp.soup :: (x in m.m.Keys) && (exists y : Object :: m.m[x] == y);
+
+//
+//       assert s in m.m.Keys; assert t in m.m.Values;
+//       assert os_sp.fAll == flatten(os) <= m.m.Keys;
+// //      var k :| k in m.m.Keys && (m.m[k] == v);
 
 
 
- flownerStrictlyInside_RESULT(cs_sp.soup,cs_sp.pivot,cs_sp.fSin);
-   assert forall o <- cs_sp.fAll | strictlyInside(o,cs_sp.pivot) :: o in cs_sp.fSin;
-   assert forall o <- cs_sp.fSin :: o in flatten(cs_sp.soup);
-   assert forall o <- cs_sp.fSin :: strictlyInside(o,cs_sp.pivot);
-   assert forall o <- cs_sp.fSin :: exists s <- cs_sp.soup | o in s.AMFO :: (PART_INSIDE_OWNER(cs_sp.soup,cs_sp.pivot);  ownerStrictlyInside(s,cs_sp.pivot,o));
+
+  }
 
 
 
-forall k <- os_sp.fSin ensures (m.m[k] in cs_sp.fSin) {
-    assert k in m.m.Keys;
-    var v := m.m[k];
-    assert klonLine(k,v,m);
-
-    assert k in os_sp.fAll;
-
-    assert exists s <- os_sp.soup :: inside(s,k) && strictlyInside(s,m.o);
-    var s :| s in os_sp.soup && inside(s,k) && strictlyInside(s,m.o);
-    assert cs_sp.soup == mapThruKlon(os_sp.soup,m);
-    var t :| t in cs_sp.soup && (m.m[s] == t);
-
-K_P_Inside(s,k,t,v,m);
-
-// Error: this is the precondition that could not be proved
-// Inside strictlyInside(oo,m.o)
-// Could not prove: part.AMFO > whole.AMFO
-
-        assert v in cs_sp.fAll;
-
-    // assert strictlyInside(k,os_sp.pivot);
-    // assert strictlyInside(v,cs_sp.pivot);
-
-        assert k in os_sp.fSin;
-        assert v in cs_sp.fSin;
-
-    }
+  assert mapThruKlon(os_sp.fSin, m) <= cs_sp.fSin;
+  assert mapThruKlon(os_sp.fSin, m) >= cs_sp.fSin;
+  }
 
 
-assert mapThruKlon(os_sp.fSin, m) <= cs_sp.fSin;
-assert mapThruKlon(os_sp.fSin, m) >= cs_sp.fSin;
-
-}
-
+lemma BOOLEAN_SPOOLEAN(a : bool, b : bool)
+  requires a  ==> b
+  requires a <==  b
+   ensures a <==> b
+{}
 
 
 
@@ -185,8 +679,12 @@ datatype preFlownerSplit = preFlownerSplit(
     fPvt : Owner,
     fXpt : Owner
   ) {
-    predicate Valid() {
-     && (fAll == flownerAll(soup))
+    predicate {:timeLimit 60} Valid() {
+      assume AllReady(flatten(soup));
+      assume pivot.Ready();
+    //  && AllReady(flatten(soup))   //should do better than that…
+    //  && pivot.Ready() //…ditto
+     && (fAll == flownerAll(soup) == flatten(soup))
      && (fSin == flownerStrictlyInside(soup,pivot))
      && (fOut == flownerStrictlyOutside(soup,pivot))
      && (fPvt == flownerOnlyPivot(soup,pivot))
@@ -196,7 +694,6 @@ datatype preFlownerSplit = preFlownerSplit(
      && (fAll == fSin + fOut + fPvt + fXpt)
 
      && fSin !! (fOut + fPvt + fXpt)
-
     }
   }
 
@@ -204,7 +701,7 @@ datatype preFlownerSplit = preFlownerSplit(
 
 
 predicate flownerSplitOK(soup : OWNR, pivot : Object, split : FlownerSplit)
-  requires AllReady(flatten(soup)) && pivot.Ready()
+ // requires AllReady(soup) && pivot.Ready()
   {
       && (split.soup == soup)
       && (split.pivot == pivot)
@@ -227,7 +724,7 @@ lemma UNPACK_flownerSplitOK(soup : OWNR, pivot : Object, split : FlownerSplit)
    ensures ((split.fOut + split.fPvt + split.fXpt) == flownerPivotlyOutside(soup,pivot))
    ensures (split.fAll == split.fSin + split.fOut + split.fPvt + split.fXpt)
    ensures split.fSin !! (split.fOut + split.fPvt + split.fXpt)
-{}
+  {}
 
 
 
@@ -405,3 +902,19 @@ lemma flownerStrictlyInside_RESULT(soup : Owner, pivot : Object, rv : Owner)
    ensures forall owner <- rv :: exists o <- soup | owner in o.AMFO ::
           (PART_INSIDE_OWNER(soup,pivot);  ownerStrictlyInside(o,pivot,owner))
 {}
+
+
+
+
+
+
+function collectStrictlyInsideObject(o : Object, pivot : Object) : (rv : set<Object>)
+  decreases o.AMFO, 10
+   requires o.Ready()
+    { if (not(strictlyInside(o,pivot))) then ({}) else ({o}+collectStrictlyInside(o.owner,pivot)) }
+
+
+function collectStrictlyInside(soup : Owner, pivot : Object) : (rv : set<Object>)
+   requires forall o <- soup :: o.Ready()
+      decreases allAMFOs(soup), 20
+    { (set o <- soup, ooo <- collectStrictlyInsideObject(o,pivot) :: ooo) }
