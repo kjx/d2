@@ -36,7 +36,7 @@ include "Printing.dfy"
 //include "B2.dfy"
 include "Context.dfy"
 
-include "Klon-HighLine.dfy"
+//include "Klon-HighLine.dfy"
 
 
 include "Xlone_All_Fields.dfy"
@@ -2514,8 +2514,8 @@ method {:verify false}  FAKE_Xlone_Via_Map(a : Object, m' : Klon)
     ensures b.Ready() && b.Valid()
     ensures b.Context(m.hns())
     ensures m.CalidLineKV(a,b)
-    ensures HighLineKV(a,b,m)
-    ensures HighCalidFragilistic(m)//I WANT THIS BUT WITHOUT IT I GET CRASHES  - I LOVE YOU BUT I'VE CHOSEN DARKNESS
+    // ensures HighLineKV(a,b,m)
+    // ensures HighCalidFragilistic(m)//I WANT THIS BUT WITHOUT IT I GET CRASHES  - I LOVE YOU BUT I'VE CHOSEN DARKNESS
 //I LOVE YOU BUT I'VE CHOSEN DARKNESS
     ensures klonReady(m)
     ensures klonLine(a,b,m)
@@ -2949,8 +2949,8 @@ lemma FieldModesAreStillOK(a : Object, b : Object, m : Klon, m' : Klon)
  lemma CalidKVFromHighLineKV(k : Object, v : Object, m : Klon)
    requires m.apoCalidse()
    requires m.SuperCalidFragilistic()
-   requires HighCalidFragilistic(m)
-   requires HighLineKV(k,v,m)
+  //  requires HighCalidFragilistic(m)
+  //  requires HighLineKV(k,v,m)
     ensures m.CalidLineKV(k,v)
     {}
 
@@ -2990,7 +2990,7 @@ lemma SetDJNZ<T>(a : set<T>, b : set<T>)
 
 
 
-  lemma  RefOKGetsModeOK(source : Object, clone : Object, n : string, t : Object, u : Object, m : Klon)
+  lemma  RefOKGetsModeOK(source : Object, clone : Object, n : string, t : Object, u : Object, m : Klon)  //Unused?
   //   //cloning source.Valid() && source.Context(context) results in clone.Valid() && clone.Context(context)
   //takes ages even just to resolve, let alone veryify. crashes regularly on the new versions
   //9 Feb 2026
@@ -3043,7 +3043,7 @@ lemma SetDJNZ<T>(a : set<T>, b : set<T>)
 //NO_FIELDMODES     requires source.fieldModes[n] == clone.fieldModes[n] //less overkill version
 
 
-    requires HighLineKV(t,u,m)
+//    requires HighLineKV(t,u,m)
 //    requires mappingOWNRsThruKlonKV(t.owner, u.owner, m)  ///after the money's gone
   //  requires mappingOwnersThruKlonKV(t,u,m);
     // requires mappingOWNRsThruKlonKV(t.AMFO, u.AMFO, m)

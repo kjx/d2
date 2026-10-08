@@ -14,7 +14,7 @@ method {:timeLimit 10} {:verify true} Xlone_Via_Map(a : Object, m' : Klon)
 
     requires m'.HeapContextReady() && m'.ValuesContextReady()
     requires m'.SuperCalidFragilistic()
-    requires HighCalidFragilistic(m')
+//    requires HighCalidFragilistic(m')
     requires COK(a, m'.oHeap)      requires COKA: COK(a, m'.oHeap)  /// should merge in of course...
     requires a.Context(m'.oHeap)   requires CTXA: a.Context(m'.oHeap)
     requires m'.oHeap >= flatten(m'.clowner) >= flatten(m'.clbound) //shold be in Calid, yeah??
