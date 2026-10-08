@@ -169,6 +169,22 @@ lemma MOVIN_ON_MAP(os: Owner, left : vmap<Object,Object>, right : vmap<Object,Ob
 
 
 
+  predicate allInKlon(os : Owner) : (rv : bool)
+    //o and all its owners etc are the Klon
+    //(doesn't extend to fields)
+    //NOTE critical that this does NOT dpend on klonReady() etc
+    ///because i5t supprots that definition
+    reads {}
+
+    ensures rv ==> forall o <- os :: objectInKlon(o)
+  {
+     AllReady(os) && (os <= m.Keys)
+   }
+
+
+
+
+
   predicate ownersInKlon(o : Object) : (rv : bool)
     //sibling of objectInKlon = but only the owners, not the onejkct itself
     //I guess it could fail iff o is in the Klon but currently it does not.
@@ -1374,7 +1390,8 @@ function mapBackKlon(os: set<Object>, m : Klon) : (r : set<Object>)
   reads {}
 { mapBackVMap(os,m.m) }
 
-function objThruKlon(o : Object, m : Klon) : Object    requires o in m.m.Keys {m.m[o]}
+function objThruKlon(o : Object, m : Klon) : Object    requires o in m.m.Keys   {m.m[o]}
+function objBackKlon(v : Object, m : Klon) : Object    requires v in m.m.Values {var o :| m.m[o] == v; o}
 
 lemma MAP_THRU_KLON_OUTSIDE_ONLY(oo : Owner, m : Klon)
  //verified 24 Sept 2026
