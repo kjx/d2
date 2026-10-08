@@ -4,6 +4,25 @@ include "Set-Lemmata.dfy"
 //TO GET MY HEAD STRAIGHT/
 //IN THIS FILE
 
+//(also needs to look at cunt)
+
+
+
+//     adds recursive collectStrictyInside and collectStrictyInsideObject
+//     as yet another attenmpt to get fSin out.  God I hate this. It is
+//     destroying what's left of my life.   anyway adds them in here,
+//     they were later copied into Ownership-Dunno.dfy,
+//     also adds lemmata to prove they are equivalent to
+//     collectAllStrictlyInside - COLLECT_STRICTLY_LEMMA0
+//     arghStrictlyInside - COLLECT_STRICTLY_LEMMA1
+//     uncollectAllStrictlyInside - uncollectAllStrictlyInside_LEMMA0_noall
+//     strictlyInside - collectStrictlyInsideObject_LEMMA1o
+//     arghStrictlyInside - collectStrictlyInsideObject_LEMMA1z_noall
+//       and also fuckingMAGICLEMMA
+//     amfoStrictlyInside - arghStrictlyInside_LEMMA1b
+//     and argh_LEMMA13_noall
+
+
 //collectAllStrictlyInside -> collectAllStrictlyInside
 //skipX -> collectX
 
