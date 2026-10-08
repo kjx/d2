@@ -133,7 +133,7 @@ predicate Ready()
     && (this !in AMFX) && (this !in owner) &&  (this !in bound)
   }
 
-lemma RettyBetty(os : set<Object>)
+static lemma RettyBetty(os : set<Object>)
  requires AllReady(os)
   ensures AllReady(flatten(os))
   {}

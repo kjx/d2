@@ -151,6 +151,17 @@ predicate objectStrictlyInsideOwner(part : Object, wholeO : Owner) { part.AMFO >
 
 lemma transitiveInside(a : Object, b : Object, c : Object)
   //CULL requires a.Ready() && b.Ready() && c.Ready()
+  requires inside(a,b)
+  requires inside(b,c)
+   ensures inside(a,c)
+{}
+
+lemma transitiveStrictlyInside(a : Object, b : Object, c : Object)
+  //CULL requires a.Ready() && b.Ready() && c.Ready()
+  requires inside(a,b)
+  requires strictlyInside(b,c)
+   ensures strictlyInside(a,c)
+{}
 
 //see also R2? - NonCachedDefinitionsForPaper
 
@@ -374,7 +385,11 @@ lemma  FLATTEN_ALLAMFOS(oo : Owner)
 {}
 
 
-predicate AllReady(os : Owner) {forall oo <- os :: oo.Ready()}
+
+predicate AllReady(os : Owner) : (rv : bool)
+  ensures rv ==> (forall oo <- flatten(os) :: oo.Ready())
+     {forall oo <- os :: oo.Ready()}
+
 predicate AllValid(os : Owner) reads os`fields, os`fieldModes {forall oo <- os :: oo.Valid()}
 
 function allAMFOs(oo : Owner) : (r : OWNR)
