@@ -483,6 +483,14 @@ lemma KLONECT_ONE_MORE(done : Owner, y : Object, rv : Owner, ksio : Owner, pivot
 {}
 
 
+lemma GOING_DOWN(oo : Owner, o : Object)
+    requires oo > {}
+    requires o in oo
+     ensures allAMFOs(oo) >= o.AMFO
+     ensures allAMFOs(oo) nonincreases to o.AMFO
+     ensures 15 decreases to 14
+     ensures (allAMFOs(oo), 15 decreases to o.AMFO, 14)
+{}
 
 lemma DOWNY_DOWN(todo : Owner, y : Object)
     requires todo > {}
@@ -1195,18 +1203,13 @@ function collectStrictlyInside(soup : Owner, pivot : Object) : (rv : set<Object>
 
 
 
-lemma {:timeLimit 20} MASTERY_OBJECT(o : Object, m : Klon)
- //do i need the soup as input, so I can show I'm getting to every reachable object?
- //verified... 10Oct 2026
-  decreases o.AMFO, 15
+lemma {:timeLimit 15} MASTERY_OBJECT(o : Object, m : Klon)
+  decreases o.AMFO, 14
    requires o.Ready()
    requires klonCalid(m)
    requires m.objectInKlon(o)
    requires collectStrictlyInsideObject(o,m.o) <= m.m.Keys
-  //  requires mc == mapThruKlon(collectStrictlyInsideObject(o,m.o),m)
-  //  requires cm == collectStrictlyInsideObject(m.m[o],m.c)
 
-//    ensures mc == cm
     ensures mapThruKlon(collectStrictlyInsideObject(o,m.o),m) == collectStrictlyInsideObject(m.m[o],m.c)
 {
    var c  := m.m[o];
@@ -1272,30 +1275,16 @@ lemma {:timeLimit 20} MASTERY_OBJECT(o : Object, m : Klon)
 
 
 
-lemma {:timeLimit 30} MASTERY_THRU(oo : Owner, m : Klon)
-  decreases allAMFOs(oo), 14
+lemma {:timeLimit 10} MASTERY_THRU(oo : Owner, m : Klon)
+  decreases allAMFOs(oo), 15
    requires klonCalid(m)
    requires m.allInKlon(oo)
    requires AllReady(oo)
    requires AllReady(mapThruKlon(oo,m))
    requires collectStrictlyInside(oo,m.o) <= m.m.Keys
-  //  requires mc == mapThruKlon(collectStrictlyInside(oo,m.o),m)
-  //  requires cm == collectStrictlyInside(mapThruKlon(oo,m),m.c)
- //    ensures mc == cm
 
     ensures mapThruKlon(collectStrictlyInside(oo,m.o),m) == collectStrictlyInside(mapThruKlon(oo,m),m.c)
 {
-//   assert mc == mapThruKlon(collectStrictlyInside(oo,m.o),m);
-//   assert mc == mapThruKlon(  (set o : Object <- oo, ooo <- collectStrictlyInsideObject(o,m.o) :: ooo)  ,m);   //Err
-//
-//   assert cm == collectStrictlyInside(mapThruKlon(oo,m),m.c);
-//   assert cm == (set o : Object <- mapThruKlon(oo,m), ooo <- collectStrictlyInsideObject(o,m.o) :: ooo);  //Err
-//   assert cm == (set o : Object <- oo, ooo <- collectStrictlyInsideObject(m.m[o],m.o) :: ooo);  //Err
-//
-//   assert collectStrictlyInside(oo,m.o) == (set o : Object <- oo, ooo <- collectStrictlyInsideObject(o,m.o) :: ooo);  //Err
-//
-//
-
   var mc := mapThruKlon(collectStrictlyInside(oo,m.o),m);
   var cm := collectStrictlyInside(mapThruKlon(oo,m),m.c);
 
@@ -1309,9 +1298,14 @@ lemma {:timeLimit 30} MASTERY_THRU(oo : Owner, m : Klon)
       assert m.objectInKlon(o);
       assert c == m.m[o];
       assert collectStrictlyInsideObject(o,m.o) <= m.m.Keys;
-      //  assert omc == mapThruKlon(collectStrictlyInsideObject(o,m.o),m);
-      //  assert ocm == collectStrictlyInsideObject(m.m[o],m.c);
-            MASTERY_OBJECT(o, m);
+
+
+
+      MASTERY_OBJECT(o, m) by {
+                                GOING_DOWN(oo,o);
+                                assert (allAMFOs(oo),15 decreases to o.AMFO,14);
+                              }
+      assert (mapThruKlon(collectStrictlyInsideObject(o,m.o),m) == collectStrictlyInsideObject(m.m[o],m.c));
       }
 
    assert mc == cm;
@@ -1319,9 +1313,6 @@ lemma {:timeLimit 30} MASTERY_THRU(oo : Owner, m : Klon)
 
 }
 
-//can we soehow assert the fucking there-and-back-again line?
-//can I even express it?
-//can the Klon conditionss prove tit?
 
 //forall x <- flatten(soup) && strictlyInside(x,pivot) ::  m.m[x] in flatten(coup) && strictlyInside(m.m[x], other-pivot))
 //forall x <- flatten(coup) && strictlyInside(x,pivot) ::  unm(x) in flatten(soup) && strictlyInside(unm(x) , other-pivot))
