@@ -5,7 +5,7 @@ echo
 for i in *.dfy
 do
     #printf "%30s: " $i
-    LOG=$(ls -1t logs/*-$i.txt 2>/dev/null | head -1)
+    LOG=$(ls -1t logs/*$i.txt 2>/dev/null | head -1)
     if test -f ./$LOG
     then
 	if grep -q fini ./$LOG
