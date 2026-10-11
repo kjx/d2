@@ -470,14 +470,16 @@ function ownerBound() : Bound {  if (owner == bound) then ({this}) else (bound) 
    //the bound for directly owned objects to use to set their own bounds...
        //AMFB == AMFX or owner == bound  ???
 
-lemma OWNRsOwners(o : Object)
- requires o.Ready()
-  ensures (o.owner == o.bound) ==> (o.AMFX == o.AMFB)
-{}
 
-function collectOwnersBounds() : set<set<Object>>  { set o <- owner :: o.AMFB }
-
-function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds() ) }
+// lemma OWNRsOwners(o : Object)
+//  requires o.Ready()
+//   ensures (o.owner == o.bound) ==> (o.AMFX == o.AMFB)
+//  {}
+//
+// function collectOwnersBounds() : set<set<Object>>  { set o <- owner :: o.AMFB }
+//             //
+//
+// function proposeOwnerRebound() : set<Object> { intersetion( collectOwnersBounds() ) }
 //
 // lemma {:timeLimit 20} Bounds_Reflexive(oo : Owner)
 //    requires forall o <- oo :: o.bound == o.owner
