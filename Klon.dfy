@@ -1370,13 +1370,12 @@ function mapThruKlon(os: set<Object>, m : Klon) : (rv : set<Object>)
   requires os <= m.m.Keys
    ensures rv  <= m.m.Values
    ensures (os > {}) ==> (rv > {})
+   ensures (os > {}) ==> (var o :| o in os; (os == {o}) ==> (rv == {m.m[o]}) )
    ensures forall o <- os :: m.m[o] in rv
    ensures forall o <- os :: exists r <- rv :: m.m[o] == r
    ensures forall r <- rv :: exists o <- os :: m.m[o] == r
    ensures forall r <- rv :: exists o <- m.m.Keys :: (m.m[o] == r) ==> (o in os)
    ensures forall r <- rv :: var o :| (o in m.m.Keys) && (m.m[o] == r); (o in os)
-  //  ensures (os > {}) ==> (var o :| o in os; (os == {o}) ==> (r == {m.m[o]}) )
-  //  ensures (os > {}) ==> (exists o | o in os :: ((os == {o}) ==> (r == {m.m[o]})))
   reads {}
     { assert (os > {}) ==> ( var o :| o in os; {m.m[o]} > {});  //THIS LINE IS OF SATAN. WASN'T NEEDED PREVIOUSLY.,..
       set o <- os :: m.m[o] }
