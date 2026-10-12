@@ -726,7 +726,7 @@ lemma uncollectAllStrictlyInside_LEMMA1o(o : Object, pivot : Object, x : Object)
     }
 
 lemma collectStrictlyInsideObject_LEMMA1o_noall(o : Object, pivot : Object, x : Object)
-  //if x is inside x should be in unskipaAllInsidestrictlyInside
+  //if x is inside x should be in collectStrictlyInsideObject
   decreases o.AMFO
    requires o.Ready()
    requires x in argh(o)

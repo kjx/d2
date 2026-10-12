@@ -794,19 +794,222 @@ lemma DRACULA_DRACULA(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flow
 
 
 
-
-
-
-
-
-
-
-
-
+// lemma {:timeLimit 10} MASTERY_THRU(oo : Owner, m : Klon)
+//   decreases allAMFOs(oo), 15
+//    requires klonCalid(m)
+//    requires m.allInKlon(oo)
+//    requires AllReady(oo)
+//    requires AllReady(mapThruKlon(oo,m))
+//    requires collectStrictlyInside(oo,m.o) <= m.m.Keys
+//
+//     ensures mapThruKlon(collectStrictlyInside(oo,m.o),m) == collectStrictlyInside(mapThruKlon(oo,m),m.c)
 
 
 
 lemma MAPPING_INSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : FlownerSplit, m : Klon)
+   requires AllReady(os_sp.fAll)
+   requires AllReady(cs_sp.fAll)
+   requires klonCalid(m)
+
+   requires os <= m.m.Keys
+   requires cs == mapThruKlon(os,m)
+   requires flownerSplitOK(os, m.o,os_sp)
+   requires flownerSplitOK(cs, m.c,cs_sp)
+
+   // ensures mapThruKlon(os_sp.fSin, m) == cs_sp.fSin
+
+{
+  assert os_sp.fSin == flownerStrictlyInside(os_sp.soup,m.o);
+  assert cs_sp.fSin == flownerStrictlyInside(cs_sp.soup,m.c);
+
+  assert os_sp.fSin == flownerStrictlyInside(os,m.o);
+  assert cs_sp.fSin == flownerStrictlyInside(mapThruKlon(os,m),m.c);
+
+}
+
+
+
+//{:timeLimit 60}
+lemma  FLOWNER_ALL_COLLECT_StrictlyInside(soup : OWNR, pivot : Object)
+  requires AllReady(flatten(soup)) && pivot.Ready()
+   ensures flownerStrictlyInside(soup,pivot) <= flownerAll(soup)
+   ensures allStrictlyInside(flatten(soup),pivot) == flownerStrictlyInside(soup,pivot)
+   ensures allStrictlyInside(flownerAll(soup),pivot) == flownerStrictlyInside(soup,pivot)
+
+   ensures collectStrictlyInside(soup,pivot) == flownerStrictlyInside(soup,pivot)
+{
+
+ forall o <- soup
+    ensures (flownerStrictlyInside({o},pivot) == collectStrictlyInsideObject(o, pivot)) //by
+    { collectStrictlyInsideObject_LEMMA1z_noall(o,pivot); }
+
+ assert forall o <- soup :: collectStrictlyInsideObject(o,pivot) <= collectStrictlyInside(soup,pivot);
+
+
+ assert forall o <- collectStrictlyInside(soup,pivot) ::
+    exists s <- soup :: o in s.AMFO;
+ assert forall o <- collectStrictlyInside(soup,pivot) ::
+    exists s <- soup :: o in collectStrictlyInsideObject(s,pivot);
+//  assert forall o <- collectStrictlyInside(soup,pivot) ::
+//     o in (set s <- soup, ss <- collectStrictlyInsideObject(s,pivot) :: ss);
+
+}
+
+
+///the magic lines?
+// assert forall oo <- soup :: (set ooo <- collectStrictlyInside({oo},pivot) :: ooo) == (set ooo <- flownerStrictlyInside({oo},pivot) :: ooo);
+// assert (set oo <- soup, ooo <- (set x <- collectStrictlyInside({oo},pivot)) :: ooo) == (set oo <- soup, ooo <- flownerStrictlyInside({oo},pivot) :: ooo);
+// assert (set oo <- soup, ooo <- collectStrictlyInside({oo},pivot) :: ooo) == (set oo <- soup, ooo <- flownerStrictlyInside({oo},pivot) :: ooo);
+//
+
+// ///the magic lines?
+// assert forall oo <- soup :: (set ooo <- collectStrictlyInside({oo},pivot) :: ooo) == (set ooo <- flownerStrictlyInside({oo},pivot) :: ooo);
+// assert (set oo <- soup, ooo <- (set x <- collectStrictlyInside({oo},pivot)) :: ooo) == (set oo <- soup, ooo <- flownerStrictlyInside({oo},pivot) :: ooo);
+// assert (set oo <- soup, ooo <- collectStrictlyInside({oo},pivot) :: ooo) == (set oo <- soup, ooo <- flownerStrictlyInside({oo},pivot) :: ooo);
+
+  //  assert collectStrictlyInside(soup,pivot) == flownerStrictlyInside(soup,pivot);
+
+
+lemma LETS_BE_SUBSET(less : Owner, more : Owner)
+  requires forall o <- less :: o in more
+   ensures less <= more
+{}
+
+lemma IS_FUCKED(soup : OWNR, pivot : Object)
+  requires AllReady(flatten(soup)) && pivot.Ready()
+//   ensures collectStrictlyInside(soup,pivot) == (set o <- soup, oo <- collectStrictlyInsideObject(o,pivot) :: oo)
+ {
+    IS2FUCKED(soup,pivot);
+//    assert forall o <- collectStrictlyInside(soup,pivot) :: o in (set s <- soup, ss <- collectStrictlyInsideObject(s,pivot) :: ss);
+//    IS0FUCKED(soup,pivot);
+    IS1FUCKED(soup,pivot);
+ }
+
+lemma IS0FUCKED(soup : OWNR, pivot : Object)
+  requires AllReady(flatten(soup)) && pivot.Ready()
+  requires forall o <- collectStrictlyInside(soup,pivot) :: o in (set s <- soup, ss <- collectStrictlyInsideObject(s,pivot) :: ss)
+//   ensures collectStrictlyInside(soup,pivot) <=                  (set o <- soup, oo <- collectStrictlyInsideObject(o,pivot) :: oo)
+//   ensures collectStrictlyInside(soup,pivot) >= (set o <- soup, oo <- collectStrictlyInsideObject(o,pivot) :: oo)
+//   ensures collectStrictlyInside(soup,pivot) == (set o <- soup, oo <- collectStrictlyInsideObject(o,pivot) :: oo)
+{
+  IS2FUCKED(soup,pivot);
+  LETS_BE_SUBSET(collectStrictlyInside(soup,pivot), (set s <- soup, ss <- collectStrictlyInsideObject(s,pivot) :: ss));
+}
+
+lemma IS1FUCKED(soup : OWNR, pivot : Object)
+  requires AllReady(flatten(soup)) && pivot.Ready()
+//   ensures collectStrictlyInside(soup,pivot) <= (set o <- soup, oo <- collectStrictlyInsideObject(o,pivot) :: oo)
+   ensures collectStrictlyInside(soup,pivot) >= (set o <- soup, oo <- collectStrictlyInsideObject(o,pivot) :: oo)
+//   ensures collectStrictlyInside(soup,pivot) == (set o <- soup, oo <- collectStrictlyInsideObject(o,pivot) :: oo)
+{}
+
+
+lemma IS2FUCKED(soup : OWNR, pivot : Object)
+  requires AllReady(flatten(soup)) && pivot.Ready()
+  //  ensures forall o <- collectStrictlyInside(soup,pivot) :: exists s <- soup :: o in s.AMFO
+  //  ensures forall o <- collectStrictlyInside(soup,pivot) :: exists s <- soup :: o in collectStrictlyInsideObject(s,pivot)
+  //  ensures forall o <- collectStrictlyInside(soup,pivot) :: o in (set s <- soup, ss <- collectStrictlyInsideObject(s,pivot) :: ss)
+//   ensures collectStrictlyInside(soup,pivot) <= (set o <- soup, oo <- collectStrictlyInsideObject(o,pivot) :: oo)
+{
+   assert forall o <- collectStrictlyInside(soup,pivot) :: exists s <- soup :: o in s.AMFO;
+   assert forall o <- collectStrictlyInside(soup,pivot) :: exists s <- soup :: o in collectStrictlyInsideObject(s,pivot);
+   // assert forall o <- collectStrictlyInside(soup,pivot) :: o in (set s <- soup, ss <- collectStrictlyInsideObject(s,pivot) :: ss);
+
+ var less := collectStrictlyInside(soup,pivot);
+ var more := (set s <- soup, ss <- collectStrictlyInsideObject(s,pivot) :: ss);
+ assert forall o <- less :: o in more;
+ LETS_BE_SUBSET(less, more);
+//    LETS_BE_SUBSET(collectStrictlyInside(soup,pivot), (set s <- soup, ss <- collectStrictlyInsideObject(s,pivot) :: ss));
+  //  assert collectStrictlyInside(soup,pivot) <= (set o <- soup, oo <- collectStrictlyInsideObject(o,pivot) :: oo);
+}
+
+lemma IS3FUCKED(soup : OWNR, pivot : Object)
+  requires AllReady(flatten(soup)) && pivot.Ready()
+//   ensures collectStrictlyInside(soup,pivot) <= (set o <- soup, oo <- collectStrictlyInsideObject(o,pivot) :: oo)
+   ensures forall o <- soup, oo <- collectStrictlyInsideObject(o,pivot) :: oo in collectStrictlyInside(soup,pivot)
+//   ensures collectStrictlyInside(soup,pivot) == (set o <- soup, oo <- collectStrictlyInsideObject(o,pivot) :: oo)
+{}
+
+
+
+lemma collectStrictlyInsideObject_LEMMA1z_noall(o : Object, pivot : Object)
+  //if I'm inside I should be in collectStrictlyInsideObject
+  //given this one, why do I need all the other shit I'm doing
+  //to prove shit?
+  //see eg  argh_LEMMA13_noall
+  decreases o.AMFO
+   requires o.Ready()
+   requires pivot.Ready()
+
+    ensures allStrictlyInside(o.AMFO,pivot) <= collectStrictlyInsideObject(o,pivot)
+    ensures allStrictlyInside(o.AMFO,pivot) >= collectStrictlyInsideObject(o,pivot)
+    ensures allStrictlyInside(o.AMFO,pivot) == collectStrictlyInsideObject(o,pivot)
+
+    ensures allStrictlyInside(o.AMFO,pivot) <= flownerStrictlyInside({o},pivot)
+    ensures allStrictlyInside(o.AMFO,pivot) >= flownerStrictlyInside({o},pivot)
+    ensures allStrictlyInside(o.AMFO,pivot) == flownerStrictlyInside({o},pivot)
+
+    ensures flownerStrictlyInside({o},pivot) <= collectStrictlyInsideObject(o,pivot)
+    ensures flownerStrictlyInside({o},pivot) >= collectStrictlyInsideObject(o,pivot)
+    ensures flownerStrictlyInside({o},pivot) == collectStrictlyInsideObject(o,pivot)
+
+   {
+    forall oo <- o.AMFO | strictlyInside(oo,pivot) ensures ( oo in collectStrictlyInsideObject(o,pivot) )  {
+       assert o.Ready();
+       assert oo in o.AMFO;
+       assert strictlyInside(oo,pivot);
+       collectStrictlyInsideObject_LEMMA1o_noall(o,pivot,oo);
+       assert oo in collectStrictlyInsideObject(o,pivot);
+      }
+
+   forall  oo <- collectStrictlyInsideObject(o,pivot) ensures (oo in allStrictlyInside(o.AMFO,pivot)) {
+      assert o.Ready();
+      assume oo.Ready();
+      assert oo in o.AMFO;
+      assert strictlyInside(oo,pivot);
+      assert oo in allStrictlyInside(o.AMFO,pivot);
+
+      collectStrictlyInsideObject_LEMMA1o_noall(o,pivot,oo);
+      // assert oo in collectStrictlyInsideObject(o,pivot);
+
+      }
+
+    }
+
+
+
+lemma collectStrictlyInsideObject_LEMMA1o_noall(o : Object, pivot : Object, x : Object)
+  //if x is inside x should be in collectStrictlyInsideObject
+  decreases o.AMFO
+   requires o.Ready()
+   requires x in o.AMFO
+   requires strictlyInside(x,pivot)
+    ensures x in collectStrictlyInsideObject(o, pivot)
+   {
+      if (x == o) {assert x in collectStrictlyInsideObject(o, pivot); return;}
+      assert x != o;
+      assert exists oo <- o.owner, xx <- oo.AMFO :: x == xx;
+      assert exists oo <- o.owner :: x in collectStrictlyInsideObject(oo, pivot);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+lemma orig_MxPPING_xNSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : FlownerSplit, m : Klon)
    requires AllReady(os_sp.fAll)
    requires AllReady(cs_sp.fAll)
    requires klonCalid(m)
@@ -1123,7 +1326,7 @@ lemma PART_INSIDE_OWNER(soup : OWNR, pivot : Object)
 
 
 function flownerAll(soup : Owner) : OWNR {assume forall s <- soup :: s.Ready(); (set o <- soup, oo <- o.AMFO :: oo)}
-  //yes same as nuke() etc...
+  //yes same as flatten() etc...
 
 function flownerStrictlyInside(soup : OWNR, pivot : Object)  : (rv : Owner)
   requires AllReady(flatten(soup)) && pivot.Ready()
@@ -1183,22 +1386,66 @@ lemma flownerStrictlyInside_RESULT(soup : Owner, pivot : Object, rv : Owner)
 {}
 
 
+lemma {:timeLimit 30} collectStrictlyInside_RESULT(soup : Owner, pivot : Object, rv : Owner)
+ decreases allAMFOs(soup)
+  requires AllReady(flatten(soup)) && pivot.Ready() && AllReady(flatten(rv))
+  requires collectStrictlyInside(soup,pivot) == rv
+   //ensures forall r <- flatten(soup) | strictlyInside(r,pivot) :: r in rv //err
+   ensures forall r <- rv :: r in flatten(soup)
+  ensures forall r <- rv :: strictlyInside(r,pivot)  //err
+  //  ensures forall owner <- rv :: exists o <- soup | owner in o.AMFO ::
+  //         (PART_INSIDE_OWNER(soup,pivot);  ownerStrictlyInside(o,pivot,owner))
+{
+  if (soup == {}) {return;}
 
-
+  forall oo <- soup ensures (true) {
+    var rs := collectStrictlyInsideObject(oo, pivot);
+    assert (oo in rs) ==> strictlyInside(oo,pivot);
+    collectStrictlyInside_RESULT(oo.owner,pivot, collectStrictlyInside(oo.owner,pivot) );
+   assert rs == if (strictlyInside(oo,pivot)) then {oo} + collectStrictlyInside(oo.owner, pivot) else {};
+   assert forall r <- rs :: strictlyInside(r,pivot);
+    assert rs <= flatten(soup);
+  }
+}
 
 
 function collectStrictlyInsideObject(o : Object, pivot : Object) : (rv : set<Object>)
-  decreases o.AMFO, 10
-//   requires o.Ready()
-   ensures rv <= argh(o)
-    { assume o.Ready(); if (not(strictlyInside(o,pivot))) then ({}) else ({o}+collectStrictlyInside(o.owner,pivot)) }
+///version from BROWNE
+  decreases o.AMFO, 1
+   requires o.Ready()
+    ensures forall r <- rv :: strictlyInside(r,pivot)
+    ensures forall r <- rv :: r in o.AMFO
+    { if (not(strictlyInside(o,pivot))) then ({}) else ({o}+collectStrictlyInside(o.owner,pivot)) }
 
 
 function collectStrictlyInside(soup : Owner, pivot : Object) : (rv : set<Object>)
-  // requires forall o <- soup :: o.Ready()
-      decreases allAMFOs(soup), 20
-        ensures rv <= flatten(soup)
-    { assume forall o <- soup :: o.Ready(); (set o <- soup, ooo <- collectStrictlyInsideObject(o,pivot) :: ooo) }
+///version from BROWNE
+  decreases allAMFOs(soup), 2
+   requires forall o <- soup :: o.Ready()
+    ensures forall r <- rv :: strictlyInside(r,pivot)
+    ensures forall r <- rv :: r in flatten(soup)
+    { (set o <- soup, ooo <- collectStrictlyInsideObject(o,pivot) :: ooo) }
+
+
+//
+// function collectStrictlyInsideObject(o : Object, pivot : Object) : (rv : set<Object>)
+//   decreases o.AMFO, 10
+// //   requires o.Ready()
+//    ensures rv <= o.AMFO
+//     { assume o.Ready(); if (not(strictlyInside(o,pivot))) then ({}) else ({o}+collectStrictlyInside(o.owner,pivot)) }
+//
+//
+// function collectStrictlyInside(soup : Owner, pivot : Object) : (rv : set<Object>)
+//   // requires forall o <- soup :: o.Ready()
+//       decreases allAMFOs(soup), 20
+//         ensures rv <= flatten(soup)
+//     { assume forall o <- soup :: o.Ready(); (set o <- soup, ooo <- collectStrictlyInsideObject(o,pivot) :: ooo) }
+//
+
+
+function rorschach(soup : Owner, pivot : Object) : (rv : set<Object>)
+    decreases allAMFOs(soup), 20
+    { (set o <- soup, ooo <- collectStrictlyInsideObject(o,pivot) :: ooo) }
 
 
 
