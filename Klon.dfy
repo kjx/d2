@@ -176,10 +176,13 @@ lemma MOVIN_ON_MAP(os: Owner, left : vmap<Object,Object>, right : vmap<Object,Ob
     ///because i5t supprots that definition
     reads {}
 
-    ensures rv ==> forall o <- os :: objectInKlon(o)
+  //  ensures rv ==> forall o <- os :: objectInKlon(o)
   {
-     AllReady(os) && (os <= m.Keys)
+    //  assert (os <= m.Keys) ==> (forall o <- os :: objectInKlon(o));
+    //  AllReady(os) && (os <= m.Keys)
+    forall o <- os :: objectInKlon(o)
    }
+
 
 
 
@@ -1459,9 +1462,7 @@ lemma {:timeLimit 30} MAP_THRU_KLON(oo : Owner, rv : Owner, m : Klon)
    assert (forall o <- oo :: outside(o,m.o)) ==> (oo == rv);
     // assert (forall r <- rv :: outside(r,m.c)) ==> (oo == rv);
 
-{}
-
-
+//{}
  }
 
 
