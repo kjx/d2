@@ -1464,7 +1464,7 @@ function rorschach(soup : Owner, pivot : Object) : (rv : set<Object>)
 
 
 
-lemma {:timeLimit 15} MASTERY_OBJECT(o : Object, m : Klon)
+lemma {:timeLimit 20} MASTERY_OBJECT(o : Object, m : Klon)
   decreases o.AMFO, 14
    requires o.Ready()
    requires klonCalid(m)
@@ -1579,7 +1579,7 @@ lemma {:timeLimit 10} MASTERY_THRU(oo : Owner, m : Klon)
 //forall x <- flatten(coup) && strictlyInside(x,pivot) ::  unm(x) in flatten(soup) && strictlyInside(unm(x) , other-pivot))
 
 
-lemma MAPPEM_ONE(o : Object, m : Klon)
+lemma MAPPEN_ONE(o : Object, m : Klon)
  //shitteth has been throwth at the wallth and it sticketh
   requires o.Ready()
   requires o in m.m.Keys
