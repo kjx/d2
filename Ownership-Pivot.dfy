@@ -810,13 +810,14 @@ lemma MAPPING_INSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flown
    requires AllReady(os_sp.fAll)
    requires AllReady(cs_sp.fAll)
    requires klonCalid(m)
-
    requires os <= m.m.Keys
+   requires AllReady(mapThruKlon(os,m))
+   requires collectStrictlyInside(os,m.o) <= m.m.Keys
    requires cs == mapThruKlon(os,m)
    requires flownerSplitOK(os, m.o,os_sp)
    requires flownerSplitOK(cs, m.c,cs_sp)
 
-   // ensures mapThruKlon(os_sp.fSin, m) == cs_sp.fSin
+    ensures mapThruKlon(os_sp.fSin, m) == cs_sp.fSin
 
 {
   assert os_sp.fSin == flownerStrictlyInside(os_sp.soup,m.o);
@@ -825,6 +826,19 @@ lemma MAPPING_INSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flown
   assert os_sp.fSin == flownerStrictlyInside(os,m.o);
   assert cs_sp.fSin == flownerStrictlyInside(mapThruKlon(os,m),m.c);
 
+FLOWNER_ALL_COLLECT_StrictlyInside(os_sp.soup,m.o);
+assert collectStrictlyInside(os_sp.soup,m.o) == flownerStrictlyInside(os_sp.soup,m.o) == os_sp.fSin;
+FLOWNER_ALL_COLLECT_StrictlyInside(cs_sp.soup,m.c);
+assert collectStrictlyInside(cs_sp.soup,m.c) == flownerStrictlyInside(cs_sp.soup,m.c) == cs_sp.fSin;
+
+MASTERY_THRU(os_sp.soup,m);
+
+ assert mapThruKlon(collectStrictlyInside(os,m.o),m) == collectStrictlyInside(mapThruKlon(os,m),m.c);
+ assert mapThruKlon(os_sp.fSin, m) == mapThruKlon(collectStrictlyInside(os,m.o),m);
+ assert cs_sp.fSin == flownerStrictlyInside(mapThruKlon(os,m),m.c);
+ assert mapThruKlon(os_sp.fSin, m) == cs_sp.fSin;
+
+//HERE! //HERE //HERE
 }
 
 
@@ -1565,19 +1579,67 @@ lemma {:timeLimit 10} MASTERY_THRU(oo : Owner, m : Klon)
 //forall x <- flatten(coup) && strictlyInside(x,pivot) ::  unm(x) in flatten(soup) && strictlyInside(unm(x) , other-pivot))
 
 
+lemma MAPPEM_ONE(o : Object, m : Klon)
+ //shitteth has been throwth at the wallth and it sticketh
+  requires o.Ready()
+  requires o in m.m.Keys
+  requires klonReady(m)
+  requires klonCalid(m)
+   ensures (set x <- {o} :: m.m[x]) == {m.m[o]}
+   ensures mtk({o},m) == {m.m[o]}
+   ensures mapThruKlon({o},m) == {m.m[o]}
+{
+  LemmaSingletonSize({o},o);
+  assert IsSingleton({o});
+  var z := ExtractFromSingleton({o});
+  assert z == o;
+  assert {z} == {o};
+  assert (set x <- {o} :: m.m[x]) == {m.m[o]};
+  assert forall x <- {o} :: x == o;
+  assert o in m.m.Keys;
+  assert {m.m[o]} == (set x <- {o} :: m.m[x]);
+  assert mtk({o},m) == {m.m[o]};
+  var os := {o};
+  MTK_THRU_KLON(os,m);
+  assert mapThruKlon(os,m) == mtk(os,m);
+
+}
 
 
-lemma MAPPEN_ONE(o : Object, m : Klon)
+lemma OLD_MAPPEN_ONE(o : Object, m : Klon)
  //took at least an hour trying more sensile versions of the next 12 lines
  //to just copy these ones in from an earlier file because they work.
   requires o.Ready()
   requires o in m.m.Keys
   requires klonReady(m)
   requires klonCalid(m)
-  ensures mapThruKlon({o},m) == {m.m[o]}
+   ensures mapThruKlon({o},m) == {m.m[o]}
 {
- FLATTEN_ONE(o);
+  // assert mapThruKlon({o},m) ==
+  //     (var os := {o}; assert (os > {}) ==> ( var o :| o in os; {m.m[o]} > {});  //THIS LINE IS OF SATAN. WASN'T NEEDED PREVIOUSLY.,..
+  //     set o <- os :: m.m[o] );
+
+  forall x <- m.m.Keys ensures (mtk({x},m) == {m.m[x]})
+   {
+    assert x in m.m.Keys;
+    assert mapThruKlon({x},m) == (set o <- {x} :: m.m[o]);
+    assert (set o <- {x} :: m.m[o]) == {m.m[x]};
+    assert mapThruKlon({x},m) == {m.m[x]};
+   }
+
 }
+  // var os := {o};
+  // var rv := {m.m[o]};
+  // assert os <= m.m.Keys;
+  // assert (os > {});
+  // assert (os > {}) ==> (rv > {});
+  // assert (os > {}) ==> (var o :| o in os; (os == {o}) ==> ( mapThruKlon({o},m))     == {m.m[o]}) ;
+  // assert os > {};
+  // assert os == {o};
+  // assert rv == {m.m[o]};
+
+
+
 lemma FLATTEN_ONE(o : Object)
   requires o.Ready()
   ensures flatten({o}) == {o} + flatten(o.owner) == o.AMFO
