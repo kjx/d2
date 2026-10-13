@@ -2946,14 +2946,6 @@ lemma FieldModesAreStillOK(a : Object, b : Object, m : Klon, m' : Klon)
 
 
 
- lemma CalidKVFromHighLineKV(k : Object, v : Object, m : Klon)
-   requires m.apoCalidse()
-   requires m.SuperCalidFragilistic()
-  //  requires HighCalidFragilistic(m)
-  //  requires HighLineKV(k,v,m)
-    ensures m.CalidLineKV(k,v)
-    {}
-
 
 
 lemma SetDJNZ<T>(a : set<T>, b : set<T>)
