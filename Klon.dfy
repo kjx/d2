@@ -1407,7 +1407,7 @@ lemma MAP_THRU_KLON_OUTSIDE_ONLY(oo : Owner, m : Klon)
  }
 
 
-lemma {:timeLimit 30} MAP_THRU_KLON(oo : Owner, rv : Owner, m : Klon)
+lemma {:timeLimit 20} MAP_THRU_KLON(oo : Owner, rv : Owner, m : Klon)
  //verified 24-26 Sept 2026
    decreases allAMFOs(oo)
     requires AllReady(oo) && AllReady(rv)
@@ -1436,6 +1436,7 @@ lemma {:timeLimit 30} MAP_THRU_KLON(oo : Owner, rv : Owner, m : Klon)
      ensures forall r <- rv :: exists o <- oo :: m.m[o] == r
 
  {
+    assert rv == (set o <- oo :: m.m[o]);
     assert forall o <- m.m.Keys | outside(o,m.o) :: (o == m.m[o]);
     assert forall o <- oo | outside(o,m.o) :: o in rv;
 
@@ -1455,14 +1456,12 @@ lemma {:timeLimit 30} MAP_THRU_KLON(oo : Owner, rv : Owner, m : Klon)
     assert mapThruKlon((set o <- oo | outside(o,m.o)), m) <= rv;
     assert forall o <- rv | outside(o,m.c) :: (o == m.m[o]);
 
-    assert (forall o <- oo :: outside(o,m.o) && (m.m[o] == o)) ==> (oo == rv);
-    assert forall r <- rv :: exists o <- oo :: m.m[o] == r;
     assert forall r <- rv :: exists o <- oo :: m.m[o] == r;
 
-   assert (forall o <- oo :: outside(o,m.o)) ==> (oo == rv);
+
+    // assert (forall o <- oo :: m.m[o] == o) ==> (oo == rv);
+    assert (forall o <- oo :: outside(o,m.o)) ==> (oo == rv);
     // assert (forall r <- rv :: outside(r,m.c)) ==> (oo == rv);
-
-//{}
  }
 
 
