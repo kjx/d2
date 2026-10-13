@@ -1392,8 +1392,9 @@ function mapBackKlon(os: set<Object>, m : Klon) : (r : set<Object>)
   reads {}
 { mapBackVMap(os,m.m) }
 
-function objThruKlon(o : Object, m : Klon) : Object    requires o in m.m.Keys   {m.m[o]}
-function objBackKlon(v : Object, m : Klon) : Object    requires v in m.m.Values {var o :| m.m[o] == v; o}
+function objThruKlon(o : Object, m : Klon) : Object requires o in m.m.Keys {m.m[o]}
+function objBackKlon(v : Object, m : Klon) : Object reads m.hns() requires klonCalid(m) requires exists o <- m.m.Keys :: m.m[o] == v { var o :| (o in m.m.Keys) && (m.m[o] == v); o}
+
 
 lemma MAP_THRU_KLON_OUTSIDE_ONLY(oo : Owner, m : Klon)
  //verified 24 Sept 2026
@@ -1556,8 +1557,8 @@ lemma HOOTS_LATER(oo : Owner, rv : Owner, m : Klon)
     ensures rv == (set o <- rv :: m.m[o])
     ensures oo == mtk(oo, m)
     ensures rv == mtk(rv, m)
-    ensures oo == mtk2(oo, m)
-    ensures rv == mtk2(rv, m)
+    // ensures oo == mtk2(oo, m)
+    // ensures rv == mtk2(rv, m)
     ensures oo == mtk3(oo, m)
     ensures rv == mtk3(rv, m)
     ensures oo == mtk4(oo, m) //mtk 4 doesnnt allow mapThruKlon to prove
@@ -1596,7 +1597,7 @@ lemma MTK_THRU_KLON(os : Owner, m : Klon)
     ensures mtk(os,m) == mapThruKlon(os,m)
 {}
 
-function mtk2(os : Owner, m : Klon) : (r : Owner) reads {} requires os <= m.m.Keys ensures r  <= m.m.Values   ensures (os > {}) ==> (r > {}) {set o <- os :: m.m[o]}  //DOES NOT PROVE - does work when used above
+//function mtk2(os : Owner, m : Klon) : (r : Owner) reads {} requires os <= m.m.Keys ensures r  <= m.m.Values   ensures (os > {}) ==> (r > {}) {set o <- os :: m.m[o]}  //DOES NOT PROVE - does work when used above
 function mtk3(os : Owner, m : Klon) : Owner requires os <= m.m.Keys {assert (os > {}) ==> ( var o :| o in os; {m.m[o]} > {}); set o <- os :: m.m[o]}
 function mtk4(os : Owner, m : Klon) : (r : Owner) reads {} requires os <= m.m.Keys ensures r  <= m.m.Values   ensures (os > {}) ==> (r > {}) requires os <= m.m.Keys {assert (os > {}) ==> ( var o :| o in os; {m.m[o]} > {}); set o <- os :: m.m[o]}
 function mtk5(os : Owner, m : Klon) : (r : Owner) reads {} requires os <= m.m.Keys ensures r  <= m.m.Values   ensures (os > {}) ==> ( var o :| o in os; {m.m[o]} > {})  ensures (os > {}) ==> (r > {}) requires os <= m.m.Keys {set o <- os :: m.m[o]}
