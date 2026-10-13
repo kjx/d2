@@ -125,8 +125,6 @@ predicate Ready()
     && (AMFO > AMFX >= AMFB)
     && (forall oo <- AMFX  :: (AMFO > oo.AMFO) && oo.Ready())
 //    && (forall oo <- owner :: AMFB <= oo.AMFB)  //Beady2()
-    //NUBOUND
-  //  && (boundsOK(owner, bound))
 
     && (boundsOK(owner, bound))
 
