@@ -804,7 +804,11 @@ lemma DRACULA_DRACULA(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flow
 //
 //     ensures mapThruKlon(collectStrictlyInside(oo,m.o),m) == collectStrictlyInside(mapThruKlon(oo,m),m.c)
 
-
+lemma FNARG(os : Owner, m : Klon)
+   requires klonCalid(m)
+   requires os <= m.m.Keys
+    ensures collectStrictlyInside(os,m.o) <= m.m.Keys
+{}
 
 lemma MAPPING_INSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : FlownerSplit, m : Klon)
    requires AllReady(os_sp.fAll)
@@ -812,7 +816,6 @@ lemma MAPPING_INSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flown
    requires klonCalid(m)
    requires os <= m.m.Keys
    requires AllReady(mapThruKlon(os,m))
-   requires collectStrictlyInside(os,m.o) <= m.m.Keys
    requires cs == mapThruKlon(os,m)
    requires flownerSplitOK(os, m.o,os_sp)
    requires flownerSplitOK(cs, m.c,cs_sp)
@@ -820,6 +823,8 @@ lemma MAPPING_INSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flown
     ensures mapThruKlon(os_sp.fSin, m) == cs_sp.fSin
 
 {
+  assert collectStrictlyInside(os,m.o) <= m.m.Keys;
+
   assert os_sp.fSin == flownerStrictlyInside(os_sp.soup,m.o);
   assert cs_sp.fSin == flownerStrictlyInside(cs_sp.soup,m.c);
 
@@ -1542,10 +1547,12 @@ lemma {:timeLimit 10} MASTERY_THRU(oo : Owner, m : Klon)
    requires m.allInKlon(oo)
    requires AllReady(oo)
    requires AllReady(mapThruKlon(oo,m))
-   requires collectStrictlyInside(oo,m.o) <= m.m.Keys
+   requires oo <= m.m.Keys
 
     ensures mapThruKlon(collectStrictlyInside(oo,m.o),m) == collectStrictlyInside(mapThruKlon(oo,m),m.c)
 {
+   assert collectStrictlyInside(oo,m.o) <= m.m.Keys;
+
   var mc := mapThruKlon(collectStrictlyInside(oo,m.o),m);
   var cm := collectStrictlyInside(mapThruKlon(oo,m),m.c);
 
