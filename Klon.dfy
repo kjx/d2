@@ -176,7 +176,8 @@ lemma MOVIN_ON_MAP(os: Owner, left : vmap<Object,Object>, right : vmap<Object,Ob
     ///because i5t supprots that definition
     reads {}
 
-  //  ensures rv ==> forall o <- os :: objectInKlon(o)
+     //ensures rv ==> forall o <- os :: objectInKlon(o)
+     ensures rv ==> (os <= m.Keys)
   {
     //  assert (os <= m.Keys) ==> (forall o <- os :: objectInKlon(o));
     //  AllReady(os) && (os <= m.Keys)
