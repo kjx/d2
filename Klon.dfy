@@ -1467,6 +1467,20 @@ lemma {:timeLimit 20} MAP_THRU_KLON(oo : Owner, rv : Owner, m : Klon)
  }
 
 
+lemma MAP_KLON_IDENTITY(oo : Owner, rv : Owner, m : Klon)
+ //verified 24-26 Sept 2026
+   decreases allAMFOs(oo), 14
+    requires AllReady(oo) && AllReady(rv)
+    requires klonCalid(m)
+    requires oo <= m.m.Keys
+    requires rv == mapThruKlon(oo, m)
+
+    requires forall o <- oo :: m.m[o] == o
+    ensures rv == oo
+{
+    MapThruIdentity(oo,m.m);
+}
+
 lemma I_CAN_MEMENTO(m : Klon)
  //I can do elephunk
   requires klonCalid(m)
