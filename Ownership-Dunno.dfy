@@ -4017,16 +4017,24 @@ lemma {:timeLimit 10} HACKING_THRU(oo : Owner, m : Klon)
   assert forall o <- fOX :: outside(o,m.o);
   assert forall o <- fOX :: m.m[o] == o;
 
+  assert forall o <- flownerStrictlyOutside(oo,m.o) :: o in flownerStrictlyOutside(cc,m.c);
+  assert forall o <- flownerStrictlyOutside(cc,m.c) :: o in flownerStrictlyOutside(oo,m.o);
   assert flownerStrictlyOutside(oo,m.o) <= flownerStrictlyOutside(cc,m.c);
   assert flownerStrictlyOutside(oo,m.o) >= flownerStrictlyOutside(cc,m.c);
+  SetLtGtEq(flownerStrictlyOutside(oo,m.o),flownerStrictlyOutside(cc,m.c));
   assert flownerStrictlyOutside(oo,m.o) == flownerStrictlyOutside(cc,m.c);
 
+
+  assert forall o <- flownerExceptPivot(oo,m.o) :: o in flownerExceptPivot(cc,m.c);
+  assert forall o <- flownerExceptPivot(cc,m.c) :: o in flownerExceptPivot(oo,m.o);
   assert flownerExceptPivot(oo,m.o) <= flownerExceptPivot(cc,m.c);
   assert flownerExceptPivot(oo,m.o) >= flownerExceptPivot(cc,m.c);
+  assert flownerExceptPivot(oo,m.o) == flownerExceptPivot(cc,m.c);
 
   assert forall o <- flownerStrictlyOutside(oo,m.o) :: outside(o,m.o);
   assert forall o <- flownerExceptPivot(oo,m.o) :: outside(o,m.o);
-
+  assert forall c <- flownerStrictlyOutside(cc,m.c) :: outside(c,m.c);
+  assert forall c <- flownerExceptPivot(cc,m.c) :: outside(c,m.c);
 
   forall o <- fOX ensures ((m.m[o] == o) && (m.m[o] in mOX))
     {
@@ -4038,11 +4046,10 @@ lemma {:timeLimit 10} HACKING_THRU(oo : Owner, m : Klon)
       assert c == o;
     }
 
-
-
   assert fOX == mOX;
   assert (flownerStrictlyOutside(oo,m.o) + flownerExceptPivot(oo,m.o)) ==
      (flownerStrictlyOutside(mapThruKlon(oo,m),m.c) + flownerExceptPivot(mapThruKlon(oo,m),m.c));
+//  assert flownerDisjunctPivot(oo,m.o) == flownerDisjunctPivot(cc,m.c);
 }
 
 
