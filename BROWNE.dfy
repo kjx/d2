@@ -12,6 +12,7 @@ include "Set-Lemmata.dfy"
 //     as yet another attenmpt to get fSin out.  God I hate this. It is
 //     destroying what's left of my life.   anyway adds them in here,
 //     they were later copied into Ownership-Dunno.dfy,
+//                  which i now Ownership-Flatten.dfy
 //     also adds lemmata to prove they are equivalent to
 //     collectAllStrictlyInside - COLLECT_STRICTLY_LEMMA0
 //     arghStrictlyInside - COLLECT_STRICTLY_LEMMA1

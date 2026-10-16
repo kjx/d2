@@ -14,6 +14,35 @@ predicate boundsOK(oo : Owner, mb : Bound)
 //  && (forall o <- oo ::( ((o.AMFB) >= flatten(mb))))
 //  && (forall o <- oo ::( (o.AMFX > {}) ==> ((o.AMFB+{o}) >= flatten(mb))))
 
+
+
+
+predicate stupidlyHappy(soup0 : Owner, soup1 : Owner, pivot : Object) : (rv : bool)
+// owners "outside" the bound must still be "outside" the owner
+//
+//  this makes it easier to prove preservation of ownership
+//  and may make thigns more visible locally, but I think can
+//  likely be avoided if we no longer't distinguish between
+//  strictlyOutside and
+//
+// I'm stupidly happy
+// With idiot grin
+// I'm stupidly happy
+// It's surely a sin
+// --- Stupidly Happy, XTC
+//
+ //  requires flatten(soup0) >= flatten(soup1)
+   {
+      //  && (flatten(soup0) >= flatten(soup1)) //  this clause deleted 13Oct2026
+        && (forall r <- soup1 | outside(r,pivot) :: exists s <- soup0 :: outside(s,pivot) && inside(s,r))
+   }
+
+
+
+
+
+
+
 lemma boundSanity(part : Object, whole : Object, po : Object)
  decreases part.AMFO
   requires part.Ready() && whole.Ready()

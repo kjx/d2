@@ -1,7 +1,8 @@
 include "Ownership-Recursive.dfy"
 include "Set-Lemmata.dfy"
-include "Ownership-Dunno.dfy"
+include "Ownership-Flatten.dfy"
 include "Context.dfy"
+
 
 
 ///this file containts the "trilemma" to prove (potential) owners are where they aught to be
