@@ -1887,48 +1887,48 @@ lemma FLATTEN_SUM3(a : Owner, b : Owner, c : Owner)
   ensures flatten(a) + flatten(b) == flatten(a+b)
 {}
 
-lemma XXXFLATTEN_SUM4(a : Owner, b : Owner, c : Owner, cc : Owner)
+lemma FLATTEN_SUM4(a : Owner, b : Owner, c : Owner, cc : Owner)
   requires a+b+c == cc
   ensures flatten(a) + flatten(b) + flatten(c) == flatten(cc)
 {}
-
-
-lemma FLATTEN_SUMS(a : Owner, b : Owner, c : Owner, m : Klon)
-  //just say  FLATTEN_SUMS(done,{next},done+{next},m);
-
-  requires a+b == c
-  // requires forall o <- a :: o.Ready()  //I'm OH SO TORY
-  // requires forall o <- b :: o.Ready()  //I'm OH SO TORY
-  // requires forall o <- c :: o.Ready()  //TORY TORY TORY
-  //  requires AllReady(a)
-  //  requires AllReady(b)
-  //  requires AllReady(c)
-  //  requires klonReady(m)
-  //  requires klonCalid(m)
-  requires (a+b+c) <= m.m.Keys
-  //    ensures recFlatten(a)+recFlatten(b)==recFlatten(a+b)
-  ensures flatten(a) + flatten(b) == flatten(a+b)
-  ensures mapThruKlon(a,m) + mapThruKlon(b,m) == mapThruKlon(a+b,m)
-  ensures mapThruKlon(a+b,m) == mapThruKlon(a,m) + mapThruKlon(b,m)
-  ensures flatten(mapThruKlon(a,m)) + flatten(mapThruKlon(b,m)) == flatten(mapThruKlon(a+b,m))
-  ensures flatten(mapThruKlon(a+b,m)) == flatten(mapThruKlon(a,m)) + flatten(mapThruKlon(b,m))
-{}
-
-lemma FLATTEN_ONE(o : Object)
-  requires o.Ready()
-  ensures flatten({o}) == {o} + flatten(o.owner) == o.AMFO
-{}
-
-
-lemma MAPPEN_ONE(next : Object, m : Klon)
-  requires next.Ready()
-  requires next in m.m.Keys
-  requires klonReady(m)
-  requires klonCalid(m)
-  ensures mapThruKlon({next},m) == {m.m[next]}
-{
-  FLATTEN_ONE(next);
-}
+//
+//
+// lemma FLATTEN_SUMS(a : Owner, b : Owner, c : Owner, m : Klon)
+//   //just say  FLATTEN_SUMS(done,{next},done+{next},m);
+//
+//   requires a+b == c
+//   // requires forall o <- a :: o.Ready()  //I'm OH SO TORY
+//   // requires forall o <- b :: o.Ready()  //I'm OH SO TORY
+//   // requires forall o <- c :: o.Ready()  //TORY TORY TORY
+//   //  requires AllReady(a)
+//   //  requires AllReady(b)
+//   //  requires AllReady(c)
+//   //  requires klonReady(m)
+//   //  requires klonCalid(m)
+//   requires (a+b+c) <= m.m.Keys
+//   //    ensures recFlatten(a)+recFlatten(b)==recFlatten(a+b)
+//   ensures flatten(a) + flatten(b) == flatten(a+b)
+//   ensures mapThruKlon(a,m) + mapThruKlon(b,m) == mapThruKlon(a+b,m)
+//   ensures mapThruKlon(a+b,m) == mapThruKlon(a,m) + mapThruKlon(b,m)
+//   ensures flatten(mapThruKlon(a,m)) + flatten(mapThruKlon(b,m)) == flatten(mapThruKlon(a+b,m))
+//   ensures flatten(mapThruKlon(a+b,m)) == flatten(mapThruKlon(a,m)) + flatten(mapThruKlon(b,m))
+// {}
+//
+// lemma FLATTEN_ONE(o : Object)
+//   requires o.Ready()
+//   ensures flatten({o}) == {o} + flatten(o.owner) == o.AMFO
+// {}
+//
+//
+// lemma MAPPEN_ONE(next : Object, m : Klon)
+//   requires next.Ready()
+//   requires next in m.m.Keys
+//   requires klonReady(m)
+//   requires klonCalid(m)
+//   ensures mapThruKlon({next},m) == {m.m[next]}
+// {
+//   FLATTEN_ONE(next);
+// }
 
 lemma FLATMAP_ONE(next : Object, cext : Object,  m : Klon)
   requires next.Ready()

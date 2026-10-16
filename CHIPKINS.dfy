@@ -497,28 +497,6 @@ lemma IN_N_OUT_DELTA(o : Owner, o' : Owner, o_  : Owner, m : Klon)
 
 
 
-lemma FLATTEN_SUMS(a : Owner, b : Owner, c : Owner, m : Klon)
-  //just say  FLATTEN_SUMS(done,{next},done+{next},m);
-
-  requires a+b == c
-  // requires forall o <- a :: o.Ready()  //I'm OH SO TORY
-  // requires forall o <- b :: o.Ready()  //I'm OH SO TORY
-  // requires forall o <- c :: o.Ready()  //TORY TORY TORY
-  //  requires AllReady(a)
-  //  requires AllReady(b)
-  //  requires AllReady(c)
-  //  requires klonReady(m)
-  //  requires klonCalid(m)
-  requires (a+b+c) <= m.m.Keys
-  //    ensures recFlatten(a)+recFlatten(b)==recFlatten(a+b)
-  ensures flatten(a) + flatten(b) == flatten(a+b)
-  ensures mapThruKlon(a,m) + mapThruKlon(b,m) == mapThruKlon(a+b,m)
-  ensures mapThruKlon(a+b,m) == mapThruKlon(a,m) + mapThruKlon(b,m)
-  ensures flatten(mapThruKlon(a,m)) + flatten(mapThruKlon(b,m)) == flatten(mapThruKlon(a+b,m))
-  ensures flatten(mapThruKlon(a+b,m)) == flatten(mapThruKlon(a,m)) + flatten(mapThruKlon(b,m))
-{}
-
-
 
 lemma IN_N_OUT_LEMMER(oo : Owner, m : Klon)
    requires oo <= m.m.Keys

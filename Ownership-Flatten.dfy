@@ -1,6 +1,6 @@
 include "Ownership.dfy"
-include "Ownership-Pivot.dfy"
-include "Klon-Split.dfy"
+include "Ownership-Split.dfy"
+include "Klon-Preserve.dfy"
 
 //originally named Ownership-Dunno cos I didn't know whwat else to call it
 //perhaps functions wiht the PIVOT stay here ("Onwership-Pivot")

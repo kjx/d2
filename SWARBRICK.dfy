@@ -1,7 +1,8 @@
 include "Ownership.dfy"
-include "Klon-Split.dfy"
-include "Ownership-Pivot.dfy"
+include "Ownership-Split.dfy"
+include "Klon-Preserve.dfy"
 include "Ownership-Flatten.dfy"
+
 
 
 //SWARBICK - preliminary work on core ownershiup vhecs kept ariound for later...

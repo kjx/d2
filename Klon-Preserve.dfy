@@ -1,5 +1,5 @@
-include "Ownership.dfy"
-include "Klon-Split.dfy"
+//include "Ownership.dfy"
+include "Ownership-Split.dfy"
 
 
 //this all depends on Klon, soi shohjld be renamed into Klon
