@@ -2153,59 +2153,59 @@ lemma YouGetThereEventually(part : Object, whole : Object) returns (prev : Objec
 
 
 
+// //
+// lemma {:timeLimit 30} ThereIsALightThatNeverGoesOut(part : Object, whole : Object)
+//   //at least one of part's direct owners is on the way to whole.
+//   requires part.Ready()
+//   requires whole.Ready()
+//   requires inside(part,whole)
+//   ensures (part == whole) || (exists x <- part.owner :: inside(x, whole))
+// {
+//   //    InsideRecInside2(part, whole);
 //
-lemma {:timeLimit 30} ThereIsALightThatNeverGoesOut(part : Object, whole : Object)
-  //at least one of part's direct owners is on the way to whole.
-  requires part.Ready()
-  requires whole.Ready()
-  requires inside(part,whole)
-  ensures (part == whole) || (exists x <- part.owner :: inside(x, whole))
-{
-  //    InsideRecInside2(part, whole);
-
-  if (part == whole) {
-    assert ((part == whole) || (exists x <- part.owner :: inside(x, whole)));
-    return; }
-
-  assert part != whole;
-  assert (exists x <- part.owner :: inside(x,whole));
-}
-
-
-ghost function YouCan'tGetThereFromHereBut(part : Object, whole : Object) : (next : Object)
-  //return next - a "direct owner" of part that is on the way up to "whole"
-  decreases part.AMFO
-
-  requires part.Ready()
-  requires whole.Ready()
-  requires part != whole
-  requires inside(part,whole)
-
-  ensures next in part.owner
-  ensures strictlyInside(part, next)
-  ensures inside(next,whole)
-  ensures (part.AMFO decreases to next.AMFO)
-{
-  InsideRecInside2(part, whole);
-  assert recInside(part, whole);
-  ThereIsALightThatNeverGoesOut(part, whole);
-
-  assert exists x <- part.owner :: inside(x, whole);
-
-  var next : Object :| next in part.owner && inside(next, whole);
-
-  assert part !in part.owner;
-  assert next  in part.owner;
-  assert part.AMFO > next.AMFO;
-  assert (part.AMFO decreases to next.AMFO);
-  assert inside(next,whole);
-
-  next
-}
-
-
-
-
+//   if (part == whole) {
+//     assert ((part == whole) || (exists x <- part.owner :: inside(x, whole)));
+//     return; }
+//
+//   assert part != whole;
+//   assert (exists x <- part.owner :: inside(x,whole));
+// }
+//
+//
+// ghost function YouCan'tGetThereFromHereBut(part : Object, whole : Object) : (next : Object)
+//   //return next - a "direct owner" of part that is on the way up to "whole"
+//   decreases part.AMFO
+//
+//   requires part.Ready()
+//   requires whole.Ready()
+//   requires part != whole
+//   requires inside(part,whole)
+//
+//   ensures next in part.owner
+//   ensures strictlyInside(part, next)
+//   ensures inside(next,whole)
+//   ensures (part.AMFO decreases to next.AMFO)
+// {
+//   InsideRecInside2(part, whole);
+//   assert recInside(part, whole);
+//   ThereIsALightThatNeverGoesOut(part, whole);
+//
+//   assert exists x <- part.owner :: inside(x, whole);
+//
+//   var next : Object :| next in part.owner && inside(next, whole);
+//
+//   assert part !in part.owner;
+//   assert next  in part.owner;
+//   assert part.AMFO > next.AMFO;
+//   assert (part.AMFO decreases to next.AMFO);
+//   assert inside(next,whole);
+//
+//   next
+// }
+//
+//
+//
+//
 
 
 
