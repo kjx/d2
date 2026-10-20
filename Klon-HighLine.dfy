@@ -941,7 +941,7 @@ lemma MAP_THRU_IDS(os: set<Object>, m : Klon)
     { }
 
 
-lemma MAP_ONE(k : Object, v : Object, m : Klon)
+lemma {:timeLimit 20} MAP_ONE(k : Object, v : Object, m : Klon)
   requires klonReady(m)
    requires k in m.m.Keys
    requires m.m[k] == v

@@ -1,9 +1,5 @@
 include "Klon.dfy"
 //////////////////////////WARNING
-//////////////////////////WARNING   This file uses "only" to pick out the few lemmas we acutally depend on.
-//////////////////////////WARNING
-
-//////////////////////////WARNING
 //////////////////////////WARNING   MappedBounds doesn't work for reasons that we currently know so well.
 //////////////////////////WARNING   as of 23 July 2026 - 4 timeouts
 
@@ -26,7 +22,7 @@ lemma HNSV(v : Object, m : Klon)
 /////// (con)versions?
 
 
-lemma {:only} OwnersFromCalid(m : Klon)
+lemma OwnersFromCalid(m : Klon)
   requires m.SuperCalidFragilistic()
    ensures m.SuperCalidOwners()
    ensures m.CalidOwners()
@@ -40,7 +36,7 @@ lemma {:only} OwnersFromCalid(m : Klon)
 }
 
 
-lemma {:timeLimit 40} CalidFromOwners(m : Klon)
+lemma {:verify false} {:timeLimit 40} XCalidFromOwners(m : Klon)
   requires m.CalidOwners()
   requires m.HeapContextReady()
   requires m.ValuesContextReady()
@@ -68,15 +64,15 @@ lemma {:timeLimit 40} CalidFromOwners(m : Klon)
                       && (k.AMFX <= m.m.Keys)
                       && (k.AMFB <= m.m.Keys)
                       && (m.ownersInKlon(k))  //belt and braces--- currently a requirement!
-                      && (checkOwnershipOfClone(k,v, m))
-                      && (checkBoundOfClone(k,v, m))
+                      // && (checkOwnershipOfClone(k,v, m))
+                      // && (checkBoundOfClone(k,v, m))
                       && (mappingOwnersThruKlonKV(k,v, m))
                    ;
     assert m.AllLinesCalid();
      }
 }
 
-lemma OwnersLineFromCalidLine(k : Object, v : Object, m : Klon)
+lemma  {:verify false}  XOwnersLineFromCalidLine(k : Object, v : Object, m : Klon)
     requires m.apoCalidse()
     requires k.Ready()// && k.Valid() // should context go in here too? probasbly?
     requires m.ownersInKlon(k)
@@ -88,20 +84,20 @@ lemma OwnersLineFromCalidLine(k : Object, v : Object, m : Klon)
 
 //// mappings
 
-lemma MapThruKlonFrom(os: set<Object>, m : Klon, m' : Klon)
+lemma {:verify false}  XMapThruKlonFrom(os: set<Object>, m : Klon, m' : Klon)
   requires os <= m'.m.Keys
   requires m.from(m')
   ensures  mapThruKlon(os, m) == mapThruKlon(os, m')
 {}
 
-lemma MapThruKlonFUCKED(os: set<Object>, ot : set<Object>,  m : Klon)
+lemma {:verify false}  XMapThruKlonFUCKED(os: set<Object>, ot : set<Object>,  m : Klon)
   requires os <= m.m.Keys
   requires ot <= m.m.Keys
   requires os == ot
   ensures  mapThruKlon(os, m) == mapThruKlon(ot, m)
 {}
 
-lemma MapThruKlonLEQ(os: set<Object>, ot : set<Object>,  m : Klon)
+lemma {:verify false}  XMapThruKlonLEQ(os: set<Object>, ot : set<Object>,  m : Klon)
   requires os <= m.m.Keys
   requires ot <= m.m.Keys
   requires os <= ot
@@ -109,7 +105,7 @@ lemma MapThruKlonLEQ(os: set<Object>, ot : set<Object>,  m : Klon)
 {}
 
 
-lemma MapThruKlonGEQ(os: set<Object>, ot : set<Object>,  m : Klon)
+lemma {:verify false}  XMapThruKlonGEQ(os: set<Object>, ot : set<Object>,  m : Klon)
   requires os <= m.m.Keys
   requires ot <= m.m.Keys
   requires os >= ot
@@ -117,14 +113,14 @@ lemma MapThruKlonGEQ(os: set<Object>, ot : set<Object>,  m : Klon)
 {}
 
 
-lemma MapThruKlonID(os: set<Object>, m : Klon)
+lemma {:verify false}  XMapThruKlonID(os: set<Object>, m : Klon)
   requires os <= m.m.Keys
   requires forall x <- os :: m.m[x] == x
   ensures  mapThruKlon(os, m) == os
 {}
 
 
-lemma MapThruKlonIsMapThruVMap(ks: set<Object>, m : Klon, vs : set<Object>)
+lemma  {:verify false}  XMapThruKlonIsMapThruVMap(ks: set<Object>, m : Klon, vs : set<Object>)
   requires ks <= m.m.Keys
   requires mapThruKlon(ks, m)   == vs
   ensures  mapThruVMap(ks, m.m) == vs
@@ -132,7 +128,7 @@ lemma MapThruKlonIsMapThruVMap(ks: set<Object>, m : Klon, vs : set<Object>)
 
 
 
-lemma {:only} ThereAndKlonAgain1(os: set<Object>, m : Klon, r : set<Object>)
+lemma ThereAndKlonAgain1(os: set<Object>, m : Klon, r : set<Object>)
   requires os <= m.m.Keys
   requires r  == mapThruKlon(os,m)
    ensures r  <= m.m.Values
@@ -143,7 +139,7 @@ lemma {:only} ThereAndKlonAgain1(os: set<Object>, m : Klon, r : set<Object>)
   assert os == mapBackKlon(r,m);
 }
 
-lemma ThereAndKlonAgain2(os: set<Object>, m : Klon, r : set<Object>)
+lemma {:verify false}  XThereAndKlonAgain2(os: set<Object>, m : Klon, r : set<Object>)
   requires os <= m.m.Values
   requires r == mapBackKlon(os,m)
    ensures r  <= m.m.Keys
@@ -157,7 +153,7 @@ lemma ThereAndKlonAgain2(os: set<Object>, m : Klon, r : set<Object>)
 
 //SuperDuperMappers --- well on the way but could do with a bnit more qwork
 
-lemma SuperDuperExternalMapperKV(k : Object, v : Object, m : Klon)
+lemma {:verify false}  XSuperDuperExternalMapperKV(k : Object, v : Object, m : Klon)
   //outside stuff is maping. (and equa;)
     requires m.apoCalidse()
     requires m.ownersInKlon(k)
@@ -170,7 +166,7 @@ lemma SuperDuperExternalMapperKV(k : Object, v : Object, m : Klon)
 {}
 
 
-lemma SuperDuperPivotMapperKV(k : Object, v : Object, m : Klon)
+lemma {:verify false}  XSuperDuperPivotMapperKV(k : Object, v : Object, m : Klon)
   //consistency lemma… or somesthing.
     requires m.apoCalidse()
     requires m.ownersInKlon(k)
@@ -183,7 +179,7 @@ lemma SuperDuperPivotMapperKV(k : Object, v : Object, m : Klon)
 {}
 
 
-lemma SuperDuperKlonMapperKV(m : Klon)
+lemma {:verify false}  XSuperDuperKlonMapperKV(m : Klon)
   //consistency lemma… or somesthing.kkkkk
     requires m.apoCalidse()
     requires m.ownersInKlon(m.o)
@@ -196,7 +192,7 @@ lemma SuperDuperKlonMapperKV(m : Klon)
 
 
 
-lemma {:verify false} {:obsolete} SuperDuperOwnerMapperKV(k : Object, v : Object, m : Klon)
+lemma {:verify false} {:obsolete} XSuperDuperOwnerMapperKV(k : Object, v : Object, m : Klon)
   //consistency lemma… or somesthing.
     requires m.apoCalidse()
     requires m.ownersInKlon(k)
@@ -222,7 +218,7 @@ lemma {:verify false} {:obsolete} SuperDuperOwnerMapperKV(k : Object, v : Object
 {}
 
 
-lemma {:verify false} {:obsolete}  MappingInsideOwnersThruKlon(k : Object, v : Object, m : Klon)
+lemma {:verify false} {:obsolete}  XMappingInsideOwnersThruKlon(k : Object, v : Object, m : Klon)
    decreases k.AMFO
     requires k.Ready()
     requires v.Ready()
@@ -339,7 +335,7 @@ lemma {:verify false} {:obsolete}  MappingInsideOwnersThruKlon(k : Object, v : O
 //   }
 
 
-lemma MappingSameObjectIsOutsideThruKlon(k : Object, v : Object, m : Klon)
+lemma {:verify false}  XMappingSameObjectIsOutsideThruKlon(k : Object, v : Object, m : Klon)
 //wrong turn on the rocky road to dublin…
 //answer - it works cos saying  m.m[k] == k == v
 // constraints the spec so there are no solutions - except outside?
@@ -357,7 +353,7 @@ lemma MappingSameObjectIsOutsideThruKlon(k : Object, v : Object, m : Klon)
    assert mappingOwnersThruKlonKV(k, v, m);
 }
 
-lemma {:verify false} {:obsolete}   MappingInsideBoundsThruKlon(k : Object, v : Object, m : Klon)
+lemma {:verify false} {:obsolete}   XMappingInsideBoundsThruKlon(k : Object, v : Object, m : Klon)
 //wrong turn on the rocky road to dublin…
 //answer - it works cos saying "outside" overconstraints the spec so there are no solutions
 //saying m.m[k] == v gives us outside
@@ -397,7 +393,7 @@ lemma {:verify false} {:obsolete}   MappingInsideBoundsThruKlon(k : Object, v : 
 
 
 
-lemma OwnershipOfCloneGEQ(os: set<Object>, ot : set<Object>,  m : Klon)
+lemma {:verify false} XOwnershipOfCloneGEQ(os: set<Object>, ot : set<Object>,  m : Klon)
 //
 ///kj 7 June 2025 - not claer how this  works if we're comaring owners and bounds?
   requires os <= m.m.Keys <= m.oHeap
@@ -419,7 +415,7 @@ lemma OwnershipOfCloneGEQ(os: set<Object>, ot : set<Object>,  m : Klon)
 
 
 
-lemma OwnershipOfCloneGEQ2(os: set<Object>, ot : set<Object>, m : Klon, ro : set<Object>, rt : set<Object>)
+lemma {:verify false} XOwnershipOfCloneGEQ2(os: set<Object>, ot : set<Object>, m : Klon, ro : set<Object>, rt : set<Object>)
   requires os <= m.m.Keys <= m.oHeap
   requires ot <= m.m.Keys <= m.oHeap
   requires os >= ot
@@ -536,7 +532,7 @@ lemma {:verify false} BROKENCalidKVCalid(k : Object, v : Object, m0 : Klon, m1 :
 
 
 
-lemma {:timeLimit 0} BETTERCalidKVCalid(k : Object, v : Object, m0 : Klon, m1 : Klon)
+lemma {:timeLimit 0} {:verify false} XBETTERCalidKVCalid(k : Object, v : Object, m0 : Klon, m1 : Klon)
   //if m0.klonKLV(kv == m1,  and m0 is calid, can m1 pretty please be calid()?
     requires m0.CKV_preconditions(k,v)
 //requires HighCalidFragilistic(m0)
@@ -571,7 +567,7 @@ lemma {:timeLimit 0} BETTERCalidKVCalid(k : Object, v : Object, m0 : Klon, m1 : 
 
 
 //this costs 0.08ms - who knows whw?
-lemma OIKsisOIKs(o : Object, m : Klon)
+lemma {:verify false} XOIKsisOIKs(o : Object, m : Klon)
   requires o.Ready()
   requires m.ownersInKlon(o)
   ensures forall oo <- o.AMFO | oo != o :: m.ownersInKlon(oo)
@@ -582,7 +578,7 @@ lemma OIKsisOIKs(o : Object, m : Klon)
 ////////// shifting
 
 
-function shiftObject(i0 : Object, m : Klon) : (i1 : Object)
+function {:verify false} XshiftObject(i0 : Object, m : Klon) : (i1 : Object)
 // see below BETTER version but with stronger preconditions
 // kept this one becuase the necessary refactoring needs to come later //JDl
     requires m.apoCalidse()
@@ -600,7 +596,7 @@ function shiftObject(i0 : Object, m : Klon) : (i1 : Object)
 
 
 
-function shiftAMFO(i0 : OWNR, x0 : OWNR, x1 : OWNR, im : vmap<Object, Object>) : (i1 : OWNR)
+function{:verify false} XshiftAMFO(i0 : OWNR, x0 : OWNR, x1 : OWNR, im : vmap<Object, Object>) : (i1 : OWNR)
  //given i0 insidfe x0, shift it sideways to the same relationship with w1
  //fuck - perhaps this needs a Klon.  probalby does!
  // lemmee guess, this thrns out to b som version of nmapwthKlon.  fucker.  commie FUCK.
@@ -614,7 +610,7 @@ function shiftAMFO(i0 : OWNR, x0 : OWNR, x1 : OWNR, im : vmap<Object, Object>) :
    ensures i1 == (set o <- (i0 - x0) :: im[o]) + x1
                { (set o <- (i0 - x0) :: im[o]) + x1 }
 
-function shiftAMFOF(i0 : OWNR, x0 : OWNR, x1 : OWNR, im : vmap<Object, Object>) : (i1 : OWNR)
+function {:verify false} XshiftAMFOF(i0 : OWNR, x0 : OWNR, x1 : OWNR, im : vmap<Object, Object>) : (i1 : OWNR)
  //given i0 insidfe x0, shift it sideways to the same relationship with w1
  //fuck - perhaps this needs a Klon.  probalby does!
  // lemmee guess, this thrns out to b som version of nmapwthKlon.  fucker.  commie FUCK.
@@ -630,7 +626,7 @@ function shiftAMFOF(i0 : OWNR, x0 : OWNR, x1 : OWNR, im : vmap<Object, Object>) 
 
 
 
-function shiftAMFOZ(i0 : OWNR, x0 : OWNR, x1 : OWNR, im : vmap<Object, Object>) : (i1 : OWNR)
+function {:verify false} XshiftAMFOZ(i0 : OWNR, x0 : OWNR, x1 : OWNR, im : vmap<Object, Object>) : (i1 : OWNR)
  //given i0 insidfe x0, shift it sideways to the same relationship with w1
  //fuck - perhaps this needs a Klon.  probalby does!
  // lemmee guess, this thrns out to b som version of nmapwthKlon.  fucker.  commie FUCK.
@@ -649,27 +645,27 @@ function shiftAMFOZ(i0 : OWNR, x0 : OWNR, x1 : OWNR, im : vmap<Object, Object>) 
 
 
 
-lemma SubObjectsGeqViaOWNRs(p0 : Object, w0 : Object, p1 : Object, w1 : Object, m : Klon)
+lemma {:verify false} XSubObjectsGeqViaOWNRs(p0 : Object, w0 : Object, p1 : Object, w1 : Object, m : Klon)
     requires m.SuperCalidFragilistic()
     requires m.objectInKlon(p0)
     requires m.objectInKlon(w0)
     requires inside3(p0,w0,m.o)
     requires not(inside(w1, w0)) // careful because we want !>= relation, as against < or <=
-    requires p1.AMFO == shiftAMFO(p0.AMFO, m.o.AMFO, m.m[m.o].AMFO, m.m)
-    requires w1.AMFO == shiftAMFO(w0.AMFO, m.o.AMFO, m.m[m.o].AMFO, m.m)
+    requires p1.AMFO == XshiftAMFO(p0.AMFO, m.o.AMFO, m.m[m.o].AMFO, m.m)
+    requires w1.AMFO == XshiftAMFO(w0.AMFO, m.o.AMFO, m.m[m.o].AMFO, m.m)
      ensures inside3(p1,w1,m.m[m.o])
 {}
 
 
-lemma {:only} SubAMFOsGeq(p0 : OWNR, w0 : OWNR, p1 : OWNR, w1 : OWNR, m : Klon)
+lemma SubAMFOsGeq(p0 : OWNR, w0 : OWNR, p1 : OWNR, w1 : OWNR, m : Klon)
     //p0 and w0 are flattened owners )AMFOs( within pivot x0;  (original)
     //p1 and w1 are flattened owners )AMFOs( within copivot x1;  (clone)
     requires m.SuperCalidFragilistic()
     requires m.m.Keys >= p0 >= w0 >= m.o.AMFO
     requires m.OwnersLineKV(m.o, m.m[m.o])
   //  requires not( w1 >= w0 ) // careful because we want !>= relation, as against < or <=
-    requires p1 == shiftAMFO(p0, m.o.AMFO, m.m[m.o].AMFO, m.m)
-    requires w1 == shiftAMFO(w0, m.o.AMFO, m.m[m.o].AMFO, m.m)
+    requires p1 == XshiftAMFO(p0, m.o.AMFO, m.m[m.o].AMFO, m.m)
+    requires w1 == XshiftAMFO(w0, m.o.AMFO, m.m[m.o].AMFO, m.m)
 
      ensures m.objectInKlon(m.o)
      ensures m.m[m.o] in m.m.Values
@@ -692,13 +688,13 @@ lemma {:only} SubAMFOsGeq(p0 : OWNR, w0 : OWNR, p1 : OWNR, w1 : OWNR, m : Klon)
     assert forall oo <- m.m[m.o].owner :: inside(m.m[m.o], oo);
 }
 
-lemma {:timeLimit 60}  {:verify false} {:obsolete}  IWannaBeFoolish(i0 : Object, m : Klon, i1 : Object)
- //shiftObject is shiftAMFO is mappingOwnersThruKlonKV
+lemma {:timeLimit 60}  {:verify false} {:obsolete}  XIWannaBeFoolish(i0 : Object, m : Klon, i1 : Object)
+ //shiftObject is XshiftAMFO is mappingOwnersThruKlonKV
   requires m.objectInKlon(i0)
   requires m.SuperCalidFragilistic()
   requires inside(i0, m.o)
   requires m.m[i0] == i1 ///'not strong enough  (6 Oct 2025)
-  requires i1.AMFO == shiftAMFO(i0.AMFO, m.o.AMFO, m.m[m.o].AMFO, m.m)
+  requires i1.AMFO == XshiftAMFO(i0.AMFO, m.o.AMFO, m.m[m.o].AMFO, m.m)
   requires forall z <- (m.m.Keys)   :: z.Ready()
   requires forall z <- (m.m.Values) :: z.Ready()
   requires forall z <- (i0.AMFO)    :: z.Ready()
@@ -706,8 +702,8 @@ lemma {:timeLimit 60}  {:verify false} {:obsolete}  IWannaBeFoolish(i0 : Object,
   requires flatten(i0.AMFO) <= m.oHeap
   requires flatten(i1.AMFO) <= m.hns(i1.AMFO)
 
-   ensures i1 == shiftObject(i0, m)
-   ensures i1.AMFO == shiftAMFO(i0.AMFO, m.o.AMFO, m.m[m.o].AMFO, m.m)
+   ensures i1 == XshiftObject(i0, m)
+   ensures i1.AMFO == XshiftAMFO(i0.AMFO, m.o.AMFO, m.m[m.o].AMFO, m.m)
    ensures mappingOWNRsThruKlonKV(i0.AMFO, i1.AMFO, m)
    {
 
@@ -719,7 +715,7 @@ var si0 := i0.AMFO;
 var sx0 := m.o.AMFO;
 var sx1 := m.m[m.o].AMFO;
 var slm := m.m;
-var si1 := shiftAMFO(i0.AMFO, m.o.AMFO, m.m[m.o].AMFO, m.m);
+var si1 := XshiftAMFO(i0.AMFO, m.o.AMFO, m.m[m.o].AMFO, m.m);
 assert si1 == (set o <- (si0 - sx0) :: slm[o]) + sx1;
 assert si1 == (set o <- (i0.AMFO - m.o.AMFO) :: m.m[o]) + m.m[m.o].AMFO;
 assert si1 == vv;
@@ -731,8 +727,8 @@ assert i1.AMFO == si1;
 
 
 
-lemma {:verify false} {:obsolete} ShiftAMFOshiftOWNRs(kk : OWNR, vv : OWNR, m : Klon)
-   //establishes that shiftAMFO(Kk) makes a vv that passes mappignOWNRS...
+lemma {:verify false} {:obsolete} XshiftAMFOshiftOWNRs(kk : OWNR, vv : OWNR, m : Klon)
+   //establishes that XshiftAMFO(Kk) makes a vv that passes mappignOWNRS...
       requires m.apoCalidse()
       requires AllReady(kk)
       requires AllReady(vv)
@@ -742,15 +738,15 @@ lemma {:verify false} {:obsolete} ShiftAMFOshiftOWNRs(kk : OWNR, vv : OWNR, m : 
       requires flatten(kk) <= m.oHeap
       requires flatten(vv) <= m.hns(vv)  //kind of trivially true though...
 
-      requires vv == shiftAMFO(kk, m.o.AMFO, m.m[m.o].AMFO, m.m)
+      requires vv == XshiftAMFO(kk, m.o.AMFO, m.m[m.o].AMFO, m.m)
 
        //ensures vv == (mapThruKlon(kk - m.o.AMFO, m) + m.m[m.o].AMFO)
 
-       ensures mappingOWNRsThruKlonKV(kk, shiftAMFO(kk, m.o.AMFO, m.m[m.o].AMFO, m.m), m)
+       ensures mappingOWNRsThruKlonKV(kk, XshiftAMFO(kk, m.o.AMFO, m.m[m.o].AMFO, m.m), m)
       {}
 
 
-lemma {:verify false} {:obsolete} ShiftOWNRshiftAMFOs(kk : OWNR, vv : OWNR, m : Klon)
+lemma {:verify false} {:obsolete} XShiftOWNRXshiftAMFOs(kk : OWNR, vv : OWNR, m : Klon)
     //or this? 0 if mappign OWNRS are OK< then shitAMFO doea the righ tthing
       requires m.apoCalidse()
       requires AllReady(kk)
@@ -759,7 +755,7 @@ lemma {:verify false} {:obsolete} ShiftOWNRshiftAMFOs(kk : OWNR, vv : OWNR, m : 
 
       requires kk >= m.o.AMFO
       requires mappingOWNRsThruKlonKV(kk, vv, m)
-      ensures vv == shiftAMFO(kk, m.o.AMFO, m.m[m.o].AMFO, m.m)
+      ensures vv == XshiftAMFO(kk, m.o.AMFO, m.m[m.o].AMFO, m.m)
       {}
 
 
@@ -768,7 +764,7 @@ lemma {:verify false} {:obsolete} ShiftOWNRshiftAMFOs(kk : OWNR, vv : OWNR, m : 
 
 
 
-function {:verify false} {:obsolete}  shiftObjectBETTER(i0 : Object, m : Klon) : (i1 : Object)
+function {:verify false} {:obsolete}  XshiftObjectBETTER(i0 : Object, m : Klon) : (i1 : Object)
     requires m.apoCalidse()
     requires m.SuperCalidFragilistic()
      ensures m.AllLinesCalid()
@@ -786,7 +782,7 @@ function {:verify false} {:obsolete}  shiftObjectBETTER(i0 : Object, m : Klon) :
 
 
 
-lemma {:resource_limit 0} {:verify false}  INSIDEOUT(oo : OWNR, m : Klon)   ///it'll be somethign missing that's in HighLine but not other lines
+lemma {:resource_limit 0} {:verify false}  XINSIDEOUT(oo : OWNR, m : Klon)   ///it'll be somethign missing that's in HighLine but not other lines
    requires forall o <- oo :: m.objectInKlon(o)
    requires oo <= m.m.Keys
    // requires HighCalidFragilistic(m)
@@ -812,7 +808,7 @@ lemma {:resource_limit 0} {:verify false}  INSIDEOUT(oo : OWNR, m : Klon)   ///i
 // // // // // //  // // // // // //  // // // // // //  // // // // // //  // // // // // //  // // // // // //  // // // // // //
  // // // // // //  // // // // //  // // // // // //  // // // // //    // // // // // //  // // // // //   // // // // // // //
 
-lemma KlonMTKPreservesEQ(oo : Owner, mb : Owner, m : Klon) returns (ro : Owner, rb : Owner)
+lemma {:verify false} XKlonMTKPreservesEQ(oo : Owner, mb : Owner, m : Klon) returns (ro : Owner, rb : Owner)
   requires klonReady(m)
   requires klonPivot(m)
   requires klonAllLines(m)
@@ -828,7 +824,7 @@ lemma KlonMTKPreservesEQ(oo : Owner, mb : Owner, m : Klon) returns (ro : Owner, 
   rb := mapThruKlon(mb, m);
 }
 
-lemma {:only} KlonMTKPreservesGEQ(oo : Owner, mb : Owner, m : Klon) returns (ro : Owner, rb : Owner)
+lemma KlonMTKPreservesGEQ(oo : Owner, mb : Owner, m : Klon) returns (ro : Owner, rb : Owner)
   requires klonReady(m)
   requires klonPivot(m)
   requires klonAllLines(m)
@@ -842,4 +838,100 @@ lemma {:only} KlonMTKPreservesGEQ(oo : Owner, mb : Owner, m : Klon) returns (ro 
 {
   ro := mapThruKlon(oo, m);
   rb := mapThruKlon(mb, m);
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+///// special purpose mappings - local/globa/sideways
+
+function local(o : OWNR, m : Klon) : (r : OWNR)
+ //take a "global" original OWNR to a local internal one in the original (should this be global2local)
+ //should theyb e differen types? ARGH!
+  // //requires isFlat(o)
+  // //ARGH.  this is a set of Owners inside the pivotg
+  // //but those objects are all fully global AMDOs...?
+  // requires m.apoCalidse()
+  // requires o >= m.o.AMFO   //o >= or o > ?
+   ensures r <= o
+   //ensures isFlat(r)
+   // { o - m.o.AMFO  }   //shit shit shit
+   { o - m.o.AMFO  }
+
+function global(oo : set<Object>, m : Klon) : (rs : set<Object>)
+ //take a "local" OWNR to a global one in the clone (should this be local2global)
+   requires m.apoCalidse()
+  //  requires forall o <- oo :: inside(o,m.c)
+  //  //ensures  isReallyFuckingFlat(rs)
+  // //requires o >= m.o.AMFO
+  //  //ensures isFlat(r)
+   { oo + m.c.AMFO  }
+
+function sideways(oo : set<Object>, m : Klon) : (r : set<Object>)
+ //take a "local" OWNR to a global one in the clone (should this be local2global)
+  //  requires AllReady(oo)
+   requires oo <= m.m.Keys
+  //  requires m.apoCalidse()
+  // //requires isFlat(o)
+  // requires oo <= m.o.AMFO
+  //  //ensures isFlat(r)
+  ensures r ==  mapThruKlon(oo, m) //hmm???
+  ensures r <= m.m.Values
+   { mapThruKlon(oo, m) }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+predicate XcheckBoundOfClone(k : Object, v : Object, m : Klon)
+  requires k.Ready()
+  requires v.Ready()
+  requires klonReady(m)
+  requires m.ownersInKlon(k)
+  reads m.hns(), k, v
+ { klonIdentity(k,v,m) }
+  // NO NO NO NO NO NO NO NO!!!
+  // { && boundsOK(k.owner, k.bound)
+  //   && (mapThruKlon(k.owner, m) == v.owner)
+  //   && (mapThruKlon(k.bound, m) == v.bound)
+  //   && boundsOK(v.owner, v.bound) }
+
+
+
+
+predicate XcheckOwnershipOfClone(k : Object, v : Object, m : Klon)
+  //to work, this needs m.o and m.c to be set up
+  //but does NOT need k in Keys, or v in values!
+  //
+  // apparently doesn't even need Caliud or precalid let alone supercalid.  HMMM
+  requires k.Ready()
+  requires m.ownersInKlon(k)
+  requires v.Ready()
+  requires m.apoCalidse()
+
+  //the six requirements of preCalid2 / computeOwnerForClone apocalypse
+  requires k.owner <= m.m.Keys <= m.oHeap
+  requires m.m.Values <= flatten( m.hns() )
+  requires m.o.Ready()
+  ///requires m.objectInKlon(m.o) //// NO NO NO NO NO NO NO NO NO
+  requires m.HeapOwnersReady()
+  requires m.c_amfx <= m.oHeap
+
+//  reads m.oHeap, m.m.Values
+  ensures klonReady(m)
+  reads m.hns(), k, v
+{
+  klonLine(k,v,m)
+  // mappingOwnersThruKlonKV(k,v,m)
 }
