@@ -1539,7 +1539,8 @@ lemma /*VFF*/ XAO_decreases_to_XVM(a : Object,  am : Klon, xo : Object, xm : Klo
                  decreases to (xm.oHeap - (xm.m.Keys + {xo})), |xo.AMFO|, |xo.fields.Keys|, 10)
 {
   reveal am.Calid();
-  BiggerIsStrictlyBigger(a.AMFO, xo.AMFO);
+  assert a.AMFO decreases to xo.AMFO;
+  BiggerIsStrictlyBigger(a.AMFO,xo.AMFO);
 
   assert xm.from(am);
   assert xm.oHeap == am.oHeap;
@@ -2197,12 +2198,12 @@ function fielddiff(a : Object, b : Object) : nat
   {| a.fields.Keys - b.fields.Keys |}
 
 
-lemma {:verify false} BiggerIsStrictlyBigger<T>(aa : set<T>, bb : set<T>)
+lemma BiggerIsStrictlyBigger<T>(aa : set<T>, bb : set<T>)
      requires aa > bb
      ensures |aa| > |bb|
 {
+  assert exists x : T :: (x in aa) && (x !in bb);
   var xs := aa - bb;
-  assert xs > {};
   assert |xs| > 0;
   assert |xs| >= 1;
   assert |aa| == |bb| + |xs|;
