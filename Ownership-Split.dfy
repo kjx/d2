@@ -6,7 +6,7 @@ include "Ownership-Flatten.dfy" //be nice to remove this...
 // 1. FlownerSpliut
 // 2. Tertiary predicates ownerXX(o, pivot, owner)...
 // 3. flowner functions, from a soup, via tertiary ownerXX predicates
-// 4. nonflowner functions - collectStrictlyInside. collectOutsideAvoidingPivot etc
+// 4. nonflowner functions - collectStrictlyInside. collectOutsideAvoiding etc
 ///
 
 // the stuff that does NOT depend on the Klon are doing the "horizontal" mapping
@@ -17,7 +17,7 @@ include "Ownership-Flatten.dfy" //be nice to remove this...
 // so the basis of that comparison, but not acutally doing it
 
 // I think the ownerExceptPivot & friendsare wrongo.
-// best attempt so far is at collectOutsideAvoidingPivot - I think.
+// best attempt so far is at collectOutsideAvoiding - I think.
 // does that really require constraints on soup0 side
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -34,7 +34,8 @@ datatype preFlownerSplit = preFlownerSplit(
     fPvt : Owner,
     fXpt : Owner
   ) {
-    predicate {:timeLimit 60} Valid() {
+    predicate {:timeLimit 60} Valid()
+      {
       assume AllReady(flatten(soup));
       assume pivot.Ready();
     //  && AllReady(flatten(soup))   //should do better than that…
@@ -53,7 +54,7 @@ datatype preFlownerSplit = preFlownerSplit(
   }
 
 
-predicate flownerSplitOK(soup : OWNR, pivot : Object, split : FlownerSplit)
+predicate flownerSplitOK(soup : OWNR, pivot : Object, split : preFlownerSplit)
  // requires AllReady(soup) && pivot.Ready()
   {
       && (split.soup == soup)
@@ -239,23 +240,6 @@ function flownerDisjunctPivot(soup : OWNR, pivot : Object)  : (rv : Owner)
 //// alternatives, often recursive
 ////
 
-function collectStrictlyInside(soup : Owner, pivot : Object) : (rv : set<Object>)
-///version from BROWNE
-  decreases allAMFOs(soup), 2
-   requires forall o <- soup :: o.Ready()
-    ensures forall r <- rv :: strictlyInside(r,pivot)
-    ensures forall r <- rv :: r in flatten(soup)
-    { (set o <- soup, ooo <- collectStrictlyInsideObject(o,pivot) :: ooo) }
-
-
-function collectStrictlyInsideObject(o : Object, pivot : Object) : (rv : set<Object>)
-///version from BROWNE
-  decreases o.AMFO, 1
-   requires o.Ready()
-    ensures forall r <- rv :: strictlyInside(r,pivot)
-    ensures forall r <- rv :: r in o.AMFO
-    { if (not(strictlyInside(o,pivot))) then ({}) else ({o}+collectStrictlyInside(o.owner,pivot)) }
-
 
      //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //
     //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //
@@ -266,197 +250,186 @@ function collectStrictlyInsideObject(o : Object, pivot : Object) : (rv : set<Obj
 
 ///////// //////////// ///////// //////////// ///////// //////////// ///////// ////////////
 
-predicate insideAvoidingAlt(part : Object, whole : Object,  pivot : Object) : (rv : bool)
+predicate outsideAvoidingAlt(part : Object, whole : Object,  pivot : Object) : (rv : bool)
+ // given part inside whole, is part outside pivot? AND is whole reachable NOT via the pivot
    decreases part.AMFO, 2
     requires part.Ready()
     requires whole.Ready()
     requires inside(part,whole)
+     ensures outside(whole,pivot) <== rv
      ensures (part  == pivot) ==> not(rv)
      ensures (whole == pivot) ==> not(rv)
-     ensures (part  == whole) && (outside(part,pivot)) ==> rv
-     ensures (part  == whole) ==> (outside(part,pivot) ==> rv)
-
-     ensures (part  == whole) && not(outside(part,pivot)) ==> not(rv)
      ensures (part  == whole) ==> (outside(part,pivot) <==> rv)
+      {whole in collectObjectOutsideAvoiding(part,pivot)}
 
-     ensures (part  == whole) && not(outside(part,pivot)) ==> not(rv)
-//ensures (part  == whole) ==> (outside(part,pivot) <==> rv)
-      {whole in collectOwnersAvoidingPivotObject(part,pivot)}
-
-predicate insideAvoiding(part : Object, whole : Object,  pivot : Object) : (rv : bool)
+predicate outsideAvoiding(part : Object, whole : Object,  pivot : Object) : (rv : bool)
+ // given part inside whole, is part outside pivot? AND is whole reachable NOT via the pivot
    decreases part.AMFO, 2
-    requires part.Ready( K   K)
+    requires part.Ready()
     requires whole.Ready()
     requires inside(part,whole)
+     ensures outside(whole,pivot) <== rv
+   //  ensures not(outside(part,pivot))
      ensures (part  == pivot) ==> not(rv)
      ensures (whole == pivot) ==> not(rv)
-     ensures (part  == whole) && (outside(part,pivot)) ==> rv
-     ensures (part  == whole) && not(outside(part,pivot)) ==> not(rv)
      ensures (part  == whole) ==> (outside(part,pivot) <==> rv)
       { || (outside(part,pivot) && inside(part,whole))
-        || (strictlyInside(part,pivot) && (exists oo <- part.owner :: (inside(oo,whole) && (insideAvoiding(oo, whole, pivot)))))
+        || (strictlyInside(part,pivot) && (exists oo <- part.owner :: (inside(oo,whole) && (outsideAvoiding(oo, whole, pivot)))))
       }
 
+
+///////// //////////// ///////// //////////// ///////// //////////// ///////// ////////////
+
+function collectOutsideAvoiding(soup : Owner, pivot : Object) : (rv : set<Object>)
+///gets all outside owners - avoiding the pivot and any owners reachabke ONLY through that.
+   decreases allAMFOs(soup), 2
+   requires forall o <- soup :: o.Ready()
+    ensures forall r <- rv :: outside(r,pivot)
+    ensures forall r <- rv :: r in flatten(soup)
+    { (set o <- soup, ooo <- collectObjectOutsideAvoiding(o,pivot) :: ooo) }
+
+function collectObjectOutsideAvoiding(o : Object, pivot : Object) : (rv : set<Object>)
+///gets all outside owners - avoiding the pivot and any owners reachabke ONLY through that.
+  decreases o.AMFO, 1
+   requires o.Ready()
+    ensures forall r <- rv :: outside(r,pivot)
+    ensures forall r <- rv :: r in o.AMFO
+    { if (outside(o,pivot)) then (o.AMFO)
+        else if (o == pivot) then ({})
+          else (collectOutsideAvoiding(o.owner,pivot)) }
+///////// //////////// ///////// //////////// ///////// //////////// ///////// ////////////
+
+
 lemma AVOIDING_AVOIDANCE(part : Object, whole : Object,  pivot : Object)
-  // insideAvoiding == insideAvoidingAlt
+  // outsideAvoiding == outsideAvoidingAlt
  //why clean your flat when you can AVOID IT ALL?
    decreases part.AMFO, 2
     requires part.Ready()
     requires whole.Ready()
     requires inside(part,whole)
- //    ensures insideAvoiding(part,whole,pivot) == insideAvoidingAlt(part,whole,pivot)
+     ensures outsideAvoiding(part,whole,pivot) == outsideAvoidingAlt(part,whole,pivot)
  {
 
     if ((part == pivot) || (whole == pivot))
     {
-       assert not(insideAvoiding(part,whole,pivot));
-       assert not(insideAvoidingAlt(part,whole,pivot));
-       assert insideAvoiding(part,whole,pivot) == insideAvoidingAlt(part,whole,pivot);
+       assert not(outsideAvoiding(part,whole,pivot));
+       assert not(outsideAvoidingAlt(part,whole,pivot));
+       assert outsideAvoiding(part,whole,pivot) == outsideAvoidingAlt(part,whole,pivot);
        return;
     }
 
-assert whole != pivot;
-assert part != pivot;
+    if (part == whole) {
 
-if (part == whole) {
-       assert inside(part,whole);
-       if (outside(part,pivot)) {
-        assert insideAvoiding(part,whole,pivot) == insideAvoidingAlt(part,whole,pivot);
-        return;
-       }
-       assert not(outside(part,pivot));
-       assert inside(part,pivot);
-       assert inside(whole,pivot);
-       assert part != pivot;
-       FUCKED_Inside_to_Strictly(part,pivot);
-       assert strictlyInside(part,pivot);
-
-// Inside insideAvoiding(part,whole,pivot)
-// Could not prove: || (outside(part,pivot) && inside(part,whole)) || (strictlyInside(part,pivot) && (exists oo <- part.owner :: (inside(oo,whole) && (insideAvoiding(oo, whole, pivot)))))
-
-       assert part in collectOwnersAvoidingPivotObject(part,pivot);
-       assert part == whole;
-       assert whole in collectOwnersAvoidingPivotObject(part,pivot);
-       assert (insideAvoidingAlt(part,whole,pivot));
-
-       assert inside(part,whole);
-       assert strictlyInside(part,pivot);
-
-       assert not( exists oo <- part.owner :: insideAvoiding(oo, whole, pivot) );
-
-assert
-|| (outside(part,pivot) && inside(part,whole))
-|| (strictlyInside(part,pivot) && (exists oo <- part.owner :: (inside(oo,whole) && (insideAvoiding(oo, whole, pivot)))))
-;
-       assert insideAvoiding(part,whole,pivot);  //ERRRR
-       assert insideAvoiding(part,whole,pivot) == insideAvoidingAlt(part,whole,pivot);
-       return;
-}
-
-//
-// && (outside(part,pivot))) {
-//        assert (insideAvoiding(part,whole,pivot));
-//        assert part  in collectOwnersAvoidingPivotObject(part,pivot);
-//        assert whole in collectOwnersAvoidingPivotObject(part,pivot);
-//        assert insideAvoiding(part,whole,pivot) == insideAvoidingAlt(part,whole,pivot);
-//        return;
-// }
-
-assert not((part == whole) &&    (outside(part,pivot)));
-assert     (part != whole) || not(outside(part,pivot));
-
-    if (outside(part,pivot)) {
-      assert insideAvoiding(part,whole,pivot);
-       assert collectOwnersAvoidingPivotObject(part,pivot) == part.AMFO;
-       assert part in part.AMFO;
-       assert whole in part.AMFO;
-       assert insideAvoidingAlt(part,whole,pivot);
-       assert insideAvoiding(part,whole,pivot) == insideAvoidingAlt(part,whole,pivot);
-       return;
+          assert outside(part,pivot) == outsideAvoiding(part,whole,pivot) == outsideAvoidingAlt(part,whole,pivot);
+          return;
     }
-
-    assert inside(part,pivot);
-    assert inside(part,whole);
 
     assert part != pivot;
+    assert whole != pivot;
+    assert whole != part;
+    assert {part} !! {whole} !! {pivot};
+
+
+    assert strictlyInside(part,whole);
+
+    assert not((part == whole) &&    (outside(part,pivot)));    //defn outsideAvoiding
+    assert     (part != whole) || not(outside(part,pivot));
+
+    if (outside(part,pivot)) {
+      assert outsideAvoiding(part,whole,pivot);
+       assert collectObjectOutsideAvoiding(part,pivot) == part.AMFO;
+       assert part in part.AMFO;
+       assert whole in part.AMFO;
+       assert outsideAvoidingAlt(part,whole,pivot);
+       assert outsideAvoiding(part,whole,pivot) == outsideAvoidingAlt(part,whole,pivot);
+       return;
+    }
+
+    if (inside(whole,pivot)) {
+       assert forall r <- collectObjectOutsideAvoiding(part,pivot) :: outside(r,pivot);
+       assert not(outsideAvoiding(part,whole,pivot));
+       assert outsideAvoiding(part,whole,pivot) == outsideAvoidingAlt(part,whole,pivot);
+       return;
+    }
+
+    assert strictlyInside(part,whole);
+    assert inside(part,pivot);
+    assert part != pivot;
+    FUCKED_Inside_to_Strictly(part,pivot);
+    assert strictlyInside(part,pivot);
+
     insideFUCKINGowner(part, whole);
-
     assert exists oo <- part.owner :: (part == whole) || (exists oo <- part.owner :: inside(oo,whole));
+    assert exists oo <- part.owner :: (exists oo <- part.owner :: inside(oo,whole));
 
-
-    forall oo <- part.owner | inside(oo,whole)  ensures (insideAvoiding(oo,whole,pivot) == insideAvoidingAlt(oo,whole,pivot))  {
+    forall oo <- part.owner | inside(oo,whole)  ensures (outsideAvoiding(oo,whole,pivot) == outsideAvoidingAlt(oo,whole,pivot))  {
         AVOIDING_AVOIDANCE(oo,whole,pivot);
-        assume insideAvoiding(oo,whole,pivot) == insideAvoidingAlt(oo,whole,pivot);   ///ASSUME FUCKED EVIL
+//        assume outsideAvoiding(oo,whole,pivot) == outsideAvoidingAlt(oo,whole,pivot);   ///ASSUME FUCKED EVIL
+          assert outsideAvoiding(oo,whole,pivot) == (whole in collectObjectOutsideAvoiding(oo,pivot));
         }
 
-assert forall oo <- part.owner |  inside(oo,whole)  :: insideAvoiding(oo,whole,pivot) == insideAvoidingAlt(oo,whole,pivot);  ///ERRR???? huh??
+    assert forall oo <- part.owner |  inside(oo,whole)  :: outsideAvoiding(oo,whole,pivot) == outsideAvoidingAlt(oo,whole,pivot);
 
 
-if (insideAvoiding(part,whole,pivot)) {
-    assert  not(  outside(part,pivot) && inside(part,whole)  );
-    assert strictlyInside(part,pivot);
-    assert (exists oo <- part.owner :: (inside(oo,whole) && (insideAvoiding(oo, whole, pivot))));
-
-    assert  whole in collectOwnersAvoidingPivotObject(part,pivot);
-
-   assert insideAvoiding(part,whole,pivot) == insideAvoidingAlt(part,whole,pivot);
-   return;
- }
-
-    assert not( (insideAvoiding(part,whole,pivot)) );
-    assert not(
-          || (outside(part,pivot) && inside(part,whole))
-          || (strictlyInside(part,pivot) && (exists oo <- part.owner :: (inside(oo,whole) && (insideAvoiding(oo, whole, pivot)))))
-    );
+    if (outsideAvoiding(part,whole,pivot)) {
+        assert  not(  outside(part,pivot) && inside(part,whole)  );
+        assert strictlyInside(part,pivot);
 
 
-assert not( (outside(part,pivot) && inside(part,whole)) );
-assert inside(part,whole);
-assert not( outside(part,pivot) );
-assert    (  inside(part,pivot) );
-FUCKinside(part, pivot);
-assert inside(part,pivot) == (part == pivot) || (strictlyInside(part,pivot));
-assert (part == pivot) || (strictlyInside(part,pivot));
-assert part != pivot;
+        assert  whole in collectObjectOutsideAvoiding(part,pivot);
+
+      assert outsideAvoiding(part,whole,pivot) == outsideAvoidingAlt(part,whole,pivot);
+      return;
+    }
+
+
+    assert not( (outsideAvoiding(part,whole,pivot)) );
+
+
+assert not(
+        || (outside(part,pivot) && inside(part,whole))
+        || (strictlyInside(part,pivot) && (exists oo <- part.owner :: (inside(oo,whole) && (outsideAvoiding(oo, whole, pivot)))))
+);
+
 assert strictlyInside(part,pivot);
+assert not(outside(part,pivot) && inside(part,whole));
+assert not(exists oo <- part.owner :: (inside(oo,whole) && (outsideAvoiding(oo, whole, pivot))));
+assert forall oo <- part.owner :: not( (inside(oo,whole) && (outsideAvoiding(oo, whole, pivot))) );
+assert forall oo <- part.owner :: not(inside(oo,whole))  ||  not(outsideAvoiding(oo, whole, pivot));
 
-assert not( strictlyInside(part,pivot) && (exists oo <- part.owner :: (inside(oo,whole) && (insideAvoiding(oo, whole, pivot)))) );
-
-assert (
-       || not(strictlyInside(part,pivot))
-       || not(exists oo <- part.owner :: (inside(oo,whole) && (insideAvoiding(oo, whole, pivot))))
-      );
-
-if (not(strictlyInside(part,pivot)))
-  {
-    assert (strictlyInside(part,pivot));
-    assert false;
-    return;
-  }
-
-assert not(exists oo <- part.owner :: (inside(oo,whole) && (insideAvoiding(oo, whole, pivot))));
-assert forall oo <- part.owner :: not( inside(oo,whole) && (insideAvoiding(oo, whole, pivot)) );
-
-assert forall oo <- part.owner | inside(oo,whole)   :: insideAvoiding(oo,whole,pivot) == insideAvoidingAlt(oo,whole,pivot);  ///ERRR???? huh??
+assert inside(whole,whole);
+// assert not(outsideAvoiding(whole, whole, pivot));
 
 
 
-assert forall oo <- part.owner :: insideAvoiding(oo,whole,pivot) == insideAvoidingAlt(oo,whole,pivot);  ///ERRR???? huh??
-
-assert forall oo <- part.owner :: not(inside(oo,whole)) || not(insideAvoiding(oo, whole, pivot));
-
-
-if (not(inside(part,whole))) {assert inside(part,whole); assert false; }
-
-if (not(insideAvoiding(part, whole, pivot))) {assert inside(part,whole); assert false; }  //ERR
+    forall oo <- part.owner | inside(oo,whole)  ensures (outsideAvoiding(oo,whole,pivot) == (whole in collectObjectOutsideAvoiding(oo,pivot)))  {
+        AVOIDING_AVOIDANCE(oo,whole,pivot);
+//        assume outsideAvoiding(oo,whole,pivot) == outsideAvoidingAlt(oo,whole,pivot);   ///ASSUME FUCKED EVIL
+          assert outsideAvoiding(oo,whole,pivot) == (whole in collectObjectOutsideAvoiding(oo,pivot));
+        }
 
 
-//  assert not( (insideAvoidingAlt(part,whole,pivot)) );
-//  assert insideAvoiding(part,whole,pivot) == insideAvoidingAlt(part,whole,pivot);
+assert forall oo <- part.owner :: whole !in collectObjectOutsideAvoiding(oo,pivot);
+assert whole != part;
 
-assert false;
+
+//     assert not(outside(part,pivot) && inside(part,whole));
+//     assert not (exists oo <- part.owner :: (inside(oo,whole) && (outsideAvoiding(oo, whole, pivot))));
+//     assert forall oo <- part.owner :: not(inside(oo,whole) && (outsideAvoiding(oo, whole, pivot)));
+
+
+
+
+
+
+    assert whole !in collectObjectOutsideAvoiding(part,pivot);
+    assert not( (outsideAvoidingAlt(part,whole,pivot)) );
+    assert outsideAvoiding(part,whole,pivot) == outsideAvoidingAlt(part,whole,pivot);
 
  }
+
+    ///  CORRECT UP TO HERE!  CORRECT UP TO HERE!  CORRECT UP TO HERE!  CORRECT UP TO HERE!  CORRECT UP TO HERE!
+
 
 
 lemma FUCKEDEDED(a : bool, b : bool)
@@ -486,37 +459,17 @@ lemma FUCKED_Inside_to_Strictly(part : Object, whole : Object)
       assume part.Ready() && whole.Ready();
      }
 
-function collectOutsideAvoidingPivot(soup : Owner, pivot : Object) : (rv : set<Object>)
-///conerted from collectStrictlyInside etc
-   decreases allAMFOs(soup), 2
-   requires forall o <- soup :: o.Ready()
-    ensures forall r <- rv :: outside(r,pivot)
-    ensures forall r <- rv :: r in flatten(soup)
-    { (set o <- soup, ooo <- collectOutsideAvoidingPivotObject(o,pivot) :: ooo) }
-
-function collectOutsideAvoidingPivotObject(o : Object, pivot : Object) : (rv : set<Object>)
-///converted from collectStrictlyInside etc
-  decreases o.AMFO, 1
-   requires o.Ready()
-    ensures forall r <- rv :: outside(r,pivot)
-    ensures forall r <- rv :: r in o.AMFO
-    { if (outside(o,pivot)) then (o.AMFO)
-        else if (o == pivot) then ({})
-          else (collectOutsideAvoidingPivot(o.owner,pivot)) }
-
-
 ///////// //////////// ///////// //////////// ///////// //////////// ///////// ////////////
-///
 
-function collectOwnersAvoidingPivot(soup : Owner, pivot : Object) : (rv : set<Object>)
+function collectOwnerAvoiding(soup : Owner, pivot : Object) : (rv : set<Object>)
 ///gets all owners - inside & outsidem, avoiding the pivot and any owners reachabke ONLY through that.
    decreases allAMFOs(soup), 2
    requires forall o <- soup :: o.Ready()
     ensures forall r <- rv :: r in flatten(soup)
     ensures pivot !in rv
-    { (set o <- soup, ooo <- collectOwnersAvoidingPivotObject(o,pivot) :: ooo) }
+    { (set o <- soup, ooo <- collectObjectOwnerAvoiding(o,pivot) :: ooo) }
 
-function collectOwnersAvoidingPivotObject(o : Object, pivot : Object) : (rv : set<Object>)
+function collectObjectOwnerAvoiding(o : Object, pivot : Object) : (rv : set<Object>)
 ///gets all owners - inside & outsidem, avoiding the pivot and any owners reachabke ONLY through that.
   decreases o.AMFO, 1
    requires o.Ready()
@@ -525,77 +478,88 @@ function collectOwnersAvoidingPivotObject(o : Object, pivot : Object) : (rv : se
     ensures pivot !in rv
     { if (outside(o,pivot)) then (o.AMFO)
         else if (o == pivot) then ({})
-          else ({o}+collectOwnersAvoidingPivot(o.owner,pivot)) }
+          else ({o}+collectOwnerAvoiding(o.owner,pivot)) }
+
+///////// //////////// ///////// //////////// ///////// //////////// ///////// ////////////
+
+function collectStrictlyInside(soup : Owner, pivot : Object) : (rv : set<Object>)
+///version from BROWNE
+  decreases allAMFOs(soup), 2
+   requires forall o <- soup :: o.Ready()
+    ensures forall r <- rv :: strictlyInside(r,pivot)
+    ensures forall r <- rv :: r in flatten(soup)
+    { (set o <- soup, ooo <- collectObjectStrictlyInside(o,pivot) :: ooo) }
 
 
-
-
-
-
-
-
-
+function collectObjectStrictlyInside(o : Object, pivot : Object) : (rv : set<Object>)
+///version from BROWNE
+  decreases o.AMFO, 1
+   requires o.Ready()
+    ensures forall r <- rv :: strictlyInside(r,pivot)
+    ensures forall r <- rv :: r in o.AMFO
+    ensures rv <= argh(o)
+    { if (not(strictlyInside(o,pivot))) then ({}) else ({o}+collectStrictlyInside(o.owner,pivot)) }
 
 
 ///////// //////////// ///////// //////////// ///////// //////////// ///////// ////////////
 
 
 //WRONG WRONG WRONG
-// predicate outsideAvoidingPivot(o : Object, pivot : Object)
+// predicate outsideAvoiding(o : Object, pivot : Object)
 //  decreases o.AMFO
 //   requires o.Ready() && pivot.Ready()
-//  { outside(o,pivot) || ((o != pivot) && (exists oo <- o.owner :: outsideAvoidingPivot(oo,pivot))) }
+//  { outside(o,pivot) || ((o != pivot) && (exists oo <- o.owner :: outsideAvoiding(oo,pivot))) }
 
 //WRONG WRONG WRONG
-// lemma collectOutsideAvoidingPivotObject_RESULT(o : Object, pivot : Object)
+// lemma collectOutsideAvoidingObject_RESULT(o : Object, pivot : Object)
 //    decreases o.AMFO, 1
 //    requires o.Ready() && pivot.Ready()
-//     ensures outsideAvoidingPivot(o,pivot) ==> (o in collectOutsideAvoidingPivotObject(o,pivot))
+//     ensures outsideAvoiding(o,pivot) ==> (o in collectObjectOutsideAvoiding(o,pivot))
 //     {
-//       if (outside(o,pivot)) {assert outsideAvoidingPivot(o,pivot); return;}
-//       if (o == pivot) {assert not(outsideAvoidingPivot(o,pivot)); return;}
+//       if (outside(o,pivot)) {assert outsideAvoiding(o,pivot); return;}
+//       if (o == pivot) {assert not(outsideAvoiding(o,pivot)); return;}
 //
-//       forall oo <- o.owner ensures (outsideAvoidingPivot(oo,pivot) ==> (oo in collectOutsideAvoidingPivotObject(oo,pivot)))
+//       forall oo <- o.owner ensures (outsideAvoiding(oo,pivot) ==> (oo in collectObjectOutsideAvoiding(oo,pivot)))
 //        {
-//         collectOutsideAvoidingPivotObject_RESULT(oo,pivot);
+//         collectOutsideAvoidingObject_RESULT(oo,pivot);
 //        }
-//    //   assert (exists oo <- o.owner ::  (oo in collectOutsideAvoidingPivotObject(oo,pivot))) ==> (o in collectOutsideAvoidingPivotObject(o,pivot));
+//    //   assert (exists oo <- o.owner ::  (oo in collectObjectOutsideAvoiding(oo,pivot))) ==> (o in collectObjectOutsideAvoiding(o,pivot));
 //
-//       if (exists oo <- o.owner ::  outsideAvoidingPivot(oo,pivot))
+//       if (exists oo <- o.owner ::  outsideAvoiding(oo,pivot))
 //        {
-//           var oo :| (oo in o.owner) && outsideAvoidingPivot(oo,pivot);
-//           assert outsideAvoidingPivot(o,pivot);
+//           var oo :| (oo in o.owner) && outsideAvoiding(oo,pivot);
+//           assert outsideAvoiding(o,pivot);
 //
 //        }
-//       // assert (exists oo <- o.owner ::  outsideAvoidingPivot(oo,pivot)) ==> outsideAvoidingPivot(o,pivot);
-//       // assert (exists oo <- o.owner ::  outsideAvoidingPivot(oo,pivot)) ==> outsideAvoidingPivot(o,pivot);
+//       // assert (exists oo <- o.owner ::  outsideAvoiding(oo,pivot)) ==> outsideAvoiding(o,pivot);
+//       // assert (exists oo <- o.owner ::  outsideAvoiding(oo,pivot)) ==> outsideAvoiding(o,pivot);
 //
 //
-//       assert outsideAvoidingPivot(o,pivot) ==> (o in collectOutsideAvoidingPivotObject(o,pivot));
+//       assert outsideAvoiding(o,pivot) ==> (o in collectObjectOutsideAvoiding(o,pivot));
 //     }
 
 
-// predicate ownerOutsideAvoidingPivot(o : Object, pivot : Object, owner : Object) : (rv : bool)
+// predicate ownerOutsideAvoiding(o : Object, pivot : Object, owner : Object) : (rv : bool)
 //   requires o.Ready() && pivot.Ready() && owner.Ready()  requires inside(o, owner)  reads {}
 //     {outside(owner,pivot) && (exists z <- o.AMFO :: ((owner in z.owner) && (outside(pivot,z)))) }
 //
 
-function flownerOutsideAvoidingPivot(soup : OWNR, pivot : Object)  : (rv : Owner)
+function flownerOutsideAvoiding(soup : OWNR, pivot : Object)  : (rv : Owner)
   requires AllReady(flatten(soup)) && pivot.Ready()
- {set o <- soup, owner <- o.AMFO | PART_INSIDE_OWNER(soup,pivot); hackOwnerOutsideAvoidingPivot(o,pivot,owner) :: owner}
+ {set o <- soup, owner <- o.AMFO | PART_INSIDE_OWNER(soup,pivot); hackOwnerOutsideAvoiding(o,pivot,owner) :: owner}
 
 
-predicate hackOwnerOutsideAvoidingPivot(o : Object, pivot : Object, owner : Object)  : (rv : bool)
+predicate hackOwnerOutsideAvoiding(o : Object, pivot : Object, owner : Object)  : (rv : bool)
   decreases o.AMFO, 2
    requires o.Ready() && pivot.Ready() && owner.Ready()  requires inside(o, owner)  reads {}
     ensures rv ==> outside(owner,pivot)
-      { owner in collectOutsideAvoidingPivotObject(o,pivot) }
+      { owner in collectObjectOutsideAvoiding(o,pivot) }
 
 
 lemma FUCKOTONIC(soup0 : Owner, soup1 : Owner, pivot : Object)
   requires AllReady(flatten(soup0)) && AllReady(flatten(soup1)) && pivot.Ready()
   requires flatten(soup0) >= flatten(soup1)
-//   ensures flownerOutsideAvoidingPivot(soup0,pivot)  >= flownerOutsideAvoidingPivot(soup1,pivot)
+//   ensures flownerOutsideAvoiding(soup0,pivot)  >= flownerOutsideAvoiding(soup1,pivot)
 {
   assert soup1 <= flatten(soup1);
   assert soup1 <= flatten(soup0);
@@ -609,25 +573,25 @@ lemma DOWNWARDS_DOGE(down : Object, seed : Object, pivot : Object)
   requires down != pivot //(I think I ned this or it all stops)
   requires outside(down,pivot)  //ths is overkill but should be enough!
     //or does ot een fuckiong matter????
-   ensures collectOutsideAvoidingPivotObject(down,pivot) >= collectOutsideAvoidingPivotObject(seed,pivot)
+   ensures collectObjectOutsideAvoiding(down,pivot) >= collectObjectOutsideAvoiding(seed,pivot)
   {
     if (down == seed) { return; }
 
     if (seed == pivot)
       {
-        assert collectOutsideAvoidingPivotObject(seed,pivot) == {};
-        assert collectOutsideAvoidingPivotObject(down,pivot) >= collectOutsideAvoidingPivotObject(seed,pivot);
+        assert collectObjectOutsideAvoiding(seed,pivot) == {};
+        assert collectObjectOutsideAvoiding(down,pivot) >= collectObjectOutsideAvoiding(seed,pivot);
         return;
       }
 
     if (outside(seed,pivot))
       {
-        assert collectOutsideAvoidingPivotObject(seed,pivot) == seed.AMFO;
+        assert collectObjectOutsideAvoiding(seed,pivot) == seed.AMFO;
         if (outside(down,pivot))
           {
-            assert collectOutsideAvoidingPivotObject(down,pivot) == down.AMFO;
+            assert collectObjectOutsideAvoiding(down,pivot) == down.AMFO;
             assert strictlyInside(down,seed);
-            assert collectOutsideAvoidingPivotObject(down,pivot) >= collectOutsideAvoidingPivotObject(seed,pivot);
+            assert collectObjectOutsideAvoiding(down,pivot) >= collectObjectOutsideAvoiding(seed,pivot);
             return;
            }
 
@@ -636,7 +600,7 @@ lemma DOWNWARDS_DOGE(down : Object, seed : Object, pivot : Object)
           assert inside(down,seed);
           assert down != seed;
           assert exists do <- down.owner :: inside(do,seed);
-          assert collectOutsideAvoidingPivotObject(down,pivot) == collectOutsideAvoidingPivot(down.owner,pivot);
+          assert collectObjectOutsideAvoiding(down,pivot) == collectOutsideAvoiding(down.owner,pivot);
     assert inside(down,seed);
     assert exists do <- down.owner :: inside(do,seed);
     var do :| do in down.owner && inside(do,seed);  // can do = pivot??
@@ -644,13 +608,13 @@ lemma DOWNWARDS_DOGE(down : Object, seed : Object, pivot : Object)
      assert do != pivot;
      assert inside(do,seed);
     DOWNWARDS_DOGE(do,seed,pivot);// by {  reveal CUNT; assert down != pivot; assert inside(down,seed); }
-    assert collectOutsideAvoidingPivotObject(down,pivot) >= collectOutsideAvoidingPivotObject(seed,pivot);
+    assert collectObjectOutsideAvoiding(down,pivot) >= collectObjectOutsideAvoiding(seed,pivot);
 
          return;
       }
 
     assert strictlyInside(down,pivot);
-    assert collectOutsideAvoidingPivotObject(down,pivot) == collectOutsideAvoidingPivot(down.owner,pivot);
+    assert collectObjectOutsideAvoiding(down,pivot) == collectOutsideAvoiding(down.owner,pivot);
 
     assert inside(down,seed);
     assert exists do <- down.owner :: inside(do,seed);
@@ -658,7 +622,7 @@ lemma DOWNWARDS_DOGE(down : Object, seed : Object, pivot : Object)
      assert do != pivot;
      assert inside(do, seed);
     DOWNWARDS_DOGE(do,seed,pivot);
-    assert collectOutsideAvoidingPivotObject(down,pivot) >= collectOutsideAvoidingPivotObject(seed,pivot);
+    assert collectObjectOutsideAvoiding(down,pivot) >= collectObjectOutsideAvoiding(seed,pivot);
   }
 
 
@@ -669,8 +633,8 @@ lemma DOWNWARDS_ELON(down : Object, seed : Object, pivot : Object)
   requires down != pivot //(I think I ned this or it all stops)
   requires down != seed //(options see above)
   requires outside(down,pivot)
-  requires collectOutsideAvoidingPivotObject(down,pivot) == collectOutsideAvoidingPivot(down.owner,pivot)
-   ensures collectOutsideAvoidingPivotObject(down,pivot) >= collectOutsideAvoidingPivotObject(seed,pivot)
+  requires collectObjectOutsideAvoiding(down,pivot) == collectOutsideAvoiding(down.owner,pivot)
+   ensures collectObjectOutsideAvoiding(down,pivot) >= collectObjectOutsideAvoiding(seed,pivot)
 {
     assert inside(down,seed);
     assert exists do <- down.owner :: inside(do,seed);
@@ -678,7 +642,7 @@ lemma DOWNWARDS_ELON(down : Object, seed : Object, pivot : Object)
      assert CUNT: do != pivot;
      assert inside(do,seed);
     DOWNWARDS_DOGE(do,seed,pivot) by {  reveal CUNT; assert do != pivot; assert inside(do,seed); }
-    assert collectOutsideAvoidingPivotObject(down,pivot) >= collectOutsideAvoidingPivotObject(seed,pivot);
+    assert collectObjectOutsideAvoiding(down,pivot) >= collectObjectOutsideAvoiding(seed,pivot);
 }
 
 
@@ -694,7 +658,7 @@ lemma DOWNWARDS_ELON(down : Object, seed : Object, pivot : Object)
 
 
 //
-// predicate recOwnrOutsideAvoidingPivot(o : Object, pivot : Object, owner : Object)  : (rv : bool)
+// predicate recOwnrOutsideAvoiding(o : Object, pivot : Object, owner : Object)  : (rv : bool)
 //   decreases o.AMFO, 1
 //    requires o.Ready() && pivot.Ready() && owner.Ready()  requires inside(o, owner)  reads {}
 //     ensures rv ==> outside(owner,pivot)
@@ -702,7 +666,7 @@ lemma DOWNWARDS_ELON(down : Object, seed : Object, pivot : Object)
 //        &&
 //       if (outside(o,pivot)) then (o.AMFO)
 //         else if (o == pivot) then ({})
-//           else (collectOutsideAvoidingPivot(o.owner,pivot)) }
+//           else (collectOutsideAvoiding(o.owner,pivot)) }
 
 
 lemma DUMBO(o : Object, pivot : Object)
@@ -722,7 +686,7 @@ function arghStrictlyInside(o : Object, pivot : Object) : Owner
 
 
 //
-// function collectStrictlyInsideObject(o : Object, pivot : Object) : (rv : set<Object>)
+// function collectObjectStrictlyInside(o : Object, pivot : Object) : (rv : set<Object>)
 //   decreases o.AMFO, 10
 // //   requires o.Ready()
 //    ensures rv <= o.AMFO
@@ -733,7 +697,7 @@ function arghStrictlyInside(o : Object, pivot : Object) : Owner
 //   // requires forall o <- soup :: o.Ready()
 //       decreases allAMFOs(soup), 20
 //         ensures rv <= flatten(soup)
-//     { assume forall o <- soup :: o.Ready(); (set o <- soup, ooo <- collectStrictlyInsideObject(o,pivot) :: ooo) }
+//     { assume forall o <- soup :: o.Ready(); (set o <- soup, ooo <- collectObjectStrictlyInside(o,pivot) :: ooo) }
 //
 
 
@@ -759,7 +723,7 @@ lemma {:timeLimit 30} collectStrictlyInside_RESULT(soup : Owner, pivot : Object,
   if (soup == {}) {return;}
 
   forall oo <- soup ensures (true) {
-    var rs := collectStrictlyInsideObject(oo, pivot);
+    var rs := collectObjectStrictlyInside(oo, pivot);
     assert (oo in rs) ==> strictlyInside(oo,pivot);
     collectStrictlyInside_RESULT(oo.owner,pivot, collectStrictlyInside(oo.owner,pivot) );
   // assert rs == if (strictlyInside(oo,pivot)) then {oo} + collectStrictlyInside(oo.owner, pivot) else {};
@@ -839,8 +803,8 @@ lemma flownerAll_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
    ensures flownerEverythingOutside(soup0,pivot) >= flownerEverythingOutside(soup1,pivot)
    ensures flownerPivotlyOutside(soup0,pivot)    >= flownerPivotlyOutside(soup1,pivot)
 
-//   ensures flownerOutsideAvoidingPivot(soup0,pivot) >= flownerOutsideAvoidingPivot(soup1,pivot)
-//   ensures collectOutsideAvoidingPivot(soup0,pivot) >= collectOutsideAvoidingPivot(soup1,pivot)
+//   ensures flownerOutsideAvoiding(soup0,pivot) >= flownerOutsideAvoiding(soup1,pivot)
+//   ensures collectOutsideAvoiding(soup0,pivot) >= collectOutsideAvoiding(soup1,pivot)
  //  ensures flownerDisjunctPivot(soup0,pivot)     >= flownerDisjunctPivot(soup1,pivot)
 {
     flownerStrictlyInside_MONOTONIC(soup0, soup1, pivot);
@@ -849,7 +813,7 @@ lemma flownerAll_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
     flownerExceptPivot_MONOTONIC(soup0, soup1, pivot);
     flownerOutsidePivot_MONOTONIC(soup0, soup1, pivot);
   //  flownerPivotlyOutside_MONOTONIC(soup0, soup1, pivot);
- //   flownerOutsideAvoidingPivot_MONOTONIC(soup0, soup1, pivot);
+ //   flownerOutsideAvoiding_MONOTONIC(soup0, soup1, pivot);
 }
 
 
@@ -993,38 +957,36 @@ lemma {:timeLimit 120}  flownerExceptPivot_MONOTONIC(soup0 : OWNR, soup1 : OWNR,
 
 
 
-lemma collectOutsideAvoidingPivot_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
-  requires AllReady(flatten(soup0)) && AllReady(flatten(soup1)) && pivot.Ready()
-  requires flatten(soup0) >= flatten(soup1)
-
-  requires stupidlyHappy(soup0,soup1,pivot)
-
-
-   ensures collectOutsideAvoidingPivot(soup0,pivot)  >= collectOutsideAvoidingPivot(soup1,pivot)
-{
-}
-
-
-
-
-
-// lemma {:timeLimit 120} flownerOutsideAvoidingPivot_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
+// lemma collectOutsideAvoiding_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
 //   requires AllReady(flatten(soup0)) && AllReady(flatten(soup1)) && pivot.Ready()
 //   requires flatten(soup0) >= flatten(soup1)
-//    ensures flownerOutsideAvoidingPivot(soup0,pivot)  >= flownerOutsideAvoidingPivot(soup1,pivot)
+//
+//   requires stupidlyHappy(soup0,soup1,pivot)
+//
+//    ensures collectOwnerAvoiding(soup0,pivot)  >= collectOwnerAvoiding(soup1,pivot)
+// {}
+
+
+
+
+// lemma {:timeLimit 120} flownerOutsideAvoiding_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
+// likely not monotonic so shoul;dn't prove.
+//   requires AllReady(flatten(soup0)) && AllReady(flatten(soup1)) && pivot.Ready()
+//   requires flatten(soup0) >= flatten(soup1)
+//    ensures flownerOutsideAvoiding(soup0,pivot)  >= flownerOutsideAvoiding(soup1,pivot)
 // {
-//   var rv0 := flownerOutsideAvoidingPivot(soup0,pivot);
-//   var rv1 := flownerOutsideAvoidingPivot(soup1,pivot);
+//   var rv0 := flownerOutsideAvoiding(soup0,pivot);
+//   var rv1 := flownerOutsideAvoiding(soup1,pivot);
 //   assert  flownerAll(soup0) >= flownerAll(soup1);
 //
 //   assert (set o <- soup0, owner <- o.AMFO :: owner) == flatten(soup0);
 //   assert (set o <- soup1, owner <- o.AMFO :: owner) == flatten(soup1);
 //
 //
-//   assert rv0 == (set o <- soup0, owner <- o.AMFO | PART_INSIDE_OWNER(soup0,pivot); hackOwnerOutsideAvoidingPivot(o,pivot,owner) :: owner);
-//   assert rv1 == (set o <- soup1, owner <- o.AMFO | PART_INSIDE_OWNER(soup1,pivot); hackOwnerOutsideAvoidingPivot(o,pivot,owner) :: owner);
+//   assert rv0 == (set o <- soup0, owner <- o.AMFO | PART_INSIDE_OWNER(soup0,pivot); hackOwnerOutsideAvoiding(o,pivot,owner) :: owner);
+//   assert rv1 == (set o <- soup1, owner <- o.AMFO | PART_INSIDE_OWNER(soup1,pivot); hackOwnerOutsideAvoiding(o,pivot,owner) :: owner);
 //   assert rv0 >= rv1;
-//   assert flownerOutsideAvoidingPivot(soup0,pivot)     >= flownerOutsideAvoidingPivot(soup1,pivot);
+//   assert flownerOutsideAvoiding(soup0,pivot)     >= flownerOutsideAvoiding(soup1,pivot);
 // }
 
 lemma flownerOnlyPivot_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
@@ -1049,6 +1011,7 @@ lemma flownerOutsidePivot_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
   requires stupidlyHappy(soup0,soup1,pivot)
 
    ensures flownerOutsidePivot(soup0,pivot)  >= flownerOutsidePivot(soup1,pivot)
+   ensures flownerOutside(soup0,pivot) >= flownerOutside(soup1,pivot)
 {
   var rv0 := flownerOutsidePivot(soup0,pivot);
   var rv1 := flownerOutsidePivot(soup1,pivot);
@@ -1064,73 +1027,6 @@ lemma flownerOutsidePivot_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
   assert rv0 >= rv1;
   assert flownerOutsidePivot(soup0,pivot)     >= flownerOutsidePivot(soup1,pivot);
 }
-
-//probalby isn't actaully monotonic so this shouldn't pass, should it?
-//
-//
-// lemma {:timeLimit 120} flownerStrictlyOutside_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
-//   requires AllReady(flatten(soup0)) && AllReady(flatten(soup1)) && pivot.Ready()
-//   requires flownerAll(soup0) >= flownerAll(soup1)
-//   requires flatten(soup0) >= flatten(soup1)
-//
-//  // requires stupidlyHappy(soup0, soup1, pivot)
-//
-//
-// //X   ensures flownerStrictlyOutside(soup0,pivot)  >= flownerStrictlyOutside(soup1,pivot)
-// {
-//    var rv0 := flownerStrictlyOutside(soup0,pivot);
-//    flownerStrictlyOutside_RESULT(soup0,pivot,rv0);
-//    assert forall owner <- rv0 :: exists o <- soup0 | owner in o.AMFO ::
-//           (PART_INSIDE_OWNER(soup0,pivot);
-//            && outside(o,pivot)
-//            && ownerStrictlyOutside(o,pivot,owner));
-//
-//    var rv1 := flownerStrictlyOutside(soup1,pivot);
-//    flownerStrictlyOutside_RESULT(soup1,pivot,rv1);
-//    assert forall owner <- rv1 :: exists s <- soup1 | owner in s.AMFO ::
-//           (PART_INSIDE_OWNER(soup1,pivot);  ownerStrictlyOutside(s,pivot,owner));
-//
-//    forall owner <- rv1 ensures (exists o <- soup0 | owner in o.AMFO ::
-//        (PART_INSIDE_OWNER(soup0,pivot);
-//           assert o.Ready();
-//           assert pivot.Ready();
-//           assert owner.Ready();
-//           assert inside(o, owner);
-//          ownerStrictlyOutside(o,pivot,owner)))  //by
-//      {
-//         assert exists s <- soup1 | owner in s.AMFO ::
-//           (PART_INSIDE_OWNER(soup1,pivot);
-//           && outside(s,pivot)
-//           && ownerStrictlyOutside(s,pivot,owner));
-//         var s :| (s in soup1) && (owner in s.AMFO) && outside(s,pivot) && (PART_INSIDE_OWNER(soup1,pivot);  ownerStrictlyOutside(s,pivot,owner));
-//         assert flatten(soup0) >= flatten(soup1);
-//         assert exists o <- soup0 :: s in o.AMFO &&
-//           (PART_INSIDE_OWNER(soup0,pivot);  ownerStrictlyOutside(o,pivot,owner));
-//         var o :| (o in soup0) && (s in o.AMFO) &&
-//           (PART_INSIDE_OWNER(soup0,pivot);  ownerStrictlyOutside(o,pivot,owner));
-//         assert ownerStrictlyOutside(o,pivot,owner);
-//         assert outside(o,pivot);
-//
-//
-//   assert AllReady(flatten(soup0)) && AllReady(flatten(soup1)) && pivot.Ready();
-//   assert flatten(soup0) >= flatten(soup1);
-//   assert s in soup1;
-//   assert outside(s,pivot);
-//   assert owner in s.AMFO;
-//   assert owner in flatten(soup1);
-//   assert outside(owner,pivot);
-//   assert s in o.AMFO;
-//   assert o in soup0;
-//   assert outside(o,pivot);
-//   assert forall q <- flatten(soup0) :: q.Ready();
-//   assert ownerStrictlyOutside(s,pivot,owner);
-//
-//            EXISTENTIAL_FUCKED(soup0, soup1, s, pivot, owner, o);
-//      }
-// }
-//
-//
-
 
 
 

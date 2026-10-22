@@ -655,25 +655,25 @@ assert flownerExceptPivot(cc,m.c) == mtk(flownerExceptPivot(oo,m.o), m);
 
 
 
-lemma {:timeLimit 20} MASTERY_OBJECT(o : Object, m : Klon)
+lemma {:timeLimit 60} MASTERY_OBJECT(o : Object, m : Klon)
   decreases o.AMFO, 14
    requires o.Ready()
    requires klonCalid(m)
    requires m.objectInKlon(o)
-   requires collectStrictlyInsideObject(o,m.o) <= m.m.Keys
+   requires collectObjectStrictlyInside(o,m.o) <= m.m.Keys
 
-    ensures mapThruKlon(collectStrictlyInsideObject(o,m.o),m) == collectStrictlyInsideObject(m.m[o],m.c)
+    ensures mapThruKlon(collectObjectStrictlyInside(o,m.o),m) == collectObjectStrictlyInside(m.m[o],m.c)
 {
    var c  := m.m[o];
-   var mc := mapThruKlon(collectStrictlyInsideObject(o,m.o),m);
-   var cm := collectStrictlyInsideObject(c,m.c);
+   var mc := mapThruKlon(collectObjectStrictlyInside(o,m.o),m);
+   var cm := collectObjectStrictlyInside(c,m.c);
 
   if (not(strictlyInside(o,m.o)))
     {
       assert (not(strictlyInside(c,m.c)));
-      assert collectStrictlyInsideObject(o,m.o) == {};
-      assert mapThruKlon(collectStrictlyInsideObject(o,m.o),m) == {};
-      assert collectStrictlyInsideObject(c,m.c) == {};
+      assert collectObjectStrictlyInside(o,m.o) == {};
+      assert mapThruKlon(collectObjectStrictlyInside(o,m.o),m) == {};
+      assert collectObjectStrictlyInside(c,m.c) == {};
       assert {} == mc == cm;
       return;
     }
@@ -681,17 +681,17 @@ lemma {:timeLimit 20} MASTERY_OBJECT(o : Object, m : Klon)
   assert (strictlyInside(o,m.o));
   assert (strictlyInside(c,m.c));
 
-  assert collectStrictlyInsideObject(o,m.o) == {o} + collectStrictlyInside(o.owner,m.o)
+  assert collectObjectStrictlyInside(o,m.o) == {o} + collectStrictlyInside(o.owner,m.o)
       by {
-        assert collectStrictlyInsideObject(o,m.o) == (if (not(strictlyInside(o,m.o))) then ({}) else ({o}+collectStrictlyInside(o.owner,m.o)));
+        assert collectObjectStrictlyInside(o,m.o) == (if (not(strictlyInside(o,m.o))) then ({}) else ({o}+collectStrictlyInside(o.owner,m.o)));
         assert (strictlyInside(o,m.o));
-        assert collectStrictlyInsideObject(o,m.o) == {o} + collectStrictlyInside(o.owner,m.o);
+        assert collectObjectStrictlyInside(o,m.o) == {o} + collectStrictlyInside(o.owner,m.o);
       }
 
-  assert collectStrictlyInsideObject(c,m.c) == {c} + collectStrictlyInside(c.owner,m.c);
+  assert collectObjectStrictlyInside(c,m.c) == {c} + collectStrictlyInside(c.owner,m.c);
   assert cm == {c} + collectStrictlyInside(c.owner,m.c);
 
-  assert mapThruKlon(collectStrictlyInsideObject(o,m.o),m)
+  assert mapThruKlon(collectObjectStrictlyInside(o,m.o),m)
      == mapThruKlon({o}  + collectStrictlyInside(o.owner,m.o),m)
      == mapThruKlon({o},m) + mapThruKlon(collectStrictlyInside(o.owner,m.o),m)
      == {c} + mapThruKlon(collectStrictlyInside(o.owner,m.o),m)
@@ -721,7 +721,7 @@ lemma {:timeLimit 20} MASTERY_OBJECT(o : Object, m : Klon)
   assert {c} + mapThruKlon(collectStrictlyInside(o.owner,m.o),m) == {c} + collectStrictlyInside(mapThruKlon(o.owner, m),m.c);
 
   assert mc == cm;
-  assert mapThruKlon(collectStrictlyInsideObject(o,m.o),m) == collectStrictlyInsideObject(m.m[o],m.c);
+  assert mapThruKlon(collectObjectStrictlyInside(o,m.o),m) == collectObjectStrictlyInside(m.m[o],m.c);
 }
 
 
@@ -740,16 +740,16 @@ lemma {:timeLimit 10} MASTERY_THRU(oo : Owner, m : Klon)
   var mc := mapThruKlon(collectStrictlyInside(oo,m.o),m);
   var cm := collectStrictlyInside(mapThruKlon(oo,m),m.c);
 
-  forall o <- oo ensures (mapThruKlon(collectStrictlyInsideObject(o,m.o),m) == collectStrictlyInsideObject(m.m[o],m.c))
+  forall o <- oo ensures (mapThruKlon(collectObjectStrictlyInside(o,m.o),m) == collectObjectStrictlyInside(m.m[o],m.c))
       {
       var c := m.m[o];
-      var omc := mapThruKlon(collectStrictlyInsideObject(o,m.o),m);
-      var ocm := collectStrictlyInsideObject(m.m[o],m.c);
+      var omc := mapThruKlon(collectObjectStrictlyInside(o,m.o),m);
+      var ocm := collectObjectStrictlyInside(m.m[o],m.c);
       assert o.Ready();
       assert klonCalid(m);
       assert m.objectInKlon(o);
       assert c == m.m[o];
-      assert collectStrictlyInsideObject(o,m.o) <= m.m.Keys;
+      assert collectObjectStrictlyInside(o,m.o) <= m.m.Keys;
 
 
 
@@ -757,7 +757,7 @@ lemma {:timeLimit 10} MASTERY_THRU(oo : Owner, m : Klon)
                                 GOING_DOWN(oo,o);
                                 assert (allAMFOs(oo),15 decreases to o.AMFO,14);
                               }
-      assert (mapThruKlon(collectStrictlyInsideObject(o,m.o),m) == collectStrictlyInsideObject(m.m[o],m.c));
+      assert (mapThruKlon(collectObjectStrictlyInside(o,m.o),m) == collectObjectStrictlyInside(m.m[o],m.c));
       }
 
    assert mc == cm;
@@ -1010,11 +1010,7 @@ lemma FLOWER_JOIN_All(oo : Owner, ob : Bound, pivot : Object)
 
 
 
-//split thru klon
-
-
-// {:timeLimit 30}
-function splitThruKlon(soup : OWNR, split : FlownerSplit, m : Klon) : (cc : FlownerSplit)
+function  splitThruKlon(soup : OWNR, split : FlownerSplit, m : Klon) : (cc : FlownerSplit)
  //this doesn't acutally jmove the split across the map
  //**it just recaloculates from scratch? */
  //
@@ -1027,73 +1023,15 @@ function splitThruKlon(soup : OWNR, split : FlownerSplit, m : Klon) : (cc : Flow
   requires split.pivot == m.o
   requires split.soup  == soup
   requires m.m.Keys >= soup
+   ensures cc.Valid()
    ensures flownerSplitOK(mapThruKlon(soup,m),m.c,cc)
    reads m.hns()
    {
        var coup := mapThruKlon(soup,m);
        var pivot := m.c;
-
-
-       var cc := preFlownerSplit(coup,pivot,
-                    flownerAll(coup),
-                    flownerStrictlyInside(coup,pivot),
-                    flownerStrictlyOutside(coup,pivot),
-                    flownerOnlyPivot(coup,pivot),
-                    flownerExceptPivot(coup,pivot));
-
-   assert (cc.soup == coup);
-   assert (cc.pivot == m.c);
-   assert (cc.fAll == flownerAll(coup));
-   assert (cc.fSin == flownerStrictlyInside(coup,pivot));
-   assert (cc.fOut == flownerStrictlyOutside(coup,pivot));
-   assert (cc.fPvt == flownerOnlyPivot(coup,pivot));
-   assert (cc.fXpt == flownerExceptPivot(coup,pivot));
-
-
-      //  var cc_All : Owner := flownerAll(coup);
-      //  var cc_Sin : Owner := flownerStrictlyInside(coup,pivot);
-      //  var cc_Out : Owner := flownerStrictlyOutside(coup,pivot);
-      //  var cc_Pvt : Owner := flownerOnlyPivot(coup,pivot);
-      //  var cc_Xpt : Owner := flownerExceptPivot(coup,pivot);
-FLOWNER_ALL_ALL(coup,pivot);
-
-assert flownerEverythingOutside(coup,pivot) == flownerStrictlyOutside(coup,pivot) + flownerOnlyPivot(coup,pivot) + flownerExceptPivot(coup,pivot);
-assert flownerPivotlyOutside(coup,pivot) == flownerStrictlyOutside(coup,pivot) + flownerOnlyPivot(coup,pivot) + flownerExceptPivot(coup,pivot);
-
-assert (cc.fOut + cc.fPvt + cc.fXpt) == flownerEverythingOutside(coup,pivot);
-assert (cc.fOut + cc.fPvt + cc.fXpt) == flownerPivotlyOutside(coup,pivot);
-assert cc.fSin !! (cc.fOut + cc.fPvt + cc.fXpt);
-
-       var ccFEO := flownerEverythingOutside(coup,pivot);
-     var ccOPX := (cc.fOut + cc.fPvt + cc.fXpt);
-
-       assert flownerEverythingOutside(coup,pivot) ==
-                    flownerStrictlyOutside(coup,pivot)
-                  + flownerOnlyPivot(coup,pivot)
-                  + flownerExceptPivot(coup,pivot)
-        by { FLOWNER_EVERYTHING_EVERYWHERE(coup,pivot, ccFEO, cc.fOut, cc.fPvt, cc.fXpt); }
-
-
-       FLOWNER_EVERYTHING_OUTSIDE(coup,pivot);
-       assert ccOPX == flownerPivotlyOutside(coup,pivot);
-
-       FLOWNER_ALL_EVERYTHING(coup,pivot,cc.fAll,cc.fSin,cc.fOut,cc.fPvt,cc.fXpt);
-       assert (cc.fAll == cc.fSin + cc.fOut + cc.fPvt + cc.fXpt);
-       assert cc.fSin !! (cc.fOut + cc.fPvt + cc.fXpt);
-
-       assert (cc.fAll == cc.fSin + cc.fOut + cc.fPvt + cc.fXpt);
-       assert cc.fSin !! (cc.fOut + cc.fPvt + cc.fXpt);
-
-
-assert (cc.soup == coup);
-assert (cc.pivot == m.c);
-assert cc.Valid();
-
-      assert flownerSplitOK(coup,m.c,cc);
-      // assert cc.Valid();
-      cc
-   }
-
+       var cc := flownerSplit(coup,pivot);
+       cc
+}
 
 
 
@@ -1190,42 +1128,40 @@ FLOWNER_SHORTCUT_OnlyPivot(cs, m.c, cs_sp.fPvt);
 
 
 
-lemma collectStrictlyInsideObject_LEMMA1z_noall(o : Object, pivot : Object)
-  //if I'm inside I should be in collectStrictlyInsideObject
+lemma collectObjectStrictlyInside_LEMMA1z_noall(o : Object, pivot : Object)
+  //if I'm inside I should be in collectObjectStrictlyInside
   //given this one, why do I need all the other shit I'm doing
   //to prove shit?
   //see eg  argh_LEMMA13_noall
   decreases o.AMFO
    requires o.Ready()
-   // ensures forall oo <- argh(o) | strictlyInside(oo,pivot) :: oo in collectStrictlyInsideObject(o, pivot)
+   // ensures forall oo <- argh(o) | strictlyInside(oo,pivot) :: oo in collectObjectStrictlyInside(o, pivot)
 
-    ensures (set oo <- argh(o) | strictlyInside(oo,pivot)) <= collectStrictlyInsideObject(o, pivot)
-    ensures (set oo <- argh(o) | strictlyInside(oo,pivot)) >= collectStrictlyInsideObject(o, pivot)
-    ensures (set oo <- argh(o) | strictlyInside(oo,pivot)) == collectStrictlyInsideObject(o, pivot)
+    ensures (set oo <- argh(o) | strictlyInside(oo,pivot)) <= collectObjectStrictlyInside(o, pivot)
+    ensures (set oo <- argh(o) | strictlyInside(oo,pivot)) >= collectObjectStrictlyInside(o, pivot)
+    ensures (set oo <- argh(o) | strictlyInside(oo,pivot)) == collectObjectStrictlyInside(o, pivot)
 
     ensures (set oo <- argh(o) | strictlyInside(oo,pivot)) <= arghStrictlyInside(o, pivot)
     ensures (set oo <- argh(o) | strictlyInside(oo,pivot)) >= arghStrictlyInside(o, pivot)
     ensures (set oo <- argh(o) | strictlyInside(oo,pivot)) == arghStrictlyInside(o, pivot)
 
-    ensures arghStrictlyInside(o,pivot) == collectStrictlyInsideObject(o, pivot)
+    ensures arghStrictlyInside(o,pivot) == collectObjectStrictlyInside(o, pivot)
    {
-    forall oo <- argh(o) | strictlyInside(oo,pivot) ensures ( oo in collectStrictlyInsideObject(o, pivot) )  {
+    forall oo <- argh(o) | strictlyInside(oo,pivot) ensures ( oo in collectObjectStrictlyInside(o, pivot) )  {
        assert o.Ready();
        assert oo in argh(o);
        assert strictlyInside(oo,pivot);
-       collectStrictlyInsideObject_LEMMA1o_noall(o,pivot,oo);
-       assert oo in collectStrictlyInsideObject(o, pivot);
+       collectObjectStrictlyInside_LEMMA1o_noall(o,pivot,oo);
+       assert oo in collectObjectStrictlyInside(o, pivot);
       }
 
-   forall  oo <- collectStrictlyInsideObject(o, pivot) ensures (oo in (set oo <- argh(o) | strictlyInside(oo,pivot))) {
+   forall  oo <- collectObjectStrictlyInside(o, pivot) ensures (oo in (set oo <- argh(o) | strictlyInside(oo,pivot))) {
       assert o.Ready();
       assume oo.Ready();
       assert oo in argh(o);
       assert strictlyInside(oo,pivot);
       assert oo in (set oo <- argh(o) | strictlyInside(oo,pivot));
 
-      // collectStrictlyInsideObject_LEMMA1o(o,pivot,oo);
-      // assert oo in collectStrictlyInsideObject(o, pivot);
 
       }
 
@@ -1233,18 +1169,18 @@ lemma collectStrictlyInsideObject_LEMMA1z_noall(o : Object, pivot : Object)
 
 
 
-lemma collectStrictlyInsideObject_LEMMA1o_noall(o : Object, pivot : Object, x : Object)
-  //if x is inside x should be in collectStrictlyInsideObject
-  decreases o.AMFO
+lemma collectObjectStrictlyInside_LEMMA1o_noall(o : Object, pivot : Object, x : Object)
+  //if x is inside x should be in collectObjectStrictlyInside
+  decreases o.AMFO, 2
    requires o.Ready()
    requires x in argh(o)
    requires strictlyInside(x,pivot)
-    ensures x in collectStrictlyInsideObject(o, pivot)
+    ensures x in collectObjectStrictlyInside(o, pivot)
    {
-      if (x == o) {assert x in collectStrictlyInsideObject(o, pivot); return;}
+      if (x == o) {assert x in collectObjectStrictlyInside(o, pivot); return;}
       assert x != o;
       assert exists oo <- o.owner, xx <- argh(oo) :: x == xx;
-      assert exists oo <- o.owner :: x in collectStrictlyInsideObject(oo, pivot);
+      assert exists oo <- o.owner :: x in collectObjectStrictlyInside(oo, pivot);
     }
 
 
@@ -1255,30 +1191,56 @@ lemma collectStrictlyInsideObject_LEMMA1o_noall(o : Object, pivot : Object, x : 
 
 
 //{:timeLimit 60}
-lemma  FLOWNER_ALL_COLLECT_StrictlyInside(soup : OWNR, pivot : Object)
+lemma FLOWNER_ALL_COLLECT_StrictlyInside(soup : OWNR, pivot : Object)
+ decreases allAMFOs(soup), 2
   requires AllReady(flatten(soup)) && pivot.Ready()
    ensures flownerStrictlyInside(soup,pivot) <= flownerAll(soup)
-   ensures allStrictlyInside(flatten(soup),pivot) == flownerStrictlyInside(soup,pivot)
-   ensures allStrictlyInside(flownerAll(soup),pivot) == flownerStrictlyInside(soup,pivot)
+  //  ensures allStrictlyInside(flatten(soup),pivot) == flownerStrictlyInside(soup,pivot)
+  //  ensures allStrictlyInside(flownerAll(soup),pivot) == flownerStrictlyInside(soup,pivot)
 
    ensures collectStrictlyInside(soup,pivot) == flownerStrictlyInside(soup,pivot)
 {
  forall o <- soup
-    ensures (flownerStrictlyInside({o},pivot) == collectStrictlyInsideObject(o, pivot)) //by
-    { collectStrictlyInsideObject_LEMMA1z_noall(o,pivot); }
+    ensures (flownerStrictlyInside({o},pivot) == collectObjectStrictlyInside(o, pivot)) //by
+    { assert allAMFOs(soup) nonincreases to o.AMFO;
+      assert 2 decreases to 1;
+      assert (allAMFOs(soup),2  nonincreases to o.AMFO,1);
+      FLOWNER_ALL_COLLECT_StrictlyInside2(o,pivot); }
 
- assert forall o <- soup :: collectStrictlyInsideObject(o,pivot) <= collectStrictlyInside(soup,pivot);
+ assert forall o <- soup :: collectObjectStrictlyInside(o,pivot) <= collectStrictlyInside(soup,pivot);
 
 
  assert forall o <- collectStrictlyInside(soup,pivot) ::
     exists s <- soup :: o in s.AMFO;
  assert forall o <- collectStrictlyInside(soup,pivot) ::
-    exists s <- soup :: o in collectStrictlyInsideObject(s,pivot);
+    exists s <- soup :: o in collectObjectStrictlyInside(s,pivot);
 //  assert forall o <- collectStrictlyInside(soup,pivot) ::
-//     o in (set s <- soup, ss <- collectStrictlyInsideObject(s,pivot) :: ss);
+//     o in (set s <- soup, ss <- collectObjectStrictlyInside(s,pivot) :: ss);
 
 }
 
+
+lemma FLOWNER_ALL_COLLECT_StrictlyInside2(o : Object, pivot : Object)
+ decreases o.AMFO, 1
+  requires o.Ready() && pivot.Ready()
+   ensures flownerStrictlyInside({o},pivot) == collectObjectStrictlyInside(o, pivot)
+ {
+   if (not(strictlyInside(o,pivot)))
+    {
+      assert collectObjectStrictlyInside(o, pivot) == {};
+      assert flownerStrictlyInside({o},pivot) == {};
+      assert  flownerStrictlyInside({o},pivot) == collectObjectStrictlyInside(o, pivot);
+      return;
+    }
+  assert strictlyInside(o,pivot);
+  assert o in flownerStrictlyInside({o},pivot);
+  assert o in collectObjectStrictlyInside(o, pivot);
+  assert AllReady(flatten(o.owner));
+  Object.RettyBetty(o.owner);
+  FLOWNER_ALL_COLLECT_StrictlyInside(o.owner,pivot);
+
+  assert flownerStrictlyInside({o},pivot) == collectObjectStrictlyInside(o, pivot);
+}
 
 
 
