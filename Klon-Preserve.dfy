@@ -855,7 +855,7 @@ lemma FUCKED(o0 : Owner, o1 : Owner, o2 : Owner, b0 : Owner, b1 : Owner, b2 : Ow
 
 
 
-lemma FLOWER_JOIN_All(oo : Owner, ob : Bound, pivot : Object)
+lemma {:timeLimit 15} FLOWER_JOIN_All(oo : Owner, ob : Bound, pivot : Object)
  //given the vartious components are >=, conclude Foo >= Fob,
  //just a nice? version of FLOWER_JOIN_H without the typo
   requires AllReady(flatten(oo))
@@ -867,6 +867,7 @@ lemma FLOWER_JOIN_All(oo : Owner, ob : Bound, pivot : Object)
 
    ensures flownerStrictlyInside(oo,pivot) + (flownerOutsidePivot(oo,pivot) + flownerStrictlyOutside(oo,pivot)) >=
            flownerStrictlyInside(ob,pivot) + (flownerOutsidePivot(ob,pivot) + flownerStrictlyOutside(ob,pivot))
+
 
    ensures flownerAll(oo) == flownerStrictlyInside(oo,pivot) + (flownerOutsidePivot(oo,pivot) + flownerStrictlyOutside(oo,pivot))
    ensures flownerAll(ob) == flownerStrictlyInside(ob,pivot) + (flownerOutsidePivot(ob,pivot) + flownerStrictlyOutside(ob,pivot))

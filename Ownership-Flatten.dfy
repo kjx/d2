@@ -33,37 +33,37 @@ include "Klon-Preserve.dfy"
  function flattenInside(soup : OWNR, pivot : Object) : (rv : Owner)
   ensures forall r <- rv :: inside(r,pivot)
   ensures forall r <- flatten(soup) :: inside(r,pivot) ==> r in rv
-{ set x <- flatten(soup) | inside(x,pivot) }
+{ set seed <- flatten(soup) | inside(seed,pivot) }
 
 function flattenOutside(soup : OWNR, pivot : Object) : (rv : Owner)
   ensures forall r <- rv :: outside(r,pivot)
   ensures forall r <- flatten(soup) :: outside(r,pivot) ==> r in rv
-{ set x <- flatten(soup) | outside(x,pivot) }
+{ set seed <- flatten(soup) | outside(seed,pivot) }
 
 function flattenOffside(soup : OWNR, pivot : Object) : (rv : Owner)
   ensures forall r <- rv :: offside(r,pivot)
   ensures forall r <- flatten(soup) :: offside(r,pivot) ==> r in rv
-{ set x <- flatten(soup) | offside(x,pivot) }
+{ set seed <- flatten(soup) | offside(seed,pivot) }
 
 function flattenStrictlyInside(soup : OWNR, pivot : Object) : (rv : Owner)
   ensures forall r <- rv :: strictlyInside(r,pivot)
   ensures forall r <- flatten(soup) :: strictlyInside(r,pivot) ==> r in rv
-{ set x <- flatten(soup) | strictlyInside(x,pivot) }
+{ set seed <- flatten(soup) | strictlyInside(seed,pivot) }
 
 function flattenPivotlyOutside(soup : OWNR, pivot : Object) : (rv : Owner)
   ensures forall r <- rv :: pivotlyOutside(r,pivot)
   ensures forall r <- flatten(soup) :: pivotlyOutside(r,pivot) ==> r in rv
-{ set x <- flatten(soup) | pivotlyOutside(x,pivot) }
+{ set seed <- flatten(soup) | pivotlyOutside(seed,pivot) }
 
 function flattenOnlyPivot(soup : OWNR, pivot : Object)  : (rv : Owner)
- {set s <- soup, oo <- s.AMFO | onlyPivot(s,pivot,oo) :: oo}
+ {set seed <- soup, oo <- seed.AMFO | onlyPivot(seed,pivot,oo) :: oo}
 // snuck iinto Ownerehsip-Pivot.dfy...
 
 function flattenExceptPivot(soup : OWNR, pivot : Object) : (rv : Owner)
- {set s <- soup, oo <- s.AMFO | exceptPivot(s,pivot,oo) :: oo}
+ {set seed <- soup, oo <- seed.AMFO | exceptPivot(seed,pivot,oo) :: oo}
 
 function flattenOutsidePivot(soup : OWNR, pivot : Object) : (rv : Owner)
- {set s <- soup, oo <- s.AMFO | outsidePivot(s,pivot,oo) :: oo}
+ {set seed <- soup, oo <- seed.AMFO | outsidePivot(seed,pivot,oo) :: oo}
 //
 // lemma LEMMA_flattenOutsudePivot0(soup : OWNR, pivot : Object, rv : Owner)   //JUST SEEMS WRONGa
 //  //JUST SEEMS WRONG - likely copy & pasted fromn below but bnot edited<>
