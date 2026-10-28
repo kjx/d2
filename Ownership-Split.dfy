@@ -757,10 +757,10 @@ function collectOwnerAvoiding(soup : Owner, pivot : Object) : (rv : set<Object>)
    requires forall o <- soup :: o.Ready()
     ensures forall r <- rv :: r in flatten(soup)
     ensures pivot !in rv
-    ensures flatten(soup) >= rv >= (flatten(soup) - pivot.AMFO)
+ //   ensures flatten(soup) >= rv >= (flatten(soup) - pivot.AMFO)
     { var rr :=  (set o <- soup, ooo <- collectObjectOwnerAvoiding(o,pivot) :: ooo)  ;
-      MILLION_DOLLAR_DREAM(soup,pivot,rr) ;
-      assert flatten(soup) >= rr >= (flatten(soup) - pivot.AMFO);
+   //   MILLION_DOLLAR_DREAM(soup,pivot,rr) ;
+    //  assert flatten(soup) >= rr >= (flatten(soup) - pivot.AMFO);
       rr}
 
 function collectObjectOwnerAvoiding(o : Object, pivot : Object) : (rv : set<Object>)
@@ -770,7 +770,7 @@ function collectObjectOwnerAvoiding(o : Object, pivot : Object) : (rv : set<Obje
     ensures forall r <- rv :: r in o.AMFO
     ensures (o == pivot) ==> (rv == {})
     ensures pivot !in rv
-    ensures o.AMFO >= rv >= (o.AMFO - pivot.AMFO)
+//  ensures o.AMFO >= rv >= (o.AMFO - pivot.AMFO)
     { if (outside(o,pivot)) then (o.AMFO)
         else if (o == pivot) then ({})
           else ({o}+collectOwnerAvoiding(o.owner,pivot)) }
@@ -780,11 +780,102 @@ lemma MILLION_DOLLAR_DREAM(soup : Owner, pivot : Object, rv : set<Object>)
 ///gets all owners - inside & outsidem, avoiding the pivot and any owners reachabke ONLY through that.
    decreases allAMFOs(soup), 2
    requires forall o <- soup :: o.Ready()
-   requires rv == collectOwnerAvoiding(soup,pivot)//ERR
+   requires rv == collectOwnerAvoiding(soup,pivot)
     ensures forall r <- rv :: r in flatten(soup)
     ensures pivot !in rv
     ensures flatten(soup) >= rv >= (flatten(soup) - pivot.AMFO)
+{
+  forall o : Object <- soup
+  //ERR vvvvvvvvvvvvvvvvvvv
+     ensures flatten(soup) >= collectObjectOwnerAvoiding(o,pivot) >= (flatten(soup) - pivot.AMFO)
+     {
+      var rr := collectObjectOwnerAvoiding(o,pivot);
+      TALLER_THAN_GOD(o,pivot,rr);
+      assert o.AMFO >= rv >= (o.AMFO - pivot.AMFO);
+
+
+
+      assert flatten(soup) >= rr;
+      assert rr >= (flatten(soup) - pivot.AMFO);
+     }
+}
+
+lemma SOUP_TO_NUTS(soup : Owner, pivot : Object, rv : set<Object>)
+///gets all owners - inside & outsidem, avoiding the pivot and any owners reachabke ONLY through that.
+   decreases allAMFOs(soup), 3
+   requires forall o <- soup :: o.Ready()
+   requires rv == collectOwnerAvoiding(soup,pivot)
+   requires forall seed <- soup :: seed.AMFO >= collectObjectOwnerAvoiding(seed,pivot)
+   requires forall seed <- soup :: collectObjectOwnerAvoiding(seed,pivot) >= (seed.AMFO - pivot.AMFO)
+    ensures forall seed <- soup :: seed.AMFO >= collectObjectOwnerAvoiding(seed,pivot) >= (seed.AMFO - pivot.AMFO)
+
+    ensures (set seed <- soup, ooo <- seed.AMFO :: ooo) == flatten(soup)
+
+//    ensures flatten(soup) >= rv >= (flatten(soup) - pivot.AMFO)
 {}
+
+lemma SET_COMP_MINUS(soup : Owner, pivot : Object, rv : set<Object>)
+   decreases allAMFOs(soup), 3
+   requires forall o <- soup :: o.Ready()
+   requires pivot.Ready()
+    ensures (set seed <- soup, ooo <-  seed.AMFO :: ooo) == flatten(soup)
+    ensures (set seed <- soup, ooo <- pivot.AMFO :: ooo) == pivot.AMFO
+
+   requires rv == (set seed <- soup, ooo <- seed.AMFO :: ooo) - (set seed <- soup, ooo <- pivot.AMFO :: ooo)
+    ensures rv == (set seed <- soup, ooo <- seed.AMFO :: ooo) - pivot.AMFO
+    ensures rv == flatten(soup)                               - pivot.AMFO
+{}
+
+
+
+lemma MARR(soup : Owner, pivot : Object, rv : set<Object>)
+   decreases allAMFOs(soup), 3
+   requires forall o <- soup :: o.Ready()
+   requires pivot.Ready()
+   requires rv == (set seed <- soup, ooo <- pivot.AMFO :: ooo)
+//    ensures rv == pivot.AMFO
+  ensures SMALLTOWN_BOY(pivot,rv)
+{
+  if (soup == {}) {   assume SMALLTOWN_BOY(pivot,rv);
+   return; }
+
+  assume SMALLTOWN_BOY(pivot,rv);
+}
+
+
+lemma MORRISSEY(soup : Owner, pivot : Object, rv : set<Object>)
+   decreases allAMFOs(soup), 3
+   requires forall o <- soup :: o.Ready()
+   requires pivot.Ready()
+   requires rv == (set seed <- soup, ooo <- pivot.AMFO :: ooo)
+    ensures (soup > {}) ==> (rv == pivot.AMFO)
+    ensures (soup > {}) ==> SMALLTOWN_BOY(pivot,rv)
+{
+  if (soup == {}) { assert rv == {}; return; }
+
+  assert soup > {};
+
+  assert (set seed <- soup :: seed) == soup;
+
+  assert (set seed <- soup :: pivot) == {pivot};
+  assert (set seed <- soup :: pivot.AMFO) == {pivot.AMFO};
+  assert (set ooo <- pivot.AMFO :: ooo) == pivot.AMFO;
+
+  assert forall i <- rv :: i in pivot.AMFO;
+  assert forall i <- pivot.AMFO :: i in rv;
+     opaque {  //these two work non-opaquely
+        assert rv == (set seed <- soup, ooo <- pivot.AMFO :: ooo);
+        assert rv == pivot.AMFO;
+     }
+  assert SMALLTOWN_BOY(pivot,rv) by {
+                                      reveal SMALLTOWN_BOY();
+                                      assert rv == pivot.AMFO;
+                                      assert SMALLTOWN_BOY(pivot,rv);
+                                      }
+}
+
+opaque predicate SMALLTOWN_BOY(pivot : Object, rv : OWNR) {rv == pivot.AMFO}
+
 
 lemma TALLER_THAN_GOD(o : Object, pivot : Object, rv : set<Object>)
 ///gets all owners - inside & outsidem, avoiding the pivot and any owners reachabke ONLY through that.
@@ -798,6 +889,7 @@ lemma TALLER_THAN_GOD(o : Object, pivot : Object, rv : set<Object>)
 
     ensures o.AMFO >= rv
     ensures rv >= (o.AMFO - pivot.AMFO)
+    ensures o.AMFO >= rv >= (o.AMFO - pivot.AMFO)
 
  { assume pivot.Ready();  assume forall r <- rv :: r.Ready();
 
@@ -814,7 +906,10 @@ lemma TALLER_THAN_GOD(o : Object, pivot : Object, rv : set<Object>)
      assert strictlyInside(o,pivot);
 
      assert o in rv;
-     assert o.AMFO >= collectOwnerAvoiding(o.owner,pivot) >= (o.AMFO - pivot.AMFO);//ERR??
+     var rr := collectOwnerAvoiding(o.owner,pivot);
+     MILLION_DOLLAR_DREAM(o.owner,pivot,rr);
+     assert flatten(o.owner) >= rr >= (flatten(o.owner) - pivot.AMFO);
+    // assert o.AMFO >= rr >= (o.AMFO - pivot.AMFO);//ERR??
  }
 ///////// //////////// ///////// //////////// ///////// //////////// ///////// ////////////
 
