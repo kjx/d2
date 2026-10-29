@@ -2,6 +2,7 @@ include "Ownership.dfy"
 include "Bound.dfy"
 
 include "Ownership-Flatten.dfy" //be nice to remove this...
+include "Set-Lemmata.dfy"
 
 // 1. FlownerSpliut
 // 2. Tertiary predicates ownerXX(o, pivot, owner)...
@@ -770,11 +771,50 @@ function collectObjectOwnerAvoiding(o : Object, pivot : Object) : (rv : set<Obje
     ensures forall r <- rv :: r in o.AMFO
     ensures (o == pivot) ==> (rv == {})
     ensures pivot !in rv
+    ensures outside(o,pivot) ==> (rv == o.AMFO)
 //  ensures o.AMFO >= rv >= (o.AMFO - pivot.AMFO)
     { if (outside(o,pivot)) then (o.AMFO)
         else if (o == pivot) then ({})
           else ({o}+collectOwnerAvoiding(o.owner,pivot)) }
 
+
+lemma collectOwnerAvoiding_NOPIVOT(soup : Owner, pivot : Object, rv : set<Object>)
+   decreases allAMFOs(soup), 10
+   requires forall o <- soup :: o.Ready()
+   requires pivot.Ready()
+   requires rv == collectOwnerAvoiding(soup,pivot)
+   requires forall seed <- soup :: outside(seed,pivot)
+    ensures pivot !in flatten(soup)
+    ensures pivot !in rv
+    ensures rv == flatten(soup)
+{
+   assert forall seed <- soup :: outside(seed,pivot);
+
+   assert forall  seed <- soup :: collectObjectOwnerAvoiding(seed,pivot) == seed.AMFO;
+
+}
+
+
+//
+//
+// lemma collectOwnerAvoiding_PIVOT(soup : Owner, pivot : Object, rv : set<Object>)
+//    decreases allAMFOs(soup), 10
+//    requires forall o <- soup :: o.Ready()
+//    requires pivot.Ready()
+//    requires rv == collectOwnerAvoiding(soup,pivot)
+//    requires pivot in flatten(soup)
+//     ensures pivot !in flatten(soup)
+//     ensures pivot !in rv
+//     ensures rv == flatten(soup)
+// {
+//    assert forall seed <- soup :: outside(seed,pivot);
+//
+//    assert forall  seed <- soup :: collectObjectOwnerAvoiding(seed,pivot) == seed.AMFO;
+//
+// }
+//
+//
+//
 
 lemma MILLION_DOLLAR_DREAM(soup : Owner, pivot : Object, rv : set<Object>)
     //scopes output of cOA between flattern(soup) and (flatten(soup) - pivot.AMFO)
@@ -1560,6 +1600,9 @@ assert  o.AMFO >= collectObjectOwnerAvoiding(o,pivot) >= (o.AMFO - pivot.AMFO);
 }
 
 lemma {:timeLimit 16} HULL(soup : OWNR, pivot : Object)
+//long and chonky version:
+//should have a much nicer (and caseless) version by just calling GOOLE
+decreases allAMFOs(soup), 1000
   requires AllReady(flatten(soup)) && pivot.Ready()
 
    ensures shortcutOnlyPivot(soup,pivot) <= flatten(soup)
@@ -1582,24 +1625,36 @@ lemma {:timeLimit 16} HULL(soup : OWNR, pivot : Object)
    assert flatten(soup) >= cOA >= (flatten(soup) - pivot.AMFO);
 
    if (pivot !in flatten(soup)) {
-      assert shortcutOnlyPivot(soup,pivot) == {};
-
       assert forall x <- flatten(soup) :: not(inside(x,pivot));
-      assert collectOwnerAvoiding(soup,pivot) == flatten(soup);
-      assert {} + collectOwnerAvoiding(soup,pivot) == flatten(soup);
-      assert shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot) ==  flatten(soup);
+      collectOwnerAvoiding_NOPIVOT(soup,pivot,cOA);
+      assert cOA == flatten(soup) == collectOwnerAvoiding(soup,pivot);
+      assert shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot) == flatten(soup)
+        by {
+            assert shortcutOnlyPivot(soup,pivot) == {};
+            assert collectOwnerAvoiding(soup,pivot) ==  flatten(soup);
+            SetPlus0(flatten(soup));
+            assert {} + flatten(soup) == flatten(soup);
+            assert shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot) == flatten(soup);
+        }
       return;
    }
 
    assert (pivot in flatten(soup));
-   assert (pivot.AMFO <= flatten(soup));
-   assert shortcutOnlyPivot(soup,pivot) == pivot.AMFO;
-   assert flatten(soup) >= cOA >= (flatten(soup) - pivot.AMFO);
-   assert flatten(soup) >= cOA;
-   assert flatten(soup) + pivot.AMFO == flatten(soup);
-   assert ((flatten(soup) - pivot.AMFO) +  pivot.AMFO) == flatten(soup);
-   assert shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot) ==  flatten(soup);
-   return;
+      assert shortcutOnlyPivot(soup,pivot) == pivot.AMFO;
+      assert flatten(soup) >= pivot.AMFO;
+      assert cOA >= (flatten(soup) - pivot.AMFO);
+      assert ((flatten(soup) - pivot.AMFO) + pivot.AMFO) >= flatten(soup);
+      assert cOA + pivot.AMFO >= flatten(soup);
+      SetMinus1Plus1(flatten(soup), pivot.AMFO);
+      assert ((flatten(soup) - pivot.AMFO) +  pivot.AMFO) == flatten(soup);
+      assert shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot) == flatten(soup)
+        by {
+            assert shortcutOnlyPivot(soup,pivot) == pivot.AMFO;
+            assert collectOwnerAvoiding(soup,pivot) >= (flatten(soup) - pivot.AMFO);
+
+            assert shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot) == flatten(soup);
+        }
+      return;
 }
 
 //       assert forall o <- flatten(soup) :: o.AMFO <= flatten(soup);

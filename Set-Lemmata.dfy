@@ -60,8 +60,15 @@ lemma Set3Eq3<T>(a : set<T>, b : set<T>, c : set<T>, d : set<T>, e : set<T>, f :
 {}
 
 
+lemma SetMinus1Plus1<T>(left : set<T>, right : set<T>)
+ requires left >= right
+  ensures ((left - right) + right) == left
+{}
 
 
+lemma SetPlus0<T>(left : set<T>)
+  ensures {} + left == left
+{}
 
 lemma SetPlus1<T>(o : T, left : set<T>, right : set<T>)
 // (left == right) ==> ({o}+left == {o}+right)
