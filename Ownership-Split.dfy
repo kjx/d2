@@ -777,7 +777,7 @@ function collectObjectOwnerAvoiding(o : Object, pivot : Object) : (rv : set<Obje
 
 
 lemma MILLION_DOLLAR_DREAM(soup : Owner, pivot : Object, rv : set<Object>)
-///gets all owners - inside & outsidem, avoiding the pivot and any owners reachabke ONLY through that.
+    //scopes output of cOA between flattern(soup) and (flatten(soup) - pivot.AMFO)
    decreases allAMFOs(soup), 2
    requires forall o <- soup :: o.Ready()
    requires rv == collectOwnerAvoiding(soup,pivot)
@@ -785,23 +785,41 @@ lemma MILLION_DOLLAR_DREAM(soup : Owner, pivot : Object, rv : set<Object>)
     ensures pivot !in rv
     ensures flatten(soup) >= rv >= (flatten(soup) - pivot.AMFO)
 {
+  if (soup == {})
+      { assert flatten(soup) == {};
+        assert collectOwnerAvoiding(soup,pivot) == {};
+        assert rv == {};
+        assert {} == {} - pivot.AMFO; //nothing shall come from nothing
+        assert {} == flatten(soup) - pivot.AMFO;
+        assert {} >= rv >= {};
+        return;
+      }
+
+
   forall o : Object <- soup
+      ensures o.AMFO >= collectObjectOwnerAvoiding(o,pivot) >= (o.AMFO - pivot.AMFO)
   //ERR vvvvvvvvvvvvvvvvvvv
-     ensures flatten(soup) >= collectObjectOwnerAvoiding(o,pivot) >= (flatten(soup) - pivot.AMFO)
+  //   ensures flatten(soup) >= collectObjectOwnerAvoiding(o,pivot) >= (flatten(soup) - pivot.AMFO)  //ERR
+  //ERR ^^^^^^^^^^^^^^^^^^^^
      {
       var rr := collectObjectOwnerAvoiding(o,pivot);
       TALLER_THAN_GOD(o,pivot,rr);
-      assert o.AMFO >= rv >= (o.AMFO - pivot.AMFO);
-
-
-
+      assert o.AMFO >= rr >= (o.AMFO - pivot.AMFO);
       assert flatten(soup) >= rr;
-      assert rr >= (flatten(soup) - pivot.AMFO);
      }
+
+       var lowerBound0 := (set seed <- soup, ooo <- (seed.AMFO - pivot.AMFO) :: ooo);
+       assert rv >= lowerBound0;
+       var lowerBound1 := (set seed <- soup, ooo <- seed.AMFO :: ooo) - (set seed <- soup, ooo <- pivot.AMFO :: ooo); //ERR
+       SET_COMP_MINUS2(soup,pivot,lowerBound0,lowerBound1);
+       assert lowerBound1 == flatten(soup) - pivot.AMFO;
+       assert rv >=  flatten(soup) - pivot.AMFO;
 }
 
 lemma SOUP_TO_NUTS(soup : Owner, pivot : Object, rv : set<Object>)
-///gets all owners - inside & outsidem, avoiding the pivot and any owners reachabke ONLY through that.
+    //given collectOwnerAvoiding (WHY? WHY?)oh
+   //verifies seed.AMFO >= collectObjectOwnerAvoiding(seed,pivot)
+   //verifies 28.10.2026
    decreases allAMFOs(soup), 3
    requires forall o <- soup :: o.Ready()
    requires rv == collectOwnerAvoiding(soup,pivot)
@@ -810,75 +828,130 @@ lemma SOUP_TO_NUTS(soup : Owner, pivot : Object, rv : set<Object>)
     ensures forall seed <- soup :: seed.AMFO >= collectObjectOwnerAvoiding(seed,pivot) >= (seed.AMFO - pivot.AMFO)
 
     ensures (set seed <- soup, ooo <- seed.AMFO :: ooo) == flatten(soup)
-
-//    ensures flatten(soup) >= rv >= (flatten(soup) - pivot.AMFO)
 {}
 
-lemma SET_COMP_MINUS(soup : Owner, pivot : Object, rv : set<Object>)
+lemma SET_COMP_MINUS1(soup : Owner, pivot : Object, rv : set<Object>)
+  //setcomp soup - set comp pivot === flatten - pivot
    decreases allAMFOs(soup), 3
-   requires forall o <- soup :: o.Ready()
-   requires pivot.Ready()
+  //  requires forall o <- soup :: o.Ready()
+  //  requires pivot.Ready()
+  //verified Oct 29.10.2026
+   requires soup > {}
     ensures (set seed <- soup, ooo <-  seed.AMFO :: ooo) == flatten(soup)
     ensures (set seed <- soup, ooo <- pivot.AMFO :: ooo) == pivot.AMFO
 
    requires rv == (set seed <- soup, ooo <- seed.AMFO :: ooo) - (set seed <- soup, ooo <- pivot.AMFO :: ooo)
     ensures rv == (set seed <- soup, ooo <- seed.AMFO :: ooo) - pivot.AMFO
     ensures rv == flatten(soup)                               - pivot.AMFO
-{}
-
-
-
-lemma MARR(soup : Owner, pivot : Object, rv : set<Object>)
-   decreases allAMFOs(soup), 3
-   requires forall o <- soup :: o.Ready()
-   requires pivot.Ready()
-   requires rv == (set seed <- soup, ooo <- pivot.AMFO :: ooo)
-//    ensures rv == pivot.AMFO
-  ensures SMALLTOWN_BOY(pivot,rv)
+    ensures rv == flatten(soup) - pivot.AMFO
 {
-  if (soup == {}) {   assume SMALLTOWN_BOY(pivot,rv);
-   return; }
-
-  assume SMALLTOWN_BOY(pivot,rv);
+    assume forall o <- soup :: o.Ready();
+    assume pivot.Ready();
 }
 
 
+lemma {:timeLimit 10} SET_COMP_MINUS2(soup : Owner, pivot : Object, rv0 : set<Object>, rv1 : set<Object>)
+ //converts set comp to subtraction
+   decreases allAMFOs(soup), 3
+    requires soup > {}
+    requires rv0 == (set seed <- soup, ooo <- (seed.AMFO - pivot.AMFO) :: ooo)
+    requires rv1 == (flatten(soup) - pivot.AMFO)
+  //verified Oct 29.10.2026
+   //ensures rv0 == rv1
+{
+    assume forall o <- soup :: o.Ready();
+    assume pivot.Ready();
+
+    assert forall seed <- soup, ooo <- (seed.AMFO - pivot.AMFO) :: ooo in rv0;
+    assert forall r <- rv0 :: (r in flatten(soup)) && (r !in pivot.AMFO);
+
+    assert forall seed <- soup, ooo <- seed.AMFO | ooo !in pivot.AMFO :: ooo in rv0;
+    assert forall ooo <- flatten(soup) | ooo !in pivot.AMFO :: ooo in rv0;
+
+    assert (set ooo <- flatten(soup) | ooo !in pivot.AMFO :: ooo) == rv0;
+    assert (flatten(soup) - pivot.AMFO) == rv0;
+    assert rv1 == rv0;
+
+
+    // assert (forall r <- rv0 :: (r in flatten(soup)) && (r !in pivot.AMFO));
+    // assert (forall r <- rv0 :: (r in flatten(soup))) && (forall r <- rv0 :: (r !in pivot.AMFO));
+    // assert (forall r <- rv0 :: (r in flatten(soup))) && (forall r <- rv0 :: (r !in pivot.AMFO));
+//    assert rv0 == ((set r <- flatten(soup) :: r) * (set r <- flatten(soup) | (r !in pivot.AMFO) :: r));
+
+
+//    assert rv0 == flatten(soup) - pivot.AMFO;
+
+}
+//
+// lemma {:timeLimit 10} SET_COMP_MINUS(soup : Owner, pivot : Object, rv0 : set<Object>, rv1 : set<Object>)
+//    decreases allAMFOs(soup), 3
+//     requires soup > {}
+//     requires rv0 == (set seed <- soup, ooo <- (seed.AMFO - pivot.AMFO) :: ooo)
+//     requires rv1 == (set seed <- soup, ooo <- seed.AMFO :: ooo) - (set seed <- soup, ooo <- pivot.AMFO :: ooo)
+//
+//    //ensures rv0 == rv1
+// {
+//     assume forall o <- soup :: o.Ready();
+//     assume pivot.Ready();
+//
+//     assert forall r <- rv0 :: (r in flatten(soup)) && (r !in pivot.AMFO);
+//     assert (forall r <- rv0 :: (r in flatten(soup))) && (forall r <- rv0 :: (r !in pivot.AMFO));
+// ///    assert rv0 == ((set r <- flatten(soup) :: r) * (set r <- flatten(soup) | (r !in pivot.AMFO) :: r));  //ERR
+//
+//     assert (forall r <- rv1 :: (r in flatten(soup))) && (forall r <- rv1 :: (r !in pivot.AMFO));
+//     assert rv1 == ((set r <- flatten(soup) :: r) * (set r <- flatten(soup) | (r !in pivot.AMFO) :: r));
+//     assert rv1 == flatten(soup) * (set r <- flatten(soup) | (r !in pivot.AMFO) :: r);
+//     assert rv1 == flatten(soup) * (set r <- flatten(soup) | (r !in pivot.AMFO) :: r);
+//     assert rv1 == flatten(soup) - pivot.AMFO;
+//
+//
+//     assert (set seed <- soup, ooo <- seed.AMFO :: ooo) == flatten(soup);
+//
+//     assert rv1 == ((set r <- flatten(soup) :: r) * (set r <- flatten(soup) | (r !in pivot.AMFO) :: r));
+//
+//     assert forall seed <- soup, ooo <- seed.AMFO :: ooo in flatten(soup);
+//     assert forall r <- rv0 :: (exists seed <- soup :: r in (seed.AMFO - pivot.AMFO));
+//     assert forall r <- rv0 :: ((exists seed <- soup :: r in (seed.AMFO - pivot.AMFO)) && r !in pivot.AMFO);
+//     assert forall r <- rv0 :: ((exists seed <- soup :: r in seed.AMFO) && r !in pivot.AMFO);
+//    // assert forall seed <- soup, ooo <- seed.AMFO | ooo !in  pivot.AMFO :: ooo in rv0;   //ERR
+//    // assert forall r <- flatten(soup) :: (r !in pivot.AMFO) == (r in rv0);
+//
+//
+// }
+
+
+
 lemma MORRISSEY(soup : Owner, pivot : Object, rv : set<Object>)
+ //collecting a soup of pivots
+ //leaves you with... a pivot
+ //verified 28 OCt 2026
    decreases allAMFOs(soup), 3
    requires forall o <- soup :: o.Ready()
    requires pivot.Ready()
    requires rv == (set seed <- soup, ooo <- pivot.AMFO :: ooo)
     ensures (soup > {}) ==> (rv == pivot.AMFO)
-    ensures (soup > {}) ==> SMALLTOWN_BOY(pivot,rv)
 {
-  if (soup == {}) { assert rv == {}; return; }
-
-  assert soup > {};
-
-  assert (set seed <- soup :: seed) == soup;
-
-  assert (set seed <- soup :: pivot) == {pivot};
-  assert (set seed <- soup :: pivot.AMFO) == {pivot.AMFO};
-  assert (set ooo <- pivot.AMFO :: ooo) == pivot.AMFO;
-
-  assert forall i <- rv :: i in pivot.AMFO;
-  assert forall i <- pivot.AMFO :: i in rv;
-     opaque {  //these two work non-opaquely
-        assert rv == (set seed <- soup, ooo <- pivot.AMFO :: ooo);
-        assert rv == pivot.AMFO;
-     }
-  assert SMALLTOWN_BOY(pivot,rv) by {
-                                      reveal SMALLTOWN_BOY();
-                                      assert rv == pivot.AMFO;
-                                      assert SMALLTOWN_BOY(pivot,rv);
-                                      }
+//  if (soup == {}) { assert rv == {}; return; }
+//
+//   assert soup > {};
+//
+//   assert (set seed <- soup :: seed) == soup;
+//   assert (set seed <- soup :: pivot) == {pivot};
+//   assert (set seed <- soup :: pivot.AMFO) == {pivot.AMFO};
+//   assert (set ooo <- pivot.AMFO :: ooo) == pivot.AMFO;
+//
+//   assert forall i <- rv :: i in pivot.AMFO;
+//   assert forall i <- pivot.AMFO :: i in rv;
+//   assert rv == (set seed <- soup, ooo <- pivot.AMFO :: ooo);
+//   assert rv == pivot.AMFO;
 }
-
-opaque predicate SMALLTOWN_BOY(pivot : Object, rv : OWNR) {rv == pivot.AMFO}
 
 
 lemma TALLER_THAN_GOD(o : Object, pivot : Object, rv : set<Object>)
-///gets all owners - inside & outsidem, avoiding the pivot and any owners reachabke ONLY through that.
+ // says collectObjectOwnerAvoiding(o,pivot) is between AMFO and AMF-pivot
+ // see also SOUP_TO_NUTS
+  //whhy is thos oen so much woprk if SOUP_TO_NUTS does enough?
+//VERIFIES 28/10/20267
   decreases o.AMFO, 1
    requires o.Ready()
    requires rv == collectObjectOwnerAvoiding(o,pivot)
@@ -1453,7 +1526,7 @@ lemma LEMMA_shortcutOnlyPivot1(soup : OWNR, pivot : Object, rv : Owner)
 
 
 
-lemma {:timeLimit 16} GOOLE(o : Object, pivot : Object)
+lemma {:timeLimit 20} GOOLE(o : Object, pivot : Object)
   requires o.Ready() && pivot.Ready()
 
    ensures shortcutOnlyPivot({o},pivot) <= o.AMFO
@@ -1461,9 +1534,9 @@ lemma {:timeLimit 16} GOOLE(o : Object, pivot : Object)
    ensures collectObjectOwnerAvoiding(o,pivot) <= o.AMFO
    ensures collectObjectStrictlyInside(o,pivot) <= o.AMFO
 
-  //  ensures (shortcutOnlyPivot({o},pivot) + collectObjectOwnerAvoiding(o,pivot)) <= o.AMFO
-  //  ensures (shortcutOnlyPivot({o},pivot) + collectObjectOwnerAvoiding(o,pivot)) >= o.AMFO
-   ensures (shortcutOnlyPivot({o},pivot) + collectObjectOwnerAvoiding(o,pivot)) == o.AMFO
+    ensures (shortcutOnlyPivot({o},pivot) + collectObjectOwnerAvoiding(o,pivot)) <= o.AMFO
+    ensures (shortcutOnlyPivot({o},pivot) + collectObjectOwnerAvoiding(o,pivot)) >= o.AMFO
+    ensures (shortcutOnlyPivot({o},pivot) + collectObjectOwnerAvoiding(o,pivot)) == o.AMFO
 {
   if (o.owner == {})  { return; }
 
@@ -1477,8 +1550,13 @@ lemma {:timeLimit 16} GOOLE(o : Object, pivot : Object)
   assert (exists s <- {o} :: inside(s,pivot));
   assert shortcutOnlyPivot({o},pivot) == pivot.AMFO;
 
+  var cooa := collectObjectOwnerAvoiding(o,pivot);
+  TALLER_THAN_GOD(o, pivot, cooa);
+assert  o.AMFO >= cooa >= (o.AMFO - pivot.AMFO);
+assert  o.AMFO >= collectObjectOwnerAvoiding(o,pivot) >= (o.AMFO - pivot.AMFO);
 
   assert  (shortcutOnlyPivot({o},pivot) + collectObjectOwnerAvoiding(o,pivot)) == o.AMFO;
+
 }
 
 lemma {:timeLimit 16} HULL(soup : OWNR, pivot : Object)
@@ -1489,7 +1567,7 @@ lemma {:timeLimit 16} HULL(soup : OWNR, pivot : Object)
    ensures collectOwnerAvoiding(soup,pivot) <= flatten(soup)
    ensures collectStrictlyInside(soup,pivot) <= flatten(soup)
 
-   ensures (shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot)) <= flatten(soup)
+   ensures (shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot)) == flatten(soup)
  //  ensures (shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot)) >= flatten(soup)
 {
    var rv := flownerOnlyPivot(soup,pivot);
@@ -1499,26 +1577,139 @@ lemma {:timeLimit 16} HULL(soup : OWNR, pivot : Object)
 
    assert rv == if (pivot in flatten(soup)) then (pivot.AMFO) else {};
 
+   var cOA := collectOwnerAvoiding(soup,pivot);
+   MILLION_DOLLAR_DREAM(soup, pivot, cOA);
+   assert flatten(soup) >= cOA >= (flatten(soup) - pivot.AMFO);
+
    if (pivot !in flatten(soup)) {
       assert shortcutOnlyPivot(soup,pivot) == {};
-      assert forall o <- flatten(soup) :: o.AMFO <= flatten(soup);
-      assert forall o <- flatten(soup) :: pivot !in o.AMFO;
-      assert forall o <- flatten(soup) :: outside(o,pivot);
-      assert forall o <- flatten(soup) | o != pivot :: collectObjectOwnerAvoiding(o,pivot) == o.AMFO;
-      assert (pivot !in flatten(soup)) ==> forall o <- flatten(soup) :: o != pivot;
-      assert forall o <- flatten(soup) :: o != pivot;
-      assert forall o <- flatten(soup) | (o != pivot) :: (collectObjectOwnerAvoiding(o,pivot) == o.AMFO);
 
-
-      assert forall o <- flatten(soup) | o != pivot :: collectObjectOwnerAvoiding(o,pivot) == o.AMFO;
-
-      assert collectOwnerAvoiding(soup,pivot) == (set o <- soup, ooo <- collectObjectOwnerAvoiding(o,pivot) :: ooo);
-
-      assert collectOwnerAvoiding(soup,pivot) == (set o <- soup, ooo <- o.AMFO :: ooo);
+      assert forall x <- flatten(soup) :: not(inside(x,pivot));
       assert collectOwnerAvoiding(soup,pivot) == flatten(soup);
+      assert {} + collectOwnerAvoiding(soup,pivot) == flatten(soup);
+      assert shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot) ==  flatten(soup);
+      return;
    }
+
+   assert (pivot in flatten(soup));
+   assert (pivot.AMFO <= flatten(soup));
+   assert shortcutOnlyPivot(soup,pivot) == pivot.AMFO;
+   assert flatten(soup) >= cOA >= (flatten(soup) - pivot.AMFO);
+   assert flatten(soup) >= cOA;
+   assert flatten(soup) + pivot.AMFO == flatten(soup);
+   assert ((flatten(soup) - pivot.AMFO) +  pivot.AMFO) == flatten(soup);
+   assert shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot) ==  flatten(soup);
+   return;
 }
 
+//       assert forall o <- flatten(soup) :: o.AMFO <= flatten(soup);
+//       assert forall o <- flatten(soup) :: pivot !in o.AMFO;
+//       assert forall o <- flatten(soup) :: outside(o,pivot);
+//       assert forall o <- flatten(soup) | o != pivot :: collectObjectOwnerAvoiding(o,pivot) == o.AMFO;
+//       assert (pivot !in flatten(soup)) ==> forall o <- flatten(soup) :: o != pivot;
+//       assert forall o <- flatten(soup) :: o != pivot;
+//       assert forall o <- flatten(soup) | (o != pivot) :: (collectObjectOwnerAvoiding(o,pivot) == o.AMFO);
+//       assert forall o <- flatten(soup) | o != pivot :: collectObjectOwnerAvoiding(o,pivot) == o.AMFO;
+
+//
+// lemma RORY_TORY(soup : Owner, pivot : Object, rv0 : set<Object>, rv1 : set<Object>)
+//    //set comp defn of cOA is "subset" of coA defn
+//    //verified 28 Oct 2026
+//    decreases allAMFOs(soup), 2
+//    requires forall o <- soup :: o.Ready()
+//    requires pivot.Ready()
+//    requires forall r <- rv0 :: r.Ready()
+//    requires forall r <- rv1 :: r.Ready()
+//    requires rv0 == (set o <- soup, ooo <- collectObjectOwnerAvoiding(o,pivot) :: ooo)
+//    requires rv1 == collectOwnerAvoiding(soup,pivot)
+//
+//     ensures rv0 == rv1
+//  {
+//    assert rv0 == (set o <- soup, ooo <- collectObjectOwnerAvoiding(o,pivot) :: ooo);
+//    assert rv1 == collectOwnerAvoiding(soup,pivot);
+//    RORY_TORY(soup,pivot,rv0,rv1);
+//    assert rv0 == rv1;
+//
+//       assert collectOwnerAvoiding(soup,pivot) == (set o <- soup, ooo <- collectObjectOwnerAvoiding(o,pivot) :: ooo);  //ERR
+//
+//       assert collectOwnerAvoiding(soup,pivot) == (set o <- soup, ooo <- o.AMFO :: ooo);
+//       assert collectOwnerAvoiding(soup,pivot) == flatten(soup);
+//   }
+
+
+lemma OTHER_TORY(soup : Owner, pivot : Object, rv0 : set<Object>, rv1 : set<Object>)
+   //functional cOA is "subset" of set comprehension defn
+   decreases allAMFOs(soup), 2
+   requires forall o <- soup :: o.Ready()
+   requires pivot.Ready()
+   requires forall r <- rv0 :: r.Ready()
+   requires forall r <- rv1 :: r.Ready()
+   requires rv0 == (set o <- soup, ooo <- collectObjectOwnerAvoiding(o,pivot) :: ooo)
+   requires rv1 == collectOwnerAvoiding(soup,pivot)
+    ensures forall r <- rv1:: r in rv0 //ERR
+    ensures rv0 <= rv1
+  //  ensures rv0 == rv1
+{
+   if (soup == {})
+     {
+      assert rv0 == {};
+      assert rv1 == {};
+      assert rv0 == rv1;
+      return;
+     }
+
+    forall r <- rv1 ensures (r in rv0)
+       {
+        assert exists seed <- soup :: (r in collectObjectOwnerAvoiding(seed,pivot));
+       }
+
+    assert forall r <- rv1 :: r in rv0;
+
+//    assert forall r <- rv1 :: r in rv0;
+}
+
+lemma RORY_TORY(soup : Owner, pivot : Object, rv0 : set<Object>, rv1 : set<Object>)
+   //set comp defn of cOA is "subset" of coA defn
+   //verified 28 Oct 2026
+   decreases allAMFOs(soup), 2
+   requires forall o <- soup :: o.Ready()
+   requires pivot.Ready()
+   requires forall r <- rv0 :: r.Ready()
+   requires forall r <- rv1 :: r.Ready()
+   requires rv0 == (set o <- soup, ooo <- collectObjectOwnerAvoiding(o,pivot) :: ooo)
+   requires rv1 == collectOwnerAvoiding(soup,pivot)
+    ensures rv0 == rv1
+{
+  HALF_TORY(soup,pivot,rv0,rv1);
+  OTHER_TORY(soup,pivot,rv0,rv1);
+}
+
+lemma HALF_TORY(soup : Owner, pivot : Object, rv0 : set<Object>, rv1 : set<Object>)
+   //set comp defn of cOA is "subset" of coA defn
+   //verified 28 Oct 2026
+   decreases allAMFOs(soup), 2
+   requires forall o <- soup :: o.Ready()
+   requires pivot.Ready()
+   requires forall r <- rv0 :: r.Ready()
+   requires forall r <- rv1 :: r.Ready()
+   requires rv0 == (set o <- soup, ooo <- collectObjectOwnerAvoiding(o,pivot) :: ooo)
+   requires rv1 == collectOwnerAvoiding(soup,pivot)
+    ensures forall r <- rv0 :: r in rv1
+    ensures rv0 <= rv1
+  //  ensures rv0 == rv1
+{
+//    if (soup == {})
+//      {
+//       assert rv0 == {};
+//       assert rv1 == {};
+//       assert rv0 == rv1;
+//       return;
+//      }
+//
+//     assert forall r <- rv0 :: r in rv1;
+
+//    assert forall r <- rv1 :: r in rv0;
+}
 
 
 lemma {:timeLimit 6} ONLY_PIVOT(soup : OWNR, pivot : Object, rv : Owner)
