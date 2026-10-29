@@ -1599,7 +1599,32 @@ assert  o.AMFO >= collectObjectOwnerAvoiding(o,pivot) >= (o.AMFO - pivot.AMFO);
 
 }
 
+
 lemma {:timeLimit 16} HULL(soup : OWNR, pivot : Object)
+//long and chonky version:
+//should have a much nicer (and caseless) version by just calling GOOLE
+decreases allAMFOs(soup), 1000
+  requires AllReady(flatten(soup)) && pivot.Ready()
+
+   ensures shortcutOnlyPivot(soup,pivot) <= flatten(soup)
+   ensures collectOutsideAvoiding(soup,pivot) <= flatten(soup)
+   ensures collectOwnerAvoiding(soup,pivot) <= flatten(soup)
+   ensures collectStrictlyInside(soup,pivot) <= flatten(soup)
+
+   ensures (shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot)) == flatten(soup)
+ //  ensures (shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot)) >= flatten(soup)
+{
+    forall seed <- soup ensures ((shortcutOnlyPivot({seed},pivot) + collectObjectOwnerAvoiding(seed,pivot)) == seed.AMFO)
+     {
+      GOOLE(seed,pivot);
+     }
+
+    ensures (shortcutOnlyPivot({seed},pivot) + collectObjectOwnerAvoiding(seed,pivot)) == seed.AMF
+{
+
+}
+
+lemma {:timeLimit 16} HULLold(soup : OWNR, pivot : Object)
 //long and chonky version:
 //should have a much nicer (and caseless) version by just calling GOOLE
 decreases allAMFOs(soup), 1000
