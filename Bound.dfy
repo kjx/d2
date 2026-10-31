@@ -23,7 +23,7 @@ predicate stupidlyHappy(soup0 : Owner, soup1 : Owner, pivot : Object) : (rv : bo
 //  this makes it easier to prove preservation of ownership
 //  and may make thigns more visible locally, but I think can
 //  likely be avoided if we no longer't distinguish between
-//  strictlyOutside and
+//  strictlyOutside and all other forms of outside.
 //
 // I'm stupidly happy
 // With idiot grin

@@ -65,6 +65,12 @@ lemma SetMinus1Plus1<T>(left : set<T>, right : set<T>)
   ensures ((left - right) + right) == left
 {}
 
+lemma SetXMinusXPlusX<T>(flattenSoup : set<T>, cAO: set<T>, pivotAMFO : set<T>)
+  requires flattenSoup >= pivotAMFO
+  requires flattenSoup >= cAO >= (flattenSoup - pivotAMFO)
+   ensures (pivotAMFO + cAO) == flattenSoup
+{}
+
 
 lemma SetPlus0<T>(left : set<T>)
   ensures {} + left == left
