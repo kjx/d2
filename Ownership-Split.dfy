@@ -885,6 +885,7 @@ function collectOwnerAvoiding(soup : Owner, pivot : Object) : (rv : set<Object>)
    decreases allAMFOs(soup), 5
    requires forall o <- soup :: o.Ready()
     ensures forall r <- rv :: r in flatten(soup)
+    ensures rv <= flatten(soup)
     ensures pivot !in rv
  //   ensures flatten(soup) >= rv >= (flatten(soup) - pivot.AMFO)
     { var rr :=  (set o <- soup, ooo <- collectObjectOwnerAvoiding(o,pivot) :: ooo)  ;
@@ -897,6 +898,7 @@ function collectObjectOwnerAvoiding(o : Object, pivot : Object) : (rv : set<Obje
   decreases o.AMFO, 1
    requires o.Ready()
     ensures forall r <- rv :: r in o.AMFO
+    ensures o.AMFO >= rv
     ensures forall r <- rv :: inside(o,r)
     ensures (o == pivot) ==> (rv == {})
     ensures pivot !in rv
@@ -946,7 +948,7 @@ lemma collectOwnerAvoiding_NOPIVOT(soup : Owner, pivot : Object, rv : set<Object
 //
 //
 
-lemma MILLION_DOLLAR_DREAM(soup : Owner, pivot : Object, rv : set<Object>)
+lemma {:timeLimit 30} MILLION_DOLLAR_DREAM(soup : Owner, pivot : Object, rv : set<Object>)
     //scopes output of cOA between flattern(soup) and (flatten(soup) - pivot.AMFO)
    decreases allAMFOs(soup), 2
    requires forall o <- soup :: o.Ready()
@@ -978,12 +980,15 @@ lemma MILLION_DOLLAR_DREAM(soup : Owner, pivot : Object, rv : set<Object>)
       assert flatten(soup) >= rr;
      }
 
+       assert  flatten(soup) >= rv;
        var lowerBound0 := (set seed <- soup, ooo <- (seed.AMFO - pivot.AMFO) :: ooo);
        assert rv >= lowerBound0;
-       var lowerBound1 := (set seed <- soup, ooo <- seed.AMFO :: ooo) - (set seed <- soup, ooo <- pivot.AMFO :: ooo); //ERR
+       var lowerBound1 := (set seed <- soup, ooo <- seed.AMFO :: ooo) - (set seed <- soup, ooo <- pivot.AMFO :: ooo);
        SET_COMP_MINUS2(soup,pivot,lowerBound0,lowerBound1);
        assert lowerBound1 == flatten(soup) - pivot.AMFO;
+       assert lowerBound1 == lowerBound0;
        assert rv >=  flatten(soup) - pivot.AMFO;
+       assert flatten(soup) >= rv >= (flatten(soup) - pivot.AMFO);
 }
 
 lemma SOUP_TO_NUTS(soup : Owner, pivot : Object, rv : set<Object>)
@@ -1027,7 +1032,7 @@ lemma {:timeLimit 10} SET_COMP_MINUS2(soup : Owner, pivot : Object, rv0 : set<Ob
     requires rv0 == (set seed <- soup, ooo <- (seed.AMFO - pivot.AMFO) :: ooo)
     requires rv1 == (flatten(soup) - pivot.AMFO)
   //verified Oct 29.10.2026
-   //ensures rv0 == rv1
+   ensures rv0 == rv1
 {
     assume forall o <- soup :: o.Ready();
     assume pivot.Ready();
