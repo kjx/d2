@@ -636,7 +636,7 @@ lemma TestRecombine(p0 : OWNR, w0 : OWNR, p1 : OWNR)
 
 
 
-predicate fromPartToWholeWithoutTheTroll(part : Object, whole : Object, troll : Object)
+predicate fromPartToWholeWithoutTheTroll(part : Object, whole : Object, troll : Object) : (rv : bool)
   //at least one of part's direct owners is on the way to whole.
   //and can get there without going via troll
   //false if you have no path that doesn't hit the troll, or if part' not inside whole
@@ -644,13 +644,17 @@ predicate fromPartToWholeWithoutTheTroll(part : Object, whole : Object, troll : 
   decreases part.AMFO
 //  requires inside(part,whole)
    ensures forall x <- part.owner :: inside(part,x)
+   ensures rv ==> inside(part,whole)
+
 //  ensures (part == whole) || (exists x <- part.owner :: fromPartToWholeWithoutTheTroll(x, whole, troll)
 {
   assume part.Ready();
   assume whole.Ready();
   assume troll.Ready();
-  || (part == whole)
-  || ((part != troll) && (exists x <- part.owner :: fromPartToWholeWithoutTheTroll(x, whole, troll)))
+  && (part != troll)
+  && (|| (part == whole)
+      || (exists x <- part.owner :: fromPartToWholeWithoutTheTroll(x, whole, troll))
+     )
 }
 
 lemma {:timeLimit 30} ThereIsALightThatNeverGoesOut(part : Object, whole : Object)
