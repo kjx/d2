@@ -14,7 +14,7 @@ include "Ownership-Split.dfy"
 
 
 //{:timeLimit 30}
-lemma {:timeLimit 30} CLONING_PRESERVES_OWNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound, m : Klon)
+lemma CLONING_PRESERVES_OWNERSHIP(oo : Owner, ob : Bound, co : Owner, cb : Bound, m : Klon)
  //is this name OVERKILL???
  //should it also do bounds?  --- currentlyt NO!
   requires AllReady(flatten(oo))
@@ -129,8 +129,6 @@ assert flatten(co) >= flatten(cb);
 // assert stupidlyHappy(co,cb, m.o);
 // flownerAll_SONOMONIC_AND_HAPPY_AND_BOUNDS(co,coSP,cb,cbSP,m.c);
 
-
-return;
 
 }
 
