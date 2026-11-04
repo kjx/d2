@@ -657,6 +657,33 @@ predicate fromPartToWholeWithoutTheTroll(part : Object, whole : Object, troll : 
      )
 }
 
+lemma ThreeBillyGoatsGruff(part : Object, whole : Object, troll : Object)
+   decreases part.AMFO
+    requires inside(part,whole)
+    requires strictlyInside(whole,troll)
+     ensures strictlyInside(part,troll)
+     ensures fromPartToWholeWithoutTheTroll(part,whole,troll)
+{
+  assume part.Ready();
+  assume whole.Ready();
+  assume troll.Ready();
+
+  assert part != troll;
+  if (part == whole) { return; }
+
+  if (exists x <- part.owner :: fromPartToWholeWithoutTheTroll(x, whole, troll))
+    {
+      var x :| (x in part.owner) && fromPartToWholeWithoutTheTroll(x, whole, troll);
+      assert fromPartToWholeWithoutTheTroll(x, whole, troll);
+      if (x == whole) { return; }
+      ThreeBillyGoatsGruff(x,whole,troll);  return;
+    }
+
+  assert {:contradiction} false;
+
+}
+
+
 lemma {:timeLimit 30} ThereIsALightThatNeverGoesOut(part : Object, whole : Object)
   //at least one of part's direct owners is on the way to whole.
   requires part.Ready()
@@ -664,7 +691,7 @@ lemma {:timeLimit 30} ThereIsALightThatNeverGoesOut(part : Object, whole : Objec
   requires inside(part,whole)
   ensures (part == whole) || (exists x <- part.owner :: inside(x, whole))
 {
-  //    InsideRecInside2(part, whole);444
+  //    InsideRecInside2(part, whole);
 
   if (part == whole) {
     assert ((part == whole) || (exists x <- part.owner :: inside(x, whole)));

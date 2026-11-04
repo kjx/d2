@@ -1,5 +1,5 @@
 include "Ownership.dfy"
-include "Ownership-Split.dfy"
+include "Ownership-Collect.dfy"
 include "Klon-Preserve.dfy"
 
 //originally named Ownership-Dunno cos I didn't know whwat else to call it
