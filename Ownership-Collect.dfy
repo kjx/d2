@@ -46,7 +46,7 @@ datatype preFlownerSplit = preFlownerSplit(
      && (fAll == flownerAll(soup) == flatten(soup))
      && (fSin == flownerStrictlyInside(soup,pivot))    //owner strictly inside
      && (fOut == {}) //FOUT because it's fucked flownerStrictlyOutside(soup,pivot))
-     && (fPvt == shortcutOnlyPivot(soup,pivot))   //FOUT     //same as shortcutOnlyPivot
+     && (fPvt == collectBeyondPivot(soup,pivot))   //FOUT     //same as collectBeyondPivot
      && (fXpt == collectOutsideAvoiding(soup,pivot)) //FOUT flownerExceptPivot(soup,pivot))
      && ((fOut + fPvt + fXpt) == flownerEverythingOutside(soup,pivot))
      && ((fOut + fPvt + fXpt) == flownerPivotlyOutside(soup,pivot))
@@ -57,7 +57,7 @@ datatype preFlownerSplit = preFlownerSplit(
 
     lemma ExtraValid()
      requires Valid()
-      ensures fPvt == shortcutOnlyPivot(soup, pivot)
+      ensures fPvt == collectBeyondPivot(soup, pivot)
       ensures fPvt == flattenOnlyPivot(soup, pivot)
       ensures fPvt == flownerOnlyPivot(soup,pivot)
 
@@ -586,11 +586,11 @@ lemma {:timeLimit 10} FUCKER_WUCKER(owner : Object, soup : Owner, pivot : Object
     ensures owner  in flownerPivotlyOutside(soup, pivot)
     ensures owner  in flownerOutside(soup, pivot)
 
-   requires owner !in shortcutOnlyPivot(soup,pivot)
+   requires owner !in collectBeyondPivot(soup,pivot)
     ensures owner !in flattenOnlyPivot(soup,pivot)
     ensures owner !in flownerOnlyPivot(soup,pivot)
 {
-  var sOP := shortcutOnlyPivot(soup,pivot);
+  var sOP := collectBeyondPivot(soup,pivot);
   assert owner !in sOP;
   ONLY_PIVOT(soup,pivot,sOP);
   FLOWNER_DISJOINT(soup, pivot);
@@ -647,10 +647,10 @@ lemma {:timeLimit 10} HEY_FUCKER(soup : Owner, pivot : Object)
    requires forall o <- soup :: o.Ready()
    requires pivot.Ready()
    requires AllReady(flatten(soup))
-    ensures collectOutsideAvoiding(soup,pivot) + shortcutOnlyPivot(soup,pivot) <= flownerPivotlyOutside(soup,pivot)
+    ensures collectOutsideAvoiding(soup,pivot) + collectBeyondPivot(soup,pivot) <= flownerPivotlyOutside(soup,pivot)
    {
-      var shortCut := shortcutOnlyPivot(soup,pivot);
-      // LEMMA_shortcutOnlyPivot1(soup,pivot,shortCut);
+      var shortCut := collectBeyondPivot(soup,pivot);
+      // LEMMA_collectBeyondPivot1(soup,pivot,shortCut);
       // assert forall r <- shortCut :: pivotlyOutside(r,pivot);
       // assert forall r <- shortCut :: r in flatten(soup);
 
@@ -661,11 +661,11 @@ lemma {:timeLimit 10} HEY_FUCKER(soup : Owner, pivot : Object)
       FLOWNER_SHORTCUT_OnlyPivot(soup,pivot,shortCut);
       ONLY_PIVOT(soup,pivot,shortCut);
 
-      assert shortcutOnlyPivot(soup, pivot) == flattenOnlyPivot(soup, pivot) == flownerOnlyPivot(soup,pivot) ;
+      assert collectBeyondPivot(soup, pivot) == flattenOnlyPivot(soup, pivot) == flownerOnlyPivot(soup,pivot) ;
 
-      assert                                      shortcutOnlyPivot(soup,pivot) <= flownerPivotlyOutside(soup,pivot);
+      assert                                      collectBeyondPivot(soup,pivot) <= flownerPivotlyOutside(soup,pivot);
       assert collectOutsideAvoiding(soup,pivot)                                 <= flownerPivotlyOutside(soup,pivot);
-      assert collectOutsideAvoiding(soup,pivot) + shortcutOnlyPivot(soup,pivot) <= flownerPivotlyOutside(soup,pivot);
+      assert collectOutsideAvoiding(soup,pivot) + collectBeyondPivot(soup,pivot) <= flownerPivotlyOutside(soup,pivot);
 
 //    assert forall x <- flownerPivotlyOutside(soup,pivot) :: ((x == pivot) || outside(x,pivot));
       assert forall x <- flownerPivotlyOutside(soup,pivot) :: (pivotlyOutside(x,pivot));
@@ -678,43 +678,43 @@ lemma {:timeLimit 10} HEY_FUCKER(soup : Owner, pivot : Object)
  assert forall x <- flownerPivotlyOutside(soup,pivot) :: ((x == pivot) || outside(x,pivot));
 
   if (pivot in flatten(soup)) {
-    assert pivot in shortcutOnlyPivot(soup,pivot);
-    assert shortcutOnlyPivot(soup,pivot) == pivot.AMFO;
+    assert pivot in collectBeyondPivot(soup,pivot);
+    assert collectBeyondPivot(soup,pivot) == pivot.AMFO;
     assert pivot.AMFO <= flownerPivotlyOutside(soup,pivot);
-    assert shortcutOnlyPivot(soup,pivot) <= flownerPivotlyOutside(soup,pivot);
+    assert collectBeyondPivot(soup,pivot) <= flownerPivotlyOutside(soup,pivot);
 
         forall x <- flownerPivotlyOutside(soup,pivot) ensures (true)
           {
 
-//              assert x in shortcutOnlyPivot(soup,pivot) + collectOutsideAvoiding(soup,pivot);
+//              assert x in collectBeyondPivot(soup,pivot) + collectOutsideAvoiding(soup,pivot);
 
               if (x in pivot.AMFO) {
-                assert (x in shortcutOnlyPivot(soup,pivot));
+                assert (x in collectBeyondPivot(soup,pivot));
                   } else {
                 assert pivotlyOutside(x,pivot);
                 assert pivot in pivot.AMFO;
                 assert x !in pivot.AMFO;
                 assert x != pivot;
                 assert outside(x,pivot);
-                assert (x !in shortcutOnlyPivot(soup,pivot));
-///                SET_SPLIT(x, shortcutOnlyPivot(soup,pivot), collectOutsideAvoiding(soup,pivot));
+                assert (x !in collectBeyondPivot(soup,pivot));
+///                SET_SPLIT(x, collectBeyondPivot(soup,pivot), collectOutsideAvoiding(soup,pivot));
       //          assert (x in collectOutsideAvoiding(soup,pivot));
                   }
           }
 
   } else {
     assert (pivot !in flatten(soup));
-    assert shortcutOnlyPivot(soup,pivot) == {};
+    assert collectBeyondPivot(soup,pivot) == {};
   }
 
- assert (collectOutsideAvoiding(soup,pivot) + shortcutOnlyPivot(soup,pivot)) <= flownerPivotlyOutside(soup,pivot);
+ assert (collectOutsideAvoiding(soup,pivot) + collectBeyondPivot(soup,pivot)) <= flownerPivotlyOutside(soup,pivot);
 
    }
 
       // forall x <- flownerPivotlyOutside(soup,pivot)
       //   ensures (
       //      || (x in collectOutsideAvoiding(soup,pivot))
-      //      || (x in shortcutOnlyPivot(soup,pivot))
+      //      || (x in collectBeyondPivot(soup,pivot))
       //   )  {
       //     if (x !in collectOutsideAvoiding(soup,pivot))
       //       {
@@ -722,7 +722,7 @@ lemma {:timeLimit 10} HEY_FUCKER(soup : Owner, pivot : Object)
       //         assert pivotlyOutside(x,pivot);
       //         if (x == pivot) { assert pivot in flownerPivotlyOutside(soup,pivot);
       //                           assert pivot in flownerAll(soup);
-      //                           assert pivot in shortcutOnlyPivot(soup,pivot); }
+      //                           assert pivot in collectBeyondPivot(soup,pivot); }
       //                   else { assert x in flownerPivotlyOutside(soup,pivot);
       //                          assert pivotlyOutside(x,pivot);
       //                          assert x != pivot;
@@ -730,8 +730,8 @@ lemma {:timeLimit 10} HEY_FUCKER(soup : Owner, pivot : Object)
       //                          assert outside(x,pivot);
       //                          assert x in flownerAll(soup);
       //                          assert x !in collectOutsideAvoiding(soup,pivot);
-      //                          assert x in shortcutOnlyPivot(soup,pivot); }    //ERR ERR ERR ERR
-      //         assert  (x in shortcutOnlyPivot(soup,pivot));
+      //                          assert x in collectBeyondPivot(soup,pivot); }    //ERR ERR ERR ERR
+      //         assert  (x in collectBeyondPivot(soup,pivot));
       //       }
       //   }
 
@@ -741,22 +741,22 @@ lemma {:timeLimit 10} HEY_FUCKER(soup : Owner, pivot : Object)
 
 // if (pivot in flatten(soup))  {
 //       assert maybePivot == {pivot};
-//       assert shortcutOnlyPivot(soup,pivot) == pivot.AMFO;
+//       assert collectBeyondPivot(soup,pivot) == pivot.AMFO;
 //
-//       assert collectOutsideAvoiding(soup,pivot) + shortcutOnlyPivot(soup,pivot) >= flownerPivotlyOutside(soup,pivot);
+//       assert collectOutsideAvoiding(soup,pivot) + collectBeyondPivot(soup,pivot) >= flownerPivotlyOutside(soup,pivot);
 // } else {
 //     assert pivot !in flatten(soup);
-//     assert collectOutsideAvoiding(soup,pivot) + shortcutOnlyPivot(soup,pivot) >= flownerPivotlyOutside(soup,pivot);
+//     assert collectOutsideAvoiding(soup,pivot) + collectBeyondPivot(soup,pivot) >= flownerPivotlyOutside(soup,pivot);
 //     assert maybePivot == {};
-//     assert collectOutsideAvoiding(soup,pivot) + shortcutOnlyPivot(soup,pivot) >= flownerPivotlyOutside(soup,pivot);
-//     assert collectOutsideAvoiding(soup,pivot) + shortcutOnlyPivot(soup,pivot) == flownerPivotlyOutside(soup,pivot);
+//     assert collectOutsideAvoiding(soup,pivot) + collectBeyondPivot(soup,pivot) >= flownerPivotlyOutside(soup,pivot);
+//     assert collectOutsideAvoiding(soup,pivot) + collectBeyondPivot(soup,pivot) == flownerPivotlyOutside(soup,pivot);
 // }
 
 
-      // assert collectOutsideAvoiding(soup,pivot) + shortcutOnlyPivot(soup,pivot) == flownerPivotlyOutside(soup,pivot);
+      // assert collectOutsideAvoiding(soup,pivot) + collectBeyondPivot(soup,pivot) == flownerPivotlyOutside(soup,pivot);
 
-      // assert collectOutsideAvoiding(soup,pivot) + shortcutOnlyPivot(soup,pivot) == flownerPivotlyOutside(soup,pivot);
-      // assert collectOutsideAvoiding(soup,pivot) + shortcutOnlyPivot(soup,pivot) == flownerPivotlyOutside(soup,pivot);
+      // assert collectOutsideAvoiding(soup,pivot) + collectBeyondPivot(soup,pivot) == flownerPivotlyOutside(soup,pivot);
+      // assert collectOutsideAvoiding(soup,pivot) + collectBeyondPivot(soup,pivot) == flownerPivotlyOutside(soup,pivot);
 
 
 
@@ -1592,12 +1592,12 @@ lemma flownerOnlyPivot_RESULT(soup : Owner, pivot : Object, rv : Owner)
    ensures (pivot  in flatten(soup))  ==> (rv == pivot.AMFO)
    ensures (pivot !in flatten(soup)) ==> (rv == {})
    ensures rv == (if (pivot in flatten(soup)) then (pivot.AMFO) else {})
-   ensures shortcutOnlyPivot(soup, pivot) == rv
+   ensures collectBeyondPivot(soup, pivot) == rv
    {
    assert rv == flownerOnlyPivot(soup, pivot);
 FLOWNER_SHORTCUT_OnlyPivot(soup, pivot, rv);
-   assert rv == shortcutOnlyPivot(soup, pivot);
- LEMMA_shortcutOnlyPivot1(soup, pivot, rv);
+   assert rv == collectBeyondPivot(soup, pivot);
+ LEMMA_collectBeyondPivot1(soup, pivot, rv);
    }
 
 
@@ -1879,7 +1879,7 @@ lemma FUK_DA_POLICE(x : Object, pivot : Object)
 
 
 
-function shortcutOnlyPivot(soup : OWNR, pivot : Object) : (rv : Owner)
+function collectBeyondPivot(soup : OWNR, pivot : Object) : (rv : Owner)
   ensures forall p <- pivot.AMFO :: inside(pivot, p)
   ensures forall r <- rv :: inside(pivot, r)
   ensures (rv == {}) != (rv == pivot.AMFO)
@@ -1892,10 +1892,10 @@ function shortcutOnlyPivot(soup : OWNR, pivot : Object) : (rv : Owner)
     if (exists s <- soup :: inside(s,pivot)) then (pivot.AMFO) else {} }
 
 
-lemma LEMMA_shortcutOnlyPivot0(soup : OWNR, pivot : Object, rv : Owner)
+lemma LEMMA_collectBeyondPivot0(soup : OWNR, pivot : Object, rv : Owner)
   requires forall s <- soup :: s.Ready()
   requires pivot.Ready()
-  requires (rv == shortcutOnlyPivot(soup, pivot))
+  requires (rv == collectBeyondPivot(soup, pivot))
 
    ensures forall r <- rv :: inside(pivot, r)
    ensures forall r <- rv :: exists s <- soup :: inside(s,r)
@@ -1903,10 +1903,10 @@ lemma LEMMA_shortcutOnlyPivot0(soup : OWNR, pivot : Object, rv : Owner)
    ensures forall r <- rv :: exists s <- soup :: onlyPivot(s,pivot,r)
 {}
 
-lemma LEMMA_shortcutOnlyPivot1(soup : OWNR, pivot : Object, rv : Owner)
+lemma LEMMA_collectBeyondPivot1(soup : OWNR, pivot : Object, rv : Owner)
   requires forall s <- soup :: s.Ready()
   requires pivot.Ready()
-  requires (rv == shortcutOnlyPivot(soup, pivot))
+  requires (rv == collectBeyondPivot(soup, pivot))
    ensures (forall s <- soup :: outside(s,pivot)) ==> (rv == {})
    ensures (exists s <- soup ::  inside(s,pivot)) ==> (rv >  {})
    ensures (exists s <- soup ::  inside(s,pivot)) ==> (rv == pivot.AMFO)
@@ -1918,14 +1918,14 @@ lemma LEMMA_shortcutOnlyPivot1(soup : OWNR, pivot : Object, rv : Owner)
 lemma GOOLE(o : Object, pivot : Object)
   requires o.Ready() && pivot.Ready()
 
-   ensures shortcutOnlyPivot({o},pivot) <= o.AMFO
+   ensures collectBeyondPivot({o},pivot) <= o.AMFO
    ensures collectObjectOutsideAvoiding(o,pivot) <= o.AMFO
    ensures collectObjectOwnerAvoiding(o,pivot) <= o.AMFO
    ensures collectObjectStrictlyInside(o,pivot) <= o.AMFO
 
-    ensures (shortcutOnlyPivot({o},pivot) + collectObjectOwnerAvoiding(o,pivot)) <= o.AMFO
-    ensures (shortcutOnlyPivot({o},pivot) + collectObjectOwnerAvoiding(o,pivot)) >= o.AMFO
-    ensures (shortcutOnlyPivot({o},pivot) + collectObjectOwnerAvoiding(o,pivot)) == o.AMFO
+    ensures (collectBeyondPivot({o},pivot) + collectObjectOwnerAvoiding(o,pivot)) <= o.AMFO
+    ensures (collectBeyondPivot({o},pivot) + collectObjectOwnerAvoiding(o,pivot)) >= o.AMFO
+    ensures (collectBeyondPivot({o},pivot) + collectObjectOwnerAvoiding(o,pivot)) == o.AMFO
 {
   if (o.owner == {})  { return; }
 
@@ -1937,7 +1937,7 @@ lemma GOOLE(o : Object, pivot : Object)
 
   assert {o} > {};
   assert (exists s <- {o} :: inside(s,pivot));
-  assert shortcutOnlyPivot({o},pivot) == pivot.AMFO;
+  assert collectBeyondPivot({o},pivot) == pivot.AMFO;
 
   var cooa := collectObjectOwnerAvoiding(o,pivot);
   TALLER_THAN_GOD(o, pivot, cooa);
@@ -1945,7 +1945,7 @@ lemma GOOLE(o : Object, pivot : Object)
 assert  o.AMFO >= cooa >= (o.AMFO - pivot.AMFO);
 assert  o.AMFO >= collectObjectOwnerAvoiding(o,pivot) >= (o.AMFO - pivot.AMFO);
 
-  assert  (shortcutOnlyPivot({o},pivot) + collectObjectOwnerAvoiding(o,pivot)) == o.AMFO;
+  assert  (collectBeyondPivot({o},pivot) + collectObjectOwnerAvoiding(o,pivot)) == o.AMFO;
 
 }
 
@@ -1959,20 +1959,20 @@ lemma {:verify false} {:timeLimit 30} HULLnew(soup : OWNR, pivot : Object)
 decreases allAMFOs(soup), 1000
   requires AllReady(flatten(soup)) && pivot.Ready()
 
-  //  ensures shortcutOnlyPivot(soup,pivot) <= flatten(soup)
+  //  ensures collectBeyondPivot(soup,pivot) <= flatten(soup)
   //  ensures collectOutsideAvoiding(soup,pivot) <= flatten(soup)
   //  ensures collectOwnerAvoiding(soup,pivot) <= flatten(soup)
   //  ensures collectStrictlyInside(soup,pivot) <= flatten(soup)
 
-     ensures (shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot)) == flatten(soup)
+     ensures (collectBeyondPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot)) == flatten(soup)
 {
-    forall seed <- soup ensures ((shortcutOnlyPivot({seed},pivot) + collectObjectOwnerAvoiding(seed,pivot)) == seed.AMFO)
+    forall seed <- soup ensures ((collectBeyondPivot({seed},pivot) + collectObjectOwnerAvoiding(seed,pivot)) == seed.AMFO)
      {
       GOOLE(seed,pivot);
      }
 
 
-    forall seed <- soup ensures ((set ooo <- shortcutOnlyPivot({seed},pivot) :: ooo) == (set ooo <- flattenOnlyPivot({seed},pivot) :: ooo))
+    forall seed <- soup ensures ((set ooo <- collectBeyondPivot({seed},pivot) :: ooo) == (set ooo <- flattenOnlyPivot({seed},pivot) :: ooo))
       {
        assume AllReady(flatten({seed})) && pivot.Ready();
        FUCK_YOU_TORY_CUNT({seed},pivot);
@@ -1992,8 +1992,8 @@ decreases allAMFOs(soup), 1000
 
     assert (set seed <- soup, ooo <- seed.AMFO :: ooo) == flatten(soup);
 
-    // assert (set seed <- soup, ooo <- shortcutOnlyPivot({seed},pivot) :: ooo) <= shortcutOnlyPivot(soup,pivot);
-    // assert (set seed <- soup, ooo <- shortcutOnlyPivot({seed},pivot) :: ooo) >= shortcutOnlyPivot(soup,pivot);
+    // assert (set seed <- soup, ooo <- collectBeyondPivot({seed},pivot) :: ooo) <= collectBeyondPivot(soup,pivot);
+    // assert (set seed <- soup, ooo <- collectBeyondPivot({seed},pivot) :: ooo) >= collectBeyondPivot(soup,pivot);
 
 //    assert (set seed <- soup, ooo <- collectObjectOwnerAvoiding(seed,pivot) :: ooo) >= collectOwnerAvoiding(soup,pivot);
     assert (set seed <- soup, ooo <- collectObjectOwnerAvoiding(seed,pivot) :: ooo) <= collectOwnerAvoiding(soup,pivot);
@@ -2001,7 +2001,7 @@ decreases allAMFOs(soup), 1000
     assert (set seed <- soup, ooo <- collectObjectOwnerAvoiding(seed,pivot) :: ooo) == collectOwnerAvoiding(soup,pivot);
 
 
-  //  assert (shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot)) == flatten(soup);
+  //  assert (collectBeyondPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot)) == flatten(soup);
 }
 
 
@@ -2015,17 +2015,17 @@ lemma HULL(soup : OWNR, pivot : Object)
 decreases allAMFOs(soup), 1000
   requires AllReady(flatten(soup)) && pivot.Ready()
 
-   ensures shortcutOnlyPivot(soup,pivot) <= flatten(soup)
+   ensures collectBeyondPivot(soup,pivot) <= flatten(soup)
    ensures collectOutsideAvoiding(soup,pivot) <= flatten(soup)
    ensures collectOwnerAvoiding(soup,pivot) <= flatten(soup)
    ensures collectStrictlyInside(soup,pivot) <= flatten(soup)
 
-   ensures (shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot)) == flatten(soup)
+   ensures (collectBeyondPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot)) == flatten(soup)
 {
    var rv := flownerOnlyPivot(soup,pivot);
    assert AllReady(flatten(rv));
    flownerOnlyPivot_RESULT(soup,pivot,rv);
-   assert rv == shortcutOnlyPivot(soup,pivot);
+   assert rv == collectBeyondPivot(soup,pivot);
 
    assert rv == if (pivot in flatten(soup)) then (pivot.AMFO) else {};
 
@@ -2037,32 +2037,32 @@ decreases allAMFOs(soup), 1000
       assert forall x <- flatten(soup) :: not(inside(x,pivot));
       collectOwnerAvoiding_NOPIVOT(soup,pivot,cOA);
       assert cOA == flatten(soup) == collectOwnerAvoiding(soup,pivot);
-      assert shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot) == flatten(soup)
+      assert collectBeyondPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot) == flatten(soup)
         by {
-            assert shortcutOnlyPivot(soup,pivot) == {};
+            assert collectBeyondPivot(soup,pivot) == {};
             assert collectOwnerAvoiding(soup,pivot) ==  flatten(soup);
             SetPlus0(flatten(soup));
             assert {} + flatten(soup) == flatten(soup);
-            assert shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot) == flatten(soup);
+            assert collectBeyondPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot) == flatten(soup);
         }
       return;
    }
 
    assert (pivot in flatten(soup));
-      assert shortcutOnlyPivot(soup,pivot) == pivot.AMFO;
+      assert collectBeyondPivot(soup,pivot) == pivot.AMFO;
       assert flatten(soup) >= pivot.AMFO;
       assert cOA >= (flatten(soup) - pivot.AMFO);
       assert ((flatten(soup) - pivot.AMFO) + pivot.AMFO) >= flatten(soup);
       assert cOA + pivot.AMFO >= flatten(soup);
       SetMinus1Plus1(flatten(soup), pivot.AMFO);
       assert ((flatten(soup) - pivot.AMFO) +  pivot.AMFO) == flatten(soup);
-      assert shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot) == flatten(soup)
+      assert collectBeyondPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot) == flatten(soup)
         by {
-            assert shortcutOnlyPivot(soup,pivot) == pivot.AMFO;
+            assert collectBeyondPivot(soup,pivot) == pivot.AMFO;
             assert collectOwnerAvoiding(soup,pivot) >= (flatten(soup) - pivot.AMFO);
             SetXMinusXPlusX(flatten(soup), cOA, pivot.AMFO);
-//            assert collectOwnerAvoiding(soup,pivot) + shortcutOnlyPivot(soup,pivot) == flatten(soup);
-            assert shortcutOnlyPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot) == flatten(soup);
+//            assert collectOwnerAvoiding(soup,pivot) + collectBeyondPivot(soup,pivot) == flatten(soup);
+            assert collectBeyondPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot) == flatten(soup);
         }
       return;
 }
@@ -2204,28 +2204,28 @@ lemma {:timeLimit 6} ONLY_PIVOT(soup : OWNR, pivot : Object, rv : Owner)
 
   requires || (flownerOnlyPivot(soup,pivot) == rv)
            || (flattenOnlyPivot(soup,pivot) == rv)
-           || (shortcutOnlyPivot(soup,pivot) == rv)
+           || (collectBeyondPivot(soup,pivot) == rv)
 
    ensures ((pivot  in flownerAll(soup)) ==> (rv == pivot.AMFO))
    ensures ((pivot  in flatten(soup))  ==> (rv == pivot.AMFO))
 
    ensures ((pivot !in flownerAll(soup)) && (pivot !in flatten(soup)))  ==> (rv == {})
 
-   ensures shortcutOnlyPivot(soup, pivot) == flattenOnlyPivot(soup, pivot) == flownerOnlyPivot(soup,pivot) == rv
+   ensures collectBeyondPivot(soup, pivot) == flattenOnlyPivot(soup, pivot) == flownerOnlyPivot(soup,pivot) == rv
  {
    assume AllReady(flatten(soup));
    assume pivot.Ready();
 
-if (shortcutOnlyPivot(soup,pivot) == rv)
+if (collectBeyondPivot(soup,pivot) == rv)
      {
-     LEMMA_shortcutVSflatten2(soup, pivot, shortcutOnlyPivot(soup, pivot), flattenOnlyPivot(soup, pivot));
+     LEMMA_shortcutVSflatten2(soup, pivot, collectBeyondPivot(soup, pivot), flattenOnlyPivot(soup, pivot));
      FLOWNER_FLATTEN_TODO_FOR_ALL(soup,pivot);
      return;
       }
 
 if (flattenOnlyPivot(soup,pivot) == rv)
   {
-    LEMMA_shortcutVSflatten2(soup, pivot, shortcutOnlyPivot(soup, pivot), flattenOnlyPivot(soup, pivot));
+    LEMMA_shortcutVSflatten2(soup, pivot, collectBeyondPivot(soup, pivot), flattenOnlyPivot(soup, pivot));
     FLOWNER_FLATTEN_TODO_FOR_ALL(soup,pivot);
     return;
   }
@@ -2246,13 +2246,13 @@ assert false;
 lemma FLOWNER_SHORTCUT_OnlyPivot(soup : OWNR, pivot : Object, rv : Owner)
  //verified 21 Sep 2026
   requires AllReady(flatten(soup)) && pivot.Ready()
-   ensures shortcutOnlyPivot(soup, pivot) == flattenOnlyPivot(soup, pivot)
-   ensures (shortcutOnlyPivot(soup, pivot) == flattenOnlyPivot(soup, pivot) == {}) || (shortcutOnlyPivot(soup, pivot) == flattenOnlyPivot(soup, pivot) == pivot.AMFO)
+   ensures collectBeyondPivot(soup, pivot) == flattenOnlyPivot(soup, pivot)
+   ensures (collectBeyondPivot(soup, pivot) == flattenOnlyPivot(soup, pivot) == {}) || (collectBeyondPivot(soup, pivot) == flattenOnlyPivot(soup, pivot) == pivot.AMFO)
 
-   ensures shortcutOnlyPivot(soup, pivot) == flownerOnlyPivot(soup, pivot)
-   ensures (shortcutOnlyPivot(soup, pivot) == flownerOnlyPivot(soup, pivot) == {}) || (shortcutOnlyPivot(soup, pivot) == flownerOnlyPivot(soup, pivot) == pivot.AMFO)
+   ensures collectBeyondPivot(soup, pivot) == flownerOnlyPivot(soup, pivot)
+   ensures (collectBeyondPivot(soup, pivot) == flownerOnlyPivot(soup, pivot) == {}) || (collectBeyondPivot(soup, pivot) == flownerOnlyPivot(soup, pivot) == pivot.AMFO)
 {
-  LEMMA_shortcutVSflatten2(soup, pivot, shortcutOnlyPivot(soup, pivot), flattenOnlyPivot(soup, pivot));
+  LEMMA_shortcutVSflatten2(soup, pivot, collectBeyondPivot(soup, pivot), flattenOnlyPivot(soup, pivot));
 }
 
 
@@ -2629,7 +2629,7 @@ lemma YBOUNDEN(s0 : FlownerSplit, s1 : FlownerSplit)
    ensures collectOutside(s0.soup,s0.pivot)        >= collectOutside(s1.soup,s1.pivot)
    ensures flownerStrictlyInside(s0.soup,s0.pivot) >= flownerStrictlyInside(s1.soup,s1.pivot)  //fSin, right?
 
-  //  ensures collectStrictlyInside(s0.soup,s0.pivot) >= collectStrictlyInside(s1.soup,s1.pivot)
+   ensures collectStrictlyInside(s0.soup,s0.pivot) >= collectStrictlyInside(s1.soup,s1.pivot)
   //  ensures collectOwnerAvoiding(s0.soup,s0.pivot)  >= collectOwnerAvoiding(s1.soup,s1.pivot)
   //  ensures collectOutsideAvoiding(s0.soup,s0.pivot) >= collectOutsideAvoiding(s1.soup,s1.pivot)
 
@@ -2837,36 +2837,6 @@ lemma WARRINGTON3(seed : Object, owner : Object, pivot : Object)
       }
 }
 
-//
-//   if (seed == owner)
-//       {
-//         assert seed in collectObjectOwnerAvoiding(seed,pivot);
-//         assert fromPartToWholeWithoutTheTroll(seed,owner,pivot);
-//         return;
-//       }
-//
-//     FUCKED_Inside_to_Strictly(seed,pivot);
-//     assert inside(seed,pivot);
-//
-// //correct to here...
-//     if (exists o <- seed.owner :: owner in  collectObjectOwnerAvoiding(o,pivot))
-//        {
-//           var o :| (o in seed.owner) && (owner in  collectObjectOwnerAvoiding(o,pivot));
-//           RUNCORN3(o,seed,pivot);
-//           assert owner in  collectObjectOwnerAvoiding(o,pivot);
-//           assert fromPartToWholeWithoutTheTroll(o,owner,pivot);
-//        }
-//     else
-//        {
-//          assert forall o <- seed.owner :: owner !in  collectObjectOwnerAvoiding(o,pivot);
-//          assert owner !in  collectObjectOwnerAvoiding(seed,pivot);
-//          assert not( fromPartToWholeWithoutTheTroll(seed,owner,pivot) );
-//        }
-//
-//
-//     assert owner in collectObjectOwnerAvoiding(seed,pivot)
-//                     <==> fromPartToWholeWithoutTheTroll(seed,owner,pivot);
-// }
 
 
 lemma WOLVERHAMPTON(soup : Owner, pivot : Object)
@@ -3045,18 +3015,18 @@ lemma {:verify false} GRIMSBY(soup : Owner, pivot : Object)
    requires forall o <- flatten(soup) :: o.Ready()
    requires pivot.Ready()
 
-    ensures collectStrictlyInside(soup,pivot) + collectOutside(soup,pivot) + shortcutOnlyPivot(soup,pivot) == flatten(soup)
+    ensures collectStrictlyInside(soup,pivot) + collectOutside(soup,pivot) + collectBeyondPivot(soup,pivot) == flatten(soup)
      {
       collectOutside_RESULT2(soup,pivot);
-      LEMMA_shortcutOnlyPivot0(soup,pivot,shortcutOnlyPivot(soup, pivot));
+      LEMMA_collectBeyondPivot0(soup,pivot,collectBeyondPivot(soup, pivot));
         forall o <- flatten(soup)
           ensures (true)
-//          ensures collectObjectStrictlyInside(o,pivot) + collectObjectOutside(o,pivot) + shortcutOnlyPivot({o},pivot) == argh(o)
+//          ensures collectObjectStrictlyInside(o,pivot) + collectObjectOutside(o,pivot) + sh ortcutOnlyPivot({o},pivot) == argh(o)
     {
               assert exists s <- soup :: inside(s,o);
               if (strictlyInside(o,pivot)) { assert o in collectStrictlyInside(soup,pivot);  }
               if (outside(o,pivot))        { assert o in collectOutside(soup,pivot);  }
-              if (inside(pivot,o) && (exists s <- soup :: inside(s,o)))  { assert o in shortcutOnlyPivot(soup,pivot); }
+              if (inside(pivot,o) && (exists s <- soup :: inside(s,o)))  { assert o in collectBeyondPivot(soup,pivot); }
     }
 }
 
@@ -3126,3 +3096,121 @@ assert forall owner <- (collectStrictlyInside(soup,pivot) + collectOutsideAvoidi
     // assert collectOutsideAvoiding(soup,pivot) == (set owner <- collectOwnerAvoiding(soup,pivot) | outside(owner,pivot));
 
      }
+
+
+
+
+lemma HALIFAX(soup : Owner, pivot : Object)
+///gets all outside owners - avoiding the pivot and any owners reachabke ONLY through that.
+   decreases allAMFOs(soup), 2
+   requires forall o <- flatten(soup) :: o.Ready()
+   requires pivot.Ready()
+
+   ensures collectStrictlyInside(soup,pivot)
+            + collectOutsideAvoiding(soup,pivot)
+            + collectBeyondPivot(soup,pivot)
+           == flatten(soup)
+     {
+        COLNE(soup,pivot);
+        assert collectStrictlyInside(soup,pivot) + collectOutsideAvoiding(soup,pivot) == collectOwnerAvoiding(soup,pivot);
+
+        HULL(soup,pivot);
+        assert (collectBeyondPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot)) == flatten(soup);
+     }
+
+
+///
+/// axioms I've got wrt shortcuts & collecting...
+///
+//  GOOLE
+///     ensures (collectBeyondPivot({o},pivot) + collectObjectOwnerAvoiding(o,pivot)) == o.AMFO
+///
+//  HULL
+///   ensures (collectBeyondPivot(soup,pivot) + collectOwnerAvoiding(soup,pivot)) == flatten(soup)
+///
+//  SHEFFIELD
+///  ensures collectOwnerAvoiding(soup,pivot) >= collectOutsideAvoiding(soup,pivot)
+///
+//  COLNE
+///     ensures collectStrictlyInside(soup,pivot) + collectOutsideAvoiding(soup,pivot) == collectOwnerAvoiding(soup,pivot)
+///
+//  YBOIUNDEN
+///    monotonicity of shit.
+///
+//  RUNCORN
+/// owner in 3ofc(seed,pivot)
+///                   <==> fromPartToWholeWithoutTheTroll(seed,owner,pivot)
+///
+//  WARRINGTON
+///     ensures forall r <- seed.AMFO ::
+///    (fromPartToWholeWithoutTheTroll(seed,r,pivot) && outside(r,pivot))
+///       <==> (r in collectObjectOutsideAvoiding(seed,pivot) )
+///
+///
+//  WOLVERHAMPTON
+///      (r in collectOutsideAvoiding(soup,pivot)) <==>
+///        exists seed <- soup :: (fromPartToWholeWithoutTheTroll(seed,r,pivot) && outside(r,pivot))
+///
+//  WIDNES3
+///   ensures forall owner <- flatten(soup) ::
+///    (owner in collectOutsideAvoiding(soup, pivot)) == (owner in flownerOutsideAvoidingAlt(soup, pivot))
+///
+//  SUNDERLAND
+///      ensures flownerOutsideTroll(soup,pivot) <= flownerOwnerTroll(soup,pivot)
+///zz
+//
+///
+///
+//
+///
+///
+//
+///
+///
+//
+///
+///
+//
+///
+///
+//
+///
+///
+//
+///
+///
+//
+///
+///
+//
+///
+///
+// split01
+///  coimbines two "splits"
+///
+//  GRIMSBY  (broken)
+///   supposed to be inside + outside + pivot == flatten
+///
+// RORY_TORY
+///  ensures (set o <- soup, ooo <- collectObjectOwnerAvoiding(o,pivot) :: ooo)  == collectOwnerAvoiding(soup,pivot)
+///
+///
+// ONLY_PIVOT
+///  ensures collectBeyondPivot(soup, pivot) == flattenOnlyPivot(soup, pivot) == flownerOnlyPivot(soup,pivot) == rv
+///
+// FLOWNER_SHORTCUT_OnlyPivot
+///   see ONLY_PIVOT?
+///
+// FLOWNER_ALL_ALL
+///  whole bunch of FLOWER_ lemmas ingored
+//
+///
+//
+///
+///
+//
+///
+///
+//
+///
+///

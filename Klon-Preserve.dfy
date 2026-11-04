@@ -1,4 +1,4 @@
-  //include "Ownership.dfy"
+//include "Ownership.dfy"
 include "Ownership-Collect.dfy"
 
 
@@ -960,8 +960,8 @@ lemma DOUBLE_SPLIT_OnlyPivot(os : Owner, cs : Owner, os_sp : FlownerSplit, cs_sp
  {
    assert os_sp.fPvt == flownerOnlyPivot(os, m.o);
 FLOWNER_SHORTCUT_OnlyPivot(os, m.o, os_sp.fPvt);
-   assert os_sp.fPvt == shortcutOnlyPivot(os, m.o);
- LEMMA_shortcutOnlyPivot1(os, m.o, os_sp.fPvt);
+   assert os_sp.fPvt == collectBeyondPivot(os, m.o);
+ LEMMA_collectBeyondPivot1(os, m.o, os_sp.fPvt);
 
    assert (m.o  in os_sp.fAll) ==> (os_sp.fPvt == m.o.AMFO);
    assert (m.o !in os_sp.fAll) ==> (os_sp.fPvt == {});
@@ -972,8 +972,8 @@ FLOWNER_SHORTCUT_OnlyPivot(os, m.o, os_sp.fPvt);
 
    assert cs_sp.fPvt == flownerOnlyPivot(cs, m.c);
 FLOWNER_SHORTCUT_OnlyPivot(cs, m.c, cs_sp.fPvt);
-   assert cs_sp.fPvt == shortcutOnlyPivot(cs, m.c);
- LEMMA_shortcutOnlyPivot1(cs, m.c, cs_sp.fPvt);
+   assert cs_sp.fPvt == collectBeyondPivot(cs, m.c);
+ LEMMA_collectBeyondPivot1(cs, m.c, cs_sp.fPvt);
 
  }
 

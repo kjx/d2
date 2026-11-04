@@ -169,7 +169,7 @@ lemma LEMMA_flattenExceptPivot0(soup : OWNR, pivot : Object, rv : Owner)
 lemma LEMMA_shortcutVSflatten2(soup : OWNR, pivot : Object, shOP : Owner, fOP : Owner)
   requires forall s <- soup :: s.Ready()
   requires pivot.Ready()
-  requires shOP == shortcutOnlyPivot(soup, pivot)
+  requires shOP == collectBeyondPivot(soup, pivot)
   requires fOP == flattenOnlyPivot(soup, pivot)
   requires forall r <- shOP :: r.Ready()
   requires forall r <- fOP  :: r.Ready()
@@ -743,8 +743,8 @@ lemma flownerExceptPivot_OUTSIDE(os : Owner, FEP : Owner, pivot : Object)
 
 lemma FUCK_YOU_TORY_CUNT(soup : OWNR, pivot : Object)
    requires AllReady(flatten(soup)) && pivot.Ready()
-    ensures shortcutOnlyPivot(soup, pivot) == flattenOnlyPivot(soup, pivot)
+    ensures collectBeyondPivot(soup, pivot) == flattenOnlyPivot(soup, pivot)
 
  {
-   LEMMA_shortcutVSflatten2(soup, pivot, shortcutOnlyPivot(soup, pivot), flattenOnlyPivot(soup, pivot));
+   LEMMA_shortcutVSflatten2(soup, pivot, collectBeyondPivot(soup, pivot), flattenOnlyPivot(soup, pivot));
 }
