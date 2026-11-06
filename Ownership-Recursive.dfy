@@ -645,7 +645,7 @@ predicate fromPartToWholeWithoutTheTroll(part : Object, whole : Object, troll : 
 //  requires inside(part,whole)
    ensures forall x <- part.owner :: inside(part,x)
    ensures rv ==> inside(part,whole)
-
+   ensures rv ==> whole != troll
 //  ensures (part == whole) || (exists x <- part.owner :: fromPartToWholeWithoutTheTroll(x, whole, troll)
 {
   assume part.Ready();
@@ -660,8 +660,13 @@ predicate fromPartToWholeWithoutTheTroll(part : Object, whole : Object, troll : 
 lemma ThreeBillyGoatsGruff(part : Object, whole : Object, troll : Object)
    decreases part.AMFO
     requires inside(part,whole)
-    requires strictlyInside(whole,troll)
-     ensures strictlyInside(part,troll)
+    requires whole != troll
+    requires part != troll
+    requires strictlyInside(whole,troll) || not(inside(troll,whole))
+     ensures strictlyInside(whole,troll) ==> strictlyInside(part,troll)
+     ensures not(inside(troll,whole)) ==> not(inside(troll,part))
+     ensures strictlyInside(part,troll) ||  not(inside(troll,part))
+     ensures part != troll
      ensures fromPartToWholeWithoutTheTroll(part,whole,troll)
 {
   assume part.Ready();

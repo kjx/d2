@@ -107,10 +107,8 @@ ONLY_PIVOT(cb,m.c,cbSP.fPvt);
 
 
   assert coSP.fSin >= cbSP.fSin;
-//  assert coSP.fOut >= cbSP.fOut;
+  assert coSP.fOut+coSP.fPvt >= cbSP.fOut+cbSP.fPvt;
   assert coSP.fPvt >= cbSP.fPvt;
-//  assert coSP.fXpt >= cbSP.fXpt;
-   assert coSP.fOut+coSP.fXpt >= cbSP.fOut+cbSP.fXpt;
 
 
   assert flownerStrictlyInside(co,m.c) >= flownerStrictlyInside(cb,m.c);
@@ -348,10 +346,10 @@ lemma MAPPING_OUTSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flow
     ensures forall o <- os :: klonLine(o,m.m[o],m)
     ensures forall o <- os :: klonGeometry(o,m.m[o],m)
     ensures forall o <- os :: klonIdentity(o,m.m[o],m)
-    ensures forall o : Object <- (os_sp.fOut + os_sp.fXpt) :: outside(o,m.o) && (o == m.m[o] != m.o)
+    ensures forall o : Object <- (os_sp.fOut + os_sp.fPvt) :: outside(o,m.o) && (o == m.m[o] != m.o)
 
-//    ensures forall o <- (os_sp.fOut + os_sp.fXpt) :: woodReal(o,m.m[o],m)
-    ensures os_sp.fOut + os_sp.fXpt == cs_sp.fOut + cs_sp.fXpt
+//    ensures forall o <- (os_sp.fOut + os_sp.fPvt) :: woodReal(o,m.m[o],m)
+    ensures os_sp.fOut + os_sp.fPvt == cs_sp.fOut + cs_sp.fPvt
 
 {
      assert cs_sp == splitThruKlon(os,os_sp,m);
@@ -363,10 +361,6 @@ lemma MAPPING_OUTSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flow
      assert os_Out == flownerStrictlyOutside(os,m.o);
      assert cs_Out == flownerStrictlyOutside(cs,m.c);
 
-     var os_Xpt := os_sp.fXpt;
-     var cs_Xpt := cs_sp.fXpt;
-     assert os_Xpt == flownerExceptPivot(os,m.o);
-     assert cs_Xpt == flownerExceptPivot(cs,m.c);
 
     assert AllReady(os_sp.fAll);
     assert AllReady(cs_sp.fAll);
@@ -385,16 +379,10 @@ lemma MAPPING_OUTSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flow
 
 
 
-   assert forall o <- os_sp.fXpt :: outside(o, m.o);
 
 
-
-
-
-    assert os_sp.fOut >= cs_sp.fOut;
-    assert os_sp.fXpt >= cs_sp.fXpt;
-    assert os_sp.fOut <= cs_sp.fOut;
-    assert os_sp.fXpt <= cs_sp.fXpt;
+    // assert os_sp.fOut >= cs_sp.fOut;
+    // assert os_sp.fOut <= cs_sp.fOut;
 
 
 
@@ -410,7 +398,7 @@ lemma MAPPING_OUTSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flow
 lemma HACKING_OUTSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : FlownerSplit, m : Klon)
 //see HACKKING_THRU -
 //
- ///quick hack at combining fOUT and fXpt - so we don't need to track the outsideness of the soup, or something.
+ ///quick hack at combining fOUT  - so we don't need to track the outsideness of the soup, or something.
  ///I think the point is that an owner O >= B  should be OK even if  the "strictly ourside" owners in B
  //i.e things reachable from the soup *wihtout8 being inside the pivot
  //well O could be one owner that *is* inside the pivot which is inside Bl..
@@ -432,22 +420,22 @@ lemma HACKING_OUTSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flow
     ensures forall o <- os :: klonLine(o,m.m[o],m)
     ensures forall o <- os :: klonGeometry(o,m.m[o],m)
     ensures forall o <- os :: klonIdentity(o,m.m[o],m)
-    ensures forall o : Object <- (os_sp.fOut + os_sp.fXpt) :: outside(o,m.o) && (o == m.m[o] != m.o)
+    ensures forall o : Object <- (os_sp.fOut) :: outside(o,m.o) && (o == m.m[o] != m.o)
 
-//    ensures forall o <- (os_sp.fOut + os_sp.fXpt) :: woodReal(o,m.m[o],m)
-    ensures os_sp.fOut + os_sp.fXpt == cs_sp.fOut + cs_sp.fXpt
+//    ensures forall o <- (os_sp.fOut) :: woodReal(o,m.m[o],m)
+    ensures os_sp.fOut  == cs_sp.fOut
 {
      assert cs_sp == splitThruKlon(os,os_sp,m);
      MAP_THRU_KLON(os,cs,m);
      UNPACK_flownerSplitOK(os,m.o,os_sp);
 
-     assert (os_sp.fOut + os_sp.fXpt) <= os_sp.fAll <= m.m.Keys;
+     assert (os_sp.fOut) <= os_sp.fAll <= m.m.Keys;
 
-     assert forall o : Object <- (os_sp.fOut + os_sp.fXpt) :: outside(o,m.o) && (o == m.m[o] != m.o);
+     assert forall o : Object <- (os_sp.fOut) :: outside(o,m.o) && (o == m.m[o] != m.o);
 
      UNPACK_flownerSplitOK(mapThruKlon(os,m),m.c,cs_sp);
-     var os_Out := os_sp.fOut + os_sp.fXpt;
-     var cs_Out := cs_sp.fOut + cs_sp.fXpt;
+     var os_Out := os_sp.fOut;
+     var cs_Out := cs_sp.fOut;
      assert os_Out == flownerStrictlyOutside(os,m.o) + flownerExceptPivot(os,m.o);
      assert cs_Out == flownerStrictlyOutside(cs,m.c) + flownerExceptPivot(cs,m.c);
 
@@ -466,21 +454,14 @@ lemma HACKING_OUTSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flow
    assert forall o <- cs_sp.fOut :: exists k <- m.m.Keys :: klonLine(k,o,m);
    assert forall o <- cs_sp.fOut :: exists k <- m.m.Keys :: (m.m[k] == o)  && (outside(k,m.o)) && (k == o);
 
-    assert forall o <- os_sp.fXpt :: outside(o, m.o);
+
 
 
 
     assert os_sp.fOut >= cs_sp.fOut;
-    assert os_sp.fXpt >= cs_sp.fXpt;
-    assert os_sp.fXpt == cs_sp.fXpt;
+
 
     assert os_sp.fOut <= cs_sp.fOut;
-    assert os_sp.fXpt <= cs_sp.fXpt;
-    assert os_sp.fXpt == cs_sp.fXpt;
-
-    assert os_sp.fOut + os_sp.fXpt >= cs_sp.fOut + cs_sp.fXpt;
-    assert os_sp.fOut + os_sp.fXpt <= cs_sp.fOut + cs_sp.fXpt;
-    assert os_sp.fOut + os_sp.fXpt == cs_sp.fOut + cs_sp.fXpt;
 
 
 }

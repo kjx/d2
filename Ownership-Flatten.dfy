@@ -645,19 +645,13 @@ lemma DOUBLE_SPLIT(os : Owner, cs : Owner, os_sp : FlownerSplit, cs_sp : Flowner
 //    ensures cs_sp.fAll == flownerAll(cs)
 //    ensures os_sp.fOut == flownerStrictlyOutside(os, m.o)
 //    ensures cs_sp.fOut == flownerStrictlyOutside(cs, m.c)
-//    ensures os_sp.fXpt == flownerExceptPivot(os, m.o)
-//    ensures cs_sp.fXpt == flownerExceptPivot(cs, m.c)
 //
 //    ensures os_sp.fOut == cs_sp.fOut   //ERR
-//    ensures os_sp.fXpt == cs_sp.fXpt   //ERR
 // {
 //    assert m.m.Keys >= os_sp.fOut;
-//    assert m.m.Keys >= os_sp.fXpt;
 //
 //    flownerStrictlyOutside_OUTSIDE(os, os_sp.fOut, m.o);
 //    flownerStrictlyOutside_OUTSIDE(cs, cs_sp.fOut, m.c);
-//    flownerExceptPivot_OUTSIDE(os, os_sp.fXpt, m.o);
-//    flownerExceptPivot_OUTSIDE(cs, cs_sp.fXpt, m.c);
 // }
 //
 
