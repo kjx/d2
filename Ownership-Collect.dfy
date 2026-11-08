@@ -1450,6 +1450,25 @@ lemma DOWNWARDS_ELON(down : Object, seed : Object, pivot : Object)
 }
 
 
+lemma DOWNWARDS_MUSK(soup0 : Owner, soup1 : Owner, pivot : Object)
+ decreases allAMFOs(soup1)
+  requires forall s <- soup0 :: s.Ready()
+  requires forall s <- soup1 :: s.Ready()
+  requires pivot.Ready()
+  requires flatten(soup0) >= flatten(soup1)
+  requires pivot !in soup0
+  requires pivot !in soup1
+//  requires inside(down,seed)
+//  requires down != pivot //(I think I ned this or it all stops)
+//  requires down != seed //(options see above)
+//  requires outside(down,pivot)
+   ensures collectOutsideAvoiding(soup0,pivot) >= collectOutsideAvoiding(soup1,pivot)
+   {
+//UNFINIEHED.  BE NICE TO HAVE THOUGHm, RIGHT??
+//see HEBDEN_BRIDGE
+   }
+
+
      //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //
     //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //
    //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //   //
@@ -2931,10 +2950,10 @@ lemma HEBDEN_BRIDGE(soup0 : Owner, soup1 : Owner, fOut : Owner, pivot : Object)
 
    requires fOut == collectOutsideAvoiding(soup1,pivot)
 
-    requires forall r <- collectOutsideAvoiding(soup1,pivot) :: strictlyInside(r,pivot) || not(inside(pivot,r))
+   requires forall r <- collectOutsideAvoiding(soup1,pivot) :: strictlyInside(r,pivot) || not(inside(pivot,r))
 
-  ensures forall r <- collectOutsideAvoiding(soup1,pivot) ::  r in collectOutsideAvoiding(soup0,pivot)
-  ensures collectOutsideAvoiding(soup0,pivot) >= collectOutsideAvoiding(soup1,pivot)
+   ensures forall r <- collectOutsideAvoiding(soup1,pivot) ::  r in collectOutsideAvoiding(soup0,pivot)
+   ensures collectOutsideAvoiding(soup0,pivot) >= collectOutsideAvoiding(soup1,pivot)
    {
     assert flatten(soup0) >= flatten(soup1);
 
@@ -2951,11 +2970,20 @@ lemma HEBDEN_BRIDGE(soup0 : Owner, soup1 : Owner, fOut : Owner, pivot : Object)
     forall whole <- flatten(soup1), part <- soup1 |
                     && (whole in collectOutsideAvoiding(soup1,pivot))
                     && (inside(part,whole))
-                    && (fromPartToWholeWithoutTheTroll(part,whole,troll))
+//                    && (fromPartToWholeWithoutTheTroll(part,whole,troll))
                     && (outside(whole,troll))
       ensures (exists sub <- soup0 ::fromPartToWholeWithoutTheTroll(sub,whole,troll))
       ensures (whole in collectOutsideAvoiding(soup0,troll))
          {
+WARRINGTON(soup1,pivot);
+assert whole in collectOutsideAvoiding(soup1,troll);
+WIDNES(whole,soup1,troll);
+   assert exists o <- soup1 :: whole in collectObjectOutsideAvoiding(o,troll);
+   assert whole in (set o <- soup1, ooo <- collectObjectOutsideAvoiding(o,troll) :: ooo);
+   assert exists o <- soup1 :: fromPartToWholeWithoutTheTroll(o,whole,troll);
+
+assert fromPartToWholeWithoutTheTroll(part,whole,troll) && outside(whole,pivot);  //FOO!?
+
           assert outside(whole,pivot);
           assert exists seed0 <- soup0 | inside(seed0,part) :: inside(seed0,whole);
           assert exists sub   <- soup0 | inside(sub,part)   :: inside(sub,whole);
@@ -2996,9 +3024,31 @@ assert forall whole <- collectOutsideAvoiding(soup1,pivot), part <- soup1 |
                   && (fromPartToWholeWithoutTheTroll(part,whole,troll))
       :: (whole in collectOutsideAvoiding(soup0,troll));
 
+
+
 forall whole <- collectOutsideAvoiding(soup1,pivot), part <- soup1 ensures
                  (fromPartToWholeWithoutTheTroll(part,whole,troll))
- {}
+ {
+
+WIDNES(whole,soup1,troll);
+WARRINGTON(soup1,pivot);
+assert whole in collectOutsideAvoiding(soup1,pivot);
+assert exists seed1 <- soup1 :: fromPartToWholeWithoutThgit eTroll(part,whole,troll) && outside(whole,pivot);
+ }
+
+
+assert forall whole <- collectOutsideAvoiding(soup1,pivot) ::
+          exists part <- soup1 :: fromPartToWholeWithoutTheTroll(part,whole,troll);
+
+
+//
+// forall whole <- collectOutsideAvoiding(soup1,pivot), part <- soup1 ensures
+//                  (fromPartToWholeWithoutTheTroll(part,whole,troll))
+//  {
+// WARRINGTON(soup1,pivot);
+// assert whole in collectOutsideAvoiding(soup1,pivot);
+// assert exists seed1 <- soup1 :: fromPartToWholeWithoutTheTroll(part,whole,troll) && outside(whole,pivot);
+//  }
 
 assert forall whole <- collectOutsideAvoiding(soup1,pivot), part <- soup1 ::
                  (fromPartToWholeWithoutTheTroll(part,whole,troll));
@@ -3380,6 +3430,7 @@ assert fromPartToWholeWithoutTheTroll(sub,whole,troll);
 
 
 lemma WARRINGTON0(soup : Owner, pivot : Object, nuts : Owner)
+      //from  fromPartToWholeWithoutTheTroll to collectOutsideAvoiding
    requires forall o <- flatten(soup) :: o.Ready()
    requires pivot.Ready()
    requires forall o <- flatten(nuts) :: o.Ready()
@@ -3474,7 +3525,7 @@ lemma WARRINGTON3(seed : Object, owner : Object, pivot : Object)
 
 
 
-lemma {:verify false} WOLVERHAMPTON(soup : Owner, pivot : Object)
+lemma  WOLVERHAMPTON(soup : Owner, pivot : Object)
   decreases allAMFOs(soup), 2
    requires forall o <- flatten(soup) :: o.Ready()
    requires pivot.Ready()
@@ -3486,87 +3537,68 @@ lemma {:verify false} WOLVERHAMPTON(soup : Owner, pivot : Object)
        (r in flownerOutsideTroll(soup,pivot)) <==>
           exists seed <- soup :: (fromPartToWholeWithoutTheTroll(seed,r,pivot) && outside(r,pivot))
 
-     ensures forall r <- flatten(soup) ::
-       (r in collectOutsideAvoiding(soup,pivot)) <==>
-          exists seed <- soup :: (fromPartToWholeWithoutTheTroll(seed,r,pivot) && outside(r,pivot))
+    //  ensures forall r <- flatten(soup) ::
+    //    (r in collectOutsideAvoiding(soup,pivot)) <==>
+    //       exists seed <- soup :: (fromPartToWholeWithoutTheTroll(seed,r,pivot) && outside(r,pivot))
 
-     ensures forall r <- flatten(soup) ::
-       (r in flownerOutsideAvoiding(soup,pivot)) <==>
-          exists seed <- soup :: (fromPartToWholeWithoutTheTroll(seed,r,pivot) && outside(r,pivot))
+    //  ensures forall r <- flatten(soup) ::
+    //    (r in flownerOutsideAvoiding(soup,pivot)) <==>
+    //       exists seed <- soup :: (fromPartToWholeWithoutTheTroll(seed,r,pivot) && outside(r,pivot))
 
-     ensures forall r <- flatten(soup) ::
-       (r in flownerOutsideAvoidingAlt(soup,pivot)) <==>
-          exists seed <- soup :: (fromPartToWholeWithoutTheTroll(seed,r,pivot) && outside(r,pivot))
+    //  ensures forall r <- flatten(soup) ::
+    //    (r in flownerOutsideAvoidingAlt(soup,pivot)) <==>
+    //       exists seed <- soup :: (fromPartToWholeWithoutTheTroll(seed,r,pivot) && outside(r,pivot))
 
-     ensures forall r <- flatten(soup) ::
-       (r in flownerExceptPivot(soup,pivot)) <==>
-          exists seed <- soup :: (fromPartToWholeWithoutTheTroll(seed,r,pivot) && outside(r,pivot))
+    //  ensures forall r <- flatten(soup) ::
+    //    (r in flownerExceptPivot(soup,pivot)) <==>
+    //       exists seed <- soup :: (fromPartToWholeWithoutTheTroll(seed,r,pivot) && outside(r,pivot))
 
 
     ensures forall r <- flownerOutsideTroll(soup,pivot) ::
           exists seed <- soup :: (fromPartToWholeWithoutTheTroll(seed,r,pivot) && outside(r,pivot))
 {
 
-forall r <- flatten(soup) ensures (
-       (r in collectOutsideAvoiding(soup,pivot)) <==>
-          exists seed <- soup :: (fromPartToWholeWithoutTheTroll(seed,r,pivot) && outside(r,pivot))
-      )  {}
+// forall r <- flatten(soup) ensures (
+//        (r in collectOutsideAvoiding(soup,pivot)) <==>
+//           exists seed <- soup :: (fromPartToWholeWithoutTheTroll(seed,r,pivot) && outside(r,pivot))
+//       )  {}
 
   // { if (outside(r,pivot)) then (i
       //   else if (o == pivot) then ({})
       //     else (collectOutsideAvoiding(o.owner,pivot)) }
       // }
-
 }
 
 
 
-lemma {:verify false} WIDNES(soup : Owner, pivot : Object)
-///gets all outside owners - avoiding the pivot and any owners reachabke ONLY through that.
-   decreases allAMFOs(soup), 2
-   requires forall o <- flatten(soup) :: o.Ready()
-   requires pivot.Ready()
-    // ensures forall r <- collectOutsideAvoiding(soup,pivot) :: outside(r,pivot)
-    // ensures forall r <- collectOutsideAvoiding(soup,pivot) :: r in flatten(soup)
+lemma WIDNES(whole : Object, soup : Owner, troll : Object)
+  requires whole.Ready()
+  requires forall s <- soup :: s.Ready()
+  requires troll.Ready()
 
-    ensures forall r <- flownerOutsideTroll(soup,pivot) ::
-          exists seed <- soup :: (fromPartToWholeWithoutTheTroll(seed,r,pivot) && outside(r,pivot))
-
-//      ensures forall seed <- soup, owner <- seed.AMFO ::
-          // (owner in  flownerOutsideTroll(soup, pivot)) <== (fromPartToWholeWithoutTheTroll(seed,owner,pivot) && outside(owner,pivot))
-
-ensures forall owner <- flatten(soup) ::
-          (owner in flownerOutsideTroll(soup, pivot)
-          <==> (exists seed <- soup ::
-                (fromPartToWholeWithoutTheTroll(seed,owner,pivot) && outside(owner,pivot))))
-
-ensures forall owner <- flatten(soup) ::
-    (owner in flownerOutsideAvoiding(soup, pivot)) == (owner in flownerOutsideAvoidingAlt(soup, pivot))
-
-ensures forall owner <- flatten(soup) ::
-    (owner in collectOutsideAvoiding(soup, pivot)) == (owner in flownerOutsideAvoidingAlt(soup, pivot))
-
-
-// ensures forall owner <- flatten(soup) ::
-//           (owner in flownerOutsideTroll(soup, pivot)) == (owner in flownerOutsideAvoiding(soup, pivot))
-
-// ensures forall owner <- flatten(soup) ::
-//           (owner in flownerOutsideTroll(soup, pivot)) == (owner in flownerOutsideAvoidingAlt(soup, pivot))
-
-// ensures forall owner <- flatten(soup) ::
-//           (owner in flownerOutsideTroll(soup, pivot)) == (owner in collectOutsideAvoiding(soup, pivot))
-
-
+  requires whole in collectOutsideAvoiding(soup,troll)
+   ensures exists o <- soup :: whole in collectObjectOutsideAvoiding(o,troll)
+   ensures whole in (set o <- soup, ooo <- collectObjectOutsideAvoiding(o,troll) :: ooo)
+   ensures exists o <- soup :: fromPartToWholeWithoutTheTroll(o,whole,troll)
+   ensures outside(whole,troll)
+//   ensures exists part <- soup:: fromPartToWholeWithoutTheTroll(part,whole,troll)
 {
-      assert flownerOutsideTroll({}, pivot) == {};
-      assert collectOutsideAvoiding({},pivot) == {};
-      assert flownerOutsideAvoiding({}, pivot) == {};
-      assert flownerOutsideAvoidingAlt({}, pivot) == {};
-     if (soup == {}) { return; }
+  assert whole in collectOutsideAvoiding(soup,troll);
+  assert exists o <- soup :: whole in collectObjectOutsideAvoiding(o,troll);
+  var o :| (o in soup) &&  (whole in collectObjectOutsideAvoiding(o,troll));
+  assert whole in collectObjectOutsideAvoiding(o,troll);
+  WARRINGTON3(o,whole,troll);
+  assert fromPartToWholeWithoutTheTroll(o,whole,troll)  && outside(whole,troll);
 
-
+  // assert  collectOutsideAvoiding(soup,troll) ==
+  //             (set o <- soup, ooo <- collectObjectOutsideAvoiding(o,troll) :: ooo);
+  // assert whole in (set o <- soup, ooo <- collectObjectOutsideAvoiding(o,troll) :: ooo);
+  // assert exists o <- soup :: whole in collectObjectOutsideAvoiding(o,troll);
 
 }
+
+
+
 
 lemma SUNDERLAND(soup : Owner, pivot : Object)
 ///gets all outside owners - avoiding the pivot and any owners reachabke ONLY through that.
@@ -3799,10 +3831,7 @@ lemma SetPlus5<T>(a : set<T>, b: set<T>, c : set<T>, d : set<T>, e : set<T>)
 //  WOLVERHAMPTON
 ///      (r in collectOutsideAvoiding(soup,pivot)) <==>
 ///        exists seed <- soup :: (fromPartToWholeWithoutTheTroll(seed,r,pivot) && outside(r,pivot))
-///
-//  WIDNES3
-///   ensures forall owner <- flatten(soup) ::
-///    (owner in collectOutsideAvoiding(soup, pivot)) == (owner in flownerOutsideAvoidingAlt(soup, pivot))
+//
 ///
 //  SUNDERLAND
 ///      ensures flownerOutsideTroll(soup,pivot) <= flownerOwnerTroll(soup,pivot)
