@@ -2897,91 +2897,6 @@ lemma RUNCORN2(seed : Object, pivot : Object)
 
 
 
-lemma DUPLICATE_HXBDXN_BRIDGE(soup0 : Owner, soup1 : Owner, fOut : Owner, pivot : Object)
-//doesn't work
-   requires forall o <- flatten(soup0) :: o.Ready()
-   requires forall o <- flatten(soup1) :: o.Ready()
-   requires pivot.Ready()
-   requires forall o <- flatten(fOut) :: o.Ready()
-
-   requires flatten(soup0) >= flatten(soup1)
-
-   requires fOut == collectOutsideAvoiding(soup1,pivot)
-
-//   requires exists whole <- flatten(soup1) :: strictlyInside(whole,pivot) || not(inside(pivot,whole))
-//   requires exists seed1 <- soup1 :: strictlyInside(seed1,pivot) || not(inside(pivot,seed1))
-
-    requires forall r <- collectOutsideAvoiding(soup1,pivot) :: strictlyInside(r,pivot) || not(inside(pivot,r))
-
-  ensures forall r <- collectOutsideAvoiding(soup1,pivot) ::  r in collectOutsideAvoiding(soup0,pivot)
-  //  ensures collectOutsideAvoiding(soup0,pivot) >= collectOutsideAvoiding(soup1,pivot)
-   {
-    assert flatten(soup0) >= flatten(soup1);
-
-    assert forall seed1 <- soup1 :: exists seed0 <- soup0 :: inside(seed0,seed1);
-//
-//     assert forall r <- flatten(soup1) ::
-//        forall seed1 <- soup1 | inside(seed1,r) ::
-//           exists seed0 <- soup0 | inside(seed0,seed1) :: inside(seed0,r);
-
-
-    // assert forall r <- flatten(soup1) ::y
-    //    forall seed1 <- soup1 | r in seed1.AMFO ::
-    //       exists seed0 <- soup0 :: r in seedO.AMFO ;
-
-
-
-//BROKEN BROKEN BROKEN
-    // assert forall r <- flatten(soup1) ::
-    //    forall seed1 <- soup1 | (r in seed1.AMFO) ::
-    //       exists seed0 <- soup0 | (r in seed0.AMFO) ::
-    //         fromPartToWholeWithoutTheTroll(seed1,r,pivot) ==> fromPartToWholeWithoutTheTroll(seed0,r,pivot) ;
-
-
-    assert forall r <- flatten(soup1) ::
-       forall seed1 <- soup1 | inside(seed1,r) ::
-          exists seed0 <- soup0 | inside(seed0,seed1) :: inside(seed0,r);
-
-// assert  forall r <- flatten(soup1) ::
-//        forall seed1 <- soup1 | inside(seed1,r) && fromPartToWholeWithoutTheTroll(seed1,r,pivot) && outside(r,pivot) ::
-//          exists seed0 <- soup0 | inside(seed0,r) :: fromPartToWholeWithoutTheTroll(seed0,r,pivot) && outside(r,pivot);
-
-assert forall r <- flatten(soup1), seed1 <- soup1 | inside(seed1,r) ::
-  exists seed0 <- soup0 | inside(seed0,seed1) :: inside(seed0,r);
-
-var troll := pivot;
-forall whole <- flatten(soup1), part <- soup1 |
-                    && (whole in collectOutsideAvoiding(soup1,pivot))
-                    && (inside(part,whole))
-                    && (fromPartToWholeWithoutTheTroll(part,whole,troll))
-                    && (outside(whole,troll))
-     ensures (exists sub <- soup0 ::fromPartToWholeWithoutTheTroll(sub,whole,troll))
-         {
-          assert outside(whole,pivot);
-          assert exists seed0 <- soup0 | inside(seed0,part) :: inside(seed0,whole);
-          assert exists sub   <- soup0 | inside(sub,part)   :: inside(sub,whole);
-//        assert exists sub <- soup0   | inside(sub,whole)  :: fromPartToWholeWithoutTheTroll(sub,whole,troll) && outside(whole,troll);
-
-          var sub :| (sub in soup0) && inside(sub,part) && inside(sub,whole);
-
-   assert sub.Ready();
-   assert part.Ready();
-   assert whole.Ready();
-   assert troll.Ready();
-   assert inside(sub,part);
-   assert fromPartToWholeWithoutTheTroll(part,whole,troll);
-   assert strictlyInside(whole,troll) || not(inside(troll,whole));
-   HARTLEPOOL(sub,part,whole,pivot);   //needs inside(seed0,seed1)
-  assert fromPartToWholeWithoutTheTroll(sub,whole,troll);
-         }
-   }
-
-
-
-
-
-
-
 
 
 
@@ -3016,50 +2931,24 @@ lemma HEBDEN_BRIDGE(soup0 : Owner, soup1 : Owner, fOut : Owner, pivot : Object)
 
    requires fOut == collectOutsideAvoiding(soup1,pivot)
 
-//   requires exists whole <- flatten(soup1) :: strictlyInside(whole,pivot) || not(inside(pivot,whole))
-//   requires exists seed1 <- soup1 :: strictlyInside(seed1,pivot) || not(inside(pivot,seed1))
-
     requires forall r <- collectOutsideAvoiding(soup1,pivot) :: strictlyInside(r,pivot) || not(inside(pivot,r))
 
   ensures forall r <- collectOutsideAvoiding(soup1,pivot) ::  r in collectOutsideAvoiding(soup0,pivot)
-  //  ensures collectOutsideAvoiding(soup0,pivot) >= collectOutsideAvoiding(soup1,pivot)
+  ensures collectOutsideAvoiding(soup0,pivot) >= collectOutsideAvoiding(soup1,pivot)
    {
     assert flatten(soup0) >= flatten(soup1);
 
     assert forall seed1 <- soup1 :: exists seed0 <- soup0 :: inside(seed0,seed1);
 
-//
-//     assert forall r <- flatten(soup1) ::
-//        forall seed1 <- soup1 | inside(seed1,r) ::
-//           exists seed0 <- soup0 | inside(seed0,seed1) :: inside(seed0,r);
-
-
-    // assert forall r <- flatten(soup1) ::y
-    //    forall seed1 <- soup1 | r in seed1.AMFO ::
-    //       exists seed0 <- soup0 :: r in seedO.AMFO ;
-
-
-
-//BROKEN BROKEN BROKEN
-    // assert forall r <- flatten(soup1) ::
-    //    forall seed1 <- soup1 | (r in seed1.AMFO) ::
-    //       exists seed0 <- soup0 | (r in seed0.AMFO) ::
-    //         fromPartToWholeWithoutTheTroll(seed1,r,pivot) ==> fromPartToWholeWithoutTheTroll(seed0,r,pivot) ;
-
-
     assert forall r <- flatten(soup1) ::
        forall seed1 <- soup1 | inside(seed1,r) ::
           exists seed0 <- soup0 | inside(seed0,seed1) :: inside(seed0,r);
 
-// assert  forall r <- flatten(soup1) ::
-//        forall seed1 <- soup1 | inside(seed1,r) && fromPartToWholeWithoutTheTroll(seed1,r,pivot) && outside(r,pivot) ::
-//          exists seed0 <- soup0 | inside(seed0,r) :: fromPartToWholeWithoutTheTroll(seed0,r,pivot) && outside(r,pivot);
+    assert forall r <- flatten(soup1), seed1 <- soup1 | inside(seed1,r) ::
+      exists seed0 <- soup0 | inside(seed0,seed1) :: inside(seed0,r);
 
-assert forall r <- flatten(soup1), seed1 <- soup1 | inside(seed1,r) ::
-  exists seed0 <- soup0 | inside(seed0,seed1) :: inside(seed0,r);
-
-var troll := pivot;
-forall whole <- flatten(soup1), part <- soup1 |
+    var troll := pivot;
+    forall whole <- flatten(soup1), part <- soup1 |
                     && (whole in collectOutsideAvoiding(soup1,pivot))
                     && (inside(part,whole))
                     && (fromPartToWholeWithoutTheTroll(part,whole,troll))
@@ -3082,12 +2971,12 @@ forall whole <- flatten(soup1), part <- soup1 |
    assert fromPartToWholeWithoutTheTroll(part,whole,troll);
    assert strictlyInside(whole,troll) || not(inside(troll,whole));
    HARTLEPOOL(sub,part,whole,pivot);   //needs inside(seed0,seed1)
-  assert fromPartToWholeWithoutTheTroll(sub,whole,troll);
-WARRINGTON3(sub,whole,troll);
-assert whole in collectObjectOutsideAvoiding(sub,troll);
+   assert fromPartToWholeWithoutTheTroll(sub,whole,troll);
+    WARRINGTON3(sub,whole,troll);
+    assert whole in collectObjectOutsideAvoiding(sub,troll);
 
-assert whole in collectOutsideAvoiding(soup0,troll);
-         }
+    assert whole in collectOutsideAvoiding(soup0,troll);
+            }
 
 assert forall whole <- flatten(soup1), part <- soup1 |
                     && (whole in collectOutsideAvoiding(soup1,pivot))
@@ -3109,7 +2998,7 @@ assert forall whole <- collectOutsideAvoiding(soup1,pivot), part <- soup1 |
 
 forall whole <- collectOutsideAvoiding(soup1,pivot), part <- soup1 ensures
                  (fromPartToWholeWithoutTheTroll(part,whole,troll))
-//>>>>>>>>>>>>>>> {}
+ {}
 
 assert forall whole <- collectOutsideAvoiding(soup1,pivot), part <- soup1 ::
                  (fromPartToWholeWithoutTheTroll(part,whole,troll));
