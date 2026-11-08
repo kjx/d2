@@ -642,11 +642,10 @@ predicate fromPartToWholeWithoutTheTroll(part : Object, whole : Object, troll : 
   //false if you have no path that doesn't hit the troll, or if part' not inside whole
   // shou;d have some test cases, right?
   decreases part.AMFO
-//  requires inside(part,whole)
    ensures forall x <- part.owner :: inside(part,x)
-   ensures rv ==> inside(part,whole)
-   ensures rv ==> whole != troll
-//  ensures (part == whole) || (exists x <- part.owner :: fromPartToWholeWithoutTheTroll(x, whole, troll)
+   ensures rv ==> (inside(part,whole))
+   ensures rv ==> (whole != troll)
+   ensures rv ==> (part  != troll)
 {
   assume part.Ready();
   assume whole.Ready();
@@ -656,6 +655,11 @@ predicate fromPartToWholeWithoutTheTroll(part : Object, whole : Object, troll : 
       || (exists x <- part.owner :: fromPartToWholeWithoutTheTroll(x, whole, troll))
      )
 }
+
+lemma TRIP_TRAP_TROP(part : Object, whole : Object, troll : Object)
+   ensures fromPartToWholeWithoutTheTroll(part,whole,troll)  ==> inside(part,whole)
+   ensures not(inside(part,whole)) ==> not(fromPartToWholeWithoutTheTroll(part,whole,troll))
+   {}
 
 lemma ThreeBillyGoatsGruff(part : Object, whole : Object, troll : Object)
    decreases part.AMFO
