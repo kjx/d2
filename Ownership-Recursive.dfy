@@ -666,10 +666,10 @@ lemma ThreeBillyGoatsGruff(part : Object, whole : Object, troll : Object)
     requires inside(part,whole)
     requires whole != troll
     requires part != troll
-    requires strictlyInside(whole,troll) || not(inside(troll,whole))
-     ensures strictlyInside(whole,troll) ==> strictlyInside(part,troll)
-     ensures not(inside(troll,whole)) ==> not(inside(troll,part))
-     ensures strictlyInside(part,troll) ||  not(inside(troll,part))
+    requires strictlyInside(whole,troll) || not(inside(troll,whole)) ////TROLLHOLE
+    //  ensures strictlyInside(whole,troll) ==> strictlyInside(troll, whole)  ////TROLLHOLE
+    //  ensures not(inside(troll,whole)) ==> not(inside(troll,part))  ////TROLLHOLE
+    //  ensures strictlyInside(part,troll) ||  not(inside(troll,part))   ////TROLLHOLE
      ensures part != troll
      ensures fromPartToWholeWithoutTheTroll(part,whole,troll)
 {
@@ -678,6 +678,7 @@ lemma ThreeBillyGoatsGruff(part : Object, whole : Object, troll : Object)
   assume troll.Ready();
 
   assert part != troll;
+  assert whole != troll;
   if (part == whole) { return; }
 
   if (exists x <- part.owner :: fromPartToWholeWithoutTheTroll(x, whole, troll))

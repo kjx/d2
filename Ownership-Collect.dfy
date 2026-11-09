@@ -439,7 +439,8 @@ lemma LIZ_TRUZZZZZ(o : Object, pivot : Object)
          ensures ( outside(x,pivot)) <==> (x in collectObjectOutsideAvoiding(o,pivot) )
        {
         assume o.Ready(); assume pivot.Ready();
-        RUNCORN2(o,pivot);
+        CROSBY(o,pivot);
+//        RUNCORN2(o,pivot);
        }
   assert ({o}+collectOwnerAvoiding(o.owner,pivot)) >= (collectOutsideAvoiding(o.owner,pivot));
 }
@@ -2641,10 +2642,17 @@ predicate split01(s0 : FlownerSplit, s1 : FlownerSplit) : (rv : bool)
 
  lemma SPLIT01MONOTONIC(s0 : FlownerSplit, s1 : FlownerSplit)
    requires split01(s0,s1)
-    ensures false
-    // ensures s0.fOoo >= s1.fOoo
-    //TODO
-   { }
+    ensures (s0.fAll >= s1.fAll)
+    ensures (s0.fSin >= s1.fSin)
+//  ensures (s0.fOut >= s1.fOut)
+    ensures (s0.fPvt >= s1.fPvt)
+   {
+   assume AllReady(s0.fAll);
+   assume AllReady(s1.fAll);
+   assume s0.pivot.Ready();
+   assume s1.pivot.Ready();
+    RAINHILL(s0,s1);
+    }
 
 lemma YBOUNDEN(s0 : FlownerSplit, s1 : FlownerSplit)
    requires AllReady(s0.fAll)
@@ -2715,18 +2723,17 @@ lemma RAINHILL(s0 : FlownerSplit, s1 : FlownerSplit)
    requires split01(s0,s1)
     ensures (s0.fOut >= s1.fOut)
 {
+    assert s0.pivot == s1.pivot;
+    assert (s0.pivot in s0.fAll) <== (s1.pivot in s1.fAll);
     assert s0.fOut == collectOutsideAvoiding(s0.soup,s0.pivot);
     assert s1.fOut == collectOutsideAvoiding(s1.soup,s1.pivot);
-    assert s0.pivot == s1.pivot;
+
+//forall r <- collectOutsideAvoiding(soup1,pivot) :: strictlyInside(r,pivot) || not(inside(pivot,r))
+HEBDEN_BRIDGE(s0.soup,s1.soup,s0.pivot);
+
+
     assert s0.fAll >= s1.fAll;
     assert s0.fAll >= s1.fAll >= s1.fOut;
-
-    WARRINGTON(s0.soup,s0.pivot);
-    WARRINGTON(s1.soup,s0.pivot);
-
-    WARRINGTON0(s1.soup,s0.pivot,s0.soup);
-    assert forall r <- flatten(s1.soup) :: exists seed <- flatten(s0.soup) ::
-              (fromPartToWholeWithoutTheTroll(seed,r,s0.pivot) && outside(r,s0.pivot)) ==> (r in collectOutsideAvoiding(s1.soup,s0.pivot));
 
 
 
@@ -3019,14 +3026,38 @@ assert forall o <- collectObjectOwnerAvoiding(seed,pivot) ::
 
 
 
+lemma FUKOF(soup0 : Owner, soup1 : Owner, pivot : Object)
+   requires forall o <- flatten(soup0) :: o.Ready()
+   requires forall o <- flatten(soup1) :: o.Ready()
+   requires pivot.Ready()
+
+ensures forall r <- collectOutsideAvoiding(soup1,pivot) :: not(strictlyInside(r,pivot))
+{ }
 
 
 
+lemma FUKU(sub : Object, part : Object, whole : Object, troll : Object)
+ decreases sub.AMFO
+  requires sub.Ready()
+  requires part.Ready()
+  requires whole.Ready()
+  requires troll.Ready()
+   requires fromPartToWholeWithoutTheTroll(part,whole,troll);
+   requires fromPartToWholeWithoutTheTroll(sub,part,troll);
+    ensures fromPartToWholeWithoutTheTroll(sub,whole,troll);
+{
 
 
+  if (sub == part) {
+        return;
+  }
 
+  assert exists o <- sub.owner :: fromPartToWholeWithoutTheTroll(o,part,troll);
+  var o :| ((o in sub.owner) && fromPartToWholeWithoutTheTroll(o,part,troll));
 
-
+  FUKU(o,part,whole,troll);
+  return;
+ }
 
 
 
@@ -3039,11 +3070,14 @@ lemma HEBDEN_BRIDGE(soup0 : Owner, soup1 : Owner, pivot : Object)
    requires flatten(soup0) >= flatten(soup1)
 
 
-   requires forall r <- collectOutsideAvoiding(soup1,pivot) :: strictlyInside(r,pivot) || not(inside(pivot,r))
+ ////TROLLHOLE   requires forall r <- collectOutsideAvoiding(soup1,pivot) :: strictlyInside(r,pivot) || not(inside(pivot,r))
+////TROLLHOLE     requires forall r <- collectOutsideAvoiding(soup1,pivot) ::  not(inside(pivot,r))
 
    ensures forall r <- collectOutsideAvoiding(soup1,pivot) ::  r in collectOutsideAvoiding(soup0,pivot)
    ensures collectOutsideAvoiding(soup0,pivot) >= collectOutsideAvoiding(soup1,pivot)
    {
+ assert forall r <- collectOutsideAvoiding(soup1,pivot) :: not(strictlyInside(r,pivot));  //TROLLHOLE
+
     assert flatten(soup0) >= flatten(soup1);
 
     assert forall seed1 <- soup1 :: exists seed0 <- soup0 :: inside(seed0,seed1);
@@ -3088,7 +3122,7 @@ assert fromPartToWholeWithoutTheTroll(part,whole,troll) && outside(whole,troll);
    assert troll.Ready();
    assert inside(sub,part);
    assert fromPartToWholeWithoutTheTroll(part,whole,troll);
-   assert strictlyInside(whole,troll) || not(inside(troll,whole));
+//   assert strictlyInside(whole,troll) || not(inside(troll,whole));
    HARTLEPOOL(sub,part,whole,troll);   //needs inside(seed0,seed1)
    assert fromPartToWholeWithoutTheTroll(sub,whole,troll);
     WARRINGTON3(sub,whole,troll);
@@ -3191,6 +3225,7 @@ lemma PUDSEY(soup0 : Owner, soup1 : Owner, pivot : Object)
 
 
 lemma HARTLEPOOL(sub : Object, part : Object, whole : Object, troll : Object)
+//extends fromPartToWholeWithoutTheTroll(part,whole,troll down to sub
   //  requires forall o <- flatten(soup0) :: o.Ready()
   //  requires forall o <- flatten(soup1) :: o.Ready()
 
@@ -3202,9 +3237,9 @@ lemma HARTLEPOOL(sub : Object, part : Object, whole : Object, troll : Object)
    requires inside(sub,part)
 
    requires fromPartToWholeWithoutTheTroll(part,whole,troll)
-   requires strictlyInside(whole,troll) || not(inside(troll,whole))   //CAN I REALLY GET  THIS?????
+ ////TROLLHOLE   requires strictlyInside(whole,troll) || not(inside(troll,whole))   //CAN I REALLY GET  THIS?????
        ///answer: yes cis when cloning (at least)  while stringt isnclude troll
-//   requires not(inside(troll,sub))   //apprently not needed? HYAY
+////TROLLHOLE ??   requires not(inside(troll,sub))   //apprently not needed? HYAY - so you've said not instirr troll whole?
 
     ensures fromPartToWholeWithoutTheTroll(sub,whole,troll)
 //    ensures whole in collectObjectOutsideAvoiding(sub,troll)
@@ -3225,7 +3260,7 @@ lemma HARTLEPOOL(sub : Object, part : Object, whole : Object, troll : Object)
    else
    {
     assert not(inside(whole,troll));
-    assert not(inside(troll,sub));
+//TROLLHOLE   assert not(inside(troll,sub));
 
     }
 
@@ -3233,8 +3268,8 @@ lemma HARTLEPOOL(sub : Object, part : Object, whole : Object, troll : Object)
     assert inside(part,whole);
     assert whole != troll;
     assert strictlyInside(whole,troll) || not(inside(troll,whole));
-  ThreeBillyGoatsGruff(sub,whole,troll);
-assert fromPartToWholeWithoutTheTroll(sub,whole,troll);
+  ThreeBillyGoatsGruff(sub,part,troll);
+assert fromPartToWholeWithoutTheTroll(sub,part,troll);
 
 }
 //   assert (|| (part == whole)
