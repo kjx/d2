@@ -60,6 +60,12 @@ lemma Set3Eq3<T>(a : set<T>, b : set<T>, c : set<T>, d : set<T>, e : set<T>, f :
 {}
 
 
+
+lemma SetPlusSubset<T>(left : set<T>, right : set<T>)
+ requires left >= right
+  ensures (left + right) == left
+{}
+
 lemma SetMinus1Plus1<T>(left : set<T>, right : set<T>)
  requires left >= right
   ensures ((left - right) + right) == left
