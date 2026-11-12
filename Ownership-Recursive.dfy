@@ -666,7 +666,7 @@ lemma ThreeBillyGoatsGruff(part : Object, whole : Object, troll : Object)
     requires inside(part,whole)
     requires whole != troll
     requires part != troll
-    requires strictlyInside(whole,troll) || not(inside(troll,whole)) ////TROLLHOLE
+ //   requires strictlyInside(whole,troll) || not(inside(troll,whole)) ////TROLLHOLE
     //  ensures strictlyInside(whole,troll) ==> strictlyInside(troll, whole)  ////TROLLHOLE
     //  ensures not(inside(troll,whole)) ==> not(inside(troll,part))  ////TROLLHOLE
     //  ensures strictlyInside(part,troll) ||  not(inside(troll,part))   ////TROLLHOLE
@@ -680,6 +680,11 @@ lemma ThreeBillyGoatsGruff(part : Object, whole : Object, troll : Object)
   assert part != troll;
   assert whole != troll;
   if (part == whole) { return; }
+
+assert fromPartToWholeWithoutTheTroll(part, whole, troll);
+ThereIsALightThatNeverGoesOut(part,whole);
+assert exists x <- part.owner :: fromPartToWholeWithoutTheTroll(x, whole, troll);
+
 
   if (exists x <- part.owner :: fromPartToWholeWithoutTheTroll(x, whole, troll))
     {
