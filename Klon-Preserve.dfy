@@ -111,9 +111,9 @@ ONLY_PIVOT(cb,m.c,cbSP.fPvt);
   assert coSP.fPvt >= cbSP.fPvt;
 
 
-  assert flownerStrictlyInside(co,m.c) >= flownerStrictlyInside(cb,m.c);
+  assert collectStrictlyInside(co,m.c) >= collectStrictlyInside(cb,m.c);
 
-  assert (flownerOutsidePivot(co,m.c) + flownerStrictlyOutside(co,m.c)) >= (flownerOutsidePivot(cb,m.c) + flownerStrictlyOutside(cb,m.c));
+  assert (collectBeyondPivot(co,m.c) + collectOutsideAvoiding(co,m.c)) >= (collectBeyondPivot(cb,m.c) + collectOutsideAvoiding(cb,m.c));
 
 
 FLOWER_JOIN_All(co,cb,m.c);
@@ -252,22 +252,22 @@ lemma MAPPING_INSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flown
 {
   assert collectStrictlyInside(os,m.o) <= m.m.Keys;
 
-  assert os_sp.fSin == flownerStrictlyInside(os_sp.soup,m.o);
-  assert cs_sp.fSin == flownerStrictlyInside(cs_sp.soup,m.c);
+  assert os_sp.fSin == collectStrictlyInside(os_sp.soup,m.o);
+  assert cs_sp.fSin == collectStrictlyInside(cs_sp.soup,m.c);
 
-  assert os_sp.fSin == flownerStrictlyInside(os,m.o);
-  assert cs_sp.fSin == flownerStrictlyInside(mapThruKlon(os,m),m.c);
+  assert os_sp.fSin == collectStrictlyInside(os,m.o);
+  assert cs_sp.fSin == collectStrictlyInside(mapThruKlon(os,m),m.c);
 
 FLOWNER_ALL_COLLECT_StrictlyInside(os_sp.soup,m.o);
-assert collectStrictlyInside(os_sp.soup,m.o) == flownerStrictlyInside(os_sp.soup,m.o) == os_sp.fSin;
+assert collectStrictlyInside(os_sp.soup,m.o) == collectStrictlyInside(os_sp.soup,m.o) == os_sp.fSin;
 FLOWNER_ALL_COLLECT_StrictlyInside(cs_sp.soup,m.c);
-assert collectStrictlyInside(cs_sp.soup,m.c) == flownerStrictlyInside(cs_sp.soup,m.c) == cs_sp.fSin;
+assert collectStrictlyInside(cs_sp.soup,m.c) == collectStrictlyInside(cs_sp.soup,m.c) == cs_sp.fSin;
 
 MASTERY_THRU(os_sp.soup,m);
 
  assert mapThruKlon(collectStrictlyInside(os,m.o),m) == collectStrictlyInside(mapThruKlon(os,m),m.c);
  assert mapThruKlon(os_sp.fSin, m) == mapThruKlon(collectStrictlyInside(os,m.o),m);
- assert cs_sp.fSin == flownerStrictlyInside(mapThruKlon(os,m),m.c);
+ assert cs_sp.fSin == collectStrictlyInside(mapThruKlon(os,m),m.c);
  assert mapThruKlon(os_sp.fSin, m) == cs_sp.fSin;
 
  }
@@ -295,7 +295,7 @@ lemma {:timeLimit 15} MAPPING_PIVOT(os : Owner, os_sp : FlownerSplit, cs : Owner
     ensures forall o <- os_sp.fPvt  :: klonIdentity(o,m.m[o],m)
 
 
-    ensures if (m.o in flownerAll(os))
+    ensures if (m.o in flatten(os))
               then ((os_sp.fPvt == m.o.AMFO) && (cs_sp.fPvt == m.c.AMFO))
               else ((os_sp.fPvt == {})       && (cs_sp.fPvt == {}))
 
@@ -358,8 +358,8 @@ lemma MAPPING_OUTSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flow
 
      var os_Out := os_sp.fOut;
      var cs_Out := cs_sp.fOut;
-     assert os_Out == flownerStrictlyOutside(os,m.o);
-     assert cs_Out == flownerStrictlyOutside(cs,m.c);
+     assert os_Out == collectOutsideAvoiding(os,m.o);
+     assert cs_Out == collectOutsideAvoiding(cs,m.c);
 
 
     assert AllReady(os_sp.fAll);
@@ -436,8 +436,8 @@ lemma HACKING_OUTSIDE(os : Owner, os_sp : FlownerSplit, cs : Owner, cs_sp : Flow
      UNPACK_flownerSplitOK(mapThruKlon(os,m),m.c,cs_sp);
      var os_Out := os_sp.fOut;
      var cs_Out := cs_sp.fOut;
-     assert os_Out == flownerStrictlyOutside(os,m.o) + flownerExceptPivot(os,m.o);
-     assert cs_Out == flownerStrictlyOutside(cs,m.c) + flownerExceptPivot(cs,m.c);
+     assert os_Out == collectOutsideAvoiding(os,m.o) + flownerExceptPivot(os,m.o);
+     assert cs_Out == collectOutsideAvoiding(cs,m.c) + flownerExceptPivot(cs,m.c);
 
 
     assert AllReady(os_sp.fAll);
@@ -480,25 +480,27 @@ lemma HACKING_THRU(oo : Owner, m : Klon)
    requires AllReady(oo)
    requires AllReady(mapThruKlon(oo,m))
 
-  //  ensures  (flownerStrictlyOutside(oo,m.o) + flownerExceptPivot(oo,m.o)) ==
-  //  (flownerStrictlyOutside(mapThruKlon(oo,m),m.c) + flownerExceptPivot(mapThruKlon(oo,m),m.c))
+  //  ensures  (collectOutsideAvoiding(oo,m.o) + flownerExceptPivot(oo,m.o)) ==
+  //  (collectOutsideAvoiding(mapThruKlon(oo,m),m.c) + flownerExceptPivot(mapThruKlon(oo,m),m.c))
 {
   assert oo <= m.m.Keys;
-  assert flownerAll(oo) == flatten(oo) <= m.m.Keys;
+//  assert flXwnerAll(oo) == flatten(oo) <= m.m.Keys;
+  assert flatten(oo) <= m.m.Keys;
   var cc := (mapThruKlon(oo,m));
-  var fOX := (flownerStrictlyOutside(oo,m.o) + flownerExceptPivot(oo,m.o));
-  var mOX := (flownerStrictlyOutside(cc,m.c) + flownerExceptPivot(cc,m.c));
+  var fOX := (collectOutsideAvoiding(oo,m.o) + flownerExceptPivot(oo,m.o));
+  var mOX := (collectOutsideAvoiding(cc,m.c) + flownerExceptPivot(cc,m.c));
 
-  assert flownerStrictlyOutside(oo,m.o) <= flownerAll(oo);
-  assert flownerExceptPivot(oo,m.o) <= flownerAll(oo);
-  assert fOX <= flownerAll(oo) == flatten(oo) <= m.m.Keys;
+  assert collectOutsideAvoiding(oo,m.o) <= flatten(oo);
+  assert flownerExceptPivot(oo,m.o) <= flatten(oo);
+//  assert fOX <= flXwnerAll(oo) == flatten(oo) <= m.m.Keys;
+  assert fOX <= flatten(oo) <= m.m.Keys;
 
-  assert forall o <- flownerStrictlyOutside(oo,m.o) :: outside(o,m.o);
+  assert forall o <- collectOutsideAvoiding(oo,m.o) :: outside(o,m.o);
   assert forall o <- flownerExceptPivot(oo,m.o) :: outside(o,m.o);
   assert forall o <- fOX :: outside(o,m.o);
   assert forall o <- fOX :: m.m[o] == o;
 
-assert flownerStrictlyOutside(cc,m.c) == mtk(flownerStrictlyOutside(oo,m.o), m);
+assert collectOutsideAvoiding(cc,m.c) == mtk(collectOutsideAvoiding(oo,m.o), m);
 assert flownerExceptPivot(cc,m.c) == mtk(flownerExceptPivot(oo,m.o), m);
 
 }
@@ -750,7 +752,7 @@ lemma CARREFOUR(
       m  : Klon)
   requires klonCalid(m)
 
-  requires flownerAll(oo) >= flownerAll(ob)
+  requires flatten(oo) >= flatten(ob)
   requires stupidlyHappy(oo,ob,m.o)
   requires boundsOK(oo,ob)
 
@@ -791,20 +793,20 @@ lemma CARREFOUR(
   MAP_THRU_KLON(ob,cb,m);
 
   UNPACK_flownerSplitOK(oo,m.o,oo_sp);
-         assert oo_sp.fSin == flownerStrictlyInside(oo,m.o);  //Err
+         assert oo_sp.fSin == collectStrictlyInside(oo,m.o);  //Err
   UNPACK_flownerSplitOK(ob,m.o,ob_sp);
-         assert ob_sp.fSin == flownerStrictlyInside(ob,m.o);  //Err
+         assert ob_sp.fSin == collectStrictlyInside(ob,m.o);  //Err
   UNPACK_flownerSplitOK(co,m.c,co_sp);
-         assert co_sp.fSin == flownerStrictlyInside(co,m.c);  //Err
+         assert co_sp.fSin == collectStrictlyInside(co,m.c);  //Err
   UNPACK_flownerSplitOK(cb,m.c,cb_sp);
-         assert cb_sp.fSin == flownerStrictlyInside(cb,m.c);  //Err
+         assert cb_sp.fSin == collectStrictlyInside(cb,m.c);  //Err
 
   assert oo_sp.fAll >= ob_sp.fAll;
   assert forall o <- ob_sp.fAll :: o in oo_sp.fAll;
 
-  flownerStrictlyInside_MONOTONIC(oo,ob,m.o);
-//  flownerStrictlyInside_MONOTONIC(co,cb,m.c);  // flownerAll(co) >= flownerAll(cb)
-    //hat's very muc hthe wrong thing - tha's what we're trying to PROVE...
+  collectStrictlyInside_MONOTONIC(oo,ob,m.o);
+//  collectStrictlyInside_MONOTONIC(co,cb,m.c);  // flatten(co) >= flatten(cb)
+    //that's very much the wrong thing - that's what we're trying to PROVE...
 
   assert oo_sp.fSin >= ob_sp.fSin;
   assert forall o <- ob_sp.fSin :: o in oo_sp.fSin;
@@ -841,20 +843,20 @@ lemma {:timeLimit 15} FLOWER_JOIN_All(oo : Owner, ob : Bound, pivot : Object)
   requires AllReady(flatten(ob))
   requires pivot.Ready()
 
-  requires flownerStrictlyInside(oo,pivot) >= flownerStrictlyInside(ob,pivot)
-  requires (flownerOutsidePivot(oo,pivot) + flownerStrictlyOutside(oo,pivot)) >= (flownerOutsidePivot(ob,pivot) + flownerStrictlyOutside(ob,pivot))
+  requires collectStrictlyInside(oo,pivot) >= collectStrictlyInside(ob,pivot)
+  requires (collectBeyondPivot(oo,pivot) + collectOutsideAvoiding(oo,pivot)) >= (collectBeyondPivot(ob,pivot) + collectOutsideAvoiding(ob,pivot))
 
-   ensures flownerStrictlyInside(oo,pivot) + (flownerOutsidePivot(oo,pivot) + flownerStrictlyOutside(oo,pivot)) >=
-           flownerStrictlyInside(ob,pivot) + (flownerOutsidePivot(ob,pivot) + flownerStrictlyOutside(ob,pivot))
+   ensures collectStrictlyInside(oo,pivot) + (collectBeyondPivot(oo,pivot) + collectOutsideAvoiding(oo,pivot)) >=
+           collectStrictlyInside(ob,pivot) + (collectBeyondPivot(ob,pivot) + collectOutsideAvoiding(ob,pivot))
 
 
-   ensures flownerAll(oo) == flownerStrictlyInside(oo,pivot) + (flownerOutsidePivot(oo,pivot) + flownerStrictlyOutside(oo,pivot))
-   ensures flownerAll(ob) == flownerStrictlyInside(ob,pivot) + (flownerOutsidePivot(ob,pivot) + flownerStrictlyOutside(ob,pivot))
-   ensures flownerAll(oo) >= flownerAll(ob)
+   ensures flatten(oo) == collectStrictlyInside(oo,pivot) + (collectBeyondPivot(oo,pivot) + collectOutsideAvoiding(oo,pivot))
+   ensures flatten(ob) == collectStrictlyInside(ob,pivot) + (collectBeyondPivot(ob,pivot) + collectOutsideAvoiding(ob,pivot))
+   ensures flatten(oo) >= flatten(ob)
 //   ensures stupidlyHappy(oo,ob,pivot)
    {
-    FUCKED(flownerStrictlyInside(oo,pivot), flownerOutsidePivot(oo,pivot), flownerStrictlyOutside(oo,pivot),
-           flownerStrictlyInside(ob,pivot), flownerOutsidePivot(ob,pivot), flownerStrictlyOutside(ob,pivot)) ;
+    FUCKED(collectStrictlyInside(oo,pivot), collectBeyondPivot(oo,pivot), collectOutsideAvoiding(oo,pivot),
+           collectStrictlyInside(ob,pivot), collectBeyondPivot(ob,pivot), collectOutsideAvoiding(ob,pivot)) ;
     FLOWNER_DISJOINT(oo, pivot);
     FLOWNER_DISJOINT(ob, pivot);
     FLOWNER_ALL_ALL(oo,pivot);
@@ -927,8 +929,8 @@ lemma DOUBLE_SPLIT_OnlyPivot(os : Owner, cs : Owner, os_sp : FlownerSplit, cs_sp
   requires cs == mapThruKlon(os,m)
   requires flownerSplitOK(os, m.o, os_sp)
   requires flownerSplitOK(cs, m.c, cs_sp)
-   ensures os_sp.fAll == flownerAll(os)
-   ensures cs_sp.fAll == flownerAll(cs)
+   ensures os_sp.fAll == flatten(os)
+   ensures cs_sp.fAll == flatten(cs)
    ensures os_sp.fPvt == flownerOnlyPivot(os, m.o)
    ensures cs_sp.fPvt == flownerOnlyPivot(cs, m.c)
 
@@ -1072,14 +1074,14 @@ lemma collectObjectStrictlyInside_LEMMA1o_noall(o : Object, pivot : Object, x : 
 lemma FLOWNER_ALL_COLLECT_StrictlyInside(soup : OWNR, pivot : Object)
  decreases allAMFOs(soup), 2
   requires AllReady(flatten(soup)) && pivot.Ready()
-   ensures flownerStrictlyInside(soup,pivot) <= flownerAll(soup)
-  //  ensures allStrictlyInside(flatten(soup),pivot) == flownerStrictlyInside(soup,pivot)
-  //  ensures allStrictlyInside(flownerAll(soup),pivot) == flownerStrictlyInside(soup,pivot)
+   ensures collectStrictlyInside(soup,pivot) <= flatten(soup)
+  //  ensures allStrictlyInside(flatten(soup),pivot) == collectStrictlyInside(soup,pivot)
+  //  ensures allStrictlyInside(flatten(soup),pivot) == collectStrictlyInside(soup,pivot)
 
-   ensures collectStrictlyInside(soup,pivot) == flownerStrictlyInside(soup,pivot)
+   ensures collectStrictlyInside(soup,pivot) == collectStrictlyInside(soup,pivot)
 {
  forall o <- soup
-    ensures (flownerStrictlyInside({o},pivot) == collectObjectStrictlyInside(o, pivot)) //by
+    ensures (collectStrictlyInside({o},pivot) == collectObjectStrictlyInside(o, pivot)) //by
     { assert allAMFOs(soup) nonincreases to o.AMFO;
       assert 2 decreases to 1;
       assert (allAMFOs(soup),2  nonincreases to o.AMFO,1);
@@ -1102,23 +1104,23 @@ lemma {:timeLimit 10} FLOWNER_ALL_COLLECT_StrictlyInside2(o : Object, pivot : Ob
   ///verifies Tue 27 Oct 2026
  decreases o.AMFO, 1
   requires o.Ready() && pivot.Ready()
-   ensures flownerStrictlyInside({o},pivot) == collectObjectStrictlyInside(o, pivot)
+   ensures collectStrictlyInside({o},pivot) == collectObjectStrictlyInside(o, pivot)
  {
    if (not(strictlyInside(o,pivot)))
     {
       assert collectObjectStrictlyInside(o, pivot) == {};
-      assert flownerStrictlyInside({o},pivot) == {};
-      assert  flownerStrictlyInside({o},pivot) == collectObjectStrictlyInside(o, pivot);
+      assert collectStrictlyInside({o},pivot) == {};
+      assert  collectStrictlyInside({o},pivot) == collectObjectStrictlyInside(o, pivot);
       return;
     }
   assert strictlyInside(o,pivot);
-  assert o in flownerStrictlyInside({o},pivot);
+  assert o in collectStrictlyInside({o},pivot);
   assert o in collectObjectStrictlyInside(o, pivot);
   assert AllReady(flatten(o.owner));
   Object.RettyBetty(o.owner);
   FLOWNER_ALL_COLLECT_StrictlyInside(o.owner,pivot);
 
-  assert flownerStrictlyInside({o},pivot) == collectObjectStrictlyInside(o, pivot);
+  assert collectStrictlyInside({o},pivot) == collectObjectStrictlyInside(o, pivot);
 }
 
 
@@ -1127,9 +1129,9 @@ lemma {:timeLimit 10} FLOWNER_ALL_COLLECT_StrictlyInside2(o : Object, pivot : Ob
 
 
 ///the magic lines?
-// assert forall oo <- soup :: (set ooo <- collectStrictlyInside({oo},pivot) :: ooo) == (set ooo <- flownerStrictlyInside({oo},pivot) :: ooo);
-// assert (set oo <- soup, ooo <- (set x <- collectStrictlyInside({oo},pivot)) :: ooo) == (set oo <- soup, ooo <- flownerStrictlyInside({oo},pivot) :: ooo);
-// assert (set oo <- soup, ooo <- collectStrictlyInside({oo},pivot) :: ooo) == (set oo <- soup, ooo <- flownerStrictlyInside({oo},pivot) :: ooo);
+// assert forall oo <- soup :: (set ooo <- collectStrictlyInside({oo},pivot) :: ooo) == (set ooo <- collectStrictlyInside({oo},pivot) :: ooo);
+// assert (set oo <- soup, ooo <- (set x <- collectStrictlyInside({oo},pivot)) :: ooo) == (set oo <- soup, ooo <- collectStrictlyInside({oo},pivot) :: ooo);
+// assert (set oo <- soup, ooo <- collectStrictlyInside({oo},pivot) :: ooo) == (set oo <- soup, ooo <- collectStrictlyInside({oo},pivot) :: ooo);
 //
 
 
@@ -1227,17 +1229,17 @@ lemma STRICKTLY_OUTSIDE_IN_SOUP(soup : Owner, o : Object, pivot : Object, owner 
   requires o.Ready()
   requires pivot.Ready()
   requires owner.Ready()
-  requires owner in flownerStrictlyOutside(soup, pivot)
+  requires owner in collectOutsideAvoiding(soup, pivot)
   requires inside(o, owner)
   requires o in soup
 
    ensures forall s <- soup | outside(s,pivot) ::
              forall owner <- s.AMFO | outside(owner,pivot) ::
-               owner in flownerStrictlyOutside(soup, pivot)
+               owner in collectOutsideAvoiding(soup, pivot)
 
-   // ensures forall s <- soup, owner <- flownerStrictlyOutside(soup, pivot) :: outside(owner,pivot) &&  outside(s,pivot) && inside(s,owner)
+   // ensures forall s <- soup, owner <- collectOutsideAvoiding(soup, pivot) :: outside(owner,pivot) &&  outside(s,pivot) && inside(s,owner)
 
-   ensures forall owner <- flownerStrictlyOutside(soup, pivot) ::
+   ensures forall owner <- collectOutsideAvoiding(soup, pivot) ::
       exists s <- soup :: (
         && (outside(s,pivot))
         && (outside(owner,pivot))
@@ -1245,7 +1247,7 @@ lemma STRICKTLY_OUTSIDE_IN_SOUP(soup : Owner, o : Object, pivot : Object, owner 
       )
 
 
-//   ensures forall owner <- flownerAll(soup) :: exists s <- soup ::  &&
+//   ensures forall owner <- flatten(soup) :: exists s <- soup ::  &&
 
    ensures owner in flatten(soup)
    ensures o in soup

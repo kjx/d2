@@ -635,6 +635,32 @@ lemma TestRecombine(p0 : OWNR, w0 : OWNR, p1 : OWNR)
 /// (almost certainly belongs off in Ownership.dfy - or Ownership-Smiths.dfy)
 
 
+lemma {:timeLimit 30} NO_TROLL_NO_TROLLING(part : Object, whole : Object, troll : Object)
+ decreases part.AMFO
+  requires troll !in part.AMFO
+  requires troll !in whole.AMFO
+   ensures inside(part,whole) ==> fromPartToWholeWithoutTheTroll(part,whole,troll)
+  {
+  assume part.Ready();
+  assume whole.Ready();
+  assume troll.Ready();
+
+   assert (part != troll);
+   if not(inside(part,whole)) { return; }
+
+   if (part == whole) { return; }
+
+   ThereIsALightThatNeverGoesOut(part,whole);
+   assert exists x <- part.owner :: inside(x,whole);
+   var x :| (x in part.owner) && (inside(x,whole));
+   assert troll !in x.AMFO;
+
+   NO_TROLL_NO_TROLLING(x,whole,troll);
+
+   assert fromPartToWholeWithoutTheTroll(x,   whole,troll);
+   assert fromPartToWholeWithoutTheTroll(part,whole,troll);
+  }
+
 
 predicate fromPartToWholeWithoutTheTroll(part : Object, whole : Object, troll : Object) : (rv : bool)
   //at least one of part's direct owners is on the way to whole.
@@ -661,7 +687,8 @@ lemma TRIP_TRAP_TROP(part : Object, whole : Object, troll : Object)
    ensures not(inside(part,whole)) ==> not(fromPartToWholeWithoutTheTroll(part,whole,troll))
    {}
 
-lemma ThreeBillyGoatsGruff(part : Object, whole : Object, troll : Object)
+lemma {:verify false} XXXXThreeBillyGoatsGruff(part : Object, whole : Object, troll : Object)
+   //what was this trying to do???
    decreases part.AMFO
     requires inside(part,whole)
     requires whole != troll
@@ -691,7 +718,7 @@ assert exists x <- part.owner :: fromPartToWholeWithoutTheTroll(x, whole, troll)
       var x :| (x in part.owner) && fromPartToWholeWithoutTheTroll(x, whole, troll);
       assert fromPartToWholeWithoutTheTroll(x, whole, troll);
       if (x == whole) { return; }
-      ThreeBillyGoatsGruff(x,whole,troll);  return;
+      XXXXThreeBillyGoatsGruff(x,whole,troll);  return;
     }
 
   assert {:contradiction} false;

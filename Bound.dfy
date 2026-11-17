@@ -20,6 +20,8 @@ predicate boundsOK(oo : Owner, mb : Bound)
 predicate stupidlyHappy(soup0 : Owner, soup1 : Owner, pivot : Object) : (rv : bool)
 // owners "outside" the bound must still be "outside" the owner
 //
+// been replaced by
+//
 //  this makes it easier to prove preservation of ownership
 //  and may make thigns more visible locally, but I think can
 //  likely be avoided if we no longer't distinguish between
