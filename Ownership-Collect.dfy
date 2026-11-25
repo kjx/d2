@@ -742,7 +742,7 @@ lemma {:timeLimit 10} HEY_FUCKER(soup : Owner, pivot : Object)
 
      if (pivot in flatten(soup)) { assert maybePivot == {pivot}; }
 
-      FLOWNER_SHORTCUT_OnlyPivot(soup,pivot,shortCut);
+      FLOWNER_SHORTCUT_OnlyBeyond(soup,pivot,shortCut);
       ONLY_PIVOT(soup,pivot,shortCut);
 
       assert collectBeyondPivot(soup, pivot) == flattenOnlyPivot(soup, pivot) == flownerOnlyPivot(soup,pivot) ;
@@ -1339,20 +1339,12 @@ lemma {:timeLimit 30} collectStrictlyInside_MONOTONIC(soup0 : OWNR, soup1 : OWNR
   requires flatten(soup0) >= flatten(soup1)
    ensures collectStrictlyInside(soup0,pivot) >= collectStrictlyInside(soup1,pivot)
    {
-//     flownerPivotlyOutside_MONOTONIC(soup0,soup1,pivot);
-//     assert flownerPivotlyOutside(soup0,pivot)    >= flownerPivotlyOutside(soup1,pivot);
-//
-//     FLOWNER_ALL_ALL(soup0, pivot);
-//     assert flownerStrictlyInside(soup0,pivot) == flownerAll(soup0) - flownerPivotlyOutside(soup0,pivot);
-//     FLOWNER_ALL_ALL(soup1, pivot);
-//     assert flownerStrictlyInside(soup1,pivot) == flownerAll(soup1) - flownerPivotlyOutside(soup1,pivot);
-
     assert collectStrictlyInside(soup0,pivot) <= flatten(soup0);
     assert forall x <- collectStrictlyInside(soup0,pivot)  :: strictlyInside(x,pivot);
- assert forall r <- flatten(soup0) :: strictlyInside(r,pivot) ==> (r in collectStrictlyInside(soup0,pivot));
+    assert forall r <- flatten(soup0) :: strictlyInside(r,pivot) ==> (r in collectStrictlyInside(soup0,pivot));
     assert collectStrictlyInside(soup1,pivot) <= flatten(soup1);
     assert forall x <- collectStrictlyInside(soup1,pivot)  :: strictlyInside(x,pivot);
- assert forall r <- flatten(soup1) :: strictlyInside(r,pivot) ==> (r in collectStrictlyInside(soup1,pivot));
+    assert forall r <- flatten(soup1) :: strictlyInside(r,pivot) ==> (r in collectStrictlyInside(soup1,pivot));
 
     assert collectStrictlyInside(soup0,pivot)    >= collectStrictlyInside(soup1,pivot);
    }
@@ -1713,7 +1705,7 @@ assert internalCollectObjectStrictlyInside ==
 
 
 
-lemma flownerOnlyPivot_RESULT(soup : Owner, pivot : Object, rv : Owner)
+lemma flownerOnly_collectBeyond_RESULT(soup : Owner, pivot : Object, rv : Owner)
 //verified 23Sep2026 - compare ONLY_PIVOT
   requires AllReady(flatten(soup)) && pivot.Ready() && AllReady(flatten(rv))
   requires flownerOnlyPivot(soup,pivot) == rv
@@ -1725,7 +1717,7 @@ lemma flownerOnlyPivot_RESULT(soup : Owner, pivot : Object, rv : Owner)
    ensures collectBeyondPivot(soup, pivot) == rv
    {
    assert rv == flownerOnlyPivot(soup, pivot);
-FLOWNER_SHORTCUT_OnlyPivot(soup, pivot, rv);
+FLOWNER_SHORTCUT_OnlyBeyond(soup, pivot, rv);
    assert rv == collectBeyondPivot(soup, pivot);
  LEMMA_collectBeyondPivot1(soup, pivot, rv);
    }
@@ -1947,9 +1939,9 @@ lemma flownerOnlyPivot_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
    ensures flownerOnlyPivot(soup0,pivot)  >= flownerOnlyPivot(soup1,pivot)
 {
   var rv0 := flownerOnlyPivot(soup0,pivot);
-  flownerOnlyPivot_RESULT(soup0,pivot,rv0);
+  flownerOnly_collectBeyond_RESULT(soup0,pivot,rv0);
   var rv1 := flownerOnlyPivot(soup1,pivot);
-  flownerOnlyPivot_RESULT(soup1,pivot,rv1);
+  flownerOnly_collectBeyond_RESULT(soup1,pivot,rv1);
   assert flownerOnlyPivot(soup0,pivot)     >= flownerOnlyPivot(soup1,pivot);
 }
 
@@ -2284,7 +2276,7 @@ decreases allAMFOs(soup), 1000
 {
    var rv := flownerOnlyPivot(soup,pivot);
    assert AllReady(flatten(rv));
-   flownerOnlyPivot_RESULT(soup,pivot,rv);
+   flownerOnly_collectBeyond_RESULT(soup,pivot,rv);
    assert rv == collectBeyondPivot(soup,pivot);
 
    assert rv == if (pivot in flatten(soup)) then (pivot.AMFO) else {};
@@ -2490,7 +2482,7 @@ if (flattenOnlyPivot(soup,pivot) == rv)
 
 if (flownerOnlyPivot(soup,pivot) == rv)
   {
-   flownerOnlyPivot_RESULT(soup,pivot,rv);
+   flownerOnly_collectBeyond_RESULT(soup,pivot,rv);
    FLOWNER_FLATTEN_TODO_FOR_ALL(soup,pivot);
    return;
   }
@@ -2501,7 +2493,7 @@ assert false;
 
 
 
-lemma FLOWNER_SHORTCUT_OnlyPivot(soup : OWNR, pivot : Object, rv : Owner)
+lemma FLOWNER_SHORTCUT_OnlyBeyond(soup : OWNR, pivot : Object, rv : Owner)
  //verified 21 Sep 2026
   requires AllReady(flatten(soup)) && pivot.Ready()
    ensures collectBeyondPivot(soup, pivot) == flattenOnlyPivot(soup, pivot)
@@ -4531,8 +4523,16 @@ lemma NELSON(owner : Object, soup : Owner, pivot : Object)
 }
 
 
+
+
+lemma HUDDERSFIELD(a : Owner, b : Owner, c : Owner, d :  Owner)
+    requires a + b + c == d
+     ensures a + (c + b) == d
+{}
+
 lemma  HALIFAX(soup : Owner, pivot : Object)
 ///gets all outside owners - avoiding the pivot and any owners reachabke ONLY through that.
+//would this be better working on FlownerSplits?
    decreases allAMFOs(soup), 2
    requires forall o <- flatten(soup) :: o.Ready()
    requires pivot.Ready()
@@ -4540,6 +4540,10 @@ lemma  HALIFAX(soup : Owner, pivot : Object)
    ensures collectStrictlyInside(soup,pivot)
             + collectOutsideAvoiding(soup,pivot)
             + collectBeyondPivot(soup,pivot)
+           == flatten(soup)
+
+  ensures collectStrictlyInside(soup,pivot)
+            + (collectBeyondPivot(soup,pivot) + collectOutsideAvoiding(soup,pivot))
            == flatten(soup)
 
    ensures collectStrictlyInside(soup,pivot) !! (collectOutsideAvoiding(soup,pivot) + collectBeyondPivot(soup,pivot))
@@ -4556,6 +4560,12 @@ lemma  HALIFAX(soup : Owner, pivot : Object)
                   collectOwnerAvoiding(soup,pivot),
                   collectBeyondPivot(soup,pivot),
                   flatten(soup) );
+
+       HUDDERSFIELD( collectStrictlyInside(soup,pivot),
+                     collectOutsideAvoiding(soup,pivot),
+                     collectBeyondPivot(soup,pivot),
+                     flatten(soup) );
+
      }
 
 lemma SetPlus5<T>(a : set<T>, b: set<T>, c : set<T>, d : set<T>, e : set<T>)
@@ -4640,7 +4650,7 @@ lemma SetPlus5<T>(a : set<T>, b: set<T>, c : set<T>, d : set<T>, e : set<T>)
 // ONLY_PIVOT
 ///  ensures collectBeyondPivot(soup, pivot) == flattenOnlyPivot(soup, pivot) == flownerOnlyPivot(soup,pivot) == rv
 ///
-// FLOWNER_SHORTCUT_OnlyPivot
+// FLOWNER_SHORTCUT_OnlyBeyond
 ///   see ONLY_PIVOT?
 ///
 // FLOWNER_ALL_ALL

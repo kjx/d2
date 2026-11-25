@@ -646,7 +646,7 @@ lemma {:timeLimit 10} HEY_FUCKER(soup : Owner, pivot : Object)
 
      if (pivot in flatten(soup)) { assert maybePivot == {pivot}; }
 
-      FLOWNER_SHORTCUT_OnlyPivot(soup,pivot,shortCut);
+      FLOWNER_SHORTCUT_OnlyBeyond(soup,pivot,shortCut);
       ONLY_PIVOT(soup,pivot,shortCut);
 
       assert shortcutOnlyPivot(soup, pivot) == flattenOnlyPivot(soup, pivot) == flownerOnlyPivot(soup,pivot) ;
@@ -1513,7 +1513,7 @@ lemma {:timeLimit 30} collectStrictlyInside_RESULT(soup : Owner, pivot : Object,
 }
 
 
-lemma flownerOnlyPivot_RESULT(soup : Owner, pivot : Object, rv : Owner)
+lemma flownerOnly_collectBeyond_RESULT(soup : Owner, pivot : Object, rv : Owner)
 //verified 23Sep2026 - compare ONLY_PIVOT
   requires AllReady(flatten(soup)) && pivot.Ready() && AllReady(flatten(rv))
   requires flownerOnlyPivot(soup,pivot) == rv
@@ -1525,7 +1525,7 @@ lemma flownerOnlyPivot_RESULT(soup : Owner, pivot : Object, rv : Owner)
    ensures shortcutOnlyPivot(soup, pivot) == rv
    {
    assert rv == flownerOnlyPivot(soup, pivot);
-FLOWNER_SHORTCUT_OnlyPivot(soup, pivot, rv);
+FLOWNER_SHORTCUT_OnlyBeyond(soup, pivot, rv);
    assert rv == shortcutOnlyPivot(soup, pivot);
  LEMMA_shortcutOnlyPivot1(soup, pivot, rv);
    }
@@ -1749,9 +1749,9 @@ lemma flownerOnlyPivot_MONOTONIC(soup0 : OWNR, soup1 : OWNR, pivot : Object)
    ensures flownerOnlyPivot(soup0,pivot)  >= flownerOnlyPivot(soup1,pivot)
 {
   var rv0 := flownerOnlyPivot(soup0,pivot);
-  flownerOnlyPivot_RESULT(soup0,pivot,rv0);
+  flownerOnly_collectBeyond_RESULT(soup0,pivot,rv0);
   var rv1 := flownerOnlyPivot(soup1,pivot);
-  flownerOnlyPivot_RESULT(soup1,pivot,rv1);
+  flownerOnly_collectBeyond_RESULT(soup1,pivot,rv1);
   assert flownerOnlyPivot(soup0,pivot)     >= flownerOnlyPivot(soup1,pivot);
 }
 
@@ -1952,7 +1952,7 @@ decreases allAMFOs(soup), 1000
 {
    var rv := flownerOnlyPivot(soup,pivot);
    assert AllReady(flatten(rv));
-   flownerOnlyPivot_RESULT(soup,pivot,rv);
+   flownerOnly_collectBeyond_RESULT(soup,pivot,rv);
    assert rv == shortcutOnlyPivot(soup,pivot);
 
    assert rv == if (pivot in flatten(soup)) then (pivot.AMFO) else {};
@@ -2160,7 +2160,7 @@ if (flattenOnlyPivot(soup,pivot) == rv)
 
 if (flownerOnlyPivot(soup,pivot) == rv)
   {
-   flownerOnlyPivot_RESULT(soup,pivot,rv);
+   flownerOnly_collectBeyond_RESULT(soup,pivot,rv);
    FLOWNER_FLATTEN_TODO_FOR_ALL(soup,pivot);
    return;
   }
@@ -2171,7 +2171,7 @@ assert false;
 
 
 
-lemma FLOWNER_SHORTCUT_OnlyPivot(soup : OWNR, pivot : Object, rv : Owner)
+lemma FLOWNER_SHORTCUT_OnlyBeyond(soup : OWNR, pivot : Object, rv : Owner)
  //verified 21 Sep 2026
   requires AllReady(flatten(soup)) && pivot.Ready()
    ensures shortcutOnlyPivot(soup, pivot) == flattenOnlyPivot(soup, pivot)
